@@ -15,6 +15,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.9" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.9" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.9" />
+    <PackageReference Include="Nekos-Sharp" Version="3.3.1" />
     <PackageReference Include="TheMulti0.DuckSharp" Version="1.0.2" />
   </ItemGroup>
 
