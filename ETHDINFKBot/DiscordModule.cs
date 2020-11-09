@@ -67,7 +67,7 @@ Version: 0.0.0.I didn't implement this yet");
             builder.WithFooter($"If you can read this then ping Mert | TroNiiXx | [13]");
             builder.WithCurrentTimestamp();
             builder.AddField("help", "Returns this message");
-            builder.AddField("dmhelp", "For more commands only avaliable in private chat");
+            builder.AddField("dmhelp", "For more commands ONLY avaliable in private chat");
             builder.AddField("code or source", "Return the sourcecode for this bot");
             builder.AddField("google", "Search on Google");
             builder.AddField("duck", "Search on DuckDuckGo");
@@ -80,6 +80,11 @@ Version: 0.0.0.I didn't implement this yet");
             builder.AddField("baka", "Baka image", true);
             builder.AddField("smug", "Smug image", true);
             builder.AddField("holo", "Holo image", true);
+            builder.AddField("avatar", "Avatar image", true);
+            builder.AddField("nekoavatar", "Neko avatar image", true);
+            builder.AddField("wallpaper", "Wallpaper image", true);
+
+            builder.AddField("block", "Owner only", true);
 
             Context.Channel.SendMessageAsync("", false, builder.Build());
         }
@@ -228,62 +233,95 @@ Version: 0.0.0.I didn't implement this yet");
         [Command("holo")]
         public async Task Holo()
         {
-            var author = Context.Message.Author;
-            LogManager.ProcessMessage(author, BotMessageType.Holo);
+            try
+            {
+                var author = Context.Message.Author;
+                LogManager.ProcessMessage(author, BotMessageType.Holo);
 
-            var req = await NekoClient.Image_v3.Holo();
+                var req = await NekoClient.Image_v3.Holo();
+
+                var report = GetReportInfoByImage(req.ImageUrl);
+                if (report != null)
+                {
+                    Context.Channel.SendMessageAsync($"The current image has been blocked by {report.ReportedBy.ServerUserName}. Try the command again to get a new image", false);
+                    return;
+                }
+                
+                Context.Channel.SendMessageAsync(req.ImageUrl, false);
+            }
+            catch(Exception ex)
+            {
+
+            }
+        }
+
+        [Command("avatar")]
+        public async Task Avatar()
+        {
+            var author = Context.Message.Author;
+            LogManager.ProcessMessage(author, BotMessageType.Avatar);
+
+            var req = await NekoClient.Image_v3.Avatar();
             Context.Channel.SendMessageAsync(req.ImageUrl, false);
         }
 
-        [Command("pmhelp")]
-        public async Task Test()
-        {/*
-            var author = Context.Message.Author;
-            LogManager.ProcessMessage(author, BotMessageType.Holo);
-
-            var req = await NekoClient.Image_v3...Holo();
-            Context.Channel.SendMessageAsync(req.ImageUrl, false);*/
-        }
-
-        [Command("dmhelp")]
-        public async Task DmHelp()
+        [Command("nekoavatar")]
+        public async Task NekoAvatar()
         {
             var author = Context.Message.Author;
-            LogManager.ProcessMessage(author, BotMessageType.Other);
+            LogManager.ProcessMessage(author, BotMessageType.NekoAvatar);
 
-            EmbedBuilder builder = new EmbedBuilder();
-
-            builder.WithTitle("BattleRush's Helper Help");
-            //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
-            builder.WithDescription(@"Prefix for all comands is "".""
-Version: 0.0.0.I didn't implement this yet
-THIS IS DM ONLY");
-            builder.WithColor(0, 0, 255);
-
-            builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
-            //builder.WithFooter($"If you can read this then ping Mert | TroNiiXx | [13]");
-            builder.WithCurrentTimestamp();
-            builder.AddField("help", "Returns this message");
-
-            author.SendMessageAsync("", false, builder.Build());
+            var req = await NekoClient.Image_v3.NekoAvatar();
+            Context.Channel.SendMessageAsync(req.ImageUrl, false);
         }
 
-        [Command("lewd")]
-        public async Task Lewd()
+        [Command("wallpaper")]
+        public async Task Wallpaper()
         {
-            if (Context.IsPrivate)
-            {
-       
-            }
-            else
-            {
-                Context.Channel.SendMessageAsync("Works in dm only", false);
-            }
+            var author = Context.Message.Author;
+            LogManager.ProcessMessage(author, BotMessageType.Wallpaper);
+
+            var req = await NekoClient.Image_v3.Wallpaper();
+            Context.Channel.SendMessageAsync(req.ImageUrl, false);
         }
 
 
+        [Command("block")]
+        public async Task Block(string image)
+        {
+            var author = Context.Message.Author;
+            if (author.Id != ETHDINFKBot.Program.Owner)
+            {
+                Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+            }
+            var guildUser = author as SocketGuildUser;
 
-            [Command("stats")]
+
+            ReportInfo reportInfo = new ReportInfo()
+            {
+                ImageUrl = image,
+                ReportedBy = new Stats.DiscordUser()
+                {
+
+                    DiscordId = guildUser.Id,
+                    DiscordDiscriminator = guildUser.DiscriminatorValue,
+                    DiscordName = guildUser.Username,
+                    ServerUserName = guildUser.Nickname ?? guildUser.Username // User Nickname -> Update
+                }
+
+            };
+
+            Program.BlackList.Add(reportInfo);
+            Program.SaveBlacklist();
+
+            await Context.Message.DeleteAsync();
+
+
+            Context.Channel.SendMessageAsync("Add image to blacklist", false);
+        }
+
+
+        [Command("stats")]
         public async Task Stats()
         {
             var author = Context.Message.Author;
@@ -299,6 +337,10 @@ THIS IS DM ONLY");
             var topSmug = Program.GlobalStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalSmug).Take(5);
             var topFox = Program.GlobalStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalFox).Take(5);
 
+            var topAvatar = Program.GlobalStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalAvatar).Take(5);
+            var topNekopAvatar = Program.GlobalStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalNekoAvatar).Take(5);
+            var topWallpaper = Program.GlobalStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalWallpaper).Take(5);
+
             var topSearch = Program.GlobalStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalSearch).Take(5);
 
 
@@ -313,17 +355,26 @@ THIS IS DM ONLY");
             //builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
 
             builder.WithCurrentTimestamp();
-            builder.AddField("Total Commands", GetRankingString(topCommands.ToList().Select(i => i.ServerUserName + ": " + i.Stats.TotalCommands)));
-            builder.AddField("Total Search", GetRankingString(topSearch.ToList().Select(i => i.ServerUserName + ": " + i.Stats.TotalSearch)), true);
-            builder.AddField("Total Neko", GetRankingString(topNeko.ToList().Select(i => i.ServerUserName + ": " + i.Stats.TotalNeko)), true);
-            builder.AddField("Total Neko gifs", GetRankingString(topNekoGif.ToList().Select(i => i.ServerUserName + ": " + i.Stats.TotalNekoGif)), true);
-            builder.AddField("Total Holo", GetRankingString(topHolo.ToList().Select(i => i.ServerUserName + ": " + i.Stats.TotalHolo)), true);
-            builder.AddField("Total Waifu", GetRankingString(topWaifu.ToList().Select(i => i.ServerUserName + ": " + i.Stats.TotalWaifu)), true);
-            builder.AddField("Total Baka", GetRankingString(topBaka.ToList().Select(i => i.ServerUserName + ": " + i.Stats.TotalBaka)), true);
-            builder.AddField("Total Smug", GetRankingString(topSmug.ToList().Select(i => i.ServerUserName + ": " + i.Stats.TotalSmug)), true);
-            builder.AddField("Total Fox", GetRankingString(topFox.ToList().Select(i => i.ServerUserName + ": " + i.Stats.TotalFox)), true);
+            builder.AddField("Total Commands", GetRankingString(topCommands.Select(i => i.ServerUserName + ": " + i.Stats.TotalCommands)));
+            builder.AddField("Total Search", GetRankingString(topSearch.Select(i => i.ServerUserName + ": " + i.Stats.TotalSearch)), true);
+            builder.AddField("Total Neko", GetRankingString(topNeko.Select(i => i.ServerUserName + ": " + i.Stats.TotalNeko)), true);
+            builder.AddField("Total Neko gifs", GetRankingString(topNekoGif.Select(i => i.ServerUserName + ": " + i.Stats.TotalNekoGif)), true);
+            builder.AddField("Total Holo", GetRankingString(topHolo.Select(i => i.ServerUserName + ": " + i.Stats.TotalHolo)), true);
+            builder.AddField("Total Waifu", GetRankingString(topWaifu.Select(i => i.ServerUserName + ": " + i.Stats.TotalWaifu)), true);
+            builder.AddField("Total Baka", GetRankingString(topBaka.Select(i => i.ServerUserName + ": " + i.Stats.TotalBaka)), true);
+            builder.AddField("Total Smug", GetRankingString(topSmug.Select(i => i.ServerUserName + ": " + i.Stats.TotalSmug)), true);
+            builder.AddField("Total Fox", GetRankingString(topFox.Select(i => i.ServerUserName + ": " + i.Stats.TotalFox)), true);
+
+            builder.AddField("Total Avatar", GetRankingString(topAvatar.Select(i => i.ServerUserName + ": " + i.Stats.TotalAvatar)), true);
+            builder.AddField("Total Neko Avatar", GetRankingString(topNekopAvatar.Select(i => i.ServerUserName + ": " + i.Stats.TotalNekoAvatar)), true);
+            builder.AddField("Total Wallpaper", GetRankingString(topWallpaper.Select(i => i.ServerUserName + ": " + i.Stats.TotalWallpaper)), true);
 
             Context.Channel.SendMessageAsync("", false, builder.Build());
+        }
+
+        private ReportInfo GetReportInfoByImage(string imageUrl)
+        {
+            return Program.BlackList?.SingleOrDefault(i => i.ImageUrl == imageUrl);
         }
 
         private string GetRankingString(IEnumerable<string> list)

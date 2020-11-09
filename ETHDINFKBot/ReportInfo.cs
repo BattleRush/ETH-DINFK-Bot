@@ -8,6 +8,7 @@ namespace ETHDINFKBot
     public class ReportInfo
     {
         public string ImageUrl { get; set; }
+        public DateTime ReportedAt { get; set; }
         public DiscordUser ReportedBy { get; set; }
     }
 }

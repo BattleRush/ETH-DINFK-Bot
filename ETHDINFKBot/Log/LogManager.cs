@@ -17,6 +17,9 @@ namespace ETHDINFKBot.Log
         Baka = 5,
         Smug = 6,
         Fox = 7,
+        Avatar = 8,
+        NekoAvatar = 9,
+        Wallpaper = 10,
         Other = 999
     }
 
@@ -44,11 +47,15 @@ namespace ETHDINFKBot.Log
 
             var statUser = Program.GlobalStats.DiscordUsers.Single(i => i.DiscordId == user.Id);
 
-            if(statUser.ServerUserName != guildUser.Nickname)
+            if(guildUser != null && statUser.ServerUserName != guildUser.Nickname)
             {
                 // To update username changes
                 statUser.ServerUserName = guildUser.Nickname ?? guildUser.Username;
             }
+
+            // To prevent stats format from breaking
+            statUser.ServerUserName = statUser.ServerUserName.Replace("*", "").Replace("~", "");
+            statUser.DiscordName = statUser.DiscordName.Replace("*", "").Replace("~", "");
 
             switch (type)
             {
@@ -75,6 +82,15 @@ namespace ETHDINFKBot.Log
                     break;
                 case BotMessageType.Fox:
                     statUser.Stats.TotalFox++;
+                    break;
+                case BotMessageType.Avatar:
+                    statUser.Stats.TotalAvatar++;
+                    break;
+                case BotMessageType.NekoAvatar:
+                    statUser.Stats.TotalNekoAvatar++;
+                    break;
+                case BotMessageType.Wallpaper:
+                    statUser.Stats.TotalWallpaper++;
                     break;
                 default:
                     break;

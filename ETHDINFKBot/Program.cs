@@ -26,11 +26,14 @@ namespace ETHDINFKBot
         private IServiceProvider services;
         public static IConfiguration Configuration;
         public static string DiscordToken { get; set; }
+        public static ulong Owner { get; set; }
 
         public static GlobalStats GlobalStats = new GlobalStats()
         {
             DiscordUsers = new List<DiscordUser>()
         };
+
+        public static List<ReportInfo> BlackList = new List<ReportInfo>();
 
         private static void CheckDirs()
         {
@@ -42,6 +45,12 @@ namespace ETHDINFKBot
 
             if (!Directory.Exists("Stats"))
                 Directory.CreateDirectory("Stats");
+
+            if (!Directory.Exists("Blacklist"))
+                Directory.CreateDirectory("Blacklist");
+
+            if (!Directory.Exists("Blacklist\\Backup"))
+                Directory.CreateDirectory("Blacklist\\Backup");
 
             if (!Directory.Exists("Stats\\Backup"))
                 Directory.CreateDirectory("Stats\\Backup");
@@ -56,6 +65,7 @@ namespace ETHDINFKBot
               .Build();
 
             DiscordToken = Configuration["DiscordToken"];
+            Owner = Convert.ToUInt64(Configuration["Owner"]);
 
             new Program().MainAsync(DiscordToken).GetAwaiter().GetResult();
 
@@ -82,6 +92,11 @@ namespace ETHDINFKBot
         {
             File.Copy("Stats\\stats.json", $"Stats\\Backup\\stats_{DateTime.Now.ToString("yyyyMMdd_hhmmss")}.json");
         }
+        public static void BackUpBlackList()
+        {
+            File.Copy("Blacklist\\blacklist.json", $"Blacklist\\Backup\\blacklist_{DateTime.Now.ToString("yyyyMMdd_hhmmss")}.json");
+        }
+
         public static void LoadStats()
         {
             if (File.Exists("Stats\\stats.json"))
@@ -91,17 +106,31 @@ namespace ETHDINFKBot
                 GlobalStats = JsonConvert.DeserializeObject<GlobalStats>(content);
             }
         }
+
+        public static void LoadBlacklist()
+        {
+            if (File.Exists("Blacklist\\Blacklist.json"))
+            {
+                BackUpBlackList();
+                string content = File.ReadAllText("Blacklist\\blacklist.json");
+                BlackList = JsonConvert.DeserializeObject<List<ReportInfo>>(content);
+            }
+        }
         public static void SaveStats()
         {
             string content = JsonConvert.SerializeObject(GlobalStats);
             File.WriteAllText("Stats\\stats.json", content);
         }
+        public static void SaveBlacklist()
+        {
+            string content = JsonConvert.SerializeObject(BlackList);
+            File.WriteAllText("Blacklist\\blacklist.json", content);
+        }
 
         public async Task MainAsync(string token)
         {
-
-
             LoadStats();
+            LoadBlacklist();
 
             Client = new DiscordSocketClient();
 
@@ -192,20 +221,22 @@ namespace ETHDINFKBot
             if (m.Author.IsBot)
                 return;
 
-
-            if (SpamCache.ContainsKey(m.Author.Id))
+            if (m.Author.Id != Owner)
             {
-                if (SpamCache[m.Author.Id] > DateTime.Now.AddMilliseconds(-750))
+                if (SpamCache.ContainsKey(m.Author.Id))
                 {
-                    await m.Channel.SendMessageAsync($"Stop spamming <@{m.Author.Id}>");
-                    return;
-                }
+                    if (SpamCache[m.Author.Id] > DateTime.Now.AddMilliseconds(-750))
+                    {
+                        await m.Channel.SendMessageAsync($"Stop spamming <@{m.Author.Id}>");
+                        return;
+                    }
 
-                SpamCache[m.Author.Id] = DateTime.Now;
-            }
-            else
-            {
-                SpamCache.Add(m.Author.Id, DateTime.Now);
+                    SpamCache[m.Author.Id] = DateTime.Now;
+                }
+                else
+                {
+                    SpamCache.Add(m.Author.Id, DateTime.Now);
+                }
             }
 
             Console.ResetColor();

@@ -18,6 +18,9 @@ namespace ETHDINFKBot.Stats
         public int TotalBaka { get; set; }
         public int TotalSmug { get; set; }
         public int TotalFox { get; set; }
+        public int TotalAvatar { get; set; }
+        public int TotalNekoAvatar { get; set; }
+        public int TotalWallpaper { get; set; }
 
         public int TotalSearch { get; set; }
     }
