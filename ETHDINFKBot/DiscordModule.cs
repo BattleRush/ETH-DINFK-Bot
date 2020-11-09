@@ -67,6 +67,7 @@ Version: 0.0.0.I didn't implement this yet");
             builder.WithFooter($"If you can read this then ping Mert | TroNiiXx | [13]");
             builder.WithCurrentTimestamp();
             builder.AddField("help", "Returns this message");
+            builder.AddField("dmhelp", "For more commands only avaliable in private chat");
             builder.AddField("code or source", "Return the sourcecode for this bot");
             builder.AddField("google", "Search on Google");
             builder.AddField("duck", "Search on DuckDuckGo");
@@ -169,7 +170,7 @@ Version: 0.0.0.I didn't implement this yet");
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.Neko);
 
-            var req = await NekoClient.Image.Neko();
+            var req = await NekoClient.Image_v3.Neko();
             Context.Channel.SendMessageAsync(req.ImageUrl, false);
         }
 
@@ -177,9 +178,9 @@ Version: 0.0.0.I didn't implement this yet");
         public async Task NekoGif()
         {
             var author = Context.Message.Author;
-            LogManager.ProcessMessage(author, BotMessageType.Neko);
+            LogManager.ProcessMessage(author, BotMessageType.NekoGif);
 
-            var req = await NekoClient.Image.NekoGif();
+            var req = await NekoClient.Image_v3.NekoGif();
             Context.Channel.SendMessageAsync(req.ImageUrl, false);
         }
 
@@ -188,9 +189,9 @@ Version: 0.0.0.I didn't implement this yet");
         public async Task Fox()
         {
             var author = Context.Message.Author;
-            LogManager.ProcessMessage(author, BotMessageType.Other);
+            LogManager.ProcessMessage(author, BotMessageType.Fox);
 
-            var req = await NekoClient.Image.Fox();
+            var req = await NekoClient.Image_v3.Fox();
             Context.Channel.SendMessageAsync(req.ImageUrl, false);
         }
 
@@ -198,9 +199,9 @@ Version: 0.0.0.I didn't implement this yet");
         public async Task Waifu()
         {
             var author = Context.Message.Author;
-            LogManager.ProcessMessage(author, BotMessageType.Other);
+            LogManager.ProcessMessage(author, BotMessageType.Waifu);
 
-            var req = await NekoClient.Image.Waifu();
+            var req = await NekoClient.Image_v3.Waifu();
             Context.Channel.SendMessageAsync(req.ImageUrl, false);
         }
 
@@ -208,7 +209,7 @@ Version: 0.0.0.I didn't implement this yet");
         public async Task Baka()
         {
             var author = Context.Message.Author;
-            LogManager.ProcessMessage(author, BotMessageType.Other);
+            LogManager.ProcessMessage(author, BotMessageType.Baka);
 
             var req = await NekoClient.Image.Baka();
             Context.Channel.SendMessageAsync(req.ImageUrl, false);
@@ -218,7 +219,7 @@ Version: 0.0.0.I didn't implement this yet");
         public async Task Smug()
         {
             var author = Context.Message.Author;
-            LogManager.ProcessMessage(author, BotMessageType.Other);
+            LogManager.ProcessMessage(author, BotMessageType.Smug);
 
             var req = await NekoClient.Image.Smug();
             Context.Channel.SendMessageAsync(req.ImageUrl, false);
@@ -228,24 +229,77 @@ Version: 0.0.0.I didn't implement this yet");
         public async Task Holo()
         {
             var author = Context.Message.Author;
+            LogManager.ProcessMessage(author, BotMessageType.Holo);
+
+            var req = await NekoClient.Image_v3.Holo();
+            Context.Channel.SendMessageAsync(req.ImageUrl, false);
+        }
+
+        [Command("pmhelp")]
+        public async Task Test()
+        {/*
+            var author = Context.Message.Author;
+            LogManager.ProcessMessage(author, BotMessageType.Holo);
+
+            var req = await NekoClient.Image_v3...Holo();
+            Context.Channel.SendMessageAsync(req.ImageUrl, false);*/
+        }
+
+        [Command("dmhelp")]
+        public async Task DmHelp()
+        {
+            var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.Other);
 
-            var req = await NekoClient.Image.Holo();
-            Context.Channel.SendMessageAsync(req.ImageUrl, false);
+            EmbedBuilder builder = new EmbedBuilder();
+
+            builder.WithTitle("BattleRush's Helper Help");
+            //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
+            builder.WithDescription(@"Prefix for all comands is "".""
+Version: 0.0.0.I didn't implement this yet
+THIS IS DM ONLY");
+            builder.WithColor(0, 0, 255);
+
+            builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+            //builder.WithFooter($"If you can read this then ping Mert | TroNiiXx | [13]");
+            builder.WithCurrentTimestamp();
+            builder.AddField("help", "Returns this message");
+
+            author.SendMessageAsync("", false, builder.Build());
+        }
+
+        [Command("lewd")]
+        public async Task Lewd()
+        {
+            if (Context.IsPrivate)
+            {
+       
+            }
+            else
+            {
+                Context.Channel.SendMessageAsync("Works in dm only", false);
+            }
         }
 
 
 
-        [Command("stats")]
+            [Command("stats")]
         public async Task Stats()
         {
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.Other);
 
+            // TODO clean up this mess
+            var topCommands = Program.GlobalStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalCommands).Take(5);
+            var topNeko = Program.GlobalStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalNeko).Take(5);
+            var topNekoGif = Program.GlobalStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalNekoGif).Take(5);
+            var topHolo = Program.GlobalStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalHolo).Take(5);
+            var topWaifu = Program.GlobalStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalWaifu).Take(5);
+            var topBaka = Program.GlobalStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalBaka).Take(5);
+            var topSmug = Program.GlobalStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalSmug).Take(5);
+            var topFox = Program.GlobalStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalFox).Take(5);
 
-            var top3Commands = Program.GlobalStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalCommands).Take(5);
-            var top3Neko = Program.GlobalStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalNeko).Take(5);
-            var top3Search = Program.GlobalStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalSearch).Take(5);
+            var topSearch = Program.GlobalStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalSearch).Take(5);
 
 
             EmbedBuilder builder = new EmbedBuilder();
@@ -259,11 +313,30 @@ Version: 0.0.0.I didn't implement this yet");
             //builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
 
             builder.WithCurrentTimestamp();
-            builder.AddField("Total Commands", string.Join(Environment.NewLine, top3Commands.ToList().Select(i => i.DiscordName + ": " + i.Stats.TotalCommands).ToList()));
-            builder.AddField("Total Nekos", string.Join(Environment.NewLine, top3Neko.ToList().Select(i => i.DiscordName + ": " + i.Stats.TotalNeko).ToList()), true);
-            builder.AddField("Total Searches", string.Join(Environment.NewLine, top3Search.ToList().Select(i => i.DiscordName + ": " + i.Stats.TotalSearch).ToList()), true);
+            builder.AddField("Total Commands", GetRankingString(topCommands.ToList().Select(i => i.ServerUserName + ": " + i.Stats.TotalCommands)));
+            builder.AddField("Total Search", GetRankingString(topSearch.ToList().Select(i => i.ServerUserName + ": " + i.Stats.TotalSearch)), true);
+            builder.AddField("Total Neko", GetRankingString(topNeko.ToList().Select(i => i.ServerUserName + ": " + i.Stats.TotalNeko)), true);
+            builder.AddField("Total Neko gifs", GetRankingString(topNekoGif.ToList().Select(i => i.ServerUserName + ": " + i.Stats.TotalNekoGif)), true);
+            builder.AddField("Total Holo", GetRankingString(topHolo.ToList().Select(i => i.ServerUserName + ": " + i.Stats.TotalHolo)), true);
+            builder.AddField("Total Waifu", GetRankingString(topWaifu.ToList().Select(i => i.ServerUserName + ": " + i.Stats.TotalWaifu)), true);
+            builder.AddField("Total Baka", GetRankingString(topBaka.ToList().Select(i => i.ServerUserName + ": " + i.Stats.TotalBaka)), true);
+            builder.AddField("Total Smug", GetRankingString(topSmug.ToList().Select(i => i.ServerUserName + ": " + i.Stats.TotalSmug)), true);
+            builder.AddField("Total Fox", GetRankingString(topFox.ToList().Select(i => i.ServerUserName + ": " + i.Stats.TotalFox)), true);
 
             Context.Channel.SendMessageAsync("", false, builder.Build());
+        }
+
+        private string GetRankingString(IEnumerable<string> list)
+        {
+            string rankingString = "";
+            int pos = 1;
+            foreach (var item in list)
+            {
+                string boldText = pos == 1 ? "**" : "";
+                rankingString += $"{boldText}{pos}) {item}{boldText}{Environment.NewLine}";
+                pos++;
+            }
+            return rankingString;
         }
     }
 }

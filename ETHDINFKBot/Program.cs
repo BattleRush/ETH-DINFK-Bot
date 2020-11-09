@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using DuckSharp;
 using ETHDINFKBot.Stats;
 using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ETHDINFKBot
 {
@@ -31,8 +32,25 @@ namespace ETHDINFKBot
             DiscordUsers = new List<DiscordUser>()
         };
 
+        private static void CheckDirs()
+        {
+            if (!Directory.Exists("Plugins"))
+                Directory.CreateDirectory("Plugins");
+
+            if (!Directory.Exists("Logs"))
+                Directory.CreateDirectory("Logs");
+
+            if (!Directory.Exists("Stats"))
+                Directory.CreateDirectory("Stats");
+
+            if (!Directory.Exists("Stats\\Backup"))
+                Directory.CreateDirectory("Stats\\Backup");
+        }
+
         static void Main(string[] args)
         {
+            CheckDirs();
+
             Configuration = new ConfigurationBuilder()
               .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
               .Build();
@@ -42,10 +60,33 @@ namespace ETHDINFKBot
             new Program().MainAsync(DiscordToken).GetAwaiter().GetResult();
 
         }
+
+
+        private static Assembly LoadPlugin(string relativePath)
+        {
+            // Navigate up to the solution root
+            string root = Path.GetFullPath(Path.Combine(
+                Path.GetDirectoryName(
+                    Path.GetDirectoryName(
+                        Path.GetDirectoryName(
+                            Path.GetDirectoryName(
+                                Path.GetDirectoryName(typeof(Program).Assembly.Location)))))));
+
+            string pluginLocation = Path.GetFullPath(Path.Combine(root, relativePath.Replace('\\', Path.DirectorySeparatorChar)));
+            Console.WriteLine($"Loading commands from: {pluginLocation}");
+            PluginLoadContext loadContext = new PluginLoadContext(pluginLocation);
+            return loadContext.LoadFromAssemblyName(new AssemblyName(Path.GetFileNameWithoutExtension(pluginLocation)));
+        }
+
+        public static void BackUpStats()
+        {
+            File.Copy("Stats\\stats.json", $"Stats\\Backup\\stats_{DateTime.Now.ToString("yyyyMMdd_hhmmss")}.json");
+        }
         public static void LoadStats()
         {
             if (File.Exists("Stats\\stats.json"))
             {
+                BackUpStats();
                 string content = File.ReadAllText("Stats\\stats.json");
                 GlobalStats = JsonConvert.DeserializeObject<GlobalStats>(content);
             }
@@ -58,18 +99,13 @@ namespace ETHDINFKBot
 
         public async Task MainAsync(string token)
         {
-            if (!Directory.Exists("Logs"))
-                Directory.CreateDirectory("Logs");
-            if (!Directory.Exists("Stats"))
-                Directory.CreateDirectory("Stats");
+
 
             LoadStats();
 
             Client = new DiscordSocketClient();
 
             Client.MessageReceived += HandleCommandAsync;
-
-
 
             await Client.LoginAsync(TokenType.Bot, token);
             await Client.StartAsync();
@@ -87,6 +123,8 @@ namespace ETHDINFKBot
 
             commands = new CommandService();
             await commands.AddModulesAsync(Assembly.GetEntryAssembly(), services);
+
+   
 
             // Block this task until the program is closed.
             await Task.Delay(-1);
@@ -157,9 +195,8 @@ namespace ETHDINFKBot
 
             if (SpamCache.ContainsKey(m.Author.Id))
             {
-                if (SpamCache[m.Author.Id] > DateTime.Now.AddMilliseconds(-500))
+                if (SpamCache[m.Author.Id] > DateTime.Now.AddMilliseconds(-750))
                 {
-                    await m.Channel.SendMessageAsync($"Stop spamming <@{m.Author.Id}>");
                     await m.Channel.SendMessageAsync($"Stop spamming <@{m.Author.Id}>");
                     return;
                 }
