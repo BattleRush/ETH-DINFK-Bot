@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ETHDINFKBot.Stats
 {
-    public class GlobalStats
+    public class BotStats
     {
         public List<DiscordUser> DiscordUsers { get; set; }
     }

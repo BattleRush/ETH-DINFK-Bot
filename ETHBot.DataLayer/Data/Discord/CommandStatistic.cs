@@ -1,11 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
-namespace ETHDINFKBot.Stats
+namespace ETHBot.DataLayer.Data.Discord
 {
-    public class UserStats
+    public class CommandStatistic
     {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int CommandStatisticId { get; set; }
+
+        public CommandType Type { get; set; }
+
+        public DiscordUser User { get; set; }
+    
+        public int Count { get; set; }
+
+
+
+        /*
         public int TotalMessages { get; set; }
 
         public int TotalCommands { get; set; }
@@ -29,5 +44,7 @@ namespace ETHDINFKBot.Stats
         public int TotalFoxgirl { get; set; }
 
         public int TotalSearch { get; set; }
+
+        */
     }
 }
