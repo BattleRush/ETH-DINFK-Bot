@@ -34,7 +34,7 @@ namespace ETHDINFKBot
 
         [Command("code")]
         [Alias("source")]
-        public async Task SourceCode()
+        public async Task SourceCode() 
         {
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.Other);
