@@ -15,6 +15,9 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using ETHBot.DataLayer.Data.Enums;
 using ETHBot.DataLayer.Data.Discord;
+using Reddit;
+using RedditScrapper;
+using Reddit.Controllers;
 
 namespace ETHDINFKBot
 {
@@ -34,7 +37,7 @@ namespace ETHDINFKBot
 
         [Command("code")]
         [Alias("source")]
-        public async Task SourceCode() 
+        public async Task SourceCode()
         {
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.Other);
@@ -191,7 +194,8 @@ Version: 0.0.0.I didn't implement this yet");
             var report = GetReportInfoByImage(req.ImageUrl);
             if (report != null)
             {
-                Context.Channel.SendMessageAsync($"The current image has been blocked by {report.ReportedBy.ServerUserName}. Try the command again to get a new image", false);
+                var user = DBManager.GetDiscordUserById(report.ByUserId);
+                Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
                 return;
             }
 
@@ -208,7 +212,8 @@ Version: 0.0.0.I didn't implement this yet");
             var report = GetReportInfoByImage(req.ImageUrl);
             if (report != null)
             {
-                Context.Channel.SendMessageAsync($"The current image has been blocked by {report.ReportedBy.ServerUserName}. Try the command again to get a new image", false);
+                var user = DBManager.GetDiscordUserById(report.ByUserId);
+                Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
                 return;
             }
 
@@ -226,7 +231,8 @@ Version: 0.0.0.I didn't implement this yet");
             var report = GetReportInfoByImage(req.ImageUrl);
             if (report != null)
             {
-                Context.Channel.SendMessageAsync($"The current image has been blocked by {report.ReportedBy.ServerUserName}. Try the command again to get a new image", false);
+                var user = DBManager.GetDiscordUserById(report.ByUserId);
+                Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
                 return;
             }
 
@@ -276,7 +282,8 @@ Version: 0.0.0.I didn't implement this yet");
                 var report = GetReportInfoByImage(req.ImageUrl);
                 if (report != null)
                 {
-                    Context.Channel.SendMessageAsync($"The current image has been blocked by {report.ReportedBy.ServerUserName}. Try the command again to get a new image", false);
+                    var user = DBManager.GetDiscordUserById(report.ByUserId);
+                    Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
                     return;
                 }
 
@@ -326,12 +333,29 @@ Version: 0.0.0.I didn't implement this yet");
             LogManager.ProcessMessage(author, BotMessageType.Wallpaper);
 
             var req = NekosFun.GetLink("wallpaper");
-            var report = GetReportInfoByImage(req);
-            if (report != null)
+            BannedLink report = null;
+
+            do
             {
-                Context.Channel.SendMessageAsync($"The current image has been blocked by {report.ReportedBy.ServerUserName}. Try the command again to get a new image", false);
-                return;
-            }
+                try
+                {
+                    report = GetReportInfoByImage(req);
+                    if (report != null)
+                    {
+
+                        var user = DBManager.GetDiscordUserById(report.ByUserId);
+                        Context.Channel.SendMessageAsync($"An image has been blocked by {user.Nickname}. Regenerating a new image just for you :)", false);
+                        req = NekosFun.GetLink("wallpaper");
+
+                        //return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return;
+                }
+            } while (report != null);
+
 
             var message = await Context.Channel.SendMessageAsync(req, false);
             await AddSaveReact(message);
@@ -354,7 +378,8 @@ Version: 0.0.0.I didn't implement this yet");
             var report = GetReportInfoByImage(req);
             if (report != null)
             {
-                Context.Channel.SendMessageAsync($"The current image has been blocked by {report.ReportedBy.ServerUserName}. Try the command again to get a new image", false);
+                var user = DBManager.GetDiscordUserById(report.ByUserId);
+                Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
                 return;
             }
 
@@ -374,7 +399,8 @@ Version: 0.0.0.I didn't implement this yet");
             var report = GetReportInfoByImage(req);
             if (report != null)
             {
-                Context.Channel.SendMessageAsync($"The current image has been blocked by {report.ReportedBy.ServerUserName}. Try the command again to get a new image", false);
+                var user = DBManager.GetDiscordUserById(report.ByUserId);
+                Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
                 return;
             }
 
@@ -424,7 +450,8 @@ Version: 0.0.0.I didn't implement this yet");
             if (blockInfo != null)
             {
                 Context.Message.DeleteAsync();
-                Context.Channel.SendMessageAsync($"Image is already in the blacklist (blocked by {blockInfo.ByUser.Nickname}) You were too slow {guildUser.Nickname} <:exmatrikulator:769624058005553152>", false);
+                var user = DBManager.GetDiscordUserById(blockInfo.ByUserId);
+                Context.Channel.SendMessageAsync($"Image is already in the blacklist (blocked by {user.Nickname}) You were too slow {guildUser.Nickname} <:exmatrikulator:769624058005553152>", false);
                 return;
             }
 
@@ -468,14 +495,59 @@ Version: 0.0.0.I didn't implement this yet");
         }
 
 
+        private bool ContainsForbiddenQuery(string command)
+        {
+            List<string> forbidden = new List<string>()
+            {
+                "alter",
+                "analyze",
+                "attach",
+                "transaction",
+                "comment",
+                "commit",
+                "create",
+                "delete",
+                "detach",
+                "database",
+                "drop",
+                "insert",
+                "pragma",
+                "reindex",
+                "release",
+                "replace",
+                "rollback",
+                "savepoint",
+                "update",
+                "upsert",
+                "vacuum"
+            };
+
+            foreach (var item in forbidden)
+            {
+                if (command.ToLower().Contains(item.ToLower()))
+                    return true;
+            }
+
+            return false;
+        }
+
         [Command("sql")]
         public async Task Sql(string commandSql)
         {
+            // TODO HELP
             var author = Context.Message.Author;
             if (author.Id != ETHDINFKBot.Program.Owner)
             {
+                //Context.Channel.SendMessageAsync("Dont you dare to think you will be allowed to use this command https://tenor.com/view/you-shall-not-pass-lord-of-the-ring-gif-5234772", false);
+                //return;
+            }
+
+            // TODO Exclude owner
+
+            if (ContainsForbiddenQuery(commandSql) && author.Id != ETHDINFKBot.Program.Owner)
+            {
                 Context.Channel.SendMessageAsync("Dont you dare to think you will be allowed to use this command https://tenor.com/view/you-shall-not-pass-lord-of-the-ring-gif-5234772", false);
-                //return
+                return;
             }
 
             string header = "**";
@@ -484,65 +556,80 @@ Version: 0.0.0.I didn't implement this yet");
 
             int maxRows = 25;
 
-            using (var context = new ETHBotDBContext())
-            using (var command = context.Database.GetDbConnection().CreateCommand())
+            using (ETHBotDBContext context = new ETHBotDBContext())
             {
-                command.CommandText = commandSql;
-                context.Database.OpenConnection();
-                using (var result = command.ExecuteReader())
+                using (var command = context.Database.GetDbConnection().CreateCommand())
                 {
-                    while (result.Read())
+                    command.CommandText = commandSql;
+                    context.Database.OpenConnection();
+                    using (var result = command.ExecuteReader())
                     {
-                        if (header == "**")
+                        while (result.Read())
                         {
+                            if (header == "**")
+                            {
+                                for (int i = 0; i < result.FieldCount; i++)
+                                {
+                                    header += result.GetName(i)?.ToString() + "\t";
+                                }
+                            }
+
+                            // do something with result
                             for (int i = 0; i < result.FieldCount; i++)
                             {
-                                header += result.GetName(i)?.ToString() + "\t";
+                                try
+                                {
+                                    var type = result.GetFieldType(i)?.FullName;
+                                    var fieldString = "null";
+
+                                    if (DBNull.Value.Equals(result.GetValue(i)))
+                                    {
+                                        resultString += fieldString + "\t";
+                                        continue;
+                                    }
+
+                                    switch (type)
+                                    {
+                                        case "System.Int64":
+                                            fieldString = result.GetInt64(i).ToString();
+                                            break;
+
+                                        case "System.String":
+                                            fieldString = result.GetValue(i).ToString();
+                                            break;
+
+                                        default:
+                                            fieldString = $"{type} is unknown";
+                                            break;
+                                    }
+
+                                    resultString += fieldString + "\t";
+                                }
+                                catch (Exception ex)
+                                {
+
+                                }
+
                             }
-                        }
+                            resultString += Environment.NewLine;
+                            rowCount++;
 
-                        // do something with result
-                        for (int i = 0; i < result.FieldCount; i++)
-                        {
-                            var type = result.GetFieldType(i)?.FullName;
-                            var fieldString = "null";
-
-                            if (DBNull.Value.Equals(result.GetValue(i)))
+                            if (rowCount >= maxRows)
                             {
-                                resultString += fieldString + "\t";
-                                continue;
+                                break;
                             }
-
-                            switch (type)
-                            {
-                                case "System.Int64":
-                                    fieldString = result.GetInt64(i).ToString();
-                                    break;
-
-                                case "System.String":
-                                    fieldString = result.GetValue(i).ToString();
-                                    break;
-
-                                default:
-                                    fieldString = $"{type} is unknown";
-                                    break;
-                            }
-
-                            resultString += fieldString + "\t";
-
-                        }
-                        resultString += Environment.NewLine;
-                        rowCount++;
-
-                        if (rowCount >= maxRows)
-                        {
-                            break;
                         }
                     }
                 }
             }
 
             header += "**";
+
+            if (resultString.Length > 1800)
+            {
+                resultString = resultString.Substring(0, 1800);
+            }
+
             Context.Channel.SendMessageAsync(header + Environment.NewLine + resultString + Environment.NewLine + $"{rowCount} Row(s) affected", false);
         }
 
@@ -595,7 +682,7 @@ Version: 0.0.0.I didn't implement this yet");
 
             foreach (BotMessageType type in Enum.GetValues(typeof(BotMessageType)))
             {
-                builder.AddField(type.ToString(), DatabaseManager.Instance().GetTopStatisticByType(type).User); // TODO take top5 and their count
+                builder.AddField(type.ToString(), DatabaseManager.Instance().GetTopStatisticByType(type).DiscordUser); // TODO take top5 and their count
             }
 
             /*
@@ -667,28 +754,36 @@ Version: 0.0.0.I didn't implement this yet");
         public async Task Reddit(string subreddit)
         {
             string link = "";
-
-            // TODO Better escaping
-            subreddit = subreddit.Replace("'", "''");
-
-            using (var context = new ETHBotDBContext())
-            using (var command = context.Database.GetDbConnection().CreateCommand())
+            try
             {
-                // TODO sql input escaping
-                command.CommandText = @$"select ri.Link from SubredditInfos si
-left join RedditPosts pp on si.SubredditId = pp.SubredditInfoSubredditId
-left join RedditImages ri on pp.RedditPostId = ri.RedditPostId
-where si.SubredditName = '{subreddit}'  and ri.Link is not null
-ORDER BY RANDOM() LIMIT 1";// todo nsfw test
-                context.Database.OpenConnection();
-                using (var result = command.ExecuteReader())
+                // TODO Better escaping
+                subreddit = subreddit.Replace("'", "''");
+                using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    while (result.Read())
+                    using (var command = context.Database.GetDbConnection().CreateCommand())
                     {
-                        link = result.GetString(0);
-                        break;
+                        // TODO sql input escaping
+                        command.CommandText = @$"select ri.Link from SubredditInfos si
+left join RedditPosts pp on si.SubredditId = pp.SubredditInfoId
+left join RedditImages ri on pp.RedditPostId = ri.RedditPostId
+where si.SubredditName = '{subreddit}' and ri.Link is not null and pp.IsNSFW = 0
+ORDER BY RANDOM() LIMIT 1";// todo nsfw test
+                        context.Database.OpenConnection();
+                        using (var result = command.ExecuteReader())
+                        {
+                            while (result.Read())
+                            {
+                                link = result.GetString(0);
+                                break;
+                            }
+                        }
                     }
                 }
+
+            }
+            catch (Exception ex)
+            {
+
             }
 
             Context.Channel.SendMessageAsync(link, false);
@@ -703,12 +798,177 @@ ORDER BY RANDOM() LIMIT 1
         }
 
 
+        [Command("radmin")]
+        public async Task RedditAdmin(string command = "", string value = "")
+        {
+            var author = Context.Message.Author;
+            if (author.Id != ETHDINFKBot.Program.Owner)
+            {
+                Context.Channel.SendMessageAsync("You aren't allowed to run this command ask BattleRush to run it for you", false);
+                return;
+            }
+
+            if (command == "")
+                command = "help";
+
+            switch (command)
+            {
+                case "help":
+                    Context.Channel.SendMessageAsync("help, status, add NAME, start NAME", false);
+                    break;
+
+                case "status":
+                    CheckReddit();
+                    break;
+
+                case "add":
+                    AddSubreddit(value);
+                    break;
+
+                case "start":
+                    Context.Channel.SendMessageAsync($"Started {value} please wait :)", false);
+                    Task.Factory.StartNew(() => ScrapReddit(value));
+                    break;
+                default:
+                    break;
+            }
+
+        }
+
+        private async void AddSubreddit(string subredditName)
+        {
+            var reddit = new RedditClient(Program.RedditAppId, Program.RedditRefreshToken, Program.RedditAppSecret);
+            using (ETHBotDBContext context = new ETHBotDBContext())
+            {
+
+                SubredditManager subManager = new SubredditManager(subredditName, reddit, context);
+                Context.Channel.SendMessageAsync($"{subManager.SubredditName} was added to the list", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
+            }
+        }
+
+        private async Task ScrapReddit(string subredditName)
+        {
+            DatabaseManager.Instance().SetSubredditScaperStatus(subredditName, true);
+            var reddit = new RedditClient(Program.RedditAppId, Program.RedditRefreshToken, Program.RedditAppSecret);
+
+            using (var context = new ETHBotDBContext())
+            {
+                SubredditManager subManager = new SubredditManager(subredditName, reddit, context);
+                try
+                {
+                    bool beforeWasNotFull = false;
+
+                    string last = "";
+                    DateTime lastTime = subManager.SubredditInfo.ReachedOldest ? DateTime.MinValue : DateTime.MaxValue;
+                    while (true)
+                    {
+
+                        List<Post> posts = null;
+
+                        if (!subManager.SubredditInfo.ReachedOldest)
+                            posts = subManager.GetAfterPosts();
+                        else
+                            posts = subManager.GetBeforePosts();
+
+                        if (!subManager.SubredditInfo.ReachedOldest && posts.Count == 0)
+                        {
+                            Context.Channel.SendMessageAsync($"{subManager.SubredditName} scraper reached the end. Setting up end flags", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
+
+                            subManager.ConfirmOldestPost(last, lastTime, true);
+                            break;
+                        }
+
+                        if (posts.Count == 0)
+                        {
+                            Context.Channel.SendMessageAsync($"{subManager.SubredditName} scraper reached the newest post. Setting up end flags", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
+
+                            subManager.ConfirmNewestPost(last, lastTime);
+                            break;
+                        }
+
+                        foreach (var post in posts)
+                        {
+                            if (post.Created < lastTime && !subManager.SubredditInfo.ReachedOldest)
+                            {
+                                last = post.Fullname;
+                                lastTime = post.Created;
+                            }
+
+                            if (post.Created > lastTime && subManager.SubredditInfo.ReachedOldest)
+                            {
+                                last = post.Fullname;
+                                lastTime = post.Created;
+                            }
+
+                            PostManager manager = new PostManager(post, subManager.SubredditInfo, context);
+
+                            if (manager.IsImage())
+                            {
+                                var imageInfos = manager.DownloadImage(Program.RedditBasePath); // TODO send path in contructor
+
+                                context.RedditImages.AddRange(imageInfos);
+                                context.SaveChanges();
+
+                            }
+                            else
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine($"IGNORED {post.Title} at {last}");
+                                Console.ForegroundColor = ConsoleColor.White;
+                            }
+                        }
+
+                        if (!subManager.SubredditInfo.ReachedOldest)
+                        {
+                            subManager.ConfirmOldestPost(last, lastTime);
+                            Context.Channel.SendMessageAsync($"{subManager.SubredditName} scraper is happy and well :) Count ({posts.Count}) after {subManager.SubredditInfo.OldestPost}/{subManager.SubredditInfo.OldestPostDate}", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
+                        }
+                        else
+                        {
+                            subManager.ConfirmNewestPost(last, lastTime);
+                            //subManager.GetBeforePosts();
+                            Context.Channel.SendMessageAsync($"{subManager.SubredditName} scraper is happy and well :) Count ({posts.Count} before {subManager.SubredditInfo.NewestPost}/{subManager.SubredditInfo.NewestPostDate}", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
+
+                        }
+
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Context.Channel.SendMessageAsync($"{subManager.SubredditName} scraper died RIP {ex.Message}", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
+                }
+
+                Context.Channel.SendMessageAsync($"{subManager.SubredditName} scraper ended :D", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
+            }
+
+            DatabaseManager.Instance().SetSubredditScaperStatus(subredditName, false);
+        }
+
+        private async void CheckReddit()
+        {
+            var subreddits = DatabaseManager.Instance().GetSubredditsByStatus();
+
+            foreach (var subreddit in subreddits)
+            {
+                Context.Channel.SendMessageAsync($"{subreddit.SubredditName} is active", false);
+            }
+
+            if (subreddits.Count == 0)
+            {
+                Context.Channel.SendMessageAsync($"No subreddits are currently active", false);
+            }
+        }
+
 
 
 
         [Command("lb")]
         public async Task Leaderboard()
         {
+
+            Context.Channel.SendMessageAsync("Currently out of order come later again :(", false);
+            /*
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.Other);
 
@@ -733,14 +993,14 @@ ORDER BY RANDOM() LIMIT 1
             builder.AddField("Top Emoji (as reaction) Usage", GetRankingString(topEmojiReaction.Select(i => $"<{(i.Animated ? "a:" : ":") + i.EmojiName}:{i.EmojiId}> " + i.UsedAsReaction)));
             builder.AddField("Top Pinged Users", GetRankingString(topPing.Select(i => $"<@{i.DiscordUser.DiscordId}>: " + i.PingCountOnce)));
 
-            Context.Channel.SendMessageAsync("", false, builder.Build());
+            Context.Channel.SendMessageAsync("", false, builder.Build());*/
         }
 
 
 
-        private ReportInfo GetReportInfoByImage(string imageUrl)
+        private BannedLink GetReportInfoByImage(string imageUrl)
         {
-            return Program.BlackList?.FirstOrDefault(i => i.ImageUrl == imageUrl);
+            return DBManager.GetBannedLink(imageUrl);
         }
 
         private string GetRankingString(IEnumerable<string> list)

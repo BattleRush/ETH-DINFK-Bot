@@ -31,6 +31,16 @@ namespace ETHDINFKBot
         private static string DiscordToken { get; set; }
         public static ulong Owner { get; set; }
 
+        // TODO one object and somewhere else but im lazy
+        public static string RedditAppId { get; set; }
+        public static string RedditRefreshToken { get; set; }
+        public static string RedditAppSecret { get; set; }
+        public static string RedditBasePath { get; set; }
+
+
+
+
+
         private static BotStats BotStats = new BotStats()
         {
             DiscordUsers = new List<Stats.DiscordUser>()
@@ -45,52 +55,56 @@ namespace ETHDINFKBot
 
         private static List<ReportInfo> BlackList = new List<ReportInfo>();
 
-        private static LogManager LogManager = new LogManager();
+        private DatabaseManager DatabaseManager = DatabaseManager.Instance();
+        private LogManager LogManager = new LogManager(DatabaseManager.Instance());
+
+
+
 
         private static void CheckDirs()
         {
-            if (!Directory.Exists("Plugins"))
-                Directory.CreateDirectory("Plugins");
+            //if (!Directory.Exists("Plugins"))
+            //    Directory.CreateDirectory("Plugins");
 
-            if (!Directory.Exists("Logs"))
-                Directory.CreateDirectory("Logs");
+            //if (!Directory.Exists("Logs"))
+            //     Directory.CreateDirectory("Logs");
 
-            if (!Directory.Exists("Stats"))
-                Directory.CreateDirectory("Stats");
+            //if (!Directory.Exists("Stats"))
+            //    Directory.CreateDirectory("Stats");
 
-            if (!Directory.Exists("Blacklist"))
-                Directory.CreateDirectory("Blacklist");
+            //if (!Directory.Exists("Blacklist"))
+            //    Directory.CreateDirectory("Blacklist");
 
-            if (!Directory.Exists("Blacklist\\Backup"))
-                Directory.CreateDirectory("Blacklist\\Backup");
+            //if (!Directory.Exists("Blacklist\\Backup"))
+            //    Directory.CreateDirectory("Blacklist\\Backup");
 
-            if (!Directory.Exists("Stats\\Backup"))
-                Directory.CreateDirectory("Stats\\Backup");
+            //if (!Directory.Exists("Stats\\Backup"))
+            //    Directory.CreateDirectory("Stats\\Backup");
         }
 
         static void Main(string[] args)
         {
 
-            using (ETHBotDBContext context = new ETHBotDBContext())
-            {
+            /* using (ETHBotDBContext context = new ETHBotDBContext())
+             {
 
-                context.DiscordUsers.Add(new ETHBot.DataLayer.Data.Discord.DiscordUser()
-                {
-                    AvatarUrl = "",
-                    DiscordUserId = (ulong)new Random().Next(1, 100000),
-                    DiscriminatorValue = 1,
-                    IsBot = false,
-                    IsWebhook = false,
-                    JoinedAt = DateTime.Now,
-                    Nickname = "test1",
-                    Username = "username"
-                }); ;
+                 context.DiscordUsers.Add(new ETHBot.DataLayer.Data.Discord.DiscordUser()
+                 {
+                     AvatarUrl = "",
+                     DiscordUserId = (ulong)new Random().Next(1, 100000),
+                     DiscriminatorValue = 1,
+                     IsBot = false,
+                     IsWebhook = false,
+                     JoinedAt = DateTime.Now,
+                     Nickname = "test1",
+                     Username = "username"
+                 }); ;
 
-                context.SaveChanges();
-            }
+                 context.SaveChanges();
+             }
+            */
 
-
-            CheckDirs();
+            //CheckDirs();
 
             Configuration = new ConfigurationBuilder()
               .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -98,6 +112,13 @@ namespace ETHDINFKBot
 
             DiscordToken = Configuration["DiscordToken"];
             Owner = Convert.ToUInt64(Configuration["Owner"]);
+
+            RedditAppId = Configuration["Reddit:AppId"];
+            RedditRefreshToken = Configuration["Reddit:RefreshToken"];
+            RedditAppSecret = Configuration["Reddit:AppSecret"];
+            RedditBasePath = Configuration["Reddit:BasePath"];
+
+
 
             new Program().MainAsync(DiscordToken).GetAwaiter().GetResult();
 
@@ -192,14 +213,14 @@ namespace ETHDINFKBot
                 if (context.CommandTypes.Count() == 0)
                 {
                     // TODO check for updates
-                    var count = Enum.GetValues(typeof(BotMessageType)).Length;
+                    var count = Enum.GetValues(typeof(ETHBot.DataLayer.Data.Enums.BotMessageType)).Length;
                     var types = new List<CommandType>();
-                    for (var i = 1; i < count; i++)
+                    for (var i = 0; i < count; i++)
                     {
                         types.Add(new CommandType
                         {
                             CommandTypeId = i,
-                            Name = ((BotMessageType)i - 1).ToString()
+                            Name = ((ETHBot.DataLayer.Data.Enums.BotMessageType)i).ToString()
                         });
                     }
                     context.CommandTypes.AddRange(types);
@@ -237,7 +258,7 @@ namespace ETHDINFKBot
                             context.CommandStatistics.Add(new CommandStatistic()
                             {
                                 Type = type,
-                                User = user,
+                                DiscordUser = user,
                                 Count = item.Stats.TotalNeko
                             });
                         }
@@ -248,7 +269,7 @@ namespace ETHDINFKBot
                             context.CommandStatistics.Add(new CommandStatistic()
                             {
                                 Type = type,
-                                User = user,
+                                DiscordUser = user,
                                 Count = item.Stats.TotalSearch
                             });
                         }
@@ -259,7 +280,7 @@ namespace ETHDINFKBot
                             context.CommandStatistics.Add(new CommandStatistic()
                             {
                                 Type = type,
-                                User = user,
+                                DiscordUser = user,
                                 Count = item.Stats.TotalNekoGif
                             });
                         }
@@ -270,7 +291,7 @@ namespace ETHDINFKBot
                             context.CommandStatistics.Add(new CommandStatistic()
                             {
                                 Type = type,
-                                User = user,
+                                DiscordUser = user,
                                 Count = item.Stats.TotalHolo
                             });
                         }
@@ -282,7 +303,7 @@ namespace ETHDINFKBot
                             context.CommandStatistics.Add(new CommandStatistic()
                             {
                                 Type = type,
-                                User = user,
+                                DiscordUser = user,
                                 Count = item.Stats.TotalWaifu
                             });
                         }
@@ -293,7 +314,7 @@ namespace ETHDINFKBot
                             context.CommandStatistics.Add(new CommandStatistic()
                             {
                                 Type = type,
-                                User = user,
+                                DiscordUser = user,
                                 Count = item.Stats.TotalBaka
                             });
                         }
@@ -304,7 +325,7 @@ namespace ETHDINFKBot
                             context.CommandStatistics.Add(new CommandStatistic()
                             {
                                 Type = type,
-                                User = user,
+                                DiscordUser = user,
                                 Count = item.Stats.TotalSmug
                             });
                         }
@@ -315,7 +336,7 @@ namespace ETHDINFKBot
                             context.CommandStatistics.Add(new CommandStatistic()
                             {
                                 Type = type,
-                                User = user,
+                                DiscordUser = user,
                                 Count = item.Stats.TotalFox
                             });
                         }
@@ -326,7 +347,7 @@ namespace ETHDINFKBot
                             context.CommandStatistics.Add(new CommandStatistic()
                             {
                                 Type = type,
-                                User = user,
+                                DiscordUser = user,
                                 Count = item.Stats.TotalAvatar
                             });
                         }
@@ -338,7 +359,7 @@ namespace ETHDINFKBot
                             context.CommandStatistics.Add(new CommandStatistic()
                             {
                                 Type = type,
-                                User = user,
+                                DiscordUser = user,
                                 Count = item.Stats.TotalNekoAvatar
                             });
                         }
@@ -350,7 +371,7 @@ namespace ETHDINFKBot
                             context.CommandStatistics.Add(new CommandStatistic()
                             {
                                 Type = type,
-                                User = user,
+                                DiscordUser = user,
                                 Count = item.Stats.TotalWallpaper
                             });
                         }
@@ -362,7 +383,7 @@ namespace ETHDINFKBot
                             context.CommandStatistics.Add(new CommandStatistic()
                             {
                                 Type = type,
-                                User = user,
+                                DiscordUser = user,
                                 Count = item.Stats.TotalAnimalears
                             });
                         }
@@ -373,7 +394,7 @@ namespace ETHDINFKBot
                             context.CommandStatistics.Add(new CommandStatistic()
                             {
                                 Type = type,
-                                User = user,
+                                DiscordUser = user,
                                 Count = item.Stats.TotalFoxgirl
                             });
                         }
@@ -417,7 +438,8 @@ namespace ETHDINFKBot
                         {
                             DiscordUser = user,
                             PingCount = item.PingCount,
-                            PingCountOnce = item.PingCountOnce
+                            PingCountOnce = item.PingCountOnce,
+                            PingCountBot = 0
                         });
 
 
@@ -426,7 +448,7 @@ namespace ETHDINFKBot
 
                 context.SaveChanges();
 
-                if (context.EmojiHistory.Count() == 0)
+                if (context.EmojiHistory.Count() == 0 && false)
                 {
                     foreach (var item in GlobalStats.EmojiInfoUsage)
                     {
@@ -442,13 +464,18 @@ namespace ETHDINFKBot
                             UsedInTextOnce = item.UsedInTextOnce
                         });
 
+                        context.SaveChanges();
+
+                        var stat = context.EmojiStatistics.Single(i => i.EmojiId == item.EmojiId);
+
                         for (int i = 0; i < item.UsedInTextOnce; i++)
                         {
                             context.EmojiHistory.Add(new EmojiHistory()
                             {
                                 Count = 1,
                                 IsReaction = false,
-                                DateTimePosted = DateTime.Now
+                                DateTimePosted = DateTime.Now,
+                                EmojiStatistic = stat
                             });
                         }
 
@@ -456,7 +483,8 @@ namespace ETHDINFKBot
                         {
                             Count = item.UsedInText - item.UsedInTextOnce,
                             IsReaction = false,
-                            DateTimePosted = DateTime.Now
+                            DateTimePosted = DateTime.Now,
+                            EmojiStatistic = stat
                         });
 
                         for (int i = 0; i < item.UsedAsReaction; i++)
@@ -465,7 +493,8 @@ namespace ETHDINFKBot
                             {
                                 Count = 1,
                                 IsReaction = true,
-                                DateTimePosted = DateTime.Now
+                                DateTimePosted = DateTime.Now,
+                                EmojiStatistic = stat
                             });
                         }
 
@@ -524,6 +553,8 @@ namespace ETHDINFKBot
 
         public async Task MainAsync(string token)
         {
+            DatabaseManager.Instance().SetAllSubredditsStatus();
+
             LoadStats();
             LoadGlobalStats();
             LoadBlacklist();
@@ -566,7 +597,7 @@ namespace ETHDINFKBot
 
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"Removed emote {arg3.Emote.Name} by {arg3.User.Value.Username}");
-            LogManager.RemoveReaction((Emote)arg3.Emote);
+            LogManager.RemoveReaction((Emote)arg3.Emote, ((SocketGuildUser)arg3.User).IsBot);
 
             if (((Emote)arg3.Emote).Id == 780179874656419880)
             {
@@ -580,58 +611,58 @@ namespace ETHDINFKBot
         {
             try
             {
-                if (((SocketGuildUser)arg3.User).IsBot == true)
-                    return Task.CompletedTask;
+                /*if ( == true)
+                    return Task.CompletedTask;*/
 
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine($"Added emote {arg3.Emote.Name} by {arg3.User.Value.Username}");
-                LogManager.AddReaction((Emote)arg3.Emote);
+                LogManager.AddReaction((Emote)arg3.Emote, ((SocketGuildUser)arg3.User).IsBot);
 
                 if (((Emote)arg3.Emote).Id == 780179874656419880)
                 {
                     // Save the post link
 
-                    var user = DatabaseManager.Instance().GetDiscordUserById(arg1.Value.Author.Id); // Verify the user is created but should actually be available by this poitn
-                    var saveBy = DatabaseManager.Instance().GetDiscordUserById(arg3.User.Value.Id); // Verify the user is created but should actually be available by this poitn
+                    /*          var user = DatabaseManager.GetDiscordUserById(arg1.Value.Author.Id); // Verify the user is created but should actually be available by this poitn
+                    var saveBy = DatabaseManager.GetDiscordUserById(arg3.User.Value.Id); // Verify the user is created but should actually be available by this poitn
+                    */
 
                     var guildChannel = (SocketGuildChannel)arg1.Value.Channel;
                     var link = $"https://discord.com/channels/{guildChannel.Guild.Id}/{guildChannel.Id}/{arg1.Value.Id}";
                     if (!string.IsNullOrWhiteSpace(arg1.Value.Content))
                     {
-
-                        DatabaseManager.Instance().SaveMessage(new SavedMessage()
-                        {
-                            DirectLink = link,
-                            SendInDM = false,
-                            ByUser = user,
-                            Content = arg1.Value.Content, // todo attachment
-                            MessageId = arg1.Value.Id,
-                            SavedByUser = saveBy
-                        });
-                        arg3.User.Value.SendMessageAsync($"Saved post from {user.Nickname}: {Environment.NewLine} {arg1.Value.Content}");
+                        DatabaseManager.SaveMessage(arg1.Value.Id, arg1.Value.Author.Id, arg3.User.Value.Id, link, arg1.Value.Content);
+                        // TODO parse to guild user
+                        arg3.User.Value.SendMessageAsync($"Saved post from {arg1.Value.Author.Username}: {Environment.NewLine} {arg1.Value.Content} {Environment.NewLine}Direct link: [{guildChannel.Guild.Name}/{guildChannel.Name}/by {arg1.Value.Author.Username}] <{link}>");
                     }
 
                     if (arg1.Value.Attachments.Count > 0)
                     {
+                        //return Task.CompletedTask;
+
                         foreach (var item in arg1.Value.Attachments)
                         {
-                            DatabaseManager.Instance().SaveMessage(new SavedMessage()
+                            DatabaseManager.SaveMessage(arg1.Value.Id, arg1.Value.Author.Id, arg3.User.Value.Id, link, item.Url);
+
+                            /*DatabaseManager.SaveMessage(new SavedMessage()
                             {
                                 DirectLink = link,
                                 SendInDM = false,
-                                ByUser = user,
                                 Content = item.Url, // todo attachment save to disk
                                 MessageId = arg1.Value.Id,
-                                SavedByUser = saveBy
-                            });
+                                ByDiscordUserId = user.DiscordUserId,
+                                ByDiscordUser = user,
+                                SavedByDiscordUserId = saveBy.DiscordUserId,
+                                SavedByDiscordUser = saveBy
+                            });*/
                             // TODO markdown
 
-                            arg3.User.Value.SendMessageAsync($"Saved post (Attachment) from {user.Nickname}:{Environment.NewLine} {item.Url}{Environment.NewLine}Direct link: [{guildChannel.Guild.Name}/{guildChannel.Name}/by {user.Nickname}] <{link}>");
+                            arg3.User.Value.SendMessageAsync($"Saved post (Attachment) from {arg1.Value.Author.Username}:{Environment.NewLine} {item.Url}{Environment.NewLine}Direct link: [{guildChannel.Guild.Name}/{guildChannel.Name}/by {arg1.Value.Author.Username}] <{link}>");
                         }
+
                     }
 
-                    // TODO markdown
-                    arg1.Value.Channel.SendMessageAsync($"{arg3.User.Value.Username} saves <{link}> by {user.Nickname}");
+                    // TODO markdown -> guild user also
+                    arg1.Value.Channel.SendMessageAsync($"{arg3.User.Value.Username} saves <{link}> by {arg1.Value.Author.Username}");
                 }
 
             }
@@ -672,9 +703,14 @@ namespace ETHDINFKBot
                     {
                         DiscordChannelId = guildChannel.Id,
                         ChannelName = guildChannel.Name,
-                        DiscordServer = discordServer
+                        DiscordServerId = discordServer.DiscordServerId
                     });
                 }
+            }
+            else
+            {
+                // NO DM Tracking
+                return;
             }
 
 
@@ -695,16 +731,23 @@ namespace ETHDINFKBot
                     Username = user.Username,
                     JoinedAt = user.JoinedAt
                 });
+
+                dbAuthor = dbManager.GetDiscordUserById(msg.Author.Id);
             }
             else
             {
                 // TODO Update user
             }
 
+
+
+
             dbManager.CreateDiscordMessage(new ETHBot.DataLayer.Data.Discord.DiscordMessage()
             {
-                Channel = discordChannel,
-                User = dbAuthor,
+                //Channel = discordChannel,
+                DiscordChannelId = discordChannel.DiscordChannelId,
+                //DiscordUser = dbAuthor,
+                DiscordUserId = dbAuthor.DiscordUserId,
                 MessageId = msg.Id,
                 Content = msg.Content
             });
@@ -753,17 +796,17 @@ namespace ETHDINFKBot
             File.AppendAllText($"Logs\\ETHDINFK_{DateTime.Now:yyyy_MM_dd}_spam.txt", $"[{DateTime.Now:yyyy.MM.dd HH:mm:ss}] " + msg.Author + " wrote: " + msg.Content + Environment.NewLine);
 
             if (m.Channel.Id == 747758757395562557 || m.Channel.Id == 758293511514226718 || m.Channel.Id == 747758770393972807 ||
-                m.Channel.Id == 774286694794919989)
+            m.Channel.Id == 774286694794919989)
             {
                 // TODO Channel ID as config
                 await m.AddReactionAsync(Emote.Parse("<:this:747783377662378004>"));
                 await m.AddReactionAsync(Emote.Parse("<:that:758262252699779073>"));
             }
+ 
+            LogManager.ProcessEmojisAndPings(m.Tags, m.Author.Id, ((SocketGuildUser)m.Author).IsBot);
 
             if (m.Author.IsBot)
                 return;
-
-            LogManager.ProcessEmojisAndPings(m.Tags, m.Author.Id);
 
             int argPos = 0;
             if (!(msg.HasStringPrefix(".", ref argPos)))

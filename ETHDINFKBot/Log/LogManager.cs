@@ -9,24 +9,24 @@ using System.Text;
 
 namespace ETHDINFKBot.Log
 {
-/*
-    public enum BotMessageType
-    {
-        Neko = 0,
-        Search = 1,
-        NekoGif = 2,
-        Holo = 3,
-        Waifu = 4,
-        Baka = 5,
-        Smug = 6,
-        Fox = 7,
-        Avatar = 8,
-        NekoAvatar = 9,
-        Wallpaper = 10,
-        Animalears = 11,
-        Foxgirl = 12,
-        Other = 999
-    }*/
+    /*
+        public enum BotMessageType
+        {
+            Neko = 0,
+            Search = 1,
+            NekoGif = 2,
+            Holo = 3,
+            Waifu = 4,
+            Baka = 5,
+            Smug = 6,
+            Fox = 7,
+            Avatar = 8,
+            NekoAvatar = 9,
+            Wallpaper = 10,
+            Animalears = 11,
+            Foxgirl = 12,
+            Other = 999
+        }*/
 
     public class LogManager
     {
@@ -41,22 +41,29 @@ namespace ETHDINFKBot.Log
         public static DateTime LastUpdate = DateTime.MinValue;
 
         public static DateTime LastGlobalUpdate = DateTime.MinValue;
-        public async void AddReaction(Emote emote)
+        public async void AddReaction(Emote emote, bool isBot)
         {
-            var statistic = new EmojiStatistic()
+            try
             {
-                Animated = emote.Animated,
-                EmojiId = emote.Id,
-                EmojiName = emote.Name,
-                Url = emote.Url,
-                CreatedAt = emote.CreatedAt,
-                UsedAsReaction = 1
-            };
+                var statistic = new EmojiStatistic()
+                {
+                    Animated = emote.Animated,
+                    EmojiId = emote.Id,
+                    EmojiName = emote.Name,
+                    Url = emote.Url,
+                    CreatedAt = emote.CreatedAt,
+                    UsedAsReaction = 1
+                };
 
-            DatabaseManager.AddEmojiStatistic(statistic, 1, true);
-            //Program.GlobalStats.EmojiInfoUsage.Single(i => i.EmojiId == emote.Id).UsedAsReaction++;
+                DatabaseManager.AddEmojiStatistic(statistic, 1, true, isBot);
+                //Program.GlobalStats.EmojiInfoUsage.Single(i => i.EmojiId == emote.Id).UsedAsReaction++;
+            }
+            catch (Exception ex)
+            {
+
+            }
         }
-        public async void RemoveReaction(Emote emote)
+        public async void RemoveReaction(Emote emote, bool isBot)
         {
             var statistic = new EmojiStatistic()
             {
@@ -68,7 +75,7 @@ namespace ETHDINFKBot.Log
                 UsedAsReaction = -1
             };
 
-            DatabaseManager.AddEmojiStatistic(statistic, -1, true);
+            DatabaseManager.AddEmojiStatistic(statistic, -1, true, isBot);
 
             /*
             if (Program.GlobalStats.EmojiInfoUsage.Any(i => i.EmojiId == emote.Id))
@@ -83,44 +90,54 @@ namespace ETHDINFKBot.Log
             }*/
         }
 
-        public static async void ProcessEmojisAndPings(IReadOnlyCollection<ITag> tags, ulong authorId)
+        public async void ProcessEmojisAndPings(IReadOnlyCollection<ITag> tags, ulong authorId, bool isBot)
         {
             try
             {
                 if (tags.Count == 0)
                     return;
 
-                List<ulong> listOfEmotes = new List<ulong>();
+                Dictionary<ulong, int> listOfEmotes = new Dictionary<ulong, int>();
                 foreach (Tag<Emote> tag in tags.Where(i => i.Type == TagType.Emoji))
                 {
-                    //var emote = (Emote)tag.Value;
-
-                    if (Program.GlobalStats.EmojiInfoUsage.Any(i => i.EmojiId == tag.Value.Id))
+                    if (listOfEmotes.ContainsKey(tag.Value.Id))
                     {
-                        Program.GlobalStats.EmojiInfoUsage.Single(i => i.EmojiId == tag.Value.Id).UsedInText++;
+                        listOfEmotes[tag.Value.Id]++;
                     }
                     else
                     {
-                        // TODO Race condition prof it
-                        Program.GlobalStats.EmojiInfoUsage.Add(new EmojiInfo()
-                        {
-                            Animated = tag.Value.Animated,
-                            EmojiId = tag.Value.Id,
-                            EmojiName = tag.Value.Name,
-                            Url = tag.Value.Url,
-                            CreatedAt = tag.Value.CreatedAt,
-                            UsedInText = 1 // First use :)
-                        });
-                    }
-
-                    if (!listOfEmotes.Contains(tag.Value.Id))
-                    {
-                        Program.GlobalStats.EmojiInfoUsage.Single(i => i.EmojiId == tag.Value.Id).UsedInTextOnce++;
-                        listOfEmotes.Add(tag.Value.Id);
+                        listOfEmotes.Add(tag.Value.Id, 1);
                     }
                 }
 
-                List<ulong> listOfUsers = new List<ulong>();
+                foreach (var emote in listOfEmotes)
+                {
+                    Tag<Emote> tag = (Tag<Emote>)tags.First(i => i.Type == TagType.Emoji && ((Tag<Emote>)i).Value.Id == emote.Key);
+
+                    var stat = new EmojiStatistic()
+                    {
+                        Animated = tag.Value.Animated,
+                        EmojiId = tag.Value.Id,
+                        EmojiName = tag.Value.Name,
+                        Url = tag.Value.Url,
+                        CreatedAt = tag.Value.CreatedAt,
+                        UsedInText = emote.Value,
+                        UsedInTextOnce = 1,
+                        UsedAsReaction = 0
+                    };
+
+                    DatabaseManager.AddEmojiStatistic(stat, emote.Value, false, isBot);
+
+                }
+
+                /*
+                if (!listOfEmotes.Contains(tag.Value.Id))
+                {
+                    Program.GlobalStats.EmojiInfoUsage.Single(i => i.EmojiId == tag.Value.Id).UsedInTextOnce++;
+                    listOfEmotes.Add(tag.Value.Id);
+                }*/
+
+                Dictionary<ulong, int> listOfUsers = new Dictionary<ulong, int>();
 
                 foreach (Tag<Discord.IUser> tag in tags.Where(i => i.Type == TagType.UserMention))
                 {
@@ -132,42 +149,65 @@ namespace ETHDINFKBot.Log
                     }
 
 
-                    var guildUser = tag.Value as SocketGuildUser;
+                    //var guildUser = tag.Value as SocketGuildUser;
 
-                    if (guildUser?.Id == authorId)
+                    if (tag.Key == authorId)
                         continue; // Cant self ping
 
-                    if (!Program.GlobalStats.PingInformation.Any(i => i.DiscordUser.DiscordId == guildUser?.Id))
+
+                    if (listOfUsers.ContainsKey(tag.Key))
                     {
-                        Program.GlobalStats.PingInformation.Add(new PingInformation()
-                        {
-                            DiscordUser = new Stats.DiscordUser()
-                            {
-                                DiscordId = guildUser.Id,
-                                DiscordDiscriminator = guildUser.DiscriminatorValue,
-                                DiscordName = guildUser.Username,
-                                ServerUserName = guildUser.Nickname ?? guildUser.Username // User Nickname -> Update
-                            },
-                            PingCount = 1
-                        });
+                        listOfUsers[tag.Key]++;
                     }
                     else
                     {
-                        Program.GlobalStats.PingInformation.Single(i => i.DiscordUser.DiscordId == tag.Value.Id).PingCount++;
+                        listOfUsers.Add(tag.Key, 1);
                     }
 
-                    if (!listOfUsers.Contains(tag.Value.Id))
-                    {
-                        Program.GlobalStats.PingInformation.Single(i => i.DiscordUser.DiscordId == tag.Value.Id).PingCountOnce++;
-                        listOfUsers.Add(tag.Value.Id);
-                    }
+
                 }
 
-                if (LastGlobalUpdate < DateTime.Now.AddSeconds(-30))
+
+
+                foreach (var pingInfo in listOfUsers)
                 {
-                    LastGlobalUpdate = DateTime.Now;
-                    Program.SaveGlobalStats();
+                    DatabaseManager.AddPingStatistic(pingInfo.Key, pingInfo.Value, isBot);
                 }
+
+                /*
+
+                if (!Program.GlobalStats.PingInformation.Any(i => i.DiscordUser.DiscordId == guildUser?.Id))
+                {
+                    Program.GlobalStats.PingInformation.Add(new PingInformation()
+                    {
+                        DiscordUser = new Stats.DiscordUser()
+                        {
+                            DiscordId = guildUser.Id,
+                            DiscordDiscriminator = guildUser.DiscriminatorValue,
+                            DiscordName = guildUser.Username,
+                            ServerUserName = guildUser.Nickname ?? guildUser.Username // User Nickname -> Update
+                        },
+                        PingCount = 1
+                    });
+                }
+                else
+                {
+                    Program.GlobalStats.PingInformation.Single(i => i.DiscordUser.DiscordId == tag.Value.Id).PingCount++;
+                }
+
+                if (!listOfUsers.Contains(tag.Value.Id))
+                {
+                    Program.GlobalStats.PingInformation.Single(i => i.DiscordUser.DiscordId == tag.Value.Id).PingCountOnce++;
+                    listOfUsers.Add(tag.Value.Id);
+                }
+            }
+
+            if (LastGlobalUpdate < DateTime.Now.AddSeconds(-30))
+            {
+                LastGlobalUpdate = DateTime.Now;
+                Program.SaveGlobalStats();
+            }*/
+
             }
             catch (Exception ex)
             {

@@ -18,7 +18,11 @@ namespace ETHBot.DataLayer.Data.Reddit
 
         // Could be read from DB
         public string NewestPost { get; set; }
+        public DateTime NewestPostDate { get; set; }
         public string OldestPost { get; set; }
+        public DateTime OldestPostDate { get; set; }
+        public bool IsScraping { get; set; }
+        public bool ReachedOldest { get; set; }
 
 
         public ICollection<RedditPost> RedditPosts { get; set; }

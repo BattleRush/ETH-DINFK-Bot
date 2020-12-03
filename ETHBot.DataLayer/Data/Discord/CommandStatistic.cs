@@ -12,9 +12,13 @@ namespace ETHBot.DataLayer.Data.Discord
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int CommandStatisticId { get; set; }
 
+        [ForeignKey("Type")]
+        public int CommandTypeId { get; set; }
         public CommandType Type { get; set; }
 
-        public DiscordUser User { get; set; }
+        [ForeignKey("DiscordUser")]
+        public ulong DiscordUserId { get; set; }
+        public DiscordUser DiscordUser { get; set; }
     
         public int Count { get; set; }
 

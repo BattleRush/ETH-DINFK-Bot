@@ -19,6 +19,7 @@ namespace ETHBot.DataLayer.Data.Discord
         public int UsedAsReaction { get; set; }
         public int UsedInText { get; set; }
         public int UsedInTextOnce { get; set; }
+        public int UsedByBots { get; set; }
         public string Url { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
     }

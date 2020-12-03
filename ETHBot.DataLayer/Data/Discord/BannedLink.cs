@@ -13,6 +13,9 @@ namespace ETHBot.DataLayer.Data.Discord
         public int BannedLinkId { get; set; }
         public string Link { get; set; }
         public DateTimeOffset ReportTime { get; set; }
+
+        [ForeignKey("ByUser")]
+        public ulong ByUserId { get; set; }
         public DiscordUser ByUser { get; set; }
     }
 }

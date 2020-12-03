@@ -10,7 +10,7 @@ namespace ETHBot.DataLayer.Data.Reddit
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public string RedditPostId { get; set; }
+        public int RedditPostId { get; set; }
 
         public string PostTitle { get; set; }
         public string PostId { get; set; }
@@ -26,6 +26,8 @@ namespace ETHBot.DataLayer.Data.Reddit
 
         //public int CommentCount { get; set; } awards?
 
+        [ForeignKey("SubredditInfo")]
+        public int SubredditInfoId { get; set; }
         public virtual SubredditInfo SubredditInfo { get; set; }
         public ICollection<RedditImage> RedditImages { get; set; }
     }

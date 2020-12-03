@@ -21,11 +21,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ETHBot.DataLayer\ETHBot.DataLayer.csproj" />
+    <ProjectReference Include="..\RedditScrapper\RedditScrapper.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 

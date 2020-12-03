@@ -2,12 +2,18 @@
 using System;
 using ETHBot.DataLayer.Data.Discord;
 using ETHBot.DataLayer.Data.Reddit;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 
 namespace ETHBot.DataLayer
 {
     public class ETHBotDBContext : DbContext
     {
         private static bool _created = false;
+        //static LoggerFactory object
+        public static readonly ILoggerFactory loggerFactory
+    = LoggerFactory.Create(builder => { builder.AddConsole(); });
+
         public ETHBotDBContext()
         {
             if (!_created)
@@ -19,7 +25,7 @@ namespace ETHBot.DataLayer
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionbuilder)
         {
-            optionbuilder.UseSqlite(@"Data Source=I:\ETHBot\Sample.db");
+            optionbuilder.UseLoggerFactory(loggerFactory).UseSqlite(@"Data Source=I:\ETHBot\ETHBot.db").EnableSensitiveDataLogging();
         }
 
         public DbSet<BannedLink> BannedLinks { get; set; }
@@ -41,5 +47,13 @@ namespace ETHBot.DataLayer
         public DbSet<RedditPost> RedditPosts { get; set; }
         public DbSet<RedditImage> RedditImages { get; set; }
 
+
+        
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+                 //modelBuilder.Configurations.Add(new Student.StudentMapping());
+
+        }
+       
     }
 }

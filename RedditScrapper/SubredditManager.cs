@@ -14,7 +14,9 @@ namespace RedditScrapper
         public readonly string SubredditName;
         private RedditClient API;
         private string NewestPost;
+        private DateTime NewestPostDate;
         private string OldestPost;
+        private DateTime OldestPostDate;
 
         private Subreddit Subreddit;
         public SubredditInfo SubredditInfo;
@@ -71,18 +73,28 @@ namespace RedditScrapper
             return Subreddit.Posts.GetNew(OldestPost, NewestPost);
         }
 
-        public void ConfirmOldestPost(string post)
+        public void ConfirmOldestPost(string post, DateTime dateTime, bool end = false)
         {
             OldestPost = post;
+            OldestPostDate = dateTime;
+
+            if (end)
+            {
+                SubredditInfo.ReachedOldest = true;
+            }
 
             SubredditInfo.OldestPost = OldestPost;
+            SubredditInfo.OldestPostDate = OldestPostDate;
             ETHBotDBContext.SaveChanges();
         }
 
-        public void ConfirmNewestPost(string post)
+        public void ConfirmNewestPost(string post, DateTime dateTime)
         {
             NewestPost = post;
+            NewestPostDate = dateTime;
+
             SubredditInfo.NewestPost = NewestPost;
+            SubredditInfo.NewestPostDate = NewestPostDate;
 
             ETHBotDBContext.SaveChanges();
         }

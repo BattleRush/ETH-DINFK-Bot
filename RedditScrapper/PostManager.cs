@@ -106,7 +106,7 @@ namespace RedditScrapper
                         Downloaded = true,
                         IsNSFW = Post.NSFW,
                         Link = info.URL, // TODO if album use each image link
-                        LokalPath = localFile,
+                        LocalPath = localFile,
                         RedditPost = DBPost
                     });
                 }
