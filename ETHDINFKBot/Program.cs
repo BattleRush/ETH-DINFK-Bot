@@ -18,6 +18,9 @@ using System.ComponentModel.DataAnnotations.Schema;
 using ETHDINFKBot.Log;
 using ETHBot.DataLayer;
 using ETHBot.DataLayer.Data.Discord;
+using ETHBot.DataLayer.Data;
+using ETHBot.DataLayer.Data.Enums;
+using Microsoft.Extensions.Logging;
 
 namespace ETHDINFKBot
 {
@@ -37,8 +40,10 @@ namespace ETHDINFKBot
         public static string RedditAppSecret { get; set; }
         public static string RedditBasePath { get; set; }
 
+        public static ILoggerFactory Logger { get; set; }
 
 
+        private static List<BotChannelSetting> BotChannelSettings;
 
 
         private static BotStats BotStats = new BotStats()
@@ -60,9 +65,11 @@ namespace ETHDINFKBot
 
 
 
-
         private static void CheckDirs()
         {
+            if (!Directory.Exists("Database"))
+                Directory.CreateDirectory("Database");
+
             //if (!Directory.Exists("Plugins"))
             //    Directory.CreateDirectory("Plugins");
 
@@ -84,6 +91,8 @@ namespace ETHDINFKBot
 
         static void Main(string[] args)
         {
+            CheckDirs();
+            Logger = LoggerFactory.Create(builder => { builder.AddConsole(); });
 
             /* using (ETHBotDBContext context = new ETHBotDBContext())
              {
@@ -117,7 +126,6 @@ namespace ETHDINFKBot
             RedditRefreshToken = Configuration["Reddit:RefreshToken"];
             RedditAppSecret = Configuration["Reddit:AppSecret"];
             RedditBasePath = Configuration["Reddit:BasePath"];
-
 
 
             new Program().MainAsync(DiscordToken).GetAwaiter().GetResult();
@@ -157,20 +165,20 @@ namespace ETHDINFKBot
 
         public static void LoadStats()
         {
-            if (File.Exists("Stats\\stats.json"))
+            if (File.Exists(Path.Combine("Stats", "stats.json")))
             {
-                BackUpStats();
-                string content = File.ReadAllText("Stats\\stats.json");
+                //BackUpStats();
+                string content = File.ReadAllText(Path.Combine("Stats", "stats.json"));
                 BotStats = JsonConvert.DeserializeObject<BotStats>(content);
             }
         }
 
         public static void LoadBlacklist()
         {
-            if (File.Exists("Blacklist\\Blacklist.json"))
+            if (File.Exists(Path.Combine("Blacklist", "Blacklist.json")))
             {
-                BackUpBlackList();
-                string content = File.ReadAllText("Blacklist\\blacklist.json");
+                //BackUpBlackList();
+                string content = File.ReadAllText(Path.Combine("Blacklist", "Blacklist.json"));
                 BlackList = JsonConvert.DeserializeObject<List<ReportInfo>>(content);
 
                 // Remove duplicates
@@ -180,10 +188,10 @@ namespace ETHDINFKBot
 
         public static void LoadGlobalStats()
         {
-            if (File.Exists("Stats\\global_stats.json"))
+            if (File.Exists(Path.Combine("Stats", "global_stats.json")))
             {
-                BackUpGlobalStats();
-                string content = File.ReadAllText("Stats\\global_stats.json");
+                //BackUpGlobalStats();
+                string content = File.ReadAllText(Path.Combine("Stats", "global_stats.json"));
                 GlobalStats = JsonConvert.DeserializeObject<GlobalStats>(content);
             }
         }
@@ -448,7 +456,7 @@ namespace ETHDINFKBot
 
                 context.SaveChanges();
 
-                if (context.EmojiHistory.Count() == 0 && false)
+                if (context.EmojiHistory.Count() == 0)
                 {
                     foreach (var item in GlobalStats.EmojiInfoUsage)
                     {
@@ -551,9 +559,15 @@ namespace ETHDINFKBot
             }
         }
 
+        public static void LoadChannelSettings()
+        {
+            BotChannelSettings = DatabaseManager.Instance().GetAllChannelSettings();
+        }
+
         public async Task MainAsync(string token)
         {
             DatabaseManager.Instance().SetAllSubredditsStatus();
+            LoadChannelSettings();
 
             LoadStats();
             LoadGlobalStats();
@@ -607,6 +621,18 @@ namespace ETHDINFKBot
             return Task.CompletedTask;
         }
 
+        private bool AllowedToRun(ulong channelId, BotPermissionType type)
+        {
+            var channelSettings = DatabaseManager.GetChannelSetting(channelId);
+            if (((BotPermissionType)channelSettings?.ChannelPermissionFlags).HasFlag(type))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+
         private Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
         {
             try
@@ -618,7 +644,7 @@ namespace ETHDINFKBot
                 Console.WriteLine($"Added emote {arg3.Emote.Name} by {arg3.User.Value.Username}");
                 LogManager.AddReaction((Emote)arg3.Emote, ((SocketGuildUser)arg3.User).IsBot);
 
-                if (((Emote)arg3.Emote).Id == 780179874656419880)
+                if (((Emote)arg3.Emote).Id == 780179874656419880 && !arg3.User.Value.IsBot)
                 {
                     // Save the post link
 
@@ -632,7 +658,9 @@ namespace ETHDINFKBot
                     {
                         DatabaseManager.SaveMessage(arg1.Value.Id, arg1.Value.Author.Id, arg3.User.Value.Id, link, arg1.Value.Content);
                         // TODO parse to guild user
-                        arg3.User.Value.SendMessageAsync($"Saved post from {arg1.Value.Author.Username}: {Environment.NewLine} {arg1.Value.Content} {Environment.NewLine}Direct link: [{guildChannel.Guild.Name}/{guildChannel.Name}/by {arg1.Value.Author.Username}] <{link}>");
+
+                        arg3.User.Value.SendMessageAsync($"Saved post from {arg1.Value.Author.Username}: " +
+                            $"{Environment.NewLine} {arg1.Value.Content} {Environment.NewLine}Direct link: [{guildChannel.Guild.Name}/{guildChannel.Name}/by {arg1.Value.Author.Username}] <{link}>");
                     }
 
                     if (arg1.Value.Attachments.Count > 0)
@@ -656,13 +684,34 @@ namespace ETHDINFKBot
                             });*/
                             // TODO markdown
 
-                            arg3.User.Value.SendMessageAsync($"Saved post (Attachment) from {arg1.Value.Author.Username}:{Environment.NewLine} {item.Url}{Environment.NewLine}Direct link: [{guildChannel.Guild.Name}/{guildChannel.Name}/by {arg1.Value.Author.Username}] <{link}>");
+                            arg3.User.Value.SendMessageAsync($"Saved post (Attachment) from {arg1.Value.Author.Username}: " +
+                                $"{Environment.NewLine} {item.Url}{Environment.NewLine}Direct link: [{guildChannel.Guild.Name}/{guildChannel.Name}/by {arg1.Value.Author.Username}] <{link}>");
                         }
 
                     }
 
+                    if (AllowedToRun(arg1.Value.Channel.Id, BotPermissionType.SaveMessage))
+                    {
+                        EmbedBuilder builder = new EmbedBuilder();
+
+                        builder.WithTitle($"{arg3.User.Value.Username} saved a message");
+                        //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
+                        //builder.WithDescription($@"");
+                        builder.WithColor(0, 0, 255);
+
+                        //builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+
+                        builder.WithCurrentTimestamp();
+                        builder.AddField("Message Link", $"[Message]({link})", true);
+
+                        builder.AddField("Message Author", $"{arg1.Value.Author.Username}", true);
+
+                        // TODO More stats
+
+                        arg1.Value.Channel.SendMessageAsync("", false, builder.Build());
+                    }
                     // TODO markdown -> guild user also
-                    arg1.Value.Channel.SendMessageAsync($"{arg3.User.Value.Username} saves <{link}> by {arg1.Value.Author.Username}");
+                    //arg1.Value.Channel.SendMessageAsync($"{arg3.User.Value.Username} saves <{link}> by {arg1.Value.Author.Username}");
                 }
 
             }
@@ -679,13 +728,17 @@ namespace ETHDINFKBot
         {
             if (!(m is SocketUserMessage msg)) return;
 
+            // TODO private channels
 
             var dbManager = DatabaseManager.Instance();
 
             DiscordServer discordServer = null;
             DiscordChannel discordChannel = null;
+            BotChannelSetting channelSettings = null;
             if (msg.Channel is SocketGuildChannel guildChannel)
             {
+                channelSettings = BotChannelSettings?.SingleOrDefault(i => i.DiscordChannelId == guildChannel.Id);
+
                 discordServer = dbManager.GetDiscordServerById(guildChannel.Guild.Id);
                 if (discordServer == null)
                 {
@@ -713,6 +766,11 @@ namespace ETHDINFKBot
                 return;
             }
 
+            if (channelSettings == null && m.Author.Id != Owner)
+            {
+                // No perms for this channel
+                return;
+            }
 
             var dbAuthor = dbManager.GetDiscordUserById(msg.Author.Id);
             // todo check for update
@@ -740,7 +798,11 @@ namespace ETHDINFKBot
             }
 
 
-
+            if (m.Author.Id != Owner && !((BotPermissionType)channelSettings?.ChannelPermissionFlags).HasFlag(BotPermissionType.Read))
+            {
+                // Cant read
+                return;
+            }
 
             dbManager.CreateDiscordMessage(new ETHBot.DataLayer.Data.Discord.DiscordMessage()
             {
@@ -792,8 +854,8 @@ namespace ETHDINFKBot
                     break;
             }
 
-            Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] {msg.Author} wrote: {msg.Content}");
-            File.AppendAllText($"Logs\\ETHDINFK_{DateTime.Now:yyyy_MM_dd}_spam.txt", $"[{DateTime.Now:yyyy.MM.dd HH:mm:ss}] " + msg.Author + " wrote: " + msg.Content + Environment.NewLine);
+            //Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] {msg.Author} wrote: {msg.Content}");
+            //File.AppendAllText($"Logs\\ETHDINFK_{DateTime.Now:yyyy_MM_dd}_spam.txt", $"[{DateTime.Now:yyyy.MM.dd HH:mm:ss}] " + msg.Author + " wrote: " + msg.Content + Environment.NewLine);
 
             if (m.Channel.Id == 747758757395562557 || m.Channel.Id == 758293511514226718 || m.Channel.Id == 747758770393972807 ||
             m.Channel.Id == 774286694794919989)
@@ -802,7 +864,7 @@ namespace ETHDINFKBot
                 await m.AddReactionAsync(Emote.Parse("<:this:747783377662378004>"));
                 await m.AddReactionAsync(Emote.Parse("<:that:758262252699779073>"));
             }
- 
+
             LogManager.ProcessEmojisAndPings(m.Tags, m.Author.Id, ((SocketGuildUser)m.Author).IsBot);
 
             if (m.Author.IsBot)

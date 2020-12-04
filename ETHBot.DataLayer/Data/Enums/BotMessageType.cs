@@ -20,7 +20,7 @@ namespace ETHBot.DataLayer.Data.Enums
         NekoAvatar = 10,
         Wallpaper = 11,
         Animalears = 12,
-        Foxgirl = 13,
+        Foxgirl = 13,  // -> TODO Merge into Fox
         BrokenBot = 14
     }
 }

@@ -18,27 +18,51 @@ using ETHBot.DataLayer.Data.Discord;
 using Reddit;
 using RedditScrapper;
 using Reddit.Controllers;
+using Microsoft.Extensions.Logging;
+using System.IO;
 
 namespace ETHDINFKBot
 {
     public class DiscordModule : ModuleBase<SocketCommandContext>
     {
+        private readonly ILogger _logger = new Logger<DiscordModule>(Program.Logger);
+
         public static NekoClient NekoClient = new NekoClient("BattleRush's Helper");
         public static NekosFun NekosFun = new NekosFun();
 
         static List<RestUserMessage> LastMessages = new List<RestUserMessage>();
 
-        DatabaseManager DBManager = DatabaseManager.Instance();
+        DatabaseManager DatabaseManager = DatabaseManager.Instance();
 
         LogManager LogManager = new LogManager(DatabaseManager.Instance()); // not needed to pass a singleton actually
 
 
         // TODO Remove alot of the redundant code for loggining and stats
 
+        private bool AllowedToRun(BotPermissionType type)
+        {
+            var channelSettings = DatabaseManager.GetChannelSetting(Context.Message.Channel.Id);
+            if (Context.Message.Author.Id != Program.Owner
+                && !((BotPermissionType)channelSettings?.ChannelPermissionFlags).HasFlag(type))
+            {
+#if DEBUG
+                Context.Channel.SendMessageAsync("blocked by perms", false);
+#endif
+                return true;
+            }
+
+            return false;
+        }
+
+
+
         [Command("code")]
         [Alias("source")]
         public async Task SourceCode()
         {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
+
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.Other);
 
@@ -68,6 +92,13 @@ namespace ETHDINFKBot
         [Alias("about")]
         public async Task HelpOutput()
         {
+            _logger.LogError("GET HelpOutput called.");
+
+
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
+
+
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.Other);
 
@@ -106,11 +137,13 @@ Version: 0.0.0.I didn't implement this yet");
 
         [Command("duck")]
         [Summary("Returns info about the current user, or the user parameter, if one passed.")]
-        public async Task DuckDuckGo(string searchString,
-        [Summary("The (optional) user to get info from")]
-        SocketUser user = null)
+        public async Task DuckDuckGo([Remainder] string searchString)
         {
-            var userInfo = user ?? Context.Message.Author;
+
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
+
+            var userInfo = Context.Message.Author;
             //await ReplyAsync($"{userInfo.Username}#{userInfo.Discriminator}");
 
             LogManager.ProcessMessage(userInfo, BotMessageType.Search);
@@ -148,11 +181,12 @@ Version: 0.0.0.I didn't implement this yet");
 
         [Command("google")]
         [Summary("Returns info about the current user, or the user parameter, if one passed.")]
-        public async Task GoogleSearch(string searchString,
-        [Summary("The (optional) user to get info from")]
-        SocketUser user = null)
+        public async Task GoogleSearch([Remainder] string searchString)
         {
-            var userInfo = user ?? Context.Message.Author;
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
+
+            var userInfo = Context.Message.Author;
             //await ReplyAsync($"{userInfo.Username}#{userInfo.Discriminator}");
 
             LogManager.ProcessMessage(userInfo, BotMessageType.Search);
@@ -187,6 +221,8 @@ Version: 0.0.0.I didn't implement this yet");
         [Command("neko")]
         public async Task Neko()
         {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.Neko);
 
@@ -194,7 +230,7 @@ Version: 0.0.0.I didn't implement this yet");
             var report = GetReportInfoByImage(req.ImageUrl);
             if (report != null)
             {
-                var user = DBManager.GetDiscordUserById(report.ByUserId);
+                var user = DatabaseManager.GetDiscordUserById(report.ByUserId);
                 Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
                 return;
             }
@@ -205,6 +241,8 @@ Version: 0.0.0.I didn't implement this yet");
         [Command("nekogif")]
         public async Task NekoGif()
         {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.NekoGif);
 
@@ -212,7 +250,7 @@ Version: 0.0.0.I didn't implement this yet");
             var report = GetReportInfoByImage(req.ImageUrl);
             if (report != null)
             {
-                var user = DBManager.GetDiscordUserById(report.ByUserId);
+                var user = DatabaseManager.GetDiscordUserById(report.ByUserId);
                 Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
                 return;
             }
@@ -224,6 +262,8 @@ Version: 0.0.0.I didn't implement this yet");
         [Command("fox")]
         public async Task Fox()
         {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.Fox);
 
@@ -231,7 +271,7 @@ Version: 0.0.0.I didn't implement this yet");
             var report = GetReportInfoByImage(req.ImageUrl);
             if (report != null)
             {
-                var user = DBManager.GetDiscordUserById(report.ByUserId);
+                var user = DatabaseManager.GetDiscordUserById(report.ByUserId);
                 Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
                 return;
             }
@@ -242,6 +282,8 @@ Version: 0.0.0.I didn't implement this yet");
         [Command("waifu")]
         public async Task Waifu()
         {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.Waifu);
 
@@ -252,6 +294,8 @@ Version: 0.0.0.I didn't implement this yet");
         [Command("baka")]
         public async Task Baka()
         {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.Baka);
 
@@ -262,6 +306,8 @@ Version: 0.0.0.I didn't implement this yet");
         [Command("smug")]
         public async Task Smug()
         {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.Smug);
 
@@ -272,6 +318,8 @@ Version: 0.0.0.I didn't implement this yet");
         [Command("holo")]
         public async Task Holo()
         {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
             try
             {
                 var author = Context.Message.Author;
@@ -282,7 +330,7 @@ Version: 0.0.0.I didn't implement this yet");
                 var report = GetReportInfoByImage(req.ImageUrl);
                 if (report != null)
                 {
-                    var user = DBManager.GetDiscordUserById(report.ByUserId);
+                    var user = DatabaseManager.GetDiscordUserById(report.ByUserId);
                     Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
                     return;
                 }
@@ -298,6 +346,8 @@ Version: 0.0.0.I didn't implement this yet");
         [Command("avatar")]
         public async Task Avatar()
         {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.Avatar);
 
@@ -308,6 +358,8 @@ Version: 0.0.0.I didn't implement this yet");
         [Command("nekoavatar")]
         public async Task NekoAvatar()
         {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.NekoAvatar);
 
@@ -329,6 +381,9 @@ Version: 0.0.0.I didn't implement this yet");
         [Alias("wp")]
         public async Task Wallpaper()
         {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
+
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.Wallpaper);
 
@@ -343,7 +398,7 @@ Version: 0.0.0.I didn't implement this yet");
                     if (report != null)
                     {
 
-                        var user = DBManager.GetDiscordUserById(report.ByUserId);
+                        var user = DatabaseManager.GetDiscordUserById(report.ByUserId);
                         Context.Channel.SendMessageAsync($"An image has been blocked by {user.Nickname}. Regenerating a new image just for you :)", false);
                         req = NekosFun.GetLink("wallpaper");
 
@@ -371,6 +426,8 @@ Version: 0.0.0.I didn't implement this yet");
         [Command("animalears", RunMode = RunMode.Async)]
         public async Task Animalears()
         {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.Animalears);
 
@@ -378,7 +435,7 @@ Version: 0.0.0.I didn't implement this yet");
             var report = GetReportInfoByImage(req);
             if (report != null)
             {
-                var user = DBManager.GetDiscordUserById(report.ByUserId);
+                var user = DatabaseManager.GetDiscordUserById(report.ByUserId);
                 Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
                 return;
             }
@@ -392,6 +449,8 @@ Version: 0.0.0.I didn't implement this yet");
         [Command("foxgirl", RunMode = RunMode.Async)]
         public async Task Foxgirl()
         {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.Foxgirl);
 
@@ -399,7 +458,7 @@ Version: 0.0.0.I didn't implement this yet");
             var report = GetReportInfoByImage(req);
             if (report != null)
             {
-                var user = DBManager.GetDiscordUserById(report.ByUserId);
+                var user = DatabaseManager.GetDiscordUserById(report.ByUserId);
                 Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
                 return;
             }
@@ -426,6 +485,8 @@ Version: 0.0.0.I didn't implement this yet");
         [Command("block")]
         public async Task Block(string image)
         {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
             var author = Context.Message.Author;
             if (author.Id != ETHDINFKBot.Program.Owner)
             {
@@ -445,12 +506,12 @@ Version: 0.0.0.I didn't implement this yet");
                 return;
             }
 
-            var blockInfo = DBManager.GetBannedLink(image);
+            var blockInfo = DatabaseManager.GetBannedLink(image);
 
             if (blockInfo != null)
             {
                 Context.Message.DeleteAsync();
-                var user = DBManager.GetDiscordUserById(blockInfo.ByUserId);
+                var user = DatabaseManager.GetDiscordUserById(blockInfo.ByUserId);
                 Context.Channel.SendMessageAsync($"Image is already in the blacklist (blocked by {user.Nickname}) You were too slow {guildUser.Nickname} <:exmatrikulator:769624058005553152>", false);
                 return;
             }
@@ -470,7 +531,7 @@ Version: 0.0.0.I didn't implement this yet");
 
              };
             */
-            DBManager.CreateBannedLink(image, guildUser.Id);
+            DatabaseManager.CreateBannedLink(image, guildUser.Id);
 
             /*
             Program.BlackList.Add(reportInfo);
@@ -495,148 +556,15 @@ Version: 0.0.0.I didn't implement this yet");
         }
 
 
-        private bool ContainsForbiddenQuery(string command)
-        {
-            List<string> forbidden = new List<string>()
-            {
-                "alter",
-                "analyze",
-                "attach",
-                "transaction",
-                "comment",
-                "commit",
-                "create",
-                "delete",
-                "detach",
-                "database",
-                "drop",
-                "insert",
-                "pragma",
-                "reindex",
-                "release",
-                "replace",
-                "rollback",
-                "savepoint",
-                "update",
-                "upsert",
-                "vacuum"
-            };
 
-            foreach (var item in forbidden)
-            {
-                if (command.ToLower().Contains(item.ToLower()))
-                    return true;
-            }
 
-            return false;
-        }
-
-        [Command("sql")]
-        public async Task Sql(string commandSql)
-        {
-            // TODO HELP
-            var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
-            {
-                //Context.Channel.SendMessageAsync("Dont you dare to think you will be allowed to use this command https://tenor.com/view/you-shall-not-pass-lord-of-the-ring-gif-5234772", false);
-                //return;
-            }
-
-            // TODO Exclude owner
-
-            if (ContainsForbiddenQuery(commandSql) && author.Id != ETHDINFKBot.Program.Owner)
-            {
-                Context.Channel.SendMessageAsync("Dont you dare to think you will be allowed to use this command https://tenor.com/view/you-shall-not-pass-lord-of-the-ring-gif-5234772", false);
-                return;
-            }
-
-            string header = "**";
-            string resultString = "";
-            int rowCount = 0;
-
-            int maxRows = 25;
-
-            using (ETHBotDBContext context = new ETHBotDBContext())
-            {
-                using (var command = context.Database.GetDbConnection().CreateCommand())
-                {
-                    command.CommandText = commandSql;
-                    context.Database.OpenConnection();
-                    using (var result = command.ExecuteReader())
-                    {
-                        while (result.Read())
-                        {
-                            if (header == "**")
-                            {
-                                for (int i = 0; i < result.FieldCount; i++)
-                                {
-                                    header += result.GetName(i)?.ToString() + "\t";
-                                }
-                            }
-
-                            // do something with result
-                            for (int i = 0; i < result.FieldCount; i++)
-                            {
-                                try
-                                {
-                                    var type = result.GetFieldType(i)?.FullName;
-                                    var fieldString = "null";
-
-                                    if (DBNull.Value.Equals(result.GetValue(i)))
-                                    {
-                                        resultString += fieldString + "\t";
-                                        continue;
-                                    }
-
-                                    switch (type)
-                                    {
-                                        case "System.Int64":
-                                            fieldString = result.GetInt64(i).ToString();
-                                            break;
-
-                                        case "System.String":
-                                            fieldString = result.GetValue(i).ToString();
-                                            break;
-
-                                        default:
-                                            fieldString = $"{type} is unknown";
-                                            break;
-                                    }
-
-                                    resultString += fieldString + "\t";
-                                }
-                                catch (Exception ex)
-                                {
-
-                                }
-
-                            }
-                            resultString += Environment.NewLine;
-                            rowCount++;
-
-                            if (rowCount >= maxRows)
-                            {
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            header += "**";
-
-            if (resultString.Length > 1800)
-            {
-                resultString = resultString.Substring(0, 1800);
-            }
-
-            Context.Channel.SendMessageAsync(header + Environment.NewLine + resultString + Environment.NewLine + $"{rowCount} Row(s) affected", false);
-        }
 
 
         [Command("stats")]
         public async Task Stats()
         {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.Other);
 
@@ -733,6 +661,8 @@ Version: 0.0.0.I didn't implement this yet");
         public async Task Test()
         {
 
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
             EmbedBuilder builder = new EmbedBuilder();
 
             builder.WithTitle("BattleRush's Helper Stats");
@@ -753,6 +683,8 @@ Version: 0.0.0.I didn't implement this yet");
         [Command("r")]
         public async Task Reddit(string subreddit)
         {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
             string link = "";
             try
             {
@@ -798,6 +730,77 @@ ORDER BY RANDOM() LIMIT 1
         }
 
 
+
+        [Command("rp")]
+        public async Task RedditPost(string subreddit)
+        {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
+
+
+            int postId = 0;
+            try
+            {
+                // TODO Better escaping
+                subreddit = subreddit.Replace("'", "''");
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    using (var command = context.Database.GetDbConnection().CreateCommand())
+                    {
+                        // TODO sql input escaping
+                        command.CommandText = @$"select pp.RedditPostId from SubredditInfos si
+left join RedditPosts pp on si.SubredditId = pp.SubredditInfoId
+where si.SubredditName = '{subreddit}' and pp.IsNSFW = 0
+ORDER BY RANDOM() LIMIT 1";// todo nsfw test
+                        context.Database.OpenConnection();
+                        using (var result = command.ExecuteReader())
+                        {
+                            while (result.Read())
+                            {
+                                postId = result.GetInt32(0);
+                                break;
+                            }
+                        }
+                    }
+
+
+                    var redditPost = DatabaseManager.GetRedditPostById(postId);
+
+
+
+                    EmbedBuilder builder = new EmbedBuilder();
+
+                    builder.WithTitle(redditPost.PostTitle);
+                    builder.WithUrl(redditPost.Url);
+
+                    builder.WithDescription($@"Posted by: {redditPost.Author} on {redditPost.PostedAt}");
+                    builder.WithColor(0, 0, 255);
+
+                    //builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+                    builder.WithCurrentTimestamp();
+                    builder.WithImageUrl(redditPost.Url);
+                    builder.AddField("Upvotes", redditPost.UpvoteCount, true);
+                    builder.AddField("Downvotes", redditPost.DownvoteCount, true);
+                    builder.AddField("NSFW", redditPost.IsNSFW, true);
+
+                    Context.Channel.SendMessageAsync("", false, builder.Build());
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+
+            }
+            /*
+ * 
+ * SELECT column FROM table 
+ORDER BY RANDOM() LIMIT 1
+
+*/
+        }
+
+        /*
         [Command("radmin")]
         public async Task RedditAdmin(string command = "", string value = "")
         {
@@ -826,139 +829,17 @@ ORDER BY RANDOM() LIMIT 1
                     break;
 
                 case "start":
-                    Context.Channel.SendMessageAsync($"Started {value} please wait :)", false);
-                    Task.Factory.StartNew(() => ScrapReddit(value));
+                    
                     break;
                 default:
                     break;
             }
 
         }
-
-        private async void AddSubreddit(string subredditName)
-        {
-            var reddit = new RedditClient(Program.RedditAppId, Program.RedditRefreshToken, Program.RedditAppSecret);
-            using (ETHBotDBContext context = new ETHBotDBContext())
-            {
-
-                SubredditManager subManager = new SubredditManager(subredditName, reddit, context);
-                Context.Channel.SendMessageAsync($"{subManager.SubredditName} was added to the list", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
-            }
-        }
-
-        private async Task ScrapReddit(string subredditName)
-        {
-            DatabaseManager.Instance().SetSubredditScaperStatus(subredditName, true);
-            var reddit = new RedditClient(Program.RedditAppId, Program.RedditRefreshToken, Program.RedditAppSecret);
-
-            using (var context = new ETHBotDBContext())
-            {
-                SubredditManager subManager = new SubredditManager(subredditName, reddit, context);
-                try
-                {
-                    bool beforeWasNotFull = false;
-
-                    string last = "";
-                    DateTime lastTime = subManager.SubredditInfo.ReachedOldest ? DateTime.MinValue : DateTime.MaxValue;
-                    while (true)
-                    {
-
-                        List<Post> posts = null;
-
-                        if (!subManager.SubredditInfo.ReachedOldest)
-                            posts = subManager.GetAfterPosts();
-                        else
-                            posts = subManager.GetBeforePosts();
-
-                        if (!subManager.SubredditInfo.ReachedOldest && posts.Count == 0)
-                        {
-                            Context.Channel.SendMessageAsync($"{subManager.SubredditName} scraper reached the end. Setting up end flags", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
-
-                            subManager.ConfirmOldestPost(last, lastTime, true);
-                            break;
-                        }
-
-                        if (posts.Count == 0)
-                        {
-                            Context.Channel.SendMessageAsync($"{subManager.SubredditName} scraper reached the newest post. Setting up end flags", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
-
-                            subManager.ConfirmNewestPost(last, lastTime);
-                            break;
-                        }
-
-                        foreach (var post in posts)
-                        {
-                            if (post.Created < lastTime && !subManager.SubredditInfo.ReachedOldest)
-                            {
-                                last = post.Fullname;
-                                lastTime = post.Created;
-                            }
-
-                            if (post.Created > lastTime && subManager.SubredditInfo.ReachedOldest)
-                            {
-                                last = post.Fullname;
-                                lastTime = post.Created;
-                            }
-
-                            PostManager manager = new PostManager(post, subManager.SubredditInfo, context);
-
-                            if (manager.IsImage())
-                            {
-                                var imageInfos = manager.DownloadImage(Program.RedditBasePath); // TODO send path in contructor
-
-                                context.RedditImages.AddRange(imageInfos);
-                                context.SaveChanges();
-
-                            }
-                            else
-                            {
-                                Console.ForegroundColor = ConsoleColor.Red;
-                                Console.WriteLine($"IGNORED {post.Title} at {last}");
-                                Console.ForegroundColor = ConsoleColor.White;
-                            }
-                        }
-
-                        if (!subManager.SubredditInfo.ReachedOldest)
-                        {
-                            subManager.ConfirmOldestPost(last, lastTime);
-                            Context.Channel.SendMessageAsync($"{subManager.SubredditName} scraper is happy and well :) Count ({posts.Count}) after {subManager.SubredditInfo.OldestPost}/{subManager.SubredditInfo.OldestPostDate}", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
-                        }
-                        else
-                        {
-                            subManager.ConfirmNewestPost(last, lastTime);
-                            //subManager.GetBeforePosts();
-                            Context.Channel.SendMessageAsync($"{subManager.SubredditName} scraper is happy and well :) Count ({posts.Count} before {subManager.SubredditInfo.NewestPost}/{subManager.SubredditInfo.NewestPostDate}", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
-
-                        }
+        */
 
 
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Context.Channel.SendMessageAsync($"{subManager.SubredditName} scraper died RIP {ex.Message}", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
-                }
 
-                Context.Channel.SendMessageAsync($"{subManager.SubredditName} scraper ended :D", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
-            }
-
-            DatabaseManager.Instance().SetSubredditScaperStatus(subredditName, false);
-        }
-
-        private async void CheckReddit()
-        {
-            var subreddits = DatabaseManager.Instance().GetSubredditsByStatus();
-
-            foreach (var subreddit in subreddits)
-            {
-                Context.Channel.SendMessageAsync($"{subreddit.SubredditName} is active", false);
-            }
-
-            if (subreddits.Count == 0)
-            {
-                Context.Channel.SendMessageAsync($"No subreddits are currently active", false);
-            }
-        }
 
 
 
@@ -967,6 +848,8 @@ ORDER BY RANDOM() LIMIT 1
         public async Task Leaderboard()
         {
 
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
             Context.Channel.SendMessageAsync("Currently out of order come later again :(", false);
             /*
             var author = Context.Message.Author;
@@ -1000,7 +883,7 @@ ORDER BY RANDOM() LIMIT 1
 
         private BannedLink GetReportInfoByImage(string imageUrl)
         {
-            return DBManager.GetBannedLink(imageUrl);
+            return DatabaseManager.GetBannedLink(imageUrl);
         }
 
         private string GetRankingString(IEnumerable<string> list)

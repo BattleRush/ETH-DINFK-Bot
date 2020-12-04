@@ -1,9 +1,11 @@
 ﻿using Discord;
 using ETHBot.DataLayer;
+using ETHBot.DataLayer.Data;
 using ETHBot.DataLayer.Data.Discord;
 using ETHBot.DataLayer.Data.Enums;
 using ETHBot.DataLayer.Data.Reddit;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +17,7 @@ namespace ETHDINFKBot
     {
         private static DatabaseManager _instance;
         private static object syncLock = new object();
+        private readonly ILogger _logger = new Logger<DiscordModule>(Program.Logger);
 
         public static DatabaseManager Instance()
         {
@@ -37,60 +40,107 @@ namespace ETHDINFKBot
 
         public DiscordUser GetDiscordUserById(ulong id)
         {
-            using (ETHBotDBContext context = new ETHBotDBContext())
+            try
             {
-                return context.DiscordUsers.SingleOrDefault(i => i.DiscordUserId == id);
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordUsers.SingleOrDefault(i => i.DiscordUserId == id);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
             }
         }
 
         public DiscordUser CreateUser(DiscordUser user)
         {
-            using (ETHBotDBContext context = new ETHBotDBContext())
+            try
             {
-                context.DiscordUsers.Add(user);
-                context.SaveChanges();
-            }
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    context.DiscordUsers.Add(user);
+                    context.SaveChanges();
+                }
 
-            return GetDiscordUserById(user.DiscordUserId); // since this will rarely happen its fine i guess but we could probably return the original user
+                return GetDiscordUserById(user.DiscordUserId); // since this will rarely happen its fine i guess but we could probably return the original user      
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
         }
 
         public DiscordServer GetDiscordServerById(ulong id)
         {
-            using (ETHBotDBContext context = new ETHBotDBContext())
+            try
             {
-                return context.DiscordServers.SingleOrDefault(i => i.DiscordServerId == id);
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordServers.SingleOrDefault(i => i.DiscordServerId == id);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
             }
         }
 
         public DiscordServer CreateDiscordServer(DiscordServer server)
         {
-            using (ETHBotDBContext context = new ETHBotDBContext())
+            try
             {
-                context.DiscordServers.Add(server);
-                context.SaveChanges();
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    context.DiscordServers.Add(server);
+                    context.SaveChanges();
+                }
+
+                return GetDiscordServerById(server.DiscordServerId); // since this will rarely happen its fine i guess but we could probably return the original user
             }
-
-            return GetDiscordServerById(server.DiscordServerId); // since this will rarely happen its fine i guess but we could probably return the original user
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
         }
-
 
         public DiscordChannel GetDiscordChannel(ulong id)
         {
-            using (ETHBotDBContext context = new ETHBotDBContext())
+            try
             {
-                return context.DiscordChannels.SingleOrDefault(i => i.DiscordChannelId == id);
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordChannels.SingleOrDefault(i => i.DiscordChannelId == id);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
             }
         }
+
         public DiscordChannel CreateDiscordChannel(DiscordChannel channel)
-
         {
-            using (ETHBotDBContext context = new ETHBotDBContext())
+            try
             {
-                context.DiscordChannels.Add(channel);
-                context.SaveChanges();
-            }
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    context.DiscordChannels.Add(channel);
+                    context.SaveChanges();
+                }
 
-            return GetDiscordChannel(channel.DiscordChannelId); // since this will rarely happen its fine i guess but we could probably return the original user
+                return GetDiscordChannel(channel.DiscordChannelId); // since this will rarely happen its fine i guess but we could probably return the original user
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
         }
 
 
@@ -106,6 +156,7 @@ namespace ETHDINFKBot
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, ex.Message);
                 return false;
             }
 
@@ -124,9 +175,17 @@ namespace ETHDINFKBot
 
         public BannedLink GetBannedLink(string link)
         {
-            using (ETHBotDBContext context = new ETHBotDBContext())
+            try
             {
-                return context.BannedLinks.FirstOrDefault(i => i.Link == link);
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.BannedLinks.FirstOrDefault(i => i.Link == link);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
             }
         }
 
@@ -134,28 +193,43 @@ namespace ETHDINFKBot
 
         public bool CreateBannedLink(BannedLink bannedLink)
         {
-            using (ETHBotDBContext context = new ETHBotDBContext())
+            try
             {
-                context.BannedLinks.Add(bannedLink);
-                context.SaveChanges();
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    context.BannedLinks.Add(bannedLink);
+                    context.SaveChanges();
+                }
             }
-
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return false;
+            }
             return true;
         }
 
         public bool CreateBannedLink(string link, ulong userId)
         {
-            using (ETHBotDBContext context = new ETHBotDBContext())
+            try
             {
-                var user = GetDiscordUserById(userId);
-
-                context.BannedLinks.Add(new BannedLink()
+                using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    Link = link,
-                    ByUser = user,
-                    ReportTime = DateTimeOffset.Now
-                });
-                context.SaveChanges();
+                    var user = GetDiscordUserById(userId);
+
+                    context.BannedLinks.Add(new BannedLink()
+                    {
+                        Link = link,
+                        ByUserId = user.DiscordUserId,
+                        ReportTime = DateTimeOffset.Now
+                    });
+                    context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return false;
             }
 
             return true;
@@ -163,85 +237,172 @@ namespace ETHDINFKBot
 
         public PingStatistic GetPingStatisticByUserId(ulong userId)
         {
-            using (ETHBotDBContext context = new ETHBotDBContext())
+            try
             {
-                return context.PingStatistics.SingleOrDefault(i => i.DiscordUser.DiscordUserId == userId);
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.PingStatistics.SingleOrDefault(i => i.DiscordUser.DiscordUserId == userId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
             }
         }
 
         public void AddPingStatistic(ulong userId, int count, bool isBot)
         {
-            using (ETHBotDBContext context = new ETHBotDBContext())
+            try
             {
-                var user = GetDiscordUserById(userId);
-                if (user == null)
+                using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    // TODO can we still get the user or do we need the user to write atleast once?
-                    return;
-                }
-                var stat = GetPingStatisticByUserId(userId);
-                if (stat == null)
-                {
-                    context.PingStatistics.Add(new PingStatistic()
+                    var user = GetDiscordUserById(userId);
+                    if (user == null)
                     {
-                        DiscordUser = user,
-                        PingCount = !isBot ? count : 0,
-                        PingCountOnce = !isBot ? 1 : 0,
-                        PingCountBot = !isBot ? 0 : count,
-                        DiscordUserId = user.DiscordUserId
-                    });
-                }
-                else
-                {
-                    stat.PingCountOnce += !isBot ? 1 : 0;
-                    stat.PingCount += !isBot ? count : 0;
-                    stat.PingCountBot += !isBot ? 0 : count;
-                }
+                        // TODO can we still get the user or do we need the user to write atleast once?
+                        return;
+                    }
+                    var stat = GetPingStatisticByUserId(userId);
+                    if (stat == null)
+                    {
+                        context.PingStatistics.Add(new PingStatistic()
+                        {
+                            DiscordUser = user,
+                            PingCount = !isBot ? count : 0,
+                            PingCountOnce = !isBot ? 1 : 0,
+                            PingCountBot = !isBot ? 0 : count,
+                            DiscordUserId = user.DiscordUserId
+                        });
+                    }
+                    else
+                    {
+                        stat.PingCountOnce += !isBot ? 1 : 0;
+                        stat.PingCount += !isBot ? count : 0;
+                        stat.PingCountBot += !isBot ? 0 : count;
+                    }
 
-                context.SaveChanges();
+                    context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
             }
         }
 
         public EmojiStatistic GetEmojiStatisticById(ulong id)
         {
-            using (ETHBotDBContext context = new ETHBotDBContext())
+            try
             {
-                return context.EmojiStatistics.SingleOrDefault(i => i.EmojiId == id);
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.EmojiStatistics.SingleOrDefault(i => i.EmojiId == id);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public BotChannelSetting GetChannelSetting(ulong channelId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.BotChannelSettings.SingleOrDefault(i => i.DiscordChannelId == channelId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public void UpdateChannelSetting(ulong channelId, int permission)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var channelSetting = GetChannelSetting(channelId);
+                    if (channelSetting == null)
+                    {
+                        context.BotChannelSettings.Add(new BotChannelSetting()
+                        {
+                            DiscordChannelId = channelId,
+                            ChannelPermissionFlags = permission
+                        });
+                    }
+                    else
+                    {
+                        // TODO reuse object from above
+                        context.BotChannelSettings.Single(i => i.DiscordChannelId == channelId).ChannelPermissionFlags = permission;
+                    }
+                    context.SaveChanges();
+
+                    // TODO better way
+                    Program.LoadChannelSettings();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+        }
+
+        public List<BotChannelSetting> GetAllChannelSettings()
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.BotChannelSettings.ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
             }
         }
 
         public EmojiStatistic AddEmojiStatistic(EmojiStatistic statistic, int count, bool isReaction, bool isBot)
         {
-            using (ETHBotDBContext context = new ETHBotDBContext())
+            try
             {
-                var dbEmoji = GetEmojiStatisticById(statistic.EmojiId);
-                if (dbEmoji == null)
+                using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    context.EmojiStatistics.Add(new EmojiStatistic()
+                    var dbEmoji = GetEmojiStatisticById(statistic.EmojiId);
+                    if (dbEmoji == null)
                     {
-                        Animated = statistic.Animated,
-                        CreatedAt = statistic.CreatedAt,
-                        EmojiId = statistic.EmojiId,
-                        EmojiName = statistic.EmojiName,
-                        Url = statistic.Url,
-                        UsedAsReaction = !isBot ? statistic.UsedAsReaction : 0,
-                        UsedInText = !isBot ? statistic.UsedInText : 0,
-                        UsedInTextOnce = !isBot ? statistic.UsedInTextOnce : 0,
-                        UsedByBots = !isBot ? 0 : statistic.UsedByBots,
-                    });
-                    context.SaveChanges();
-                }
-                else
-                {
-                    dbEmoji.UsedAsReaction += !isBot ? statistic.UsedAsReaction : 0;
-                    dbEmoji.UsedInText += !isBot ? statistic.UsedInText : 0;
-                    dbEmoji.UsedInTextOnce += !isBot ? 1 : 0;// statistic.UsedInTextOnce;
-                    dbEmoji.UsedByBots += !isBot ? 0 : statistic.UsedByBots;
-                    //context.Entry(dbEmoji).State = EntityState.Modified;
-                    //dbEmoji.EmojiInfoId;
-                }
-                try
-                {
+                        context.EmojiStatistics.Add(new EmojiStatistic()
+                        {
+                            Animated = statistic.Animated,
+                            CreatedAt = statistic.CreatedAt,
+                            EmojiId = statistic.EmojiId,
+                            EmojiName = statistic.EmojiName,
+                            Url = statistic.Url,
+                            UsedAsReaction = !isBot ? statistic.UsedAsReaction : 0,
+                            UsedInText = !isBot ? statistic.UsedInText : 0,
+                            UsedInTextOnce = !isBot ? statistic.UsedInTextOnce : 0,
+                            UsedByBots = !isBot ? 0 : statistic.UsedByBots,
+                        });
+                        context.SaveChanges();
+                    }
+                    else
+                    {
+                        dbEmoji.UsedAsReaction += !isBot ? statistic.UsedAsReaction : 0;
+                        dbEmoji.UsedInText += !isBot ? statistic.UsedInText : 0;
+                        dbEmoji.UsedInTextOnce += !isBot ? 1 : 0;// statistic.UsedInTextOnce;
+                        dbEmoji.UsedByBots += !isBot ? 0 : statistic.UsedByBots;
+                        //context.Entry(dbEmoji).State = EntityState.Modified;
+                        //dbEmoji.EmojiInfoId;
+                    }
 
                     context.SaveChanges();
 
@@ -260,12 +421,17 @@ namespace ETHDINFKBot
 
                     //ETHBotDBContext.Entry(dbEmoji).State = EntityState.Detached;
                     context.SaveChanges();
-                }
-                catch (Exception ex)
-                {
 
                 }
+
+
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+
             return GetEmojiStatisticById(statistic.EmojiId);
         }
 
@@ -296,14 +462,14 @@ namespace ETHDINFKBot
                 var dbCommand = GetCommandStatisticById(type, userId);
                 if (dbCommand == null)
                 {
-                    var dbUser = GetDiscordUserById(userId);
+                    var dbUser = GetDiscordUserById(userId);// maybe not even needed
                     var commandType = GetCommandTypeById((int)type);
 
                     context.CommandStatistics.Add(new CommandStatistic()
                     {
                         Count = 1,
-                        Type = commandType,
-                        DiscordUser = dbUser
+                        CommandTypeId = commandType.CommandTypeId,
+                        DiscordUserId = userId
                     });
                 }
                 else
@@ -324,30 +490,29 @@ namespace ETHDINFKBot
             }
         }
 
-
         public bool SaveMessage(ulong messageId, ulong byDiscordUserId, ulong savedByDiscordUserId, string link, string content)
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
                 try
                 {
-                    var user = GetDiscordUserById(byDiscordUserId); // Verify the user is created but should actually be available by this poitn
-                    var saveBy = GetDiscordUserById(savedByDiscordUserId); // Verify the user is created but should actually be available by this poitn
-                                                                           //ETHBotDBContext.SaveChanges();
+                    //var user = GetDiscordUserById(byDiscordUserId); // Verify the user is created but should actually be available by this poitn
+                    //var saveBy = GetDiscordUserById(savedByDiscordUserId); // Verify the user is created but should actually be available by this poitn
+                    //ETHBotDBContext.SaveChanges();
                     var newSave = new SavedMessage()
                     {
                         DirectLink = link,
                         SendInDM = false,
-                        ByDiscordUserId = user.DiscordUserId,
+                        ByDiscordUserId = byDiscordUserId,
                         //ByDiscordUser = user,
                         Content = content, // todo attachment
                         MessageId = messageId,
-                        SavedByDiscordUserId = saveBy.DiscordUserId
+                        SavedByDiscordUserId = savedByDiscordUserId
                         //SavedByDiscordUser = saveBy
                     };
 
-                    context.DiscordUsers.Attach(user);
-                    context.DiscordUsers.Attach(saveBy);
+                    //context.DiscordUsers.Attach(user);
+                    //context.DiscordUsers.Attach(saveBy);
                     context.SavedMessages.Add(newSave);
                     context.SaveChanges();
 
@@ -412,6 +577,14 @@ namespace ETHDINFKBot
             }
         }
 
+        public RedditPost GetRedditPostById(int redditPostId)
+        {
+            using (ETHBotDBContext context = new ETHBotDBContext())
+            {
+                return context.RedditPosts.SingleOrDefault(i => i.RedditPostId == redditPostId);
+            }
+        }
+
         public string GetRandomImage(string subreddit)
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
@@ -422,7 +595,6 @@ namespace ETHDINFKBot
                 var subredditInfo = GetSubreddit(subreddit);
 
 
-
                 var posts = context.RedditPosts.AsQueryable().Where(i => i.SubredditInfo.SubredditId == subredditInfo.SubredditId).OrderBy(i => r.Next(0, 1000));
 
 
@@ -430,6 +602,8 @@ namespace ETHDINFKBot
                 return posts.First().RedditImages.First().Link;
             }
         }
+        // TODO EXCEPTION LOGGING
+
 
         // TODO Get saved message
 

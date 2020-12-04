@@ -4,15 +4,18 @@ using ETHBot.DataLayer.Data.Discord;
 using ETHBot.DataLayer.Data.Reddit;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
+using ETHBot.DataLayer.Data;
 
 namespace ETHBot.DataLayer
 {
     public class ETHBotDBContext : DbContext
     {
         private static bool _created = false;
-        //static LoggerFactory object
-        public static readonly ILoggerFactory loggerFactory
-    = LoggerFactory.Create(builder => { builder.AddConsole(); });
+
+        public static readonly ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.AddConsole().AddFilter((provider, category, logLevel) => { if (logLevel >= LogLevel.Warning) return true; return false; });
+        });
 
         public ETHBotDBContext()
         {
@@ -25,7 +28,13 @@ namespace ETHBot.DataLayer
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionbuilder)
         {
+            // TODO Setting
+#if DEBUG
             optionbuilder.UseLoggerFactory(loggerFactory).UseSqlite(@"Data Source=I:\ETHBot\ETHBot.db").EnableSensitiveDataLogging();
+#else
+            optionbuilder.UseLoggerFactory(loggerFactory).UseSqlite(@"Data Source=Database/ETHBot.db").EnableSensitiveDataLogging();
+#endif
+
         }
 
         public DbSet<BannedLink> BannedLinks { get; set; }
@@ -38,22 +47,15 @@ namespace ETHBot.DataLayer
         public DbSet<EmojiHistory> EmojiHistory { get; set; }
         public DbSet<EmojiStatistic> EmojiStatistics { get; set; }
         public DbSet<PingStatistic> PingStatistics { get; set; }
-
         public DbSet<SavedMessage> SavedMessages { get; set; }
-
-
-
+        public DbSet<BotChannelSetting> BotChannelSettings { get; set; }
         public DbSet<SubredditInfo> SubredditInfos { get; set; }
         public DbSet<RedditPost> RedditPosts { get; set; }
         public DbSet<RedditImage> RedditImages { get; set; }
 
-
-        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-                 //modelBuilder.Configurations.Add(new Student.StudentMapping());
 
         }
-       
     }
 }
