@@ -21,6 +21,7 @@ namespace ETHBot.DataLayer.Data.Enums
         Wallpaper = 11,
         Animalears = 12,
         Foxgirl = 13,  // -> TODO Merge into Fox
-        BrokenBot = 14
+        BrokenBot = 14,  
+        Reddit = 15
     }
 }

@@ -121,8 +121,19 @@ namespace ETHDINFKBot
             return null;
         }
 
-        public void LoadCache() { if (File.Exists("GoogleSearchCache.json")) cache = JsonConvert.DeserializeObject<Dictionary<string, Result[]>>(File.ReadAllText("GoogleSearchCache.json")); } //Read The Cache File And Deserialize It Into A Dictionary
-        public void SaveCache() { File.WriteAllText("GoogleSearchCache.json", JsonConvert.SerializeObject(cache)); } //Serialize The Cache Dictionary And Save It To The Cache File
+        public void LoadCache()
+        {
+            if (File.Exists("GoogleSearchCache.json"))
+                cache = JsonConvert.DeserializeObject<Dictionary<string, Result[]>>(File.ReadAllText("GoogleSearchCache.json"));
+        } 
+        //Read The Cache File And Deserialize It Into A Dictionary
+
+        public void SaveCache()
+        {
+            return;
+            File.WriteAllText("GoogleSearchCache.json", JsonConvert.SerializeObject(cache));
+        } 
+        //Serialize The Cache Dictionary And Save It To The Cache File
 
 
         public class Result { public string url, title, description; }
@@ -133,6 +144,6 @@ namespace ETHDINFKBot
             public List<Result> Results { get; set; }
         }
 
-         //Simple Class To Store Result URL, Title And Description
+        //Simple Class To Store Result URL, Title And Description
     }
 }

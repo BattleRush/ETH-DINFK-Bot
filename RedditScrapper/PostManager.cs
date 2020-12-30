@@ -16,6 +16,7 @@ namespace RedditScrapper
         private RedditPost DBPost;
         private SubredditInfo SubredditInfo;
         private ETHBotDBContext ETHBotDBContext;
+        private bool PostExisted = false;
         public PostManager(Post post, SubredditInfo subredditInfo, ETHBotDBContext context)
         {
             Post = post;
@@ -40,10 +41,10 @@ namespace RedditScrapper
                 
                 // Attention multi image
             };
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"Domain {Post.Listing.Domain}");
+            //Console.ForegroundColor = ConsoleColor.Yellow;
+            //Console.WriteLine($"Domain {Post.Listing.Domain}");
 
-            Console.ForegroundColor = ConsoleColor.White;
+            //Console.ForegroundColor = ConsoleColor.White;
             if (Post.Listing.Domain == "reddit.com")
             {
                 // https://www.reddit.com/r/hyouka/comments/ho01kk/chichan/
@@ -59,6 +60,7 @@ namespace RedditScrapper
 
             var returnList = new List<RedditImage>() { };
 
+            
 
             /*if (Post.Listing.Domain == "reddit.com")
             {
@@ -72,53 +74,62 @@ namespace RedditScrapper
             }
             */
 
-            string path = $@"{basePath}\{SubredditInfo.SubredditName}";
+
+            string additionalFolder = $"{Post.Created.Year}-{Post.Created.Month:00}";
+            string path = Path.Combine(basePath, SubredditInfo.SubredditName, additionalFolder);
+                
             if (!Directory.Exists(path))
             {
                 Directory.CreateDirectory(path);
             }
 
-            string fileEnding = Post.Listing.URL.Substring(Post.Listing.URL.LastIndexOf("."));
+            string url = Post.Listing.URL;
+
+            
+
+            string fileEnding = url.Substring(url.LastIndexOf("."));
 
 
-            var info = Post.Listing;
             // check if image is in db alread TODO
-
-            if (!File.Exists(@$"{path}\{Post.Fullname}{fileEnding}"))
+            string file = Path.Combine(path, Post.Fullname+fileEnding);
+            
+            
+            if (/*!File.Exists(file) || */!PostExisted)
             {
                 try
                 {
-                    string localFile = $@"{path}\{Post.Fullname}{fileEnding}";
-                    using (WebClient client = new WebClient())
+                    if (false)
                     {
+                        using (WebClient client = new WebClient())
+                        {
 
-                        client.DownloadFile(new Uri($"{info.URL}"), localFile);
-                        Console.ForegroundColor = ConsoleColor.Green;
+                            client.DownloadFile(new Uri($"{url}"), file);
+                            Console.ForegroundColor = ConsoleColor.Green;
 
-                        Console.WriteLine($"DOWNLOADED {info.URL}");
+                            //Console.WriteLine($"DOWNLOADED {info.URL}");
 
-                        Console.ForegroundColor = ConsoleColor.White;
+                            Console.ForegroundColor = ConsoleColor.White;
+                        }
                     }
 
                     // TODO see if the records is created already and needs update
 
                     returnList.Add(new RedditImage(){
                         Downloaded = true,
-                        IsNSFW = Post.NSFW,
-                        Link = info.URL, // TODO if album use each image link
-                        LocalPath = localFile,
+                        IsNSFW = Post.NSFW, 
+                        Link = url, // TODO if album use each image link
+                        LocalPath = null, // TODO not downloading -> set that only some subreddits are downloaded
                         RedditPost = DBPost
                     });
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Failed {info.URL} WITH DOMAIN: {info.Domain}");
+                    Console.WriteLine($"Failed {url} WITH DOMAIN: {Post.Listing.Domain}");
                 }
             }
             else
             {
-
-                Console.WriteLine($"FILE EXISTS {info.URL}");
+                //Console.WriteLine($"FILE EXISTS {url}");
             }
 
             return returnList;
@@ -140,13 +151,19 @@ namespace RedditScrapper
                     IsNSFW = Post.NSFW,
                     Permalink = Post.Permalink,
                     SubredditInfo = SubredditInfo,
-                    Url = Post.Listing.URL
-                });
+                    Url = Post.Listing.URL,
+                    IsText = Post.Listing.IsSelf,
+                    Content = Post.Listing.IsSelf ? Post.Listing.SelfText : null
+                });;
 
                 ETHBotDBContext.SaveChanges();
                 // TODO Check if the primary key is updated on save changes in the object
 
                 redditPost = ETHBotDBContext.RedditPosts.SingleOrDefault(i => i.PostId == Post.Fullname);
+            }
+            else
+            {
+                PostExisted = true;
             }
 
             DBPost = redditPost;

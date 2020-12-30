@@ -157,21 +157,25 @@ namespace ETHDINFKBot.Modules
             {
                 List<string> tableList = new List<string>()
                 {
-                    "BannedLinks",
-                    "CommandStatistics",
                     "CommandTypes",
-                    "DiscordChannels",
+                    "CommandStatistics",
                     "DiscordMessages",
+                    "DiscordChannels",
                     "DiscordServers",
-                    "DiscordUsers",
-                    "EmojiHistory",
-                    "EmojiStatistics",
-                    "PingStatistics",
-                    "SavedMessages",
+                    "BannedLinks",
 
-                    "RedditImages",
-                    "RedditPosts",
+                    "PingStatistics",
+                    "DiscordUsers",
+                    "SavedMessages",
+                    "RantMessages",
+                    "RantTypes",
+                    "BotChannelSettings",
+
                     "SubredditInfos",
+                    "RedditPosts",
+                    "RedditImages",
+                    "EmojiStatistics",
+                    "EmojiHistory",
                 };
 
 
@@ -192,7 +196,11 @@ namespace ETHDINFKBot.Modules
                         {
                             command.CommandText = $"PRAGMA table_info('{item}')";
                             context.Database.OpenConnection();
-
+                            if(item == "EmojiStatistics")
+                            {
+                                //TODO workaround until graphs drawing is done
+                                //DbTableInfos.Add(new DBTableInfo());
+                            }
                             DbTableInfos.Add(GetTableInfo(command, item));
                         }
 
@@ -202,7 +210,6 @@ namespace ETHDINFKBot.Modules
                             context.Database.OpenConnection();
 
                             ForeignKeyInfos.Add(GetForeignKeyInfo(command, item));
-
                         }
                     }
                 }
@@ -216,6 +223,9 @@ namespace ETHDINFKBot.Modules
                 foreach (var item in DbTableInfos)
                 {
                     text += "**" + item.TableName + "**" + Environment.NewLine;
+
+                    if (item.FieldInfos == null)
+                        item.FieldInfos = new List<DBFieldInfo>();
 
                     foreach (var item2 in item.FieldInfos)
                     {
@@ -284,7 +294,9 @@ namespace ETHDINFKBot.Modules
                 "savepoint",
                 "update",
                 "upsert",
-                "vacuum"
+                "vacuum",
+                "recursive ", // idk why it breaks when i have time ill take a look
+                "with " 
             };
 
             foreach (var item in forbidden)
@@ -314,7 +326,7 @@ namespace ETHDINFKBot.Modules
         }
 
 
-        [Command("sql")]
+        [Command("query")]
         public async Task Sql([Remainder] string commandSql)
         {
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
@@ -334,88 +346,97 @@ namespace ETHDINFKBot.Modules
                 Context.Channel.SendMessageAsync("Dont you dare to think you will be allowed to use this command https://tenor.com/view/you-shall-not-pass-lord-of-the-ring-gif-5234772", false);
                 return;
             }
-
-            string header = "**";
-            string resultString = "";
-            int rowCount = 0;
-
-            int maxRows = 25;
-
-            using (ETHBotDBContext context = new ETHBotDBContext())
+            try
             {
-                using (var command = context.Database.GetDbConnection().CreateCommand())
+                string header = "**";
+                string resultString = "";
+                int rowCount = 0;
+
+                int maxRows = 25;
+
+                using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    command.CommandText = commandSql;
-                    context.Database.OpenConnection();
-                    using (var result = command.ExecuteReader())
+                    using (var command = context.Database.GetDbConnection().CreateCommand())
                     {
-                        while (result.Read())
+                        command.CommandText = commandSql;
+                        context.Database.OpenConnection();
+                        using (var result = command.ExecuteReader())
                         {
-                            if (header == "**")
+                            command.CommandTimeout = 5;
+                            while (result.Read())
                             {
+                                if (header == "**")
+                                {
+                                    for (int i = 0; i < result.FieldCount; i++)
+                                    {
+                                        header += result.GetName(i)?.ToString() + "\t";
+                                    }
+                                }
+
+                                // do something with result
                                 for (int i = 0; i < result.FieldCount; i++)
                                 {
-                                    header += result.GetName(i)?.ToString() + "\t";
-                                }
-                            }
-
-                            // do something with result
-                            for (int i = 0; i < result.FieldCount; i++)
-                            {
-                                try
-                                {
-                                    var type = result.GetFieldType(i)?.FullName;
-                                    var fieldString = "null";
-
-                                    if (DBNull.Value.Equals(result.GetValue(i)))
+                                    try
                                     {
+                                        var type = result.GetFieldType(i)?.FullName;
+                                        var fieldString = "null";
+
+                                        if (DBNull.Value.Equals(result.GetValue(i)))
+                                        {
+                                            resultString += fieldString + "\t";
+                                            continue;
+                                        }
+
+                                        switch (type)
+                                        {
+                                            case "System.Int64":
+                                                fieldString = result.GetInt64(i).ToString();
+                                                break;
+
+                                            case "System.String":
+                                                fieldString = result.GetValue(i).ToString()?.Replace("`", "");
+                                                break;
+
+                                            default:
+                                                fieldString = $"{type} is unknown";
+                                                break;
+                                        }
+
                                         resultString += fieldString + "\t";
-                                        continue;
                                     }
-
-                                    switch (type)
+                                    catch (Exception ex)
                                     {
-                                        case "System.Int64":
-                                            fieldString = result.GetInt64(i).ToString();
-                                            break;
-
-                                        case "System.String":
-                                            fieldString = result.GetValue(i).ToString();
-                                            break;
-
-                                        default:
-                                            fieldString = $"{type} is unknown";
-                                            break;
+                                        throw ex;
                                     }
 
-                                    resultString += fieldString + "\t";
                                 }
-                                catch (Exception ex)
+                                resultString += Environment.NewLine;
+
+                                rowCount++;
+
+                                if (rowCount >= maxRows)
                                 {
-
+                                    break;
                                 }
-
-                            }
-                            resultString += Environment.NewLine;
-                            rowCount++;
-
-                            if (rowCount >= maxRows)
-                            {
-                                break;
                             }
                         }
                     }
                 }
+
+                header += "** ```";
+
+                if (resultString.Length > 1800)
+                {
+                    resultString = resultString.Substring(0, 1800);
+                }
+                resultString += "```";
+
+                Context.Channel.SendMessageAsync(header + Environment.NewLine + resultString + Environment.NewLine + $"{rowCount} Row(s) affected", false);
             }
-
-            header += "**";
-
-            if (resultString.Length > 1800)
+            catch(Exception ex)
             {
-                resultString = resultString.Substring(0, 1800);
+                Context.Channel.SendMessageAsync("Error: " + ex.Message, false);
             }
-
-            Context.Channel.SendMessageAsync(header + Environment.NewLine + resultString + Environment.NewLine + $"{rowCount} Row(s) affected", false);
         }
     }
 

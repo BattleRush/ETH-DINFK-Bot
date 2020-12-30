@@ -2,10 +2,12 @@
 using Discord.WebSocket;
 using ETHBot.DataLayer.Data.Discord;
 using ETHBot.DataLayer.Data.Enums;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace ETHDINFKBot.Log
 {
@@ -30,6 +32,7 @@ namespace ETHDINFKBot.Log
 
     public class LogManager
     {
+        private readonly ILogger _logger = new Logger<LogManager>(Program.Logger);
         private DatabaseManager DatabaseManager;
         public LogManager(DatabaseManager databaseManager)
         {
@@ -90,7 +93,7 @@ namespace ETHDINFKBot.Log
             }*/
         }
 
-        public async void ProcessEmojisAndPings(IReadOnlyCollection<ITag> tags, ulong authorId, bool isBot)
+        public async Task ProcessEmojisAndPings(IReadOnlyCollection<ITag> tags, ulong authorId, bool isBot)
         {
             try
             {
@@ -167,8 +170,6 @@ namespace ETHDINFKBot.Log
 
                 }
 
-
-
                 foreach (var pingInfo in listOfUsers)
                 {
                     DatabaseManager.AddPingStatistic(pingInfo.Key, pingInfo.Value, isBot);
@@ -218,9 +219,16 @@ namespace ETHDINFKBot.Log
 
         public void ProcessMessage(SocketUser user, BotMessageType type)
         {
-            var guildUser = user as SocketGuildUser;
+            try
+            {
+                var guildUser = user as SocketGuildUser;
 
-            DatabaseManager.AddCommandStatistic(type, guildUser.Id);
+                DatabaseManager.AddCommandStatistic(type, guildUser.Id);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
 
             /*
             if (!Program.BotStats.DiscordUsers.Any(i => i.DiscordId == user.Id))

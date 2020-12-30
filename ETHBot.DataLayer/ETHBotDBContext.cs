@@ -19,11 +19,14 @@ namespace ETHBot.DataLayer
 
         public ETHBotDBContext()
         {
+            //dotnet ef migrations add AddRantTables --project ETHBot.DataLayer/  --startup-project ETHDINFKBot/
+
             if (!_created)
             {
                 _created = true;
                 //Database.EnsureDeleted();
-                Database.EnsureCreated();
+                //Database.EnsureCreated();
+                Database.Migrate();
             }
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionbuilder)
@@ -32,7 +35,7 @@ namespace ETHBot.DataLayer
 #if DEBUG
             optionbuilder.UseLoggerFactory(loggerFactory).UseSqlite(@"Data Source=I:\ETHBot\ETHBot.db").EnableSensitiveDataLogging();
 #else
-            optionbuilder.UseLoggerFactory(loggerFactory).UseSqlite(@"Data Source=Database/ETHBot.db").EnableSensitiveDataLogging();
+            optionbuilder.UseLoggerFactory(loggerFactory).UseSqlite(@"Data Source=/usr/local/bin/ETHBot/Database/ETHBot.db").EnableSensitiveDataLogging();
 #endif
 
         }
@@ -52,6 +55,11 @@ namespace ETHBot.DataLayer
         public DbSet<SubredditInfo> SubredditInfos { get; set; }
         public DbSet<RedditPost> RedditPosts { get; set; }
         public DbSet<RedditImage> RedditImages { get; set; }
+
+
+        public DbSet<RantType> RantTypes { get; set; }
+        public DbSet<RantMessage> RantMessages { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

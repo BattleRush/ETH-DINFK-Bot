@@ -23,6 +23,8 @@ namespace ETHBot.DataLayer.Data.Reddit
         public int DownvoteCount { get; set; }
         public string Permalink { get; set; }
         public string Url { get; set; }
+        public bool IsText { get; set; }
+        public string Content { get; set; }
 
         //public int CommentCount { get; set; } awards?
 

@@ -78,12 +78,6 @@ namespace ETHDINFKBot
             builder.WithThumbnailUrl("https://avatars0.githubusercontent.com/u/11750584");
             builder.WithFooter($"https://github.com/BattleRush");
             builder.WithCurrentTimestamp();
-            builder.AddField("Github profile", "https://github.com/BattleRush");
-            builder.AddField("The Roslyn .NET compiler (contributor)", "https://github.com/BattleRush/roslyn");
-            builder.AddField("C# Console example for Steam Trading", "https://github.com/BattleRush/SteamTradeExample-Console");
-            //builder.AddField("http://battlerush.github.io/", "https://github.com/BattleRush/battlerush.github.io");
-            builder.AddField("PokemonGoFlairSelection", "https://github.com/BattleRush/PokemonGoFlairSelection");
-            builder.AddField("Simple lightweight website to calculate your grades", "https://github.com/BattleRush/CalculateGrades");
 
             Context.Channel.SendMessageAsync("", false, builder.Build());
         }
@@ -92,7 +86,7 @@ namespace ETHDINFKBot
         [Alias("about")]
         public async Task HelpOutput()
         {
-            _logger.LogError("GET HelpOutput called.");
+           // _logger.LogError("GET HelpOutput called.");
 
 
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
@@ -107,30 +101,19 @@ namespace ETHDINFKBot
             builder.WithTitle("BattleRush's Helper Help");
             //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
             builder.WithDescription(@"Prefix for all comands is "".""
-Version: 0.0.0.I didn't implement this yet");
+Help is in EBNF form, so I hope for you all reading this actually paid attention to Thomas how to use it");
             builder.WithColor(0, 0, 255);
 
             builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
-            builder.WithFooter($"If you can read this then ping Mert | TroNiiXx | [13]");
+            //builder.WithFooter($"If you can read this then ping Mert | TroNiiXx | [13]");
             builder.WithCurrentTimestamp();
-            builder.AddField("help", "Returns this message");
-            builder.AddField("code or source", "Return the sourcecode for this bot");
-            builder.AddField("google", "Search on Google");
-            builder.AddField("duck", "Search on DuckDuckGo");
-
-            builder.AddField("stats", "Returns stats", true);
-            builder.AddField("neko", "Neko Image", true);
-            builder.AddField("nekogif", "Neko Gif", true);
-            builder.AddField("fox", "Fox image", true);
-            builder.AddField("waifu", "Waifu image", true);
-            builder.AddField("baka", "Baka image", true);
-            builder.AddField("smug", "Smug image", true);
-            builder.AddField("holo", "Holo image", true);
-            builder.AddField("avatar", "Avatar image", true);
-            builder.AddField("nekoavatar", "Neko avatar image", true);
-            builder.AddField("wallpaper", "Wallpaper image", true);
-
-            builder.AddField("block", "Owner only", true);
+            //builder.WithAuthor(author);
+            builder.AddField("Misc", "```.help .source .stats .lb```");
+            builder.AddField("Search", "```.google|duck <search term>```");
+            builder.AddField("Images", "```.neko[avatar] .fox .waifu .baka .smug .holo .avatar .wallpaper```");
+            builder.AddField("Reddit", "```.r[p] <subreddit>|all```");
+            builder.AddField("Rant", "```.rant [ types | (<type> <message>) ]```");
+            builder.AddField("SQL", "```.sql (table info) | (query <query>)```");
 
             Context.Channel.SendMessageAsync("", false, builder.Build());
         }
@@ -556,8 +539,98 @@ Version: 0.0.0.I didn't implement this yet");
         }
 
 
+        [Command("rant")]
+        public async Task Rant(string type = null, [Remainder] string content = "")
+        {
+            // TODO perm check but for now open everwhere
 
+            if (type == null)
+            {
+                // get a random rant
+                RandomRant();
 
+            }
+            else if (type.ToLower() == "help")
+            {
+                HelpOutput();
+                return;
+            }
+            else if (type.ToLower() == "types")
+            {
+                var typeList = DatabaseManager.GetAllRantTypes();
+                string allTypes = "```" + string.Join(", ", typeList) + "```";
+
+                EmbedBuilder builder = new EmbedBuilder();
+
+                builder.WithTitle("All Rant types");
+
+                builder.WithColor(0, 0, 255);
+
+                builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+                builder.WithCurrentTimestamp();
+                builder.AddField("Types [Id, Name]", allTypes);
+
+                Context.Channel.SendMessageAsync("", false, builder.Build());
+            }
+            else
+            {
+                int typeId = DatabaseManager.GetRantType(type);
+                if (content.Length == 0)
+                {
+                    // requested a rant from that category
+                    RandomRant(type);
+                    return;
+                }
+                else if (content.Length < 5)
+                {
+                    await Context.Channel.SendMessageAsync($"Rant needs to be atleast 5 characters long", false);
+                    return;
+                }
+
+                if(typeId < 0)
+                {
+                    await Context.Channel.SendMessageAsync($"You used a type that doesnt exist yet. But because I'm so nice im adding it for you.", false);
+                    bool success = DatabaseManager.Instance().AddRantType(type);
+                    await Context.Channel.SendMessageAsync($"Added {type} Success: {success}", false);
+
+                    if (!success)
+                        return;
+
+                    typeId = DatabaseManager.GetRantType(type);
+                }
+
+                var guildChannel = (SocketGuildChannel)Context.Message.Channel;
+
+                bool successRant = DatabaseManager.AddRant(Context.Message.Id, Context.Message.Author.Id, guildChannel.Id, typeId, content);
+                Context.Channel.SendMessageAsync($"Added rant for {type} Success: {successRant}", false);
+            }
+        }
+
+        private async void RandomRant(string type = null)
+        {
+            var rant = DatabaseManager.GetRandomRant(type);
+            if (rant == null)
+            {
+                await Context.Channel.SendMessageAsync($"No rant could be loaded for type {type}. If you try to add a rant type '.rant {type} <your actuall rant>'", false);
+                return;
+            }
+
+            var byUser = Program.Client.GetUser(rant.DiscordUserId);
+            var datePosted = SnowflakeUtils.FromSnowflake(rant.DiscordMessageId);
+            var rantType = DatabaseManager.GetRantTypeNameById(rant.RantTypeId);
+
+            EmbedBuilder builder = new EmbedBuilder();
+
+            builder.WithTitle($"Rant about {rantType} on {datePosted:dd.MM.yyyy}");
+            builder.Description = rant.Content;
+            builder.WithColor(255, 0, 255);
+            builder.WithAuthor(byUser);
+            //builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+            builder.WithCurrentTimestamp();
+            builder.WithFooter($"RantId: {rant.RantMessageId} TypeId: {rant.RantTypeId}");
+
+            Context.Channel.SendMessageAsync("", false, builder.Build());
+        }
 
 
         [Command("stats")]
@@ -679,48 +752,114 @@ Version: 0.0.0.I didn't implement this yet");
             Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
+        // TODO Duplicate
+        private bool ContainsForbiddenQuery(string command)
+        {
+            List<string> forbidden = new List<string>()
+            {
+                "alter",
+                "analyze",
+                "attach",
+                "transaction",
+                "comment",
+                "commit",
+                "create",
+                "delete",
+                "detach",
+                "database",
+                "drop",
+                "insert",
+                "pragma",
+                "reindex",
+                "release",
+                "replace",
+                "rollback",
+                "savepoint",
+                "update",
+                "upsert",
+                "recursive ", // idk why it breaks when i have time ill take a look
+                "with "
+            };
+
+            //.sql query select * from RedditPosts,SubredditInfos,DiscordUsers,BannedLinks,CommandStatistics,CommandTypes,DiscordMessages as x,EmojiStatistics, PingStatistics,SavedMessages,RedditImages where PostTitle = EmojiName or UpvoteCount = x.MessageId
+
+            foreach (var item in forbidden)
+            {
+                if (command.ToLower().Contains(item.ToLower()))
+                    return true;
+            }
+
+            return false;
+        }
+
 
         [Command("r")]
-        public async Task Reddit(string subreddit)
+        public async Task Reddit(string subreddit = "")
         {
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
-            string link = "";
-            try
+
+            if (ContainsForbiddenQuery(subreddit))
+                return;
+
+            LogManager.ProcessMessage(Context.Message.Author, BotMessageType.Reddit);
+
+            if (subreddit.ToLower() == "all")
             {
-                // TODO Better escaping
-                subreddit = subreddit.Replace("'", "''");
+                string allSubreddits = "**Available subreddits**" + Environment.NewLine;
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    using (var command = context.Database.GetDbConnection().CreateCommand())
+                    var subredditInfos = context.SubredditInfos.AsQueryable().OrderBy(i => i.SubredditName).ToList();
+
+                    foreach (var item in subredditInfos)
                     {
-                        // TODO sql input escaping
-                        command.CommandText = @$"select ri.Link from SubredditInfos si
+                        allSubreddits += $"{item.SubredditName}, ";
+                    }
+
+                    // TODO better text
+                    Context.Channel.SendMessageAsync(allSubreddits, false);
+                }
+            }
+            else
+            {
+                // TODO text posts
+
+                string link = "";
+                try
+                {
+                    // TODO Better escaping
+                    subreddit = subreddit.Replace("'", "''");
+                    using (ETHBotDBContext context = new ETHBotDBContext())
+                    {
+                        using (var command = context.Database.GetDbConnection().CreateCommand())
+                        {
+                            // TODO sql input escaping
+                            command.CommandText = @$"select ri.Link from SubredditInfos si
 left join RedditPosts pp on si.SubredditId = pp.SubredditInfoId
 left join RedditImages ri on pp.RedditPostId = ri.RedditPostId
-where si.SubredditName = '{subreddit}' and ri.Link is not null and pp.IsNSFW = 0
+where si.SubredditName like '%{subreddit}%' and ri.Link is not null and pp.IsNSFW = 0
 ORDER BY RANDOM() LIMIT 1";// todo nsfw test
-                        context.Database.OpenConnection();
-                        using (var result = command.ExecuteReader())
-                        {
-                            while (result.Read())
+                            context.Database.OpenConnection();
+                            using (var result = command.ExecuteReader())
                             {
-                                link = result.GetString(0);
-                                break;
+                                while (result.Read())
+                                {
+                                    link = result.GetString(0);
+                                    break;
+                                }
                             }
                         }
                     }
+
+                }
+                catch (Exception ex)
+                {
+
                 }
 
-            }
-            catch (Exception ex)
-            {
+                Context.Channel.SendMessageAsync(link, false);
 
             }
-
-            Context.Channel.SendMessageAsync(link, false);
-
-
             /*
  * 
  * SELECT column FROM table 
@@ -729,68 +868,148 @@ ORDER BY RANDOM() LIMIT 1
 */
         }
 
+        [Command("disk")]
+        public void DirSizeReddit()
+        {
+            try
+            {
+                DirectoryInfo info = new DirectoryInfo("Reddit");
+                long size = DirSize(info);
 
+                Context.Channel.SendMessageAsync($"Current Reddit disk usage :{size / (decimal)1024 / 1024 / 1024} GB", false);
+            }
+            catch (Exception ex)
+            {
+                Context.Channel.SendMessageAsync(ex.ToString(), false);
+            }
+        }
+
+        public static long DirSize(DirectoryInfo d)
+        {
+            long size = 0;
+            // Add file sizes.
+            FileInfo[] fis = d.GetFiles();
+            foreach (FileInfo fi in fis)
+            {
+                size += fi.Length;
+            }
+            // Add subdirectory sizes.
+            DirectoryInfo[] dis = d.GetDirectories();
+            foreach (DirectoryInfo di in dis)
+            {
+                size += DirSize(di);
+            }
+            return size;
+        }
 
         [Command("rp")]
-        public async Task RedditPost(string subreddit)
+        public async Task RedditPost(string subreddit = "")
         {
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
 
+            if (ContainsForbiddenQuery(subreddit))
+                return;
 
-            int postId = 0;
-            try
+            LogManager.ProcessMessage(Context.Message.Author, BotMessageType.Reddit);
+
+            if (subreddit.ToLower() == "all")
             {
-                // TODO Better escaping
-                subreddit = subreddit.Replace("'", "''");
+                string allSubreddits = "**Available subreddits**" + Environment.NewLine;
+                Context.Channel.SendMessageAsync(allSubreddits, false);
+                allSubreddits = "";
+
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    using (var command = context.Database.GetDbConnection().CreateCommand())
+                    var subredditInfos = context.SubredditInfos.AsQueryable().OrderBy(i => i.SubredditName).ToList();
+
+                    foreach (var item in subredditInfos)
                     {
-                        // TODO sql input escaping
-                        command.CommandText = @$"select pp.RedditPostId from SubredditInfos si
-left join RedditPosts pp on si.SubredditId = pp.SubredditInfoId
-where si.SubredditName = '{subreddit}' and pp.IsNSFW = 0
-ORDER BY RANDOM() LIMIT 1";// todo nsfw test
-                        context.Database.OpenConnection();
-                        using (var result = command.ExecuteReader())
+                        allSubreddits += $"{item.SubredditName}, ";
+
+                        if (allSubreddits.Length > 1900)
                         {
-                            while (result.Read())
-                            {
-                                postId = result.GetInt32(0);
-                                break;
-                            }
+                            // TODO better text
+                            Context.Channel.SendMessageAsync(allSubreddits, false);
+                            allSubreddits = "";
                         }
                     }
 
 
-                    var redditPost = DatabaseManager.GetRedditPostById(postId);
-
-
-
-                    EmbedBuilder builder = new EmbedBuilder();
-
-                    builder.WithTitle(redditPost.PostTitle);
-                    builder.WithUrl(redditPost.Url);
-
-                    builder.WithDescription($@"Posted by: {redditPost.Author} on {redditPost.PostedAt}");
-                    builder.WithColor(0, 0, 255);
-
-                    //builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
-                    builder.WithCurrentTimestamp();
-                    builder.WithImageUrl(redditPost.Url);
-                    builder.AddField("Upvotes", redditPost.UpvoteCount, true);
-                    builder.AddField("Downvotes", redditPost.DownvoteCount, true);
-                    builder.AddField("NSFW", redditPost.IsNSFW, true);
-
-                    Context.Channel.SendMessageAsync("", false, builder.Build());
-
                 }
-
             }
-            catch (Exception ex)
+            else
             {
 
+                int postId = 0;
+                try
+                {
+                    // TODO Better escaping
+                    subreddit = subreddit.Replace("'", "''");
+                    using (ETHBotDBContext context = new ETHBotDBContext())
+                    {
+                        using (var command = context.Database.GetDbConnection().CreateCommand())
+                        {
+                            // TODO sql input escaping
+                            command.CommandText = @$"select pp.RedditPostId from SubredditInfos si
+left join RedditPosts pp on si.SubredditId = pp.SubredditInfoId
+where si.SubredditName like '%{subreddit}%' and pp.IsNSFW = 0
+ORDER BY RANDOM() LIMIT 1";// todo nsfw test
+                            context.Database.OpenConnection();
+                            using (var result = command.ExecuteReader())
+                            {
+                                while (result.Read())
+                                {
+                                    postId = result.GetInt32(0);
+                                    break;
+                                }
+                            }
+                        }
+
+
+                        var redditPost = DatabaseManager.GetRedditPostById(postId);
+
+                        var subredditInfo = DatabaseManager.GetSubreddit(redditPost.SubredditInfoId);
+
+                        EmbedBuilder builder = new EmbedBuilder();
+
+                        builder.WithTitle(redditPost.PostTitle);
+                        builder.WithUrl("https://www.reddit.com/" + redditPost.Permalink);
+
+                        var content = redditPost.IsText ? redditPost.Content : "";
+
+                        if (content.Length > 2000)
+                        {
+                            content = content.Substring(0, 2000);
+                        }
+
+                        // TODO if subreddit name null get the subreddit 
+                        builder.WithDescription(content);
+                        builder.WithColor(0, 0, 255);
+
+                        //builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+                        builder.WithCurrentTimestamp();
+                        string url = redditPost.Url;
+                        if (url.Contains("v.redd.it"))
+                        {
+                            url += "/DASH_720.mp4";
+                        }
+
+                        builder.WithImageUrl(url);
+                        builder.AddField("Infos", $"Posted by: {redditPost.Author} in /r/{subredditInfo?.SubredditName} at {redditPost.PostedAt}");
+                        builder.AddField("Upvotes", redditPost.UpvoteCount, true);
+                        builder.AddField("Downvotes", redditPost.DownvoteCount, true);
+                        builder.AddField("NSFW", redditPost.IsNSFW, true);
+
+                        Context.Channel.SendMessageAsync("", false, builder.Build());
+
+                    }
+
+                }
+                catch (Exception ex)
+                {
+
+                }
             }
             /*
  * 
@@ -850,33 +1069,42 @@ ORDER BY RANDOM() LIMIT 1
 
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
-            Context.Channel.SendMessageAsync("Currently out of order come later again :(", false);
-            /*
-            var author = Context.Message.Author;
-            LogManager.ProcessMessage(author, BotMessageType.Other);
+            try
+            {
 
-            // TODO clean up this mess
-            var topEmojiText = Program.GlobalStats.EmojiInfoUsage.OrderByDescending(i => i.UsedInTextOnce).Take(10);
-            var topEmojiReaction = Program.GlobalStats.EmojiInfoUsage.OrderByDescending(i => i.UsedAsReaction).Take(10);
-            var topPing = Program.GlobalStats.PingInformation.OrderByDescending(i => i.PingCountOnce).Take(10);
+                var author = Context.Message.Author;
+                LogManager.ProcessMessage(author, BotMessageType.Other);
+
+                var statText = DatabaseManager.GetTopEmojiStatisticByText(10);
+                var statTextBot = DatabaseManager.GetTopEmojiStatisticByBot(10);
+                var statTextOnce = DatabaseManager.GetTopEmojiStatisticByTextOnce(10);
+                var statTextReaction = DatabaseManager.GetTopEmojiStatisticByReaction(10);
+                //var statEmoji = DatabaseManager.ping(10);
 
 
-            EmbedBuilder builder = new EmbedBuilder();
+                EmbedBuilder builder = new EmbedBuilder();
 
-            builder.WithTitle("BattleRush's Helper Stats");
-            //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
+                builder.WithTitle("BattleRush's Helper Stats");
+                //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
 
-            builder.WithColor(0, 100, 175);
+                builder.WithColor(0, 100, 175);
 
-            // Profile image of top person -> to update
-            //builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+                // Profile image of top person -> to update
+                //builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
 
-            builder.WithCurrentTimestamp();
-            builder.AddField("Top Emoji Usage", GetRankingString(topEmojiText.Select(i => $"<{(i.Animated ? "a:" : ":") + i.EmojiName}:{i.EmojiId}> " + i.UsedInTextOnce)));
-            builder.AddField("Top Emoji (as reaction) Usage", GetRankingString(topEmojiReaction.Select(i => $"<{(i.Animated ? "a:" : ":") + i.EmojiName}:{i.EmojiId}> " + i.UsedAsReaction)));
-            builder.AddField("Top Pinged Users", GetRankingString(topPing.Select(i => $"<@{i.DiscordUser.DiscordId}>: " + i.PingCountOnce)));
+                builder.WithCurrentTimestamp();
+                builder.AddField("Top Emoji", GetRankingString(statTextOnce.Select(i => $"<{(i.Animated ? "a:" : ":") + i.EmojiName}:{i.EmojiId}> " + i.UsedInTextOnce)), true);
+                builder.AddField("Top Emoji (all)", GetRankingString(statText.Select(i => $"<{(i.Animated ? "a:" : ":") + i.EmojiName}:{i.EmojiId}> " + i.UsedInText)), true);
+                //builder.AddField("Top Emoji (from Bots)", GetRankingString(statTextBot.Select(i => $"<{(i.Animated ? "a:" : ":") + i.EmojiName}:{i.EmojiId}> " + i.UsedByBots)), true);
+                builder.AddField("Top Reactions", GetRankingString(statTextReaction.Select(i => $"<{(i.Animated ? "a:" : ":") + i.EmojiName}:{i.EmojiId}> " + i.UsedAsReaction)), true);
+                builder.AddField("Top Pinged Users", "TODO");
 
-            Context.Channel.SendMessageAsync("", false, builder.Build());*/
+                Context.Channel.SendMessageAsync("", false, builder.Build());
+            }
+            catch (Exception ex)
+            {
+                Context.Channel.SendMessageAsync(ex.ToString(), false);
+            }
         }
 
 

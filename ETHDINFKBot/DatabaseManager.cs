@@ -124,6 +124,22 @@ namespace ETHDINFKBot
             }
         }
 
+        public List<DiscordChannel> GetDiscordAllChannels(ulong serverId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordChannels.AsQueryable().Where(i => i.DiscordServerId == serverId).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
         public DiscordChannel CreateDiscordChannel(DiscordChannel channel)
         {
             try
@@ -173,6 +189,201 @@ namespace ETHDINFKBot
         }
 
 
+        public bool DeleteRantType(int typeId)
+        {
+
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    RantType r = new RantType() { RantTypeId = typeId };
+                    context.RantTypes.Attach(r);
+                    context.RantTypes.Remove(r);
+                    context.SaveChanges();
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return false;
+            }
+        }
+
+
+        public bool DeleteRantMessage(int rantId)
+        {
+
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    RantMessage r = new RantMessage() { RantMessageId = rantId };
+                    context.RantMessages.Attach(r);
+                    context.RantMessages.Remove(r);
+                    context.SaveChanges();
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return false;
+            }
+        }
+
+
+        public bool AddRantType(string type)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    if (!context.RantTypes.Any(i => i.Name.ToLower() == type.ToLower()))
+                    {
+                        context.RantTypes.Add(new RantType()
+                        {
+                            Name = type
+                        });
+                        context.SaveChanges();
+                        return true;
+                    }
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return false;
+            }
+        }
+
+
+        public int GetRantType(string type)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var rantType = context.RantTypes.SingleOrDefault(i => i.Name.ToLower() == type.ToLower());
+
+                    if (rantType == null)
+                        return -1;
+                    return rantType.RantTypeId;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return -1;
+            }
+        }
+
+        public string GetRantTypeNameById(int typeId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var rantType = context.RantTypes.SingleOrDefault(i => i.RantTypeId == typeId);
+
+                    if (rantType == null)
+                        return null;
+                    return rantType.Name;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public RantMessage GetRandomRant(string type = null)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    // TODO optimize
+                    var rants = context.RantMessages.ToList();
+                    
+                    if (type != null)
+                    {
+                        int rantTypeId = GetRantType(type);
+                        rants = rants.Where(i => i.RantTypeId == rantTypeId).ToList();
+                    }
+                    
+                    if(rants.Count == 0)
+                    {
+                        return null;
+                    }
+
+                    var r = new Random();
+                    return rants.ElementAt(r.Next(rants.Count()));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public Dictionary<int, string> GetAllRantTypes()
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    Dictionary<int, string> list = new Dictionary<int, string>();
+
+                    var allTypes = context.RantTypes.ToList();
+
+                    foreach (var item in allTypes)
+                    {
+                        list.Add(item.RantTypeId, item.Name);
+                    }
+
+                    return list;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+
+        public bool AddRant(ulong messageId, ulong authorId, ulong channelId, int type, string content)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    context.RantMessages.Add(new RantMessage()
+                    {
+                        DiscordChannelId = channelId,
+                        DiscordMessageId = messageId,
+                        DiscordUserId = authorId,
+                        RantTypeId = type,
+                        Content = content
+                    });
+                    context.SaveChanges();
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return false;
+            }
+        }
+
+
         public BannedLink GetBannedLink(string link)
         {
             try
@@ -189,6 +400,121 @@ namespace ETHDINFKBot
             }
         }
 
+
+        public IEnumerable<EmojiStatistic> GetTopEmojiStatisticByBot(int count)
+        {
+            if (count < 1)
+                count = 1;
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.EmojiStatistics.AsQueryable().OrderByDescending(i => i.UsedByBots).Take(count).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+
+        public IEnumerable<EmojiStatistic> GetTopEmojiStatisticByText(int count)
+        {
+            if (count < 1)
+                count = 1;
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.EmojiStatistics.AsQueryable().OrderByDescending(i => i.UsedInText).Take(count).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+        public IEnumerable<EmojiStatistic> GetTopEmojiStatisticByTextOnce(int count)
+        {
+            if (count < 1)
+                count = 1;
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.EmojiStatistics.AsQueryable().OrderByDescending(i => i.UsedInTextOnce).Take(count).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public IEnumerable<EmojiStatistic> GetTopEmojiStatisticByReaction(int count)
+        {
+            if (count < 1)
+                count = 1;
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.EmojiStatistics.AsQueryable().OrderByDescending(i => i.UsedAsReaction).Take(count).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+
+        public IEnumerable<CommandStatistic> GetTopCommandUsage(int count, BotMessageType type)
+        {
+            if (count < 1)
+                count = 1;
+
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.CommandStatistics.AsQueryable().Where(i => i.CommandTypeId == (int)type).OrderByDescending(i => i.Count).Take(count).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+
+        public bool BanSubreddit(string subreddit)
+        {
+            var subredditInfo = GetSubreddit(subreddit);
+            if (subredditInfo != null)
+            {
+                try
+                {
+                    using (ETHBotDBContext context = new ETHBotDBContext())
+                    {
+                        context.SubredditInfos.Single(i => i.SubredditId == subredditInfo.SubredditId).IsManuallyBanned = true;
+                        return true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, ex.Message);
+                    return false;
+                }
+            }
+            return false;
+        }
 
 
         public bool CreateBannedLink(BannedLink bannedLink)
@@ -268,7 +594,7 @@ namespace ETHDINFKBot
                     {
                         context.PingStatistics.Add(new PingStatistic()
                         {
-                            DiscordUser = user,
+                            //DiscordUser = user,
                             PingCount = !isBot ? count : 0,
                             PingCountOnce = !isBot ? 1 : 0,
                             PingCountBot = !isBot ? 0 : count,
@@ -277,9 +603,12 @@ namespace ETHDINFKBot
                     }
                     else
                     {
-                        stat.PingCountOnce += !isBot ? 1 : 0;
-                        stat.PingCount += !isBot ? count : 0;
-                        stat.PingCountBot += !isBot ? 0 : count;
+                        // todo cleanup for perf im just lazy :/
+                        var currStat = context.PingStatistics.SingleOrDefault(i => i.DiscordUser.DiscordUserId == userId);
+
+                        currStat.PingCountOnce += !isBot ? 1 : 0;
+                        currStat.PingCount += !isBot ? count : 0;
+                        currStat.PingCountBot += !isBot ? 0 : count;
                     }
 
                     context.SaveChanges();
@@ -323,7 +652,7 @@ namespace ETHDINFKBot
             }
         }
 
-        public void UpdateChannelSetting(ulong channelId, int permission)
+        public void UpdateChannelSetting(ulong channelId, int permission, bool onlyIfNew = false)
         {
             try
             {
@@ -338,7 +667,7 @@ namespace ETHDINFKBot
                             ChannelPermissionFlags = permission
                         });
                     }
-                    else
+                    else if (!onlyIfNew)
                     {
                         // TODO reuse object from above
                         context.BotChannelSettings.Single(i => i.DiscordChannelId == channelId).ChannelPermissionFlags = permission;
@@ -392,14 +721,18 @@ namespace ETHDINFKBot
                             UsedInTextOnce = !isBot ? statistic.UsedInTextOnce : 0,
                             UsedByBots = !isBot ? 0 : statistic.UsedByBots,
                         });
-                        context.SaveChanges();
+                        //context.SaveChanges();
                     }
                     else
                     {
-                        dbEmoji.UsedAsReaction += !isBot ? statistic.UsedAsReaction : 0;
-                        dbEmoji.UsedInText += !isBot ? statistic.UsedInText : 0;
-                        dbEmoji.UsedInTextOnce += !isBot ? 1 : 0;// statistic.UsedInTextOnce;
-                        dbEmoji.UsedByBots += !isBot ? 0 : statistic.UsedByBots;
+                        // todo cleanup this mess
+
+                        var emojiStat = context.EmojiStatistics.SingleOrDefault(i => i.EmojiId == statistic.EmojiId);
+
+                        emojiStat.UsedAsReaction += !isBot ? statistic.UsedAsReaction : 0;
+                        emojiStat.UsedInText += !isBot ? statistic.UsedInText : 0;
+                        emojiStat.UsedInTextOnce += !isBot ? 1 : 0;// statistic.UsedInTextOnce;
+                        emojiStat.UsedByBots += !isBot ? 0 : statistic.UsedByBots;
                         //context.Entry(dbEmoji).State = EntityState.Modified;
                         //dbEmoji.EmojiInfoId;
                     }
@@ -490,6 +823,14 @@ namespace ETHDINFKBot
             }
         }
 
+        public bool IsSaveMessage(ulong messageId, ulong savedByDiscordUserId)
+        {
+            using (ETHBotDBContext context = new ETHBotDBContext())
+            {
+                return context.SavedMessages.Any(i => i.MessageId == messageId && i.SavedByDiscordUserId == savedByDiscordUserId); // TODO check it works
+            }
+        }
+
         public bool SaveMessage(ulong messageId, ulong byDiscordUserId, ulong savedByDiscordUserId, string link, string content)
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
@@ -547,7 +888,10 @@ namespace ETHDINFKBot
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
                     var subredditInfo = GetSubreddit(subreddit);
-                    subredditInfo.IsScraping = status;
+                    if (subredditInfo == null)
+                        return false;
+
+                    context.SubredditInfos.Single(i => i.SubredditId == subredditInfo.SubredditId).IsScraping = status;
 
                     context.SaveChanges();
                 }
@@ -566,6 +910,14 @@ namespace ETHDINFKBot
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
                 return context.SubredditInfos.SingleOrDefault(i => i.SubredditName == subreddit);
+            }
+        }
+
+        public SubredditInfo GetSubreddit(int id)
+        {
+            using (ETHBotDBContext context = new ETHBotDBContext())
+            {
+                return context.SubredditInfos.SingleOrDefault(i => i.SubredditId == id);
             }
         }
 

@@ -3,14 +3,16 @@ using System;
 using ETHBot.DataLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ETHBot.DataLayer.Migrations
 {
     [DbContext(typeof(ETHBotDBContext))]
-    partial class ETHBotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20201207111829_AddedRedditTextPostFields")]
+    partial class AddedRedditTextPostFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -274,53 +276,6 @@ namespace ETHBot.DataLayer.Migrations
                     b.ToTable("PingStatistics");
                 });
 
-            modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.RantMessage", b =>
-                {
-                    b.Property<ulong>("RantMessageId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Content")
-                        .HasColumnType("TEXT");
-
-                    b.Property<ulong>("DiscordChannelId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<ulong>("DiscordMessageId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<ulong>("DiscordUserId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("RantTypeId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("RantMessageId");
-
-                    b.HasIndex("DiscordChannelId");
-
-                    b.HasIndex("DiscordMessageId");
-
-                    b.HasIndex("DiscordUserId");
-
-                    b.HasIndex("RantTypeId");
-
-                    b.ToTable("RantMessages");
-                });
-
-            modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.RantType", b =>
-                {
-                    b.Property<int>("RantTypeId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("RantTypeId");
-
-                    b.ToTable("RantTypes");
-                });
-
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.SavedMessage", b =>
                 {
                     b.Property<int>("SavedMessageId")
@@ -548,33 +503,6 @@ namespace ETHBot.DataLayer.Migrations
                     b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordUser", "DiscordUser")
                         .WithMany()
                         .HasForeignKey("DiscordUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.RantMessage", b =>
-                {
-                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordChannel", "Channel")
-                        .WithMany()
-                        .HasForeignKey("DiscordChannelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordMessage", "DiscordMessage")
-                        .WithMany()
-                        .HasForeignKey("DiscordMessageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordUser", "DiscordUser")
-                        .WithMany()
-                        .HasForeignKey("DiscordUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ETHBot.DataLayer.Data.Discord.RantType", "RantType")
-                        .WithMany()
-                        .HasForeignKey("RantTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
