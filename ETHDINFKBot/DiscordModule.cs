@@ -39,8 +39,12 @@ namespace ETHDINFKBot
 
         // TODO Remove alot of the redundant code for loggining and stats
 
+
         private bool AllowedToRun(BotPermissionType type)
         {
+            // since this is always calles works for now as workaround
+            NekoClient.LogType = LogType.None;
+
             var channelSettings = DatabaseManager.GetChannelSetting(Context.Message.Channel.Id);
             if (Context.Message.Author.Id != Program.Owner
                 && !((BotPermissionType)channelSettings?.ChannelPermissionFlags).HasFlag(type))
@@ -86,7 +90,7 @@ namespace ETHDINFKBot
         [Alias("about")]
         public async Task HelpOutput()
         {
-           // _logger.LogError("GET HelpOutput called.");
+            // _logger.LogError("GET HelpOutput called.");
 
 
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
@@ -373,6 +377,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             var req = NekosFun.GetLink("wallpaper");
             BannedLink report = null;
 
+            string regenString = "";
+
             do
             {
                 try
@@ -382,7 +388,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     {
 
                         var user = DatabaseManager.GetDiscordUserById(report.ByUserId);
-                        Context.Channel.SendMessageAsync($"An image has been blocked by {user.Nickname}. Regenerating a new image just for you :)", false);
+                        regenString += $"An image has been blocked by {user.Nickname}. Regenerating a new image just for you :)" + Environment.NewLine;
                         req = NekosFun.GetLink("wallpaper");
 
                         //return;
@@ -394,9 +400,17 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 }
             } while (report != null);
 
+            if (regenString.Length > 0)
+            {
+                await Context.Channel.SendMessageAsync(regenString, false);
+            }
 
             var message = await Context.Channel.SendMessageAsync(req, false);
-            await AddSaveReact(message);
+
+            // disabled for now
+            if (false)
+                await AddSaveReact(message);
+
             AddMessageToList(message);
 
             if (new Random().Next(0, 20) == 0)
@@ -464,6 +478,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             if (LastMessages.Count() > 100)
                 LastMessages.RemoveAt(0);
         }
+
 
         [Command("block")]
         public async Task Block(string image)
@@ -587,7 +602,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     return;
                 }
 
-                if(typeId < 0)
+                if (typeId < 0)
                 {
                     await Context.Channel.SendMessageAsync($"You used a type that doesnt exist yet. But because I'm so nice im adding it for you.", false);
                     bool success = DatabaseManager.Instance().AddRantType(type);
@@ -729,6 +744,27 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             }
         }
 
+        [Command("purge")]
+        public async Task Purge(int count, bool fromBot = false)
+        {
+            var author = Context.Message.Author;
+            if (author.Id != ETHDINFKBot.Program.Owner)
+            {
+                //Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
+            ulong fromUserToDelete = fromBot ? 774276700557148170 : ETHDINFKBot.Program.Owner;
+
+            if (fromBot)
+            {
+                Context.Message.DeleteAsync();
+            }
+
+            var messages = await Context.Channel.GetMessagesAsync(100).FlattenAsync(); //defualt is 100
+            messages = messages.Where(i => i.Author.Id == fromUserToDelete).OrderByDescending(i => i.Id).Take(count);
+            await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
+        }
 
         [Command("test")]
         public async Task Test()
@@ -752,7 +788,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
-        // TODO Duplicate
+        // TODO Duplicate (SERIOUSLY REWORK THAT SHIT YOU LAZY ASS)
         private bool ContainsForbiddenQuery(string command)
         {
             List<string> forbidden = new List<string>()
@@ -777,6 +813,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 "savepoint",
                 "update",
                 "upsert",
+                "vacuum",
                 "recursive ", // idk why it breaks when i have time ill take a look
                 "with "
             };

@@ -14,7 +14,7 @@ namespace ETHDINFKBot
             {
                 var json = client.DownloadString(new Uri($"http://api.nekos.fun:8080/api/{tag}"));
                 var jsonInfo = JsonConvert.DeserializeObject<Rootobject>(json);
-                Console.WriteLine("Got link: " + jsonInfo.image);
+                //Console.WriteLine("Got link: " + jsonInfo.image);
 
                 return jsonInfo.image;
             }
