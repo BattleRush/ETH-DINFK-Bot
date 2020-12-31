@@ -20,6 +20,7 @@ using RedditScrapper;
 using Reddit.Controllers;
 using Microsoft.Extensions.Logging;
 using System.IO;
+using System.Threading;
 
 namespace ETHDINFKBot
 {
@@ -765,6 +766,90 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             messages = messages.Where(i => i.Author.Id == fromUserToDelete).OrderByDescending(i => i.Id).Take(count);
             await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
         }
+
+
+        [Command("countdown2021")]
+        public async Task countdown2021()
+        {
+            var author = Context.Message.Author;
+            if (author.Id != ETHDINFKBot.Program.Owner)
+            {
+                //Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
+            Task t = new Task(() => CountdownLoop(Context));
+            t.Start();
+
+        }
+
+        private DateTime Now()
+        {
+            return DateTime.UtcNow.AddHours(1);
+        }
+
+        private long MilisecsToMidnight()
+        {
+            return (int)(new DateTime(2021, 1, 1, 0, 0, 0) - Now()).TotalMilliseconds;
+        }
+
+        private async void CountdownLoop(SocketCommandContext context)
+        {
+            while (Now().Year == 2020)
+            {
+                var ms = MilisecsToMidnight();
+                if (ms < 0)
+                    break;
+                if (ms < 10000)
+                {
+                    long secs = (ms / 1000) + 1;
+                    string addText = "";
+                    if (secs == 10)
+                        addText = "only 10 secs can you believe it";
+                    else if (secs == 9)
+                        addText = "";
+                    else if (secs == 8)
+                        addText = "uhm my time is running out";
+                    else if (secs == 7)
+                        addText = "";
+                    else if (secs == 6)
+                        addText = "uhm";
+                    else if (secs == 5)
+                        addText = "what do I say";
+                    else if (secs == 4)
+                        addText = "";
+                    else if (secs == 3)
+                        addText = "I could say something inspirational";
+                    else if (secs == 2)
+                        addText = "";
+                    else if (secs == 1)
+                        addText = "guess what happens next?";
+
+                    await context.Channel.SendMessageAsync($"{secs}... {addText}");
+
+                    Thread.Sleep((int)(ms % 1000));
+                }
+                else if (ms < 60000)
+                {
+                    await context.Channel.SendMessageAsync($"{(ms / 1000) + 1}...");
+                    Thread.Sleep((int)(ms % 5000));
+                }
+                else
+                {
+                    await context.Channel.SendMessageAsync($"{(ms / 60000) + 1} min left...");
+                    Thread.Sleep((int)(ms % 60000));
+                }
+            }
+
+            await context.Channel.SendMessageAsync($"Is it 2021?");
+            Thread.Sleep(2);
+            await context.Channel.SendMessageAsync($"Checks the clock");
+            Thread.Sleep(2);
+            await context.Channel.SendMessageAsync($"I guess it is. **Happy 2021**");
+            Thread.Sleep(5);
+            await context.Channel.SendMessageAsync($"Also **WE ARE NOW 1 YEAR CLOSER TO THE BASISPRÜFUNG EXAMS**");
+        }
+
 
         [Command("test")]
         public async Task Test()
