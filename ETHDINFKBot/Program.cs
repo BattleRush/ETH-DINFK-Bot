@@ -21,6 +21,10 @@ using ETHBot.DataLayer.Data.Discord;
 using ETHBot.DataLayer.Data;
 using ETHBot.DataLayer.Data.Enums;
 using Microsoft.Extensions.Logging;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using System.Net;
 
 namespace ETHDINFKBot
 {
@@ -239,7 +243,7 @@ namespace ETHDINFKBot
 
         private static void MigrateToSqliteDb()
         {
-        
+
 
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
@@ -681,7 +685,7 @@ namespace ETHDINFKBot
                     var saveBy = DatabaseManager.GetDiscordUserById(arg3.User.Value.Id); // Verify the user is created but should actually be available by this poitn
                     */
 
-                    if(DatabaseManager.IsSaveMessage(arg1.Value.Id, arg3.User.Value.Id))
+                    if (DatabaseManager.IsSaveMessage(arg1.Value.Id, arg3.User.Value.Id))
                     {
                         // dont allow double saves
                         return Task.CompletedTask;
@@ -841,7 +845,7 @@ namespace ETHDINFKBot
             }
 
 
-            if (m.Author.Id != Owner  && !((BotPermissionType)channelSettings?.ChannelPermissionFlags).HasFlag(BotPermissionType.Read))
+            if (m.Author.Id != Owner && !((BotPermissionType)channelSettings?.ChannelPermissionFlags).HasFlag(BotPermissionType.Read))
             {
                 // Cant read
                 return;
@@ -922,6 +926,66 @@ namespace ETHDINFKBot
             if (m.Author.IsBot)
                 return;
 
+            if (msg.Content.StartsWith("."))
+            {
+                // check if the emoji exists and if the emojis is animated
+                string name = msg.Content.Substring(1, msg.Content.Length - 1);
+
+                var emoji = DatabaseManager.GetEmojiByName(name);
+
+                if (emoji != null)
+                {
+                    var guildUser = msg.Author as SocketGuildUser;
+
+                    msg.DeleteAsync();
+
+                    var emoteString = $"<{(emoji.Animated ? "a" : "")}:{emoji.EmojiName}:{emoji.EmojiId}>";
+
+                    if (guildChannel.Guild.Emotes.Any(i => i.Id == emoji.EmojiId))
+                    {
+                        // we can post the emote as it will be rendered out
+                        await msg.Channel.SendMessageAsync(emoteString);
+                    }
+                    else
+                    {
+                        // TODO store resized images in db for faster reuse
+                        if (emoji.Animated)
+                        {
+                            // TODO gif resize
+                            await msg.Channel.SendMessageAsync(emoji.Url);
+                        }
+                        else
+                        {
+                            using (WebClient client = new WebClient())
+                            {
+                                var imageBytes = client.DownloadData(emoji.Url);
+
+                                using (var ms = new MemoryStream(imageBytes))
+                                {
+                                    var image = System.Drawing.Image.FromStream(ms);
+                                    var resImage = ResizeImage(image, 48, 48);
+
+                                    var stream = new MemoryStream();
+
+                                    resImage.Save(stream, resImage.RawFormat);
+                                    stream.Position = 0;
+
+
+                                    await msg.Channel.SendFileAsync(stream, $"{emoji.EmojiName}.png");
+                                }
+                            }
+                        }
+                        // we need to send the image as the current server doesnt have access
+                        
+                    }
+
+                    await msg.Channel.SendMessageAsync($"by {guildUser.Username}");
+
+                    return;
+                }
+            }
+
+
             int argPos = 0;
             if (!(msg.HasStringPrefix(".", ref argPos)))
             {
@@ -961,6 +1025,41 @@ namespace ETHDINFKBot
             await commands.ExecuteAsync(context, argPos, services);
         }
 
+
+
+        // source https://stackoverflow.com/questions/1922040/how-to-resize-an-image-c-sharp
+
+        /// <summary>
+        /// Resize the image to the specified width and height.
+        /// </summary>
+        /// <param name="image">The image to resize.</param>
+        /// <param name="width">The width to resize to.</param>
+        /// <param name="height">The height to resize to.</param>
+        /// <returns>The resized image.</returns>
+        public static Bitmap ResizeImage(System.Drawing.Image image, int width, int height)
+        {
+            var destRect = new Rectangle(0, 0, width, height);
+            var destImage = new Bitmap(width, height);
+
+            destImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
+
+            using (var graphics = Graphics.FromImage(destImage))
+            {
+                graphics.CompositingMode = CompositingMode.SourceCopy;
+                graphics.CompositingQuality = CompositingQuality.HighQuality;
+                graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                graphics.SmoothingMode = SmoothingMode.HighQuality;
+                graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+
+                using (var wrapMode = new ImageAttributes())
+                {
+                    wrapMode.SetWrapMode(WrapMode.TileFlipXY);
+                    graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, wrapMode);
+                }
+            }
+
+            return destImage;
+        }
         private async static void Test()
         {
 

@@ -90,6 +90,26 @@ namespace ETHDINFKBot.Modules
                 Context.Channel.SendMessageAsync("", false, builder.Build());
             }
 
+            [Command("all")]
+            public async Task AdminAllRantTypes()
+            {
+                // todo a bit of a duplicate from DiscordModule
+                var typeList = DatabaseManager.Instance().GetAllRantTypes();
+                string allTypes = "```" + string.Join(", ", typeList) + "```";
+
+                EmbedBuilder builder = new EmbedBuilder();
+
+                builder.WithTitle("All Rant types");
+
+                builder.WithColor(0, 0, 255);
+
+                builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+                builder.WithCurrentTimestamp();
+                builder.AddField("Types [Id, Name]", allTypes);
+
+                Context.Channel.SendMessageAsync("", false, builder.Build());
+            }
+
             [Command("add")]
             public async Task AddRantType(string type)
             {

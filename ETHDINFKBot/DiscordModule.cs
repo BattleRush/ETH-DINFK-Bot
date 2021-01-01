@@ -119,6 +119,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.AddField("Reddit", "```.r[p] <subreddit>|all```");
             builder.AddField("Rant", "```.rant [ types | (<type> <message>) ]```");
             builder.AddField("SQL", "```.sql (table info) | (query <query>)```");
+            builder.AddField("Emote (can send Nitro emotes for you)", "```.emote <search_string> | .<emote_name>```");
 
             Context.Channel.SendMessageAsync("", false, builder.Build());
         }
@@ -365,6 +366,38 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             Context.Channel.SendMessageAsync(req.ImageUrl, false);
         }*/
 
+        [Command("emote")]
+        public async Task EmojiInfo(string search)
+        {
+            
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
+
+            var author = Context.Message.Author;
+
+            var animatedEmotes = DatabaseManager.GetEmotesByName(search);
+
+            // limit to 100
+            animatedEmotes = animatedEmotes.Take(100).ToList();
+
+            // TODO make it look nice
+            string text = "**Available emojis to use (Usage .<name>)**" + Environment.NewLine + Environment.NewLine;
+
+            foreach (var emoji in animatedEmotes)
+            {
+                text += $".{emoji.EmojiName} ";
+
+                if(text.Length > 1800)
+                {
+                    await Context.Channel.SendMessageAsync(text, false);
+                    text = "";
+                }
+            }
+
+            await Context.Channel.SendMessageAsync(text, false);
+
+        }
+
         [Command("wallpaper", RunMode = RunMode.Async)]
         [Alias("wp")]
         public async Task Wallpaper()
@@ -574,7 +607,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             else if (type.ToLower() == "types")
             {
                 var typeList = DatabaseManager.GetAllRantTypes();
-                string allTypes = "```" + string.Join(", ", typeList) + "```";
+                string allTypes = "```" + string.Join(", ", typeList.Values) + "```";
 
                 EmbedBuilder builder = new EmbedBuilder();
 
@@ -584,7 +617,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                 builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
                 builder.WithCurrentTimestamp();
-                builder.AddField("Types [Id, Name]", allTypes);
+                builder.AddField("Types [Name]", allTypes);
 
                 Context.Channel.SendMessageAsync("", false, builder.Build());
             }
@@ -627,7 +660,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             var rant = DatabaseManager.GetRandomRant(type);
             if (rant == null)
             {
-                await Context.Channel.SendMessageAsync($"No rant could be loaded for type {type}. If you try to add a rant type '.rant {type} <your actuall rant>'", false);
+                await Context.Channel.SendMessageAsync($"No rant could be loaded for type {type} (To see all types write: '.rant types')." +
+                    $"If you are trying to add a rant type '.rant {type} <your actuall rant>'", false);
                 return;
             }
 

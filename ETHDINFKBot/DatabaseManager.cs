@@ -73,6 +73,41 @@ namespace ETHDINFKBot
             }
         }
 
+        public EmojiStatistic GetEmojiByName(string emojiName)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var emoji = context.EmojiStatistics.FirstOrDefault(i => i.EmojiName.ToLower() == emojiName.ToLower());
+                    return emoji;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public List<EmojiStatistic> GetEmotesByName(string name)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    // todo improve and better search
+                    var emojis = context.EmojiStatistics.AsQueryable().Where(i => i.EmojiName.ToLower().Contains(name)).ToList();
+                    return emojis;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
         public DiscordServer GetDiscordServerById(ulong id)
         {
             try
@@ -309,14 +344,14 @@ namespace ETHDINFKBot
                 {
                     // TODO optimize
                     var rants = context.RantMessages.ToList();
-                    
+
                     if (type != null)
                     {
                         int rantTypeId = GetRantType(type);
                         rants = rants.Where(i => i.RantTypeId == rantTypeId).ToList();
                     }
-                    
-                    if(rants.Count == 0)
+
+                    if (rants.Count == 0)
                     {
                         return null;
                     }
