@@ -2,6 +2,7 @@
 using ETHBot.DataLayer;
 using ETHBot.DataLayer.Data.Enums;
 using ETHDINFKBot.Helpers;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
@@ -13,6 +14,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ETHDINFKBot.Modules
@@ -196,7 +198,7 @@ namespace ETHDINFKBot.Modules
                         {
                             command.CommandText = $"PRAGMA table_info('{item}')";
                             context.Database.OpenConnection();
-                            if(item == "EmojiStatistics")
+                            if (item == "EmojiStatistics")
                             {
                                 //TODO workaround until graphs drawing is done
                                 //DbTableInfos.Add(new DBTableInfo());
@@ -294,9 +296,7 @@ namespace ETHDINFKBot.Modules
                 "savepoint",
                 "update",
                 "upsert",
-                "vacuum",
-                "recursive ", // idk why it breaks when i have time ill take a look
-                "with " 
+                "vacuum"
             };
 
             foreach (var item in forbidden)
@@ -325,12 +325,97 @@ namespace ETHDINFKBot.Modules
             return false;
         }
 
+        public async void WorkaroundForTimeoutNotWorking(CancellationTokenSource cts, SqliteConnection connect, SqliteCommand command)
+        {
+            await Task.Delay(6000);
+
+            if (cts.IsCancellationRequested)
+                return;
+
+            Context.Channel.SendMessageAsync("<:pepegun:747783377716904008>", false);
+
+            //connect.Close();
+            //command.Cancel();
+
+            throw new TimeoutException("Time is over");
+        }
+
+        private async Task<string> GetRowStringFromReader(SqliteDataReader reader, bool getHeader)
+        {
+            string resultString = "";
+
+            if (getHeader)
+            {
+                resultString = "**";
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    resultString += reader.GetName(i)?.ToString() + "\t";
+                }
+                resultString = "**";
+                resultString += Environment.NewLine + "```";
+            }
+
+            // do something with result
+            for (int i = 0; i < reader.FieldCount; i++)
+            {
+                try
+                {
+                    var type = reader.GetFieldType(i)?.FullName;
+                    var fieldString = "null";
+
+                    if (DBNull.Value.Equals(reader.GetValue(i)))
+                    {
+                        resultString += fieldString + "\t";
+                        continue;
+                    }
+
+                    switch (type)
+                    {
+                        case "System.Int64":
+                            fieldString = reader.GetInt64(i).ToString();
+                            break;
+
+                        case "System.String":
+                            fieldString = reader.GetValue(i).ToString()?.Replace("`", "");
+                            break;
+
+                        default:
+                            fieldString = $"{type} is unknown";
+                            break;
+                    }
+
+                    resultString += fieldString + "\t";
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+
+            }
+            resultString += Environment.NewLine;
+
+            return resultString;
+        }
+
 
         [Command("query")]
         public async Task Sql([Remainder] string commandSql)
         {
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
+
+            try
+            {
+                SqlCommand(commandSql);
+            }
+            catch (Exception ex)
+            {
+                Context.Channel.SendMessageAsync("Is thia all you got <:kekw:768912035928735775>", false);
+            }
+        }
+
+        private async void SqlCommand(string commandSql)
+        {
             // TODO HELP
             var author = Context.Message.Author;
             if (author.Id != ETHDINFKBot.Program.Owner)
@@ -348,92 +433,46 @@ namespace ETHDINFKBot.Modules
             }
             try
             {
-                string header = "**";
+                bool header = false;
                 string resultString = "";
                 int rowCount = 0;
 
                 int maxRows = 25;
 
-                using (ETHBotDBContext context = new ETHBotDBContext())
+                CancellationTokenSource cts = new CancellationTokenSource();
+
+                using (var connection = new SqliteConnection(Program.ConnectionString))
                 {
-                    using (var command = context.Database.GetDbConnection().CreateCommand())
+                    using (var command = new SqliteCommand(commandSql, connection))
                     {
-                        command.CommandText = commandSql;
-                        context.Database.OpenConnection();
-                        using (var result = command.ExecuteReader())
+                        command.CommandTimeout = 5;
+                        connection.Open();
+                        WorkaroundForTimeoutNotWorking(cts, connection, command);
+
+                        var reader = await command.ExecuteReaderAsync();
+                        cts.Cancel();
+
+                        while (reader.Read())
                         {
-                            command.CommandTimeout = 5;
-                            while (result.Read())
+                            if (rowCount < maxRows || resultString.Length < 2000)
                             {
-                                if (header == "**")
-                                {
-                                    for (int i = 0; i < result.FieldCount; i++)
-                                    {
-                                        header += result.GetName(i)?.ToString() + "\t";
-                                    }
-                                }
-
-                                // do something with result
-                                for (int i = 0; i < result.FieldCount; i++)
-                                {
-                                    try
-                                    {
-                                        var type = result.GetFieldType(i)?.FullName;
-                                        var fieldString = "null";
-
-                                        if (DBNull.Value.Equals(result.GetValue(i)))
-                                        {
-                                            resultString += fieldString + "\t";
-                                            continue;
-                                        }
-
-                                        switch (type)
-                                        {
-                                            case "System.Int64":
-                                                fieldString = result.GetInt64(i).ToString();
-                                                break;
-
-                                            case "System.String":
-                                                fieldString = result.GetValue(i).ToString()?.Replace("`", "");
-                                                break;
-
-                                            default:
-                                                fieldString = $"{type} is unknown";
-                                                break;
-                                        }
-
-                                        resultString += fieldString + "\t";
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        throw ex;
-                                    }
-
-                                }
-                                resultString += Environment.NewLine;
-
-                                rowCount++;
-
-                                if (rowCount >= maxRows)
-                                {
-                                    break;
-                                }
+                                string line = await GetRowStringFromReader(reader, !header);
+                                resultString += line;
+                                header = true;
                             }
+                            rowCount++;
                         }
                     }
                 }
 
-                header += "** ```";
+                if (resultString.Length > 1950)
+                    resultString = resultString.Substring(0, 1950);
 
-                if (resultString.Length > 1800)
-                {
-                    resultString = resultString.Substring(0, 1800);
-                }
                 resultString += "```";
 
-                Context.Channel.SendMessageAsync(header + Environment.NewLine + resultString + Environment.NewLine + $"{rowCount} Row(s) affected", false);
+                Context.Channel.SendMessageAsync(resultString + Environment.NewLine + $"{rowCount} Row(s) affected", false);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Context.Channel.SendMessageAsync("Error: " + ex.Message, false);
             }

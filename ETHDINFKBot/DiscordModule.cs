@@ -73,15 +73,18 @@ namespace ETHDINFKBot
 
             EmbedBuilder builder = new EmbedBuilder();
 
-            builder.WithTitle("Sourcecode for BattleRush's Helper");
+            builder.WithTitle("Sourcecode for BattleRush's Helper (thats me)");
             //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
             builder.WithDescription(@"TODO Create some meaningfull text here to go with such an awesome bot.
 **Source code: **
 **https://github.com/BattleRush/ETH-DINFK-Bot**");
             builder.WithColor(0, 255, 0);
 
-            builder.WithThumbnailUrl("https://avatars0.githubusercontent.com/u/11750584");
-            builder.WithFooter($"https://github.com/BattleRush");
+            //builder.WithThumbnailUrl("https://avatars0.githubusercontent.com/u/11750584");
+
+            var ownerUser = Program.Client.GetUser(Program.Owner);
+            builder.WithThumbnailUrl(ownerUser.GetAvatarUrl());
+            builder.WithAuthor(ownerUser);
             builder.WithCurrentTimestamp();
 
             Context.Channel.SendMessageAsync("", false, builder.Build());
@@ -955,6 +958,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
 
+            if (subreddit.Contains("'") || subreddit.Contains("\""))
+                return;
+
             if (ContainsForbiddenQuery(subreddit))
                 return;
 
@@ -1063,6 +1069,9 @@ ORDER BY RANDOM() LIMIT 1
         {
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
+
+            if (subreddit.Contains("'") || subreddit.Contains("\""))
+                return; 
 
             if (ContainsForbiddenQuery(subreddit))
                 return;

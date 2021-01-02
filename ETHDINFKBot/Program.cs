@@ -43,6 +43,7 @@ namespace ETHDINFKBot
         public static string RedditRefreshToken { get; set; }
         public static string RedditAppSecret { get; set; }
         public static string BasePath { get; set; }
+        public static string ConnectionString { get; set; }
 
         public static ILoggerFactory Logger { get; set; }
 
@@ -126,6 +127,7 @@ namespace ETHDINFKBot
             DiscordToken = Configuration["DiscordToken"];
             Owner = Convert.ToUInt64(Configuration["Owner"]);
             BasePath = Configuration["BasePath"];
+            ConnectionString = Configuration["ConnectionString"];
 
             RedditAppId = Configuration["Reddit:AppId"];
             RedditRefreshToken = Configuration["Reddit:RefreshToken"];
