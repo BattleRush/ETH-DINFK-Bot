@@ -325,15 +325,15 @@ namespace ETHDINFKBot.Modules
             return false;
         }
 
-        public async void WorkaroundForTimeoutNotWorking(CancellationTokenSource cts, SqliteConnection connect, SqliteCommand command)
+        public async void WorkaroundForTimeoutNotWorking(CancellationTokenSource cts, string query)
         {
-            await Task.Delay(6000);
+            await Task.Delay(5000);
 
             if (cts.IsCancellationRequested)
                 return;
 
-            Context.Channel.SendMessageAsync("<:pepegun:747783377716904008>", false);
-
+            await Context.Channel.SendMessageAsync("<:pepegun:747783377716904008>", false);
+            await Context.Channel.SendMessageAsync($"<@!{Program.Owner}> someone tried to kill me with: {query}", false);
             //connect.Close();
             //command.Cancel();
 
@@ -346,12 +346,12 @@ namespace ETHDINFKBot.Modules
 
             if (getHeader)
             {
-                resultString = "**";
+                resultString += "**";
                 for (int i = 0; i < reader.FieldCount; i++)
                 {
                     resultString += reader.GetName(i)?.ToString() + "\t";
                 }
-                resultString = "**";
+                resultString += "**";
                 resultString += Environment.NewLine + "```";
             }
 
@@ -431,6 +431,9 @@ namespace ETHDINFKBot.Modules
                 Context.Channel.SendMessageAsync("Dont you dare to think you will be allowed to use this command https://tenor.com/view/you-shall-not-pass-lord-of-the-ring-gif-5234772", false);
                 return;
             }
+
+            CancellationTokenSource cts = new CancellationTokenSource();
+
             try
             {
                 bool header = false;
@@ -439,19 +442,17 @@ namespace ETHDINFKBot.Modules
 
                 int maxRows = 25;
 
-                CancellationTokenSource cts = new CancellationTokenSource();
 
                 using (var connection = new SqliteConnection(Program.ConnectionString))
                 {
                     using (var command = new SqliteCommand(commandSql, connection))
                     {
-                        command.CommandTimeout = 5;
+                        command.CommandTimeout = 4;
                         connection.Open();
-                        WorkaroundForTimeoutNotWorking(cts, connection, command);
+
+                        WorkaroundForTimeoutNotWorking(cts, commandSql);
 
                         var reader = await command.ExecuteReaderAsync();
-                        cts.Cancel();
-
                         while (reader.Read())
                         {
                             if (rowCount < maxRows || resultString.Length < 2000)
@@ -464,17 +465,19 @@ namespace ETHDINFKBot.Modules
                         }
                     }
                 }
-
+                cts.Cancel();
                 if (resultString.Length > 1950)
                     resultString = resultString.Substring(0, 1950);
 
-                resultString += "```";
+                if(rowCount != 0)
+                    resultString += "```";
 
-                Context.Channel.SendMessageAsync(resultString + Environment.NewLine + $"{rowCount} Row(s) affected", false);
+                await Context.Channel.SendMessageAsync(resultString + Environment.NewLine + $"{rowCount.ToString("N0")} Row(s) affected", false);
             }
             catch (Exception ex)
             {
-                Context.Channel.SendMessageAsync("Error: " + ex.Message, false);
+                cts.Cancel();
+                await Context.Channel.SendMessageAsync("Error: " + ex.Message, false);
             }
         }
     }

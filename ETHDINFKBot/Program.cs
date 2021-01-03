@@ -162,6 +162,24 @@ namespace ETHDINFKBot
             var path = Path.Combine(BasePath, "Database", "ETHBot.db");
             if (File.Exists(path))
             {
+                var backupPath = Path.Combine(BasePath, "Database", "Backup");
+                if (Directory.Exists(backupPath))
+                {
+                    // check if the oldest backup is newer than x h then dont backup
+                    var files = Directory.GetFiles(backupPath);
+
+                    if(files.Length > 50)
+                    {
+
+                    }
+
+                    string oldestFile = files.ToList().OrderByDescending(i => i).First();
+                    var fileInfo = new FileInfo(oldestFile);
+
+                    if (fileInfo.CreationTimeUtc > DateTime.UtcNow.AddHours(-6))
+                        return;
+                }
+
                 var path2 = Path.Combine(BasePath, "Database", "Backup", $"ETHBot_{DateTime.Now.ToString("yyyyMMdd_HHmmss")}.db");
                 File.Copy(path, path2);
             }
@@ -771,10 +789,80 @@ namespace ETHDINFKBot
             return Task.CompletedTask;
         }
 
+        private async Task<bool> TryToParseEmoji(SocketUserMessage msg)
+        {
+            if (msg.Channel is SocketGuildChannel guildChannel)
+            {
+                if (msg.Content.StartsWith("."))
+                {
+                    // check if the emoji exists and if the emojis is animated
+                    string name = msg.Content.Substring(1, msg.Content.Length - 1);
+
+                    var emoji = DatabaseManager.GetEmojiByName(name);
+
+                    if (emoji != null)
+                    {
+                        var guildUser = msg.Author as SocketGuildUser;
+
+                        msg.DeleteAsync();
+
+                        var emoteString = $"<{(emoji.Animated ? "a" : "")}:{emoji.EmojiName}:{emoji.EmojiId}>";
+
+                        if (guildChannel.Guild.Emotes.Any(i => i.Id == emoji.EmojiId))
+                        {
+                            // we can post the emote as it will be rendered out
+                            await msg.Channel.SendMessageAsync(emoteString);
+                        }
+                        else
+                        {
+                            // TODO store resized images in db for faster reuse
+                            if (emoji.Animated)
+                            {
+                                // TODO gif resize
+                                await msg.Channel.SendMessageAsync(emoji.Url);
+                            }
+                            else
+                            {
+                                using (WebClient client = new WebClient())
+                                {
+                                    var imageBytes = client.DownloadData(emoji.Url);
+
+                                    using (var ms = new MemoryStream(imageBytes))
+                                    {
+                                        var image = System.Drawing.Image.FromStream(ms);
+                                        var resImage = ResizeImage(image, 48, 48);
+
+                                        var stream = new MemoryStream();
+
+                                        resImage.Save(stream, resImage.RawFormat);
+                                        stream.Position = 0;
+
+
+                                        await msg.Channel.SendFileAsync(stream, $"{emoji.EmojiName}.png");
+                                    }
+                                }
+                            }
+                            // we need to send the image as the current server doesnt have access
+
+                        }
+
+                        await msg.Channel.SendMessageAsync($"by {guildUser.Username}");
+
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         private static Dictionary<ulong, DateTime> SpamCache = new Dictionary<ulong, DateTime>();
         public async Task HandleCommandAsync(SocketMessage m)
         {
             if (!(m is SocketUserMessage msg)) return;
+
+            if (await TryToParseEmoji(msg))
+                return; // emoji was found and we can exit here
 
             await LogManager.ProcessEmojisAndPings(m.Tags, m.Author.Id, ((SocketGuildUser)m.Author).IsBot);
             // TODO private channels
@@ -928,66 +1016,6 @@ namespace ETHDINFKBot
             if (m.Author.IsBot)
                 return;
 
-            if (msg.Content.StartsWith("."))
-            {
-                // check if the emoji exists and if the emojis is animated
-                string name = msg.Content.Substring(1, msg.Content.Length - 1);
-
-                var emoji = DatabaseManager.GetEmojiByName(name);
-
-                if (emoji != null)
-                {
-                    var guildUser = msg.Author as SocketGuildUser;
-
-                    msg.DeleteAsync();
-
-                    var emoteString = $"<{(emoji.Animated ? "a" : "")}:{emoji.EmojiName}:{emoji.EmojiId}>";
-
-                    if (guildChannel.Guild.Emotes.Any(i => i.Id == emoji.EmojiId))
-                    {
-                        // we can post the emote as it will be rendered out
-                        await msg.Channel.SendMessageAsync(emoteString);
-                    }
-                    else
-                    {
-                        // TODO store resized images in db for faster reuse
-                        if (emoji.Animated)
-                        {
-                            // TODO gif resize
-                            await msg.Channel.SendMessageAsync(emoji.Url);
-                        }
-                        else
-                        {
-                            using (WebClient client = new WebClient())
-                            {
-                                var imageBytes = client.DownloadData(emoji.Url);
-
-                                using (var ms = new MemoryStream(imageBytes))
-                                {
-                                    var image = System.Drawing.Image.FromStream(ms);
-                                    var resImage = ResizeImage(image, 48, 48);
-
-                                    var stream = new MemoryStream();
-
-                                    resImage.Save(stream, resImage.RawFormat);
-                                    stream.Position = 0;
-
-
-                                    await msg.Channel.SendFileAsync(stream, $"{emoji.EmojiName}.png");
-                                }
-                            }
-                        }
-                        // we need to send the image as the current server doesnt have access
-                        
-                    }
-
-                    await msg.Channel.SendMessageAsync($"by {guildUser.Username}");
-
-                    return;
-                }
-            }
-
-
             int argPos = 0;
             if (!(msg.HasStringPrefix(".", ref argPos)))
             {
@@ -1024,7 +1052,7 @@ namespace ETHDINFKBot
 
 
             var context = new SocketCommandContext(Client, msg);
-            await commands.ExecuteAsync(context, argPos, services);
+            commands.ExecuteAsync(context, argPos, services);
         }
 
 
