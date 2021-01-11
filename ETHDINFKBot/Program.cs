@@ -769,6 +769,9 @@ namespace ETHDINFKBot
         private bool AllowedToRun(ulong channelId, BotPermissionType type)
         {
             var channelSettings = DatabaseManager.GetChannelSetting(channelId);
+            if (channelSettings == null)
+                return false;
+
             if (((BotPermissionType)channelSettings?.ChannelPermissionFlags).HasFlag(type))
             {
                 return true;

@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -443,6 +444,8 @@ namespace ETHDINFKBot.Modules
 
                 int maxRows = 25;
 
+                Stopwatch watch = new Stopwatch();
+                watch.Start();
 
                 using (var connection = new SqliteConnection(Program.ConnectionString))
                 {
@@ -467,13 +470,14 @@ namespace ETHDINFKBot.Modules
                     }
                 }
                 cts.Cancel();
+                watch.Stop();
                 if (resultString.Length > 1950)
                     resultString = resultString.Substring(0, 1950);
 
                 if (rowCount != 0)
                     resultString += "```";
 
-                await Context.Channel.SendMessageAsync(resultString + Environment.NewLine + $"{rowCount.ToString("N0")} Row(s) affected", false);
+                await Context.Channel.SendMessageAsync(resultString + Environment.NewLine + $"{rowCount.ToString("N0")} Row(s) affected Time: {watch.ElapsedMilliseconds.ToString("N0")} ms", false);
             }
             catch (Exception ex)
             {

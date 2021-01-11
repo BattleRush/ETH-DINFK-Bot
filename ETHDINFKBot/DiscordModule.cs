@@ -127,6 +127,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.AddField("Rant", "```.rant [ types | (<type> <message>) ]```");
             builder.AddField("SQL", "```.sql (table info) | (query <query>)```");
             builder.AddField("Emote (can send Nitro emotes for you)", "```.emote <search_string> | .<emote_name>```");
+            builder.AddField("React (can only use emotes from this server)", "```.react <message_id> <emote_name>```");
 
             Context.Channel.SendMessageAsync("", false, builder.Build());
         }
@@ -434,6 +435,22 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             mst.Position = 0;
 
             return mst;
+        }
+
+        [Command("react")]
+        public async Task ReactEmote(ulong messageid, string emoteName)
+        {
+            if (Context.Channel is SocketGuildChannel guildChannel)
+            {
+                var emote = guildChannel.Guild.Emotes.FirstOrDefault(i => i.Name.ToLower().Contains(emoteName.ToLower()));
+
+                if (emote == null)
+                    return;
+
+                var message = await Context.Channel.GetMessageAsync(messageid);
+                await message.AddReactionAsync(emote);
+                Context.Message.DeleteAsync();
+            }
         }
 
         // TODO duplicate finder -> fingerprint
