@@ -130,7 +130,14 @@ namespace ETHDINFKBot.Log
                     };
 
                     DatabaseManager.AddEmojiStatistic(stat, emote.Value, false, isBot);
+                }
 
+                // TODO dont hammer the db after each call (check if any new emotes have been added
+                int emoteCount = DatabaseManager.Instance().TotalEmoteCount();
+                if (Program.TotalEmotes != emoteCount)
+                {
+                    Program.TotalEmotes = emoteCount;
+                    await Program.Client.SetGameAsync($"{Program.TotalEmotes} emotes", null, ActivityType.Watching);
                 }
 
                 /*
@@ -225,7 +232,7 @@ namespace ETHDINFKBot.Log
 
                 DatabaseManager.AddCommandStatistic(type, guildUser.Id);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
             }

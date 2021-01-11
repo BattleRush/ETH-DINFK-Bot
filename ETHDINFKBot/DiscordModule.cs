@@ -21,6 +21,10 @@ using Reddit.Controllers;
 using Microsoft.Extensions.Logging;
 using System.IO;
 using System.Threading;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using Color = System.Drawing.Color;
+using System.Net;
 
 namespace ETHDINFKBot
 {
@@ -369,36 +373,163 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             Context.Channel.SendMessageAsync(req.ImageUrl, false);
         }*/
 
+        // TODO alot of rework to do
+        // TODO dynamic image sizes
+        // TODO support 100+
+        // TODO gifs -> video?
+        private Stream DrawPreviewImage(List<EmojiStatistic> emojis)
+        {
+            int page = 10;
+            int padding = 50;
+            int paddingY = 35;
+
+            int width = Math.Min(emojis.Count, 10) * 65 + padding;
+            int height = (int)(Math.Ceiling(emojis.Count / 10d) * 70 + paddingY);
+
+            Bitmap Bitmap = new Bitmap(width, height); // TODO insert into constructor
+            Graphics Graphics = Graphics.FromImage(Bitmap);
+            Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            Graphics.Clear(Color.FromArgb(54, 57, 63));
+
+            Font drawFont = new Font("Arial", 10);
+            Font drawFont2 = new Font("Arial", 16);
+            Brush b = new SolidBrush(Color.White);
+            Pen p = new Pen(b);
+
+
+
+            // TODO make it more robust and cleaner
+            for (int i = 0; i < page; i++)
+            {
+                Graphics.DrawString($"[{i}]", drawFont2, b, new Point(10, i * 70 + 35));
+
+                for (int j = 0; j < page; j++)
+                {
+                    if (emojis.Count <= i * j)
+                        break;
+
+                    try
+                    {
+                        var emote = emojis[i * page + j];
+
+                        Bitmap bmp;
+                        using (var ms = new MemoryStream(emote.ImageData))
+                        {
+                            bmp = new Bitmap(ms);
+                        }
+                        Graphics.DrawImage(bmp, j * 60 + padding, i * 70 + paddingY, 32, 32);
+                        Graphics.DrawString($"{emote.EmojiName}", drawFont, b, new Point(j * 60 + padding, i * 70 + j % 2 * 50 + 20));
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+                }
+
+                Graphics.DrawLine(p, new Point(0, i * 70 + 20), new Point(width, i * 70 + 20));
+            }
+
+            Stream mst = new MemoryStream();
+            Bitmap.Save(mst, System.Drawing.Imaging.ImageFormat.Png);
+            mst.Position = 0;
+
+            return mst;
+        }
+
+        // TODO duplicate finder -> fingerprint
+        // TODO better selection
         [Command("emote")]
         public async Task EmojiInfo(string search)
         {
-            
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
 
             var author = Context.Message.Author;
 
-            var animatedEmotes = DatabaseManager.GetEmotesByName(search);
-
-            // limit to 100
-            animatedEmotes = animatedEmotes.Take(100).ToList();
-
-            // TODO make it look nice
-            string text = "**Available emojis to use (Usage .<name>)**" + Environment.NewLine + Environment.NewLine;
-
-            foreach (var emoji in animatedEmotes)
+            if (search.Length < 2 && author.Id != Program.Owner)
             {
-                text += $".{emoji.EmojiName} ";
+                await Context.Channel.SendMessageAsync($"Search term needs to be atleast 2 characters long", false); // to prevent from db overload
+                return;
+            }
 
-                if(text.Length > 1800)
+            var emotes = DatabaseManager.GetEmotesByName(search); // TODO dont dowload the emote data before its further filtered
+
+            int count = 0;
+
+            int emotesNotDownloaded = emotes.Count(i => i.ImageData == null || i.ImageData.Length == 0);
+            if (emotesNotDownloaded > 0)
+            {
+                await Context.Channel.SendMessageAsync($"{emotesNotDownloaded} emote(s) need to be downloaded. Please wait...", false);
+            }
+
+            foreach (var emote in emotes)
+            {
+                if (emote.ImageData == null || emote.ImageData.Length == 0)
                 {
-                    await Context.Channel.SendMessageAsync(text, false);
-                    text = "";
+                    // download emote
+                    using (var webClient = new WebClient())
+                    {
+                        byte[] bytes = webClient.DownloadData(emote.Url);
+                        emote.ImageData = bytes;
+
+                        DatabaseManager.SaveEmoteImage(emote.EmojiId, bytes);
+                        count++;
+                    }
                 }
             }
 
-            await Context.Channel.SendMessageAsync(text, false);
+            if (count > 0)
+            {
+                await Context.Channel.SendMessageAsync($"Downloaded {count} emote(s)", false);
+            }
 
+            // since we cant differenciate between many others
+            emotes = emotes.GroupBy(i => i.EmojiName).Select(i => i.First()).ToList();
+
+            // limit to 100
+
+            // TODO make it look nice
+            string text = $"**Available({Math.Min(emotes.Count, 100)}/{emotes.Count}) '{search}' emojis to use (Usage .<name>)**" + Environment.NewLine + Environment.NewLine;
+
+            emotes = emotes.Take(100).ToList();
+
+            int countEmotes = 0;
+            int row = 0;
+            text += "[0] ";
+            foreach (var emoji in emotes)
+            {
+                text += $".{emoji.EmojiName} ";
+                countEmotes++;
+
+                if (countEmotes >= 10)
+                {
+                    row++;
+                    text += Environment.NewLine;
+
+                    if (row < 10)
+                    {
+                        text += $"[{row}] ";
+                    }
+                    countEmotes = 0;
+                }
+
+                /*          if (text.Length > 1950)
+                {
+                    await Context.Channel.SendMessageAsync(text, false);
+                    text = "";
+                }*/
+            }
+
+            //await Context.Channel.SendMessageAsync(, false);
+
+            var stream = DrawPreviewImage(emotes);
+
+            if (text.Length > 1990)
+            {
+                text = text.Substring(0, 1990);
+            }
+
+            await Context.Channel.SendFileAsync(stream, $"emote_{search}.png", text);
         }
 
         [Command("wallpaper", RunMode = RunMode.Async)]
@@ -804,6 +935,25 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
         }
 
+        [Command("nuke")]
+        public async Task Nuke(int count)
+        {
+            var author = Context.Message.Author;
+            if (author.Id != ETHDINFKBot.Program.Owner)
+            {
+                return;
+            }
+
+            if (count < 0)
+                return;
+
+            if (count > 100)
+                count = 100;
+
+            var messages = await Context.Channel.GetMessagesAsync(count).FlattenAsync(); //defualt is 100
+            await Context.Channel.SendMessageAsync($"Placing a tactical nuke KMN-{count}");
+            await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
+        }
 
         [Command("countdown2021")]
         public async Task countdown2021()
@@ -1071,7 +1221,7 @@ ORDER BY RANDOM() LIMIT 1
                 return;
 
             if (subreddit.Contains("'") || subreddit.Contains("\""))
-                return; 
+                return;
 
             if (ContainsForbiddenQuery(subreddit))
                 return;

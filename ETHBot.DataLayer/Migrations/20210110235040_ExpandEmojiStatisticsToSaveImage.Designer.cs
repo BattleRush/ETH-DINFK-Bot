@@ -3,14 +3,16 @@ using System;
 using ETHBot.DataLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ETHBot.DataLayer.Migrations
 {
     [DbContext(typeof(ETHBotDBContext))]
-    partial class ETHBotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20210110235040_ExpandEmojiStatisticsToSaveImage")]
+    partial class ExpandEmojiStatisticsToSaveImage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -231,6 +233,9 @@ namespace ETHBot.DataLayer.Migrations
 
                     b.Property<ulong>("FallbackEmojiId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("Fingerprint")
+                        .HasColumnType("TEXT");
 
                     b.Property<byte[]>("ImageData")
                         .HasColumnType("BLOB");

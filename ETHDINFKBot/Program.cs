@@ -37,6 +37,7 @@ namespace ETHDINFKBot
         private static IConfiguration Configuration;
         private static string DiscordToken { get; set; }
         public static ulong Owner { get; set; }
+        public static int TotalEmotes { get; set; }
 
         // TODO one object and somewhere else but im lazy
         public static string RedditAppId { get; set; }
@@ -168,7 +169,7 @@ namespace ETHDINFKBot
                     // check if the oldest backup is newer than x h then dont backup
                     var files = Directory.GetFiles(backupPath);
 
-                    if(files.Length > 50)
+                    if (files.Length > 50)
                     {
 
                     }
@@ -633,6 +634,8 @@ namespace ETHDINFKBot
             Client.MessageReceived += HandleCommandAsync;
             Client.ReactionAdded += Client_ReactionAdded;
             Client.ReactionRemoved += Client_ReactionRemoved;
+            Client.MessageDeleted += Client_MessageDeleted;
+            Client.MessageUpdated += Client_MessageUpdated;
 
             await Client.LoginAsync(TokenType.Bot, token);
             await Client.StartAsync();
@@ -640,8 +643,11 @@ namespace ETHDINFKBot
 #if DEBUG
             await Client.SetGameAsync($"DEV MODE");
 #else
-            await Client.SetGameAsync($"with a neko");
+            //await Client.SetGameAsync($"with a neko");
+            TotalEmotes = DatabaseManager.Instance().TotalEmoteCount();
+            await Client.SetGameAsync($"{TotalEmotes} emotes", null, ActivityType.Watching);
 #endif
+
 
             services = new ServiceCollection()
                 .AddSingleton(Client)
@@ -655,6 +661,92 @@ namespace ETHDINFKBot
 
             // Block this task until the program is closed.
             await Task.Delay(-1);
+        }
+
+        private Task Client_MessageUpdated(Cacheable<IMessage, ulong> before, SocketMessage after, ISocketMessageChannel arg3)
+        {
+            if (before.HasValue)
+            {
+                if (!AllowedToRun(before.Value.Channel.Id, BotPermissionType.RemovedPingMessage))
+                    return Task.CompletedTask;
+
+                if (before.Value.Tags?.Where(i => i.Type == TagType.UserMention || i.Type == TagType.RoleMention).Count() > 0)
+                {
+                    if (before.Value.Content.StartsWith("$q"))
+                        return Task.CompletedTask; // exclude quotes
+
+                    if (before.Value.CreatedAt.UtcDateTime < DateTime.UtcNow.AddMinutes(-15))
+                        return Task.CompletedTask; // only track for first 15 mins
+
+                    if (!before.Value.Tags.Any(i => after.Tags.Contains(i)))
+                    {
+                        // TODO similar code to deleted
+                        EmbedBuilder builder = new EmbedBuilder();
+                        var guildUser = before.Value.Author as SocketGuildUser;
+                        builder.WithTitle($"{guildUser.Nickname} is a really bad person because he edited a message with a ping");
+
+                        string messageText = "";
+                        foreach (var item in before.Value.Tags.Where(i => i.Type == TagType.UserMention || i.Type == TagType.RoleMention))
+                        {
+                            string pefixForRole = item.Type == TagType.RoleMention ? "&" : "";
+                            messageText += $"Poor <@{pefixForRole}{item.Key}>" + Environment.NewLine;
+                        }
+
+                        builder.WithDescription(messageText);
+                        builder.WithColor(255, 64, 128);
+
+                        builder.WithAuthor(before.Value.Author);
+
+                        builder.WithCurrentTimestamp();
+
+                        before.Value.Channel.SendMessageAsync("", false, builder.Build());
+                    }
+                }
+            }
+
+            return Task.CompletedTask;
+        }
+
+
+
+        private Task Client_MessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel arg2)
+        {
+            if (message.HasValue)
+            {
+                if (!AllowedToRun(message.Value.Channel.Id, BotPermissionType.RemovedPingMessage))
+                    return Task.CompletedTask;
+
+                if (message.Value.Tags?.Where(i => i.Type == TagType.UserMention || i.Type == TagType.RoleMention).Count() > 0)
+                {
+                    if (message.Value.Content.StartsWith("$q"))
+                        return Task.CompletedTask; // exclude quotes
+
+                    if (message.Value.CreatedAt.UtcDateTime < DateTime.UtcNow.AddMinutes(-15))
+                        return Task.CompletedTask; // only track for first 15 mins
+
+                    EmbedBuilder builder = new EmbedBuilder();
+                    var guildUser = message.Value.Author as SocketGuildUser;
+                    builder.WithTitle($"{guildUser.Nickname} is a really bad person because he deleted a message with a ping");
+
+                    string messageText = "";
+                    foreach (var item in message.Value.Tags.Where(i => i.Type == TagType.UserMention || i.Type == TagType.RoleMention))
+                    {
+                        string pefixForRole = item.Type == TagType.RoleMention ? "&" : "";
+                        messageText += $"Poor <@{pefixForRole}{item.Key}>" + Environment.NewLine;
+                    }
+
+                    builder.WithDescription(messageText);
+                    builder.WithColor(255, 64, 128);
+
+                    builder.WithAuthor(message.Value.Author);
+
+                    builder.WithCurrentTimestamp();
+
+                    message.Value.Channel.SendMessageAsync("", false, builder.Build());
+                }
+            }
+
+            return Task.CompletedTask;
         }
 
         private Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
@@ -846,7 +938,7 @@ namespace ETHDINFKBot
 
                         }
 
-                        await msg.Channel.SendMessageAsync($"by {guildUser.Username}");
+                        await msg.Channel.SendMessageAsync($"(.{name}) by {guildUser.Nickname}");
 
                         return true;
                     }
@@ -861,7 +953,7 @@ namespace ETHDINFKBot
         {
             if (!(m is SocketUserMessage msg)) return;
 
-            if (await TryToParseEmoji(msg))
+            if (!m.Author.IsBot && await TryToParseEmoji(msg))
                 return; // emoji was found and we can exit here
 
             await LogManager.ProcessEmojisAndPings(m.Tags, m.Author.Id, ((SocketGuildUser)m.Author).IsBot);

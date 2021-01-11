@@ -13,7 +13,9 @@ namespace ETHBot.DataLayer.Data.Enums
         React = 4,
         EnableSave = 8,
         SaveMessage = 16,
-        EnableType1Commands = 32, 
+        EnableType1Commands = 32,
         EnableType2Commands = 64,    // Usualy the commands that lead to spam
+        RemovedPingMessage = 128,
+        EnableEmojiParsing = 256
     }
 }

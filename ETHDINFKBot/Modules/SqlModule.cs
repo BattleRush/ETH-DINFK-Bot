@@ -325,9 +325,10 @@ namespace ETHDINFKBot.Modules
             return false;
         }
 
-        public async void WorkaroundForTimeoutNotWorking(CancellationTokenSource cts, string query)
+        public async void WorkaroundForTimeoutNotWorking(CancellationTokenSource cts, string query, bool owner)
         {
-            await Task.Delay(5000);
+            // normal 5 sec; onwner 60 sec
+            await Task.Delay(5000 * (owner ? 12 : 1));
 
             if (cts.IsCancellationRequested)
                 return;
@@ -450,7 +451,7 @@ namespace ETHDINFKBot.Modules
                         command.CommandTimeout = 4;
                         connection.Open();
 
-                        WorkaroundForTimeoutNotWorking(cts, commandSql);
+                        WorkaroundForTimeoutNotWorking(cts, commandSql, author.Id == ETHDINFKBot.Program.Owner);
 
                         var reader = await command.ExecuteReaderAsync();
                         while (reader.Read())
@@ -469,7 +470,7 @@ namespace ETHDINFKBot.Modules
                 if (resultString.Length > 1950)
                     resultString = resultString.Substring(0, 1950);
 
-                if(rowCount != 0)
+                if (rowCount != 0)
                     resultString += "```";
 
                 await Context.Channel.SendMessageAsync(resultString + Environment.NewLine + $"{rowCount.ToString("N0")} Row(s) affected", false);

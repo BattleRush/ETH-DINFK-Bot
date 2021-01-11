@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 
 namespace ETHDINFKBot
@@ -99,6 +100,29 @@ namespace ETHDINFKBot
                     // todo improve and better search
                     var emojis = context.EmojiStatistics.AsQueryable().Where(i => i.EmojiName.ToLower().Contains(name)).ToList();
                     return emojis;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+
+        public EmojiStatistic SaveEmoteImage(ulong id, byte[] data)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var emote = context.EmojiStatistics.FirstOrDefault(i => i.EmojiId == id);
+                    if (emote != null)
+                    {
+                        context.EmojiStatistics.FirstOrDefault(i => i.EmojiId == id).ImageData = data;
+                        context.SaveChanges();
+                    }
+                    return emote;
                 }
             }
             catch (Exception ex)
@@ -612,6 +636,23 @@ namespace ETHDINFKBot
             }
         }
 
+        public int TotalEmoteCount()
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.EmojiStatistics.Count();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+
+            return -1;
+        }
+
         public void AddPingStatistic(ulong userId, int count, bool isBot)
         {
             try
@@ -744,18 +785,24 @@ namespace ETHDINFKBot
                     var dbEmoji = GetEmojiStatisticById(statistic.EmojiId);
                     if (dbEmoji == null)
                     {
-                        context.EmojiStatistics.Add(new EmojiStatistic()
+                        using (var webClient = new WebClient())
                         {
-                            Animated = statistic.Animated,
-                            CreatedAt = statistic.CreatedAt,
-                            EmojiId = statistic.EmojiId,
-                            EmojiName = statistic.EmojiName,
-                            Url = statistic.Url,
-                            UsedAsReaction = !isBot ? statistic.UsedAsReaction : 0,
-                            UsedInText = !isBot ? statistic.UsedInText : 0,
-                            UsedInTextOnce = !isBot ? statistic.UsedInTextOnce : 0,
-                            UsedByBots = !isBot ? 0 : statistic.UsedByBots,
-                        });
+                            byte[] bytes = webClient.DownloadData(statistic.Url);
+
+                            context.EmojiStatistics.Add(new EmojiStatistic()
+                            {
+                                Animated = statistic.Animated,
+                                CreatedAt = statistic.CreatedAt,
+                                EmojiId = statistic.EmojiId,
+                                EmojiName = statistic.EmojiName,
+                                Url = statistic.Url,
+                                UsedAsReaction = !isBot ? statistic.UsedAsReaction : 0,
+                                UsedInText = !isBot ? statistic.UsedInText : 0,
+                                UsedInTextOnce = !isBot ? statistic.UsedInTextOnce : 0,
+                                UsedByBots = !isBot ? 0 : statistic.UsedByBots,
+                                ImageData = bytes
+                            });
+                        }
                         //context.SaveChanges();
                     }
                     else
