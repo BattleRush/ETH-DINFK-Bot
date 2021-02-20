@@ -10,7 +10,7 @@ namespace ETHDINFKBot.Helpers
 {
     public class DrawDbSchema : IDisposable
     {
-        private Bitmap Bitmap;
+        public Bitmap Bitmap; // to get stream maybe change a bit to a method in this class to give the stream
         private Graphics Graphics;
         private List<DBTableInfo> DBTableInfo;
         public DrawDbSchema(List<DBTableInfo> dbInfos)
@@ -19,12 +19,13 @@ namespace ETHDINFKBot.Helpers
             Graphics = Graphics.FromImage(Bitmap);
             Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             DBTableInfo = dbInfos;
-            Graphics.Clear(Color.FromArgb(54, 57, 63));
+            Graphics.Clear(CommonHelper.DiscordBackgroundColor);
         }
 
         public void Dispose()
         {
             Bitmap.Dispose();
+            Graphics.Dispose();
         }
 
         //https://stackoverflow.com/questions/2265910/convert-an-image-to-grayscale
@@ -64,6 +65,7 @@ namespace ETHDINFKBot.Helpers
             return newBitmap;
         }
 
+        // todo remove as its not working
         public static Bitmap TranslateBitmapToTryToRemoveGreenTint(Bitmap original)
         {
             //create a blank bitmap the same size as original
@@ -100,6 +102,8 @@ namespace ETHDINFKBot.Helpers
             return newBitmap;
         }
 
+
+        // TODO rework and cleanup
         public void DrawAllTables()
         {
             Brush b = new SolidBrush(Color.White);
@@ -261,9 +265,7 @@ namespace ETHDINFKBot.Helpers
                                 ang2 = 0;
                             }
 
-                            var path = GetPath(p1, p2);
-
-
+                   
 
 
 
@@ -306,7 +308,6 @@ namespace ETHDINFKBot.Helpers
             count = 0;
             row = 0;
 
-            //Dictionary<string, Point> primaryKeys = new Dictionary<string, Point>();
 
             foreach (var dbTable in DBTableInfo)
             {
@@ -358,9 +359,6 @@ namespace ETHDINFKBot.Helpers
                     countTable++;
                 }
 
-
-
-
                 count++;
 
                 if (count > 5)
@@ -369,66 +367,6 @@ namespace ETHDINFKBot.Helpers
                     row++;
                 }
             }
-
-
-        }
-
-        private GraphicsPath GetPath(Point p1, Point p2)
-        {
-            return null;
-            /*
-            GraphicsPath path = new GraphicsPath();
-
-            PointF[] ptsArray =
-            {
-                         
-                };
-
-            QuadraticBezierSegment qg = new QuadraticBezierSegment();
-
-            qg.Point1 = new Point(Convert.ToDouble(p1x.Text), Convert.ToDouble(p1y.Text));
-            //P1
-
-            qg.Point2 = new Point(Convert.ToDouble(p2x.Text), Convert.ToDouble(p2y.Text));
-
-
-            // Add a curve, a rectangle, an ellipse, and a line  
-            path.AddBeziers(ptsArray);
-
-            return path;
-            */
-        }
-
-        private void CreateBlankImage()
-        {
-            /*using ()
-            {
-                using (var graphics = Graphics.FromImage(image))
-                {
-                    graphics.CompositingQuality = CompositingQuality.HighSpeed;
-                    graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                    graphics.CompositingMode = CompositingMode.SourceCopy;
-                    //graphics.DrawImage(image, 0, 0, width, height);
-                    Pen p = new Pen(Color.Red);
-                    var b = new SolidBrush(p.Color);
-
-                    graphics.DrawEllipse(p, new Rectangle(new Point(40, 40), new Size(50, 50)));
-                }
-    
-
-            }*/
-        }
-
-
-        public Stream GetStream()
-        {
-            Stream ms = new MemoryStream();
-            Bitmap.Save(ms, ImageFormat.Png);
-            ms.Position = 0;
-
-            return ms;
-
-            //await Context.Channel.SendFileAsync(ms, "test.png");
         }
     }
 }

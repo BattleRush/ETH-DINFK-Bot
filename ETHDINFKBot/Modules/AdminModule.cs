@@ -178,6 +178,7 @@ namespace ETHDINFKBot.Modules
                 builder.WithCurrentTimestamp();
                 builder.AddField("admin channel help", "This message :)");
                 builder.AddField("admin channel info", "Returns info about the current channel settings");
+                builder.AddField("admin channel preload", "Loads old messages into the DB");
                 builder.AddField("admin channel set <permission>", "Set permissions for the current channel");
                 builder.AddField("admin channel all <permission>", "Set the MINIMUM permissions for ALL channels");
                 builder.AddField("admin channel flags", "Returns help with the flag infos");
@@ -198,6 +199,85 @@ namespace ETHDINFKBot.Modules
                          yield return value;
              }*/
 
+            [Command("preload")]
+            public async Task PreloadOldMessages(ulong channelId)
+            {
+                // new column preloaded
+                var author = Context.Message.Author;
+                if (author.Id != ETHDINFKBot.Program.Owner)
+                {
+                    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+                var dbManager = DatabaseManager.Instance();
+                var channel = Program.Client.GetChannel(channelId) as ISocketMessageChannel;
+                var oldestMessage = dbManager.GetOldestMessageAvailablePerChannel(channelId);
+
+                if (oldestMessage == null)
+                    return;
+
+                //var messages = channel.GetMessagesAsync(100000).FlattenAsync(); //defualt is 100
+
+                var messagesFromMsg = await channel.GetMessagesAsync(oldestMessage.Value, Direction.Before, 500).FlattenAsync();
+
+
+                foreach (var message in messagesFromMsg)
+                {
+                    if (message.Reactions.Count > 0)
+                    {
+                        var newMessage = dbManager.CreateDiscordMessage(new ETHBot.DataLayer.Data.Discord.DiscordMessage()
+                        {
+                            //Channel = discordChannel,
+                            DiscordChannelId = channelId,
+                            //DiscordUser = dbAuthor,
+                            DiscordUserId = message.Author.Id,
+                            MessageId = message.Id,
+                            Content = message.Content,
+                            //ReplyMessageId = message.Reference.MessageId,
+                            Preloaded = true
+                        });
+
+                        if (newMessage)
+                        {
+
+                            foreach (var item in message.Tags)
+                            {
+                                //foreach (var pingInfo in listOfUsers)
+                                //{
+                                //    DatabaseManager.AddPingStatistic(pingInfo.Key, pingInfo.Value, user);
+                                //}
+                            }
+
+                            foreach (var item in message.Reactions)
+                            {
+
+                                // only if its a new message we process it
+                                var currentEmoteReaction = await message.GetReactionUsersAsync(item.Key, 100).FlattenAsync();
+                                foreach (var currentEmoteReactionUser in currentEmoteReaction)
+                                {
+                                    /*Tag<Emote> tag = (Tag<Emote>)tags.First(i => i.Type == TagType.Emoji && ((Tag<Emote>)i).Value.Id == emote.Key);
+
+                                    var stat = new DiscordEmote()
+                                    {
+                                        Animated = tag.Value.Animated,
+                                        DiscordEmoteId = tag.Value.Id,
+                                        EmoteName = tag.Value.Name,
+                                        Url = tag.Value.Url,
+                                        CreatedAt = tag.Value.CreatedAt,
+                                        Blocked = false,
+                                        LastUpdatedAt = DateTime.Now,
+                                        LocalPath = null
+                                    };
+
+                                    DatabaseManager.ProcessDiscordEmote(stat, discordMessageId, emote.Value, false, user);*/
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+          
             [Command("info")]
             public async Task GetChannelInfoAsync()
             {

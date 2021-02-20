@@ -25,6 +25,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Net;
+using ETHDINFKBot.Helpers;
 
 namespace ETHDINFKBot
 {
@@ -45,6 +46,10 @@ namespace ETHDINFKBot
         public static string RedditAppSecret { get; set; }
         public static string BasePath { get; set; }
         public static string ConnectionString { get; set; }
+        public static bool TempDisableIncomming { get; set; }
+
+        public static Dictionary<ulong, Question> CurrentActiveQuestion = new Dictionary<ulong, Question>();
+        public static Dictionary<ulong, DateTime> CurrentDiscordOutOfJailTime = new Dictionary<ulong, DateTime>();
 
         public static ILoggerFactory Logger { get; set; }
 
@@ -177,7 +182,7 @@ namespace ETHDINFKBot
                     string oldestFile = files.ToList().OrderByDescending(i => i).First();
                     var fileInfo = new FileInfo(oldestFile);
 
-                    if (fileInfo.CreationTimeUtc > DateTime.UtcNow.AddHours(-6))
+                    if (fileInfo.CreationTimeUtc > DateTime.UtcNow.AddHours(-24))
                         return;
                 }
 
@@ -187,431 +192,9 @@ namespace ETHDINFKBot
         }
 
 
-        public static void BackUpStats()
-        {
-            File.Copy("Stats\\stats.json", $"Stats\\Backup\\stats_{DateTime.Now.ToString("yyyyMMdd_hhmmss")}.json");
-        }
 
-        public static void BackUpGlobalStats()
-        {
-            File.Copy("Stats\\global_stats.json", $"Stats\\Backup\\global_stats_{DateTime.Now.ToString("yyyyMMdd_hhmmss")}.json");
-        }
-        public static void BackUpBlackList()
-        {
-            File.Copy("Blacklist\\blacklist.json", $"Blacklist\\Backup\\blacklist_{DateTime.Now.ToString("yyyyMMdd_hhmmss")}.json");
-        }
 
-        public static void LoadStats()
-        {
-            Console.WriteLine("LoadStats");
-            Console.WriteLine(Environment.CurrentDirectory);
 
-            if (File.Exists(Path.Combine(BasePath, "Stats", "stats.json")))
-            {
-                //BackUpStats();
-                string content = File.ReadAllText(Path.Combine(BasePath, "Stats", "stats.json"));
-                BotStats = JsonConvert.DeserializeObject<BotStats>(content);
-                Console.WriteLine("LoadStats found" + BotStats.DiscordUsers.Count);
-            }
-        }
-
-        public static void LoadBlacklist()
-        {
-            Console.WriteLine("LoadBlacklist");
-            if (File.Exists(Path.Combine(BasePath, "Blacklist", "blacklist.json")))
-            {
-                Console.WriteLine("LoadBlacklist found");
-                //BackUpBlackList();
-                string content = File.ReadAllText(Path.Combine(BasePath, "Blacklist", "blacklist.json"));
-                BlackList = JsonConvert.DeserializeObject<List<ReportInfo>>(content);
-
-                // Remove duplicates
-                BlackList = BlackList.GroupBy(i => i.ImageUrl).Select(i => i.First()).ToList();
-
-                Console.WriteLine("LoadBlacklist found" + BlackList.Count);
-            }
-        }
-
-        public static void LoadGlobalStats()
-        {
-            Console.WriteLine("LoadGlobalStats");
-            if (File.Exists(Path.Combine(BasePath, "Stats", "global_stats.json")))
-            {
-                //BackUpGlobalStats();
-                string content = File.ReadAllText(Path.Combine(BasePath, "Stats", "global_stats.json"));
-                GlobalStats = JsonConvert.DeserializeObject<GlobalStats>(content);
-                Console.WriteLine("LoadGlobalStats found" + GlobalStats.EmojiInfoUsage.Count);
-            }
-        }
-
-        public static void SaveStats()
-        {
-            string content = JsonConvert.SerializeObject(BotStats);
-            File.WriteAllText("Stats\\stats.json", content);
-        }
-
-        public static void SaveGlobalStats()
-        {
-            string content = JsonConvert.SerializeObject(GlobalStats);
-            File.WriteAllText("Stats\\global_stats.json", content);
-        }
-
-        public static void SaveBlacklist()
-        {
-            string content = JsonConvert.SerializeObject(BlackList);
-            File.WriteAllText("Blacklist\\blacklist.json", content);
-        }
-
-        private static void MigrateToSqliteDb()
-        {
-
-
-            using (ETHBotDBContext context = new ETHBotDBContext())
-            {
-                if (context.CommandTypes.Count() == 0)
-                {
-                    // TODO check for updates
-                    var count = Enum.GetValues(typeof(ETHBot.DataLayer.Data.Enums.BotMessageType)).Length;
-                    var types = new List<CommandType>();
-                    for (var i = 0; i < count; i++)
-                    {
-                        types.Add(new CommandType
-                        {
-                            CommandTypeId = i,
-                            Name = ((ETHBot.DataLayer.Data.Enums.BotMessageType)i).ToString()
-                        });
-                    }
-                    context.CommandTypes.AddRange(types);
-                    context.SaveChanges();
-                }
-                return; // no longer needed
-
-
-                if (context.CommandStatistics.Count() == 0)
-                {
-                    foreach (var item in BotStats.DiscordUsers)
-                    {
-                        var user = context.DiscordUsers.SingleOrDefault(i => i.DiscordUserId == item.DiscordId);
-                        if (user == null)
-                        {
-                            context.DiscordUsers.Add(new ETHBot.DataLayer.Data.Discord.DiscordUser()
-                            {
-                                DiscordUserId = item.DiscordId,
-                                DiscriminatorValue = item.DiscordDiscriminator,
-                                //AvatarUrl = item.ReportedBy.,
-                                IsBot = false,
-                                IsWebhook = false,
-                                Nickname = item.ServerUserName,
-                                Username = item.DiscordName//,
-                                //JoinedAt = null
-                            });
-                            context.SaveChanges();
-                        }
-
-                        user = context.DiscordUsers.SingleOrDefault(i => i.DiscordUserId == item.DiscordId);
-
-
-
-                        if (item.Stats.TotalNeko > 0)
-                        {
-                            var type = context.CommandTypes.Single(i => i.CommandTypeId == 1);
-                            context.CommandStatistics.Add(new CommandStatistic()
-                            {
-                                Type = type,
-                                DiscordUser = user,
-                                Count = item.Stats.TotalNeko
-                            });
-                        }
-
-                        if (item.Stats.TotalSearch > 0)
-                        {
-                            var type = context.CommandTypes.Single(i => i.CommandTypeId == 2);
-                            context.CommandStatistics.Add(new CommandStatistic()
-                            {
-                                Type = type,
-                                DiscordUser = user,
-                                Count = item.Stats.TotalSearch
-                            });
-                        }
-
-                        if (item.Stats.TotalNekoGif > 0)
-                        {
-                            var type = context.CommandTypes.Single(i => i.CommandTypeId == 3);
-                            context.CommandStatistics.Add(new CommandStatistic()
-                            {
-                                Type = type,
-                                DiscordUser = user,
-                                Count = item.Stats.TotalNekoGif
-                            });
-                        }
-
-                        if (item.Stats.TotalHolo > 0)
-                        {
-                            var type = context.CommandTypes.Single(i => i.CommandTypeId == 4);
-                            context.CommandStatistics.Add(new CommandStatistic()
-                            {
-                                Type = type,
-                                DiscordUser = user,
-                                Count = item.Stats.TotalHolo
-                            });
-                        }
-
-
-                        if (item.Stats.TotalWaifu > 0)
-                        {
-                            var type = context.CommandTypes.Single(i => i.CommandTypeId == 5);
-                            context.CommandStatistics.Add(new CommandStatistic()
-                            {
-                                Type = type,
-                                DiscordUser = user,
-                                Count = item.Stats.TotalWaifu
-                            });
-                        }
-
-                        if (item.Stats.TotalBaka > 0)
-                        {
-                            var type = context.CommandTypes.Single(i => i.CommandTypeId == 6);
-                            context.CommandStatistics.Add(new CommandStatistic()
-                            {
-                                Type = type,
-                                DiscordUser = user,
-                                Count = item.Stats.TotalBaka
-                            });
-                        }
-
-                        if (item.Stats.TotalSmug > 0)
-                        {
-                            var type = context.CommandTypes.Single(i => i.CommandTypeId == 7);
-                            context.CommandStatistics.Add(new CommandStatistic()
-                            {
-                                Type = type,
-                                DiscordUser = user,
-                                Count = item.Stats.TotalSmug
-                            });
-                        }
-
-                        if (item.Stats.TotalFox > 0)
-                        {
-                            var type = context.CommandTypes.Single(i => i.CommandTypeId == 8);
-                            context.CommandStatistics.Add(new CommandStatistic()
-                            {
-                                Type = type,
-                                DiscordUser = user,
-                                Count = item.Stats.TotalFox
-                            });
-                        }
-
-                        if (item.Stats.TotalAvatar > 0)
-                        {
-                            var type = context.CommandTypes.Single(i => i.CommandTypeId == 9);
-                            context.CommandStatistics.Add(new CommandStatistic()
-                            {
-                                Type = type,
-                                DiscordUser = user,
-                                Count = item.Stats.TotalAvatar
-                            });
-                        }
-
-
-                        if (item.Stats.TotalNekoAvatar > 0)
-                        {
-                            var type = context.CommandTypes.Single(i => i.CommandTypeId == 10);
-                            context.CommandStatistics.Add(new CommandStatistic()
-                            {
-                                Type = type,
-                                DiscordUser = user,
-                                Count = item.Stats.TotalNekoAvatar
-                            });
-                        }
-
-
-                        if (item.Stats.TotalWallpaper > 0)
-                        {
-                            var type = context.CommandTypes.Single(i => i.CommandTypeId == 11);
-                            context.CommandStatistics.Add(new CommandStatistic()
-                            {
-                                Type = type,
-                                DiscordUser = user,
-                                Count = item.Stats.TotalWallpaper
-                            });
-                        }
-
-
-                        if (item.Stats.TotalAnimalears > 0)
-                        {
-                            var type = context.CommandTypes.Single(i => i.CommandTypeId == 12);
-                            context.CommandStatistics.Add(new CommandStatistic()
-                            {
-                                Type = type,
-                                DiscordUser = user,
-                                Count = item.Stats.TotalAnimalears
-                            });
-                        }
-
-                        if (item.Stats.TotalFoxgirl > 0)
-                        {
-                            var type = context.CommandTypes.Single(i => i.CommandTypeId == 13);
-                            context.CommandStatistics.Add(new CommandStatistic()
-                            {
-                                Type = type,
-                                DiscordUser = user,
-                                Count = item.Stats.TotalFoxgirl
-                            });
-                        }
-
-
-
-                        context.SaveChanges();
-
-                    }
-
-
-
-
-                }
-
-                if (context.PingStatistics.Count() == 0)
-                {
-                    foreach (var item in GlobalStats.PingInformation)
-                    {
-                        var user = context.DiscordUsers.SingleOrDefault(i => i.DiscordUserId == item.DiscordUser.DiscordId);
-                        if (user == null)
-                        {
-                            context.DiscordUsers.Add(new ETHBot.DataLayer.Data.Discord.DiscordUser()
-                            {
-                                DiscordUserId = item.DiscordUser.DiscordId,
-                                DiscriminatorValue = item.DiscordUser.DiscordDiscriminator,
-                                //AvatarUrl = item.ReportedBy.,
-                                IsBot = false,
-                                IsWebhook = false,
-                                Nickname = item.DiscordUser.ServerUserName,
-                                Username = item.DiscordUser.DiscordName//,
-                                //JoinedAt = null
-                            });
-                            context.SaveChanges();
-                        }
-
-                        user = context.DiscordUsers.SingleOrDefault(i => i.DiscordUserId == item.DiscordUser.DiscordId);
-
-
-                        context.PingStatistics.Add(new PingStatistic()
-                        {
-                            DiscordUser = user,
-                            PingCount = item.PingCount,
-                            PingCountOnce = item.PingCountOnce,
-                            PingCountBot = 0
-                        });
-
-
-                    }
-                }
-
-                context.SaveChanges();
-
-                if (context.EmojiHistory.Count() == 0)
-                {
-                    foreach (var item in GlobalStats.EmojiInfoUsage)
-                    {
-                        context.EmojiStatistics.Add(new EmojiStatistic()
-                        {
-                            Animated = item.Animated,
-                            CreatedAt = item.CreatedAt,
-                            EmojiId = item.EmojiId,
-                            EmojiName = item.EmojiName,
-                            Url = item.Url,
-                            UsedAsReaction = item.UsedAsReaction,
-                            UsedInText = item.UsedInText,
-                            UsedInTextOnce = item.UsedInTextOnce
-                        });
-
-                        context.SaveChanges();
-
-                        var stat = context.EmojiStatistics.Single(i => i.EmojiId == item.EmojiId);
-
-                        for (int i = 0; i < item.UsedInTextOnce; i++)
-                        {
-                            context.EmojiHistory.Add(new EmojiHistory()
-                            {
-                                Count = 1,
-                                IsReaction = false,
-                                DateTimePosted = DateTime.Now,
-                                EmojiStatistic = stat
-                            });
-                        }
-
-                        context.EmojiHistory.Add(new EmojiHistory()
-                        {
-                            Count = item.UsedInText - item.UsedInTextOnce,
-                            IsReaction = false,
-                            DateTimePosted = DateTime.Now,
-                            EmojiStatistic = stat
-                        });
-
-                        for (int i = 0; i < item.UsedAsReaction; i++)
-                        {
-                            context.EmojiHistory.Add(new EmojiHistory()
-                            {
-                                Count = 1,
-                                IsReaction = true,
-                                DateTimePosted = DateTime.Now,
-                                EmojiStatistic = stat
-                            });
-                        }
-
-                        context.SaveChanges();
-                    }
-                }
-
-                context.SaveChanges();
-
-                Console.WriteLine("LoadBlacklist CHECK " + BlackList.Count);
-                if (context.BannedLinks.Count() == 0)
-                {
-                    // not migrated yet
-
-                    Console.WriteLine("LoadBlacklist MIGRATION " + BlackList.Count);
-
-                    foreach (var item in BlackList)
-                    {
-                        var user = context.DiscordUsers.SingleOrDefault(i => i.DiscordUserId == item.ReportedBy.DiscordId);
-                        if (user == null)
-                        {
-                            context.DiscordUsers.Add(new ETHBot.DataLayer.Data.Discord.DiscordUser()
-                            {
-                                DiscordUserId = item.ReportedBy.DiscordId,
-                                DiscriminatorValue = item.ReportedBy.DiscordDiscriminator,
-                                //AvatarUrl = item.ReportedBy.,
-                                IsBot = false,
-                                IsWebhook = false,
-                                Nickname = item.ReportedBy.ServerUserName,
-                                Username = item.ReportedBy.DiscordName//,
-                                                                      //JoinedAt = null
-                            });
-                            context.SaveChanges();
-                        }
-
-                        user = context.DiscordUsers.SingleOrDefault(i => i.DiscordUserId == item.ReportedBy.DiscordId);
-
-                        if (item.ImageUrl.Contains("discordapp") || !item.ImageUrl.StartsWith("https://") || context.BannedLinks.Any(i => i.Link == item.ImageUrl))
-                        {
-                            continue; // clean up wrong blocks
-                        }
-
-                        context.BannedLinks.Add(new ETHBot.DataLayer.Data.Discord.BannedLink()
-                        {
-                            ByUser = user,
-                            Link = item.ImageUrl,
-                            ReportTime = item.ReportedAt == DateTime.MinValue ? DateTime.Now : item.ReportedAt
-                        });
-
-                    }
-
-                    context.SaveChanges();
-                }
-
-
-            }
-        }
 
         public static void LoadChannelSettings()
         {
@@ -623,10 +206,6 @@ namespace ETHDINFKBot
             DatabaseManager.Instance().SetAllSubredditsStatus();
             LoadChannelSettings();
 
-            //LoadStats();
-            //LoadGlobalStats();
-            //LoadBlacklist();
-            //MigrateToSqliteDb();
 
             var config = new DiscordSocketConfig { MessageCacheSize = 250 };
             Client = new DiscordSocketClient(config);
@@ -665,6 +244,9 @@ namespace ETHDINFKBot
 
         private Task Client_MessageUpdated(Cacheable<IMessage, ulong> before, SocketMessage after, ISocketMessageChannel arg3)
         {
+            if (TempDisableIncomming) 
+                return Task.CompletedTask;
+
             if (before.HasValue)
             {
                 if (!AllowedToRun(before.Value.Channel.Id, BotPermissionType.RemovedPingMessage))
@@ -711,6 +293,9 @@ namespace ETHDINFKBot
 
         private Task Client_MessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel arg2)
         {
+            if (TempDisableIncomming)
+                return Task.CompletedTask;
+
             if (message.HasValue)
             {
                 if (!AllowedToRun(message.Value.Channel.Id, BotPermissionType.RemovedPingMessage))
@@ -751,16 +336,23 @@ namespace ETHDINFKBot
 
         private Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
         {
+            if (TempDisableIncomming)
+                return Task.CompletedTask;
+
             if (((SocketGuildUser)arg3.User).IsBot == true)
                 return Task.CompletedTask;
 
             Console.ForegroundColor = ConsoleColor.Red;
-            //Console.WriteLine($"Removed emote {arg3.Emote.Name} by {arg3.User.Value.Username}");
-            LogManager.RemoveReaction((Emote)arg3.Emote, ((SocketGuildUser)arg3.User).IsBot);
 
-            if (((Emote)arg3.Emote).Id == 780179874656419880)
+            if (arg3.Emote is Emote)
             {
-                // TODO Remove the post from saved
+                //Console.WriteLine($"Removed emote {arg3.Emote.Name} by {arg3.User.Value.Username}");
+                LogManager.RemoveReaction((Emote)arg3.Emote, arg1.Id, ((SocketGuildUser)arg3.User));
+
+                if (((Emote)arg3.Emote).Id == 780179874656419880)
+                {
+                    // TODO Remove the post from saved
+                }
             }
 
             return Task.CompletedTask;
@@ -783,98 +375,105 @@ namespace ETHDINFKBot
 
         private Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
         {
+            if (TempDisableIncomming)
+                return Task.CompletedTask;
+
             try
             {
-                /*if ( == true)
-                    return Task.CompletedTask;*/
-
-                Console.ForegroundColor = ConsoleColor.Green;
-                //Console.WriteLine($"Added emote {arg3.Emote.Name} by {arg3.User.Value.Username}");
-                LogManager.AddReaction((Emote)arg3.Emote, ((SocketGuildUser)arg3.User).IsBot);
-
-                if (((Emote)arg3.Emote).Id == 780179874656419880 && !arg3.User.Value.IsBot)
+                // only if an emote has been used we dont count emojis yet
+                if (arg3.Emote is Emote)
                 {
-                    // Save the post link
 
-                    /*          var user = DatabaseManager.GetDiscordUserById(arg1.Value.Author.Id); // Verify the user is created but should actually be available by this poitn
-                    var saveBy = DatabaseManager.GetDiscordUserById(arg3.User.Value.Id); // Verify the user is created but should actually be available by this poitn
-                    */
+                    /*if ( == true)
+                        return Task.CompletedTask;*/
 
-                    if (DatabaseManager.IsSaveMessage(arg1.Value.Id, arg3.User.Value.Id))
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    //Console.WriteLine($"Added emote {arg3.Emote.Name} by {arg3.User.Value.Username}");
+                    LogManager.AddReaction((Emote)arg3.Emote, arg1.Id, ((SocketGuildUser)arg3.User));
+
+                    if (((Emote)arg3.Emote).Id == 780179874656419880 && !arg3.User.Value.IsBot)
                     {
-                        // dont allow double saves
-                        return Task.CompletedTask;
-                    }
+                        // Save the post link
 
-                    var guildChannel = (SocketGuildChannel)arg1.Value.Channel;
-                    var link = $"https://discord.com/channels/{guildChannel.Guild.Id}/{guildChannel.Id}/{arg1.Value.Id}";
-                    if (!string.IsNullOrWhiteSpace(arg1.Value.Content))
-                    {
-                        DatabaseManager.SaveMessage(arg1.Value.Id, arg1.Value.Author.Id, arg3.User.Value.Id, link, arg1.Value.Content);
-                        // TODO parse to guild user
+                        /*          var user = DatabaseManager.GetDiscordUserById(arg1.Value.Author.Id); // Verify the user is created but should actually be available by this poitn
+                        var saveBy = DatabaseManager.GetDiscordUserById(arg3.User.Value.Id); // Verify the user is created but should actually be available by this poitn
+                        */
 
-                        arg3.User.Value.SendMessageAsync($"Saved post from {arg1.Value.Author.Username}: " +
-                            $"{Environment.NewLine} {arg1.Value.Content} {Environment.NewLine}Direct link: [{guildChannel.Guild.Name}/{guildChannel.Name}/by {arg1.Value.Author.Username}] <{link}>");
-                    }
-
-                    foreach (var item in arg1.Value.Embeds)
-                    {
-                        DatabaseManager.SaveMessage(arg1.Value.Id, arg1.Value.Author.Id, arg3.User.Value.Id, link, "Embed: " + ((Embed)item).ToString());
-                        arg3.User.Value.SendMessageAsync("", false, ((Embed)item));
-                    }
-
-
-                    if (arg1.Value.Attachments.Count > 0)
-                    {
-                        //return Task.CompletedTask;
-
-                        foreach (var item in arg1.Value.Attachments)
+                        if (DatabaseManager.IsSaveMessage(arg1.Value.Id, arg3.User.Value.Id))
                         {
-                            DatabaseManager.SaveMessage(arg1.Value.Id, arg1.Value.Author.Id, arg3.User.Value.Id, link, item.Url);
-
-                            /*DatabaseManager.SaveMessage(new SavedMessage()
-                            {
-                                DirectLink = link,
-                                SendInDM = false,
-                                Content = item.Url, // todo attachment save to disk
-                                MessageId = arg1.Value.Id,
-                                ByDiscordUserId = user.DiscordUserId,
-                                ByDiscordUser = user,
-                                SavedByDiscordUserId = saveBy.DiscordUserId,
-                                SavedByDiscordUser = saveBy
-                            });*/
-                            // TODO markdown
-
-                            arg3.User.Value.SendMessageAsync($"Saved post (Attachment) from {arg1.Value.Author.Username}: " +
-                                $"{Environment.NewLine} {item.Url}{Environment.NewLine}Direct link: [{guildChannel.Guild.Name}/{guildChannel.Name}/by {arg1.Value.Author.Username}] <{link}>");
+                            // dont allow double saves
+                            return Task.CompletedTask;
                         }
 
+                        var guildChannel = (SocketGuildChannel)arg1.Value.Channel;
+                        var link = $"https://discord.com/channels/{guildChannel.Guild.Id}/{guildChannel.Id}/{arg1.Value.Id}";
+                        if (!string.IsNullOrWhiteSpace(arg1.Value.Content))
+                        {
+                            DatabaseManager.SaveMessage(arg1.Value.Id, arg1.Value.Author.Id, arg3.User.Value.Id, link, arg1.Value.Content);
+                            // TODO parse to guild user
+
+                            arg3.User.Value.SendMessageAsync($"Saved post from {arg1.Value.Author.Username}: " +
+                                $"{Environment.NewLine} {arg1.Value.Content} {Environment.NewLine}Direct link: [{guildChannel.Guild.Name}/{guildChannel.Name}/by {arg1.Value.Author.Username}] <{link}>");
+                        }
+
+                        foreach (var item in arg1.Value.Embeds)
+                        {
+                            DatabaseManager.SaveMessage(arg1.Value.Id, arg1.Value.Author.Id, arg3.User.Value.Id, link, "Embed: " + ((Embed)item).ToString());
+                            arg3.User.Value.SendMessageAsync("", false, ((Embed)item));
+                        }
+
+
+                        if (arg1.Value.Attachments.Count > 0)
+                        {
+                            //return Task.CompletedTask;
+
+                            foreach (var item in arg1.Value.Attachments)
+                            {
+                                DatabaseManager.SaveMessage(arg1.Value.Id, arg1.Value.Author.Id, arg3.User.Value.Id, link, item.Url);
+
+                                /*DatabaseManager.SaveMessage(new SavedMessage()
+                                {
+                                    DirectLink = link,
+                                    SendInDM = false,
+                                    Content = item.Url, // todo attachment save to disk
+                                    MessageId = arg1.Value.Id,
+                                    ByDiscordUserId = user.DiscordUserId,
+                                    ByDiscordUser = user,
+                                    SavedByDiscordUserId = saveBy.DiscordUserId,
+                                    SavedByDiscordUser = saveBy
+                                });*/
+                                // TODO markdown
+
+                                arg3.User.Value.SendMessageAsync($"Saved post (Attachment) from {arg1.Value.Author.Username}: " +
+                                    $"{Environment.NewLine} {item.Url}{Environment.NewLine}Direct link: [{guildChannel.Guild.Name}/{guildChannel.Name}/by {arg1.Value.Author.Username}] <{link}>");
+                            }
+
+                        }
+
+                        if (AllowedToRun(arg1.Value.Channel.Id, BotPermissionType.SaveMessage))
+                        {
+                            EmbedBuilder builder = new EmbedBuilder();
+
+                            builder.WithTitle($"{arg3.User.Value.Username} saved a message");
+                            //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
+                            //builder.WithDescription($@"");
+                            builder.WithColor(0, 0, 255);
+
+                            //builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+
+                            builder.WithCurrentTimestamp();
+                            builder.AddField("Message Link", $"[Message]({link})", true);
+
+                            builder.AddField("Message Author", $"{arg1.Value.Author.Username}", true);
+
+                            // TODO More stats
+
+                            arg1.Value.Channel.SendMessageAsync("", false, builder.Build());
+                        }
+                        // TODO markdown -> guild user also
+                        //arg1.Value.Channel.SendMessageAsync($"{arg3.User.Value.Username} saves <{link}> by {arg1.Value.Author.Username}");
                     }
-
-                    if (AllowedToRun(arg1.Value.Channel.Id, BotPermissionType.SaveMessage))
-                    {
-                        EmbedBuilder builder = new EmbedBuilder();
-
-                        builder.WithTitle($"{arg3.User.Value.Username} saved a message");
-                        //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
-                        //builder.WithDescription($@"");
-                        builder.WithColor(0, 0, 255);
-
-                        //builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
-
-                        builder.WithCurrentTimestamp();
-                        builder.AddField("Message Link", $"[Message]({link})", true);
-
-                        builder.AddField("Message Author", $"{arg1.Value.Author.Username}", true);
-
-                        // TODO More stats
-
-                        arg1.Value.Channel.SendMessageAsync("", false, builder.Build());
-                    }
-                    // TODO markdown -> guild user also
-                    //arg1.Value.Channel.SendMessageAsync($"{arg3.User.Value.Username} saves <{link}> by {arg1.Value.Author.Username}");
                 }
-
             }
             catch (Exception ex)
             {
@@ -893,17 +492,17 @@ namespace ETHDINFKBot
                     // check if the emoji exists and if the emojis is animated
                     string name = msg.Content.Substring(1, msg.Content.Length - 1);
 
-                    var emoji = DatabaseManager.GetEmojiByName(name);
+                    var emote = DatabaseManager.GetEmoteByName(name);
 
-                    if (emoji != null)
+                    if (emote != null)
                     {
                         var guildUser = msg.Author as SocketGuildUser;
 
                         msg.DeleteAsync();
 
-                        var emoteString = $"<{(emoji.Animated ? "a" : "")}:{emoji.EmojiName}:{emoji.EmojiId}>";
+                        var emoteString = $"<{(emote.Animated ? "a" : "")}:{emote.EmoteName}:{emote.DiscordEmoteId}>";
 
-                        if (guildChannel.Guild.Emotes.Any(i => i.Id == emoji.EmojiId))
+                        if (guildChannel.Guild.Emotes.Any(i => i.Id == emote.DiscordEmoteId))
                         {
                             // we can post the emote as it will be rendered out
                             await msg.Channel.SendMessageAsync(emoteString);
@@ -911,21 +510,21 @@ namespace ETHDINFKBot
                         else
                         {
                             // TODO store resized images in db for faster reuse
-                            if (emoji.Animated)
+                            if (emote.Animated)
                             {
                                 // TODO gif resize
-                                await msg.Channel.SendMessageAsync(emoji.Url);
+                                await msg.Channel.SendMessageAsync(emote.Url);
                             }
                             else
                             {
                                 using (WebClient client = new WebClient())
                                 {
-                                    var imageBytes = client.DownloadData(emoji.Url);
+                                    var imageBytes = client.DownloadData(emote.Url);
 
                                     using (var ms = new MemoryStream(imageBytes))
                                     {
                                         var image = System.Drawing.Image.FromStream(ms);
-                                        var resImage = ResizeImage(image, 48, 48);
+                                        var resImage = ResizeImage(image, Math.Min(image.Height, 64));
 
                                         var stream = new MemoryStream();
 
@@ -933,7 +532,7 @@ namespace ETHDINFKBot
                                         stream.Position = 0;
 
 
-                                        await msg.Channel.SendFileAsync(stream, $"{emoji.EmojiName}.png");
+                                        await msg.Channel.SendFileAsync(stream, $"{emote.EmoteName}.png");
                                     }
                                 }
                             }
@@ -941,7 +540,7 @@ namespace ETHDINFKBot
 
                         }
 
-                        await msg.Channel.SendMessageAsync($"(.{name}) by {guildUser.Nickname}");
+                        await msg.Channel.SendMessageAsync($"(.{name}) by <@{guildUser.Id}>");
 
                         return true;
                     }
@@ -954,12 +553,16 @@ namespace ETHDINFKBot
         private static Dictionary<ulong, DateTime> SpamCache = new Dictionary<ulong, DateTime>();
         public async Task HandleCommandAsync(SocketMessage m)
         {
+            if (TempDisableIncomming)
+                return;
+
             if (!(m is SocketUserMessage msg)) return;
 
-            if (!m.Author.IsBot && await TryToParseEmoji(msg))
+            // check if the emote is a command -> block
+            List<CommandInfo> commandList = commands.Commands.ToList();
+            if (!m.Author.IsBot && !commandList.Any(i => i.Name.ToLower() == msg.Content.ToLower().Replace(".", "")) && await TryToParseEmoji(msg))
                 return; // emoji was found and we can exit here
 
-            await LogManager.ProcessEmojisAndPings(m.Tags, m.Author.Id, ((SocketGuildUser)m.Author).IsBot);
             // TODO private channels
 
             var dbManager = DatabaseManager.Instance();
@@ -1006,15 +609,16 @@ namespace ETHDINFKBot
 
             var dbAuthor = dbManager.GetDiscordUserById(msg.Author.Id);
             // todo check for update
+            var user = (SocketGuildUser)msg.Author;
             if (dbAuthor == null)
             {
-                var user = (SocketGuildUser)msg.Author; // todo check non socket user
+                // todo check non socket user
 
-                dbAuthor = dbManager.CreateUser(new ETHBot.DataLayer.Data.Discord.DiscordUser()
+                dbAuthor = dbManager.CreateDiscordUser(new ETHBot.DataLayer.Data.Discord.DiscordUser()
                 {
                     DiscordUserId = user.Id,
                     DiscriminatorValue = user.DiscriminatorValue,
-                    //AvatarUrl = item.ReportedBy.,
+                    AvatarUrl = user.GetAvatarUrl(),
                     IsBot = user.IsBot,
                     IsWebhook = user.IsWebhook,
                     Nickname = user.Nickname,
@@ -1026,7 +630,17 @@ namespace ETHDINFKBot
             }
             else
             {
-                // TODO Update user
+                dbManager.UpdateDiscordUser(new ETHBot.DataLayer.Data.Discord.DiscordUser()
+                {
+                    DiscordUserId = user.Id,
+                    DiscriminatorValue = user.DiscriminatorValue,
+                    AvatarUrl = user.GetAvatarUrl(),
+                    IsBot = user.IsBot,
+                    IsWebhook = user.IsWebhook,
+                    Nickname = user.Nickname,
+                    Username = user.Username,
+                    JoinedAt = user.JoinedAt
+                });
             }
 
 
@@ -1045,6 +659,17 @@ namespace ETHDINFKBot
 
             if (channelSettings != null && ((BotPermissionType)channelSettings?.ChannelPermissionFlags).HasFlag(BotPermissionType.Read))
             {
+                ulong? referenceMessageId = null;
+                if (msg.Reference != null)
+                {
+                    referenceMessageId = (ulong?)msg.Reference.MessageId;
+
+                    if (dbManager.GetDiscordMessageById(referenceMessageId) == null)
+                    {
+                        referenceMessageId = null; // original message is not in the db therefore do not link
+                    }
+                }
+
                 dbManager.CreateDiscordMessage(new ETHBot.DataLayer.Data.Discord.DiscordMessage()
                 {
                     //Channel = discordChannel,
@@ -1052,9 +677,13 @@ namespace ETHDINFKBot
                     //DiscordUser = dbAuthor,
                     DiscordUserId = dbAuthor.DiscordUserId,
                     MessageId = msg.Id,
-                    Content = msg.Content
-                });
+                    Content = msg.Content,
+                    ReplyMessageId = referenceMessageId
+                }, true);
             }
+
+
+            await LogManager.ProcessEmojisAndPings(m.Tags, m.Author.Id, m.Id, ((SocketGuildUser)m.Author));
 
             var message = msg.Content;
             var randVal = msg.Author.DiscriminatorValue % 10;
@@ -1107,15 +736,26 @@ namespace ETHDINFKBot
                 await m.AddReactionAsync(Emote.Parse("<:that:758262252699779073>"));
             }
 
-
             if (m.Author.IsBot)
                 return;
 
-            int argPos = 0;
-            if (!(msg.HasStringPrefix(".", ref argPos)))
+            if (user.Roles.Any(i => i.Id == 798639212818726952) && false /* disabled for now */)
             {
-                return;
+                HandleQuestionAnswer(msg);
             }
+
+            int argPos = 0;
+
+            // accept .dev only in dev mode
+#if !DEBUG
+            if (!msg.HasStringPrefix(".", ref argPos))
+                return;
+#else
+            if (!msg.HasStringPrefix("dev.", ref argPos))
+                return;
+#endif
+
+
 
             if (m.Author.Id != Owner)
             {
@@ -1146,11 +786,112 @@ namespace ETHDINFKBot
             Console.ResetColor();
 
 
+
+
             var context = new SocketCommandContext(Client, msg);
             commands.ExecuteAsync(context, argPos, services);
         }
 
 
+        private static async void HandleQuestionAnswer(SocketMessage msg)
+        {
+            int timeOnFreshAnswer = 2;
+            int additionalTime = 1;
+
+            var user = (SocketGuildUser)msg.Author;
+            bool inJail = true;
+
+            // only handle users with the role
+            if (CurrentDiscordOutOfJailTime.ContainsKey(user.Id))
+            {
+                var time = CurrentDiscordOutOfJailTime[user.Id];
+
+                if (time > DateTime.Now)
+                {
+                    // he is still free to browse
+
+                    var replyMsg = await msg.Channel.SendMessageAsync($"{user.Nickname} you still have {(time - DateTime.Now).TotalSeconds} second(s) of free time. Enjoy");
+                    await Task.Delay(3000);
+                    await replyMsg.DeleteAsync();
+
+                    inJail = false;
+                }
+                else
+                {
+                    CurrentDiscordOutOfJailTime.Remove(user.Id);
+                }
+            }
+
+            string reply = msg.Content.ToLower();
+
+            if (inJail)
+            {
+                // delete the message
+                await msg.DeleteAsync();
+            }
+
+            if (CurrentActiveQuestion.ContainsKey(user.Id))
+            {
+                var question = CurrentActiveQuestion[user.Id];
+
+                if (reply != question.Answer.ToLower() && inJail)
+                {
+                    var replyMsg = await msg.Channel.SendMessageAsync($"{user.Nickname} you are still in jail. Answer my question! Type .repeat if you forgot it");
+
+                    await Task.Delay(10000);
+                    await replyMsg.DeleteAsync();
+                }
+                else if (reply == question.Answer.ToLower())
+                {
+                    if (inJail)
+                    {
+                        await msg.Channel.SendMessageAsync($"Congrats! You answered correctly. You earned yourself {timeOnFreshAnswer}min of Discord distraction GUILT FREE <:POGGERS:747783377838407691> " + Environment.NewLine +
+                            "Remember you can still call .question for a random question to extend your free time");
+                    }
+                    else
+                    {
+                        await msg.DeleteAsync(); // delete the answer
+                        await msg.Channel.SendMessageAsync($"Congrats! You extended your free time by {additionalTime}min");
+                    }
+
+                    if (CurrentActiveQuestion.ContainsKey(user.Id))
+                        CurrentActiveQuestion.Remove(user.Id);
+
+                    if (CurrentDiscordOutOfJailTime.ContainsKey(user.Id))
+                    {
+                        var time = CurrentDiscordOutOfJailTime[user.Id];
+
+                        if (time > DateTime.Now)
+                        {
+                            // user is still in free time but they can extent if they keep continuing to answer questions.
+                            CurrentDiscordOutOfJailTime[user.Id] = CurrentDiscordOutOfJailTime[user.Id].AddMinutes(additionalTime);
+                        }
+                        else
+                        {
+                            CurrentDiscordOutOfJailTime[user.Id] = DateTime.Now.AddMinutes(timeOnFreshAnswer);
+                        }
+                    }
+                    else
+                    {
+                        CurrentDiscordOutOfJailTime.Add(user.Id, DateTime.Now.AddMinutes(timeOnFreshAnswer));
+                    }
+                }
+            }
+            else if (inJail)
+            {
+                // THE user has no question assign one
+                StudyHelper helper = new StudyHelper();
+
+                var question = helper.GetRandomLinalgQuestion();
+
+                CurrentActiveQuestion.Add(user.Id, question);
+
+                var replyMsg = await msg.Channel.SendMessageAsync($"{user.Nickname} you are still in jail. Answer my question! Type .repeat if you forgot it");
+
+                await Task.Delay(10000);
+                await replyMsg.DeleteAsync();
+            }
+        }
 
         // source https://stackoverflow.com/questions/1922040/how-to-resize-an-image-c-sharp
 
@@ -1161,10 +902,13 @@ namespace ETHDINFKBot
         /// <param name="width">The width to resize to.</param>
         /// <param name="height">The height to resize to.</param>
         /// <returns>The resized image.</returns>
-        public static Bitmap ResizeImage(System.Drawing.Image image, int width, int height)
+        public static Bitmap ResizeImage(System.Drawing.Image image, int height)
         {
-            var destRect = new Rectangle(0, 0, width, height);
-            var destImage = new Bitmap(width, height);
+
+            decimal ratio = image.Width / (decimal)image.Height;
+
+            var destRect = new Rectangle(0, 0, (int)(height * ratio), height);
+            var destImage = new Bitmap((int)(height * ratio), height);
 
             destImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
 

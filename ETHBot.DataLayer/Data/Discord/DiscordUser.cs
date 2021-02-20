@@ -23,7 +23,7 @@ namespace ETHBot.DataLayer.Data.Discord
         public string Nickname { get; set; }
         //public IReadOnlyCollection<ulong> RoleIds { get; } // TODO for db
 
-        public ICollection<BannedLink> BannedLinks { get; set; }
+        //public ICollection<BannedLink> BannedLinks { get; set; }
 
         //[InverseProperty(nameof(SavedMessage.ByDiscordUser))]
         //public ICollection<SavedMessage> ByDiscordUserSaves { get; set; }

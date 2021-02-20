@@ -44,21 +44,23 @@ namespace ETHDINFKBot.Log
         public static DateTime LastUpdate = DateTime.MinValue;
 
         public static DateTime LastGlobalUpdate = DateTime.MinValue;
-        public async void AddReaction(Emote emote, bool isBot)
+        public async void AddReaction(Emote emote, ulong discordMessageId, SocketGuildUser user)
         {
             try
             {
-                var statistic = new EmojiStatistic()
+                var discordEmote = new DiscordEmote()
                 {
                     Animated = emote.Animated,
-                    EmojiId = emote.Id,
-                    EmojiName = emote.Name,
+                    DiscordEmoteId = emote.Id,
+                    EmoteName = emote.Name,
                     Url = emote.Url,
                     CreatedAt = emote.CreatedAt,
-                    UsedAsReaction = 1
+                    Blocked = false,
+                    LastUpdatedAt = DateTime.Now, // todo chech changes
+                    LocalPath = null
                 };
 
-                DatabaseManager.AddEmojiStatistic(statistic, 1, true, isBot);
+                DatabaseManager.ProcessDiscordEmote(discordEmote, discordMessageId, 1, true, user);
                 //Program.GlobalStats.EmojiInfoUsage.Single(i => i.EmojiId == emote.Id).UsedAsReaction++;
             }
             catch (Exception ex)
@@ -66,19 +68,21 @@ namespace ETHDINFKBot.Log
 
             }
         }
-        public async void RemoveReaction(Emote emote, bool isBot)
+        public async void RemoveReaction(Emote emote, ulong discordMessageId, SocketGuildUser user)
         {
-            var statistic = new EmojiStatistic()
+            var discordEmote = new DiscordEmote()
             {
                 Animated = emote.Animated,
-                EmojiId = emote.Id,
-                EmojiName = emote.Name,
+                DiscordEmoteId = emote.Id,
+                EmoteName = emote.Name,
                 Url = emote.Url,
                 CreatedAt = emote.CreatedAt,
-                UsedAsReaction = -1
+                Blocked = false,
+                LastUpdatedAt = DateTime.Now, // todo chech changes
+                LocalPath = null
             };
 
-            DatabaseManager.AddEmojiStatistic(statistic, -1, true, isBot);
+            DatabaseManager.ProcessDiscordEmote(discordEmote, discordMessageId, -1, true, user);
 
             /*
             if (Program.GlobalStats.EmojiInfoUsage.Any(i => i.EmojiId == emote.Id))
@@ -93,7 +97,7 @@ namespace ETHDINFKBot.Log
             }*/
         }
 
-        public async Task ProcessEmojisAndPings(IReadOnlyCollection<ITag> tags, ulong authorId, bool isBot)
+        public async Task ProcessEmojisAndPings(IReadOnlyCollection<ITag> tags, ulong authorId, ulong discordMessageId, SocketGuildUser user)
         {
             try
             {
@@ -117,19 +121,19 @@ namespace ETHDINFKBot.Log
                 {
                     Tag<Emote> tag = (Tag<Emote>)tags.First(i => i.Type == TagType.Emoji && ((Tag<Emote>)i).Value.Id == emote.Key);
 
-                    var stat = new EmojiStatistic()
+                    var stat = new DiscordEmote()
                     {
                         Animated = tag.Value.Animated,
-                        EmojiId = tag.Value.Id,
-                        EmojiName = tag.Value.Name,
+                        DiscordEmoteId = tag.Value.Id,
+                        EmoteName = tag.Value.Name,
                         Url = tag.Value.Url,
                         CreatedAt = tag.Value.CreatedAt,
-                        UsedInText = emote.Value,
-                        UsedInTextOnce = 1,
-                        UsedAsReaction = 0
+                        Blocked = false,
+                        LastUpdatedAt = DateTime.Now,
+                        LocalPath = null
                     };
 
-                    DatabaseManager.AddEmojiStatistic(stat, emote.Value, false, isBot);
+                    DatabaseManager.ProcessDiscordEmote(stat, discordMessageId, emote.Value, false, user);
                 }
 
                 // TODO dont hammer the db after each call (check if any new emotes have been added
@@ -179,7 +183,7 @@ namespace ETHDINFKBot.Log
 
                 foreach (var pingInfo in listOfUsers)
                 {
-                    DatabaseManager.AddPingStatistic(pingInfo.Key, pingInfo.Value, isBot);
+                    DatabaseManager.AddPingStatistic(pingInfo.Key, pingInfo.Value, user);
                 }
 
                 /*

@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.WebSocket;
 using ETHBot.DataLayer;
 using ETHBot.DataLayer.Data;
 using ETHBot.DataLayer.Data.Discord;
@@ -8,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -55,7 +57,7 @@ namespace ETHDINFKBot
             }
         }
 
-        public DiscordUser CreateUser(DiscordUser user)
+        public DiscordUser CreateDiscordUser(DiscordUser user)
         {
             try
             {
@@ -74,14 +76,73 @@ namespace ETHDINFKBot
             }
         }
 
-        public EmojiStatistic GetEmojiByName(string emojiName)
+        public void UpdateDiscordUser(DiscordUser user)
         {
             try
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    var emoji = context.EmojiStatistics.FirstOrDefault(i => i.EmojiName.ToLower() == emojiName.ToLower());
-                    return emoji;
+                    var dbUser = context.DiscordUsers.SingleOrDefault(i => i.DiscordUserId == user.DiscordUserId);
+                    if (dbUser == null)
+                        CreateDiscordUser(user);
+
+                    bool changes = false;
+                    if (dbUser.Nickname != user.Nickname)
+                    {
+                        dbUser.Nickname = user.Nickname;
+                        changes = true;
+                    }
+
+                    if (dbUser.Username != user.Username)
+                    {
+                        dbUser.Username = user.Username;
+                        changes = true;
+                    }
+
+                    if (dbUser.DiscriminatorValue != user.DiscriminatorValue)
+                    {
+                        dbUser.DiscriminatorValue = user.DiscriminatorValue;
+                        changes = true;
+                    }
+
+                    // usually this doesnt change but some old users are wrong marked to fix this
+                    if (dbUser.IsBot != user.IsBot)
+                    {
+                        dbUser.IsBot = user.IsBot;
+                        changes = true;
+                    }
+
+                    // usually this doesnt change but some old users are wrong marked to fix this
+                    if (dbUser.JoinedAt != user.JoinedAt)
+                    {
+                        dbUser.JoinedAt = user.JoinedAt;
+                        changes = true;
+                    }
+
+                    if (dbUser.AvatarUrl != user.AvatarUrl)
+                    {
+                        dbUser.AvatarUrl = user.AvatarUrl;
+                        changes = true;
+                    }
+
+
+                    if (changes)
+                        context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+        }
+
+        public DiscordEmote GetEmoteByName(string emoteName)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordEmotes.FirstOrDefault(i => i.EmoteName.ToLower() == emoteName.ToLower());
                 }
             }
             catch (Exception ex)
@@ -91,15 +152,14 @@ namespace ETHDINFKBot
             }
         }
 
-        public List<EmojiStatistic> GetEmotesByName(string name)
+        public List<DiscordEmote> GetEmotesByName(string name)
         {
             try
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
                     // todo improve and better search
-                    var emojis = context.EmojiStatistics.AsQueryable().Where(i => i.EmojiName.ToLower().Contains(name)).ToList();
-                    return emojis;
+                    return context.DiscordEmotes.AsQueryable().Where(i => i.EmoteName.ToLower().Contains(name)).ToList();
                 }
             }
             catch (Exception ex)
@@ -110,7 +170,8 @@ namespace ETHDINFKBot
         }
 
 
-        public EmojiStatistic SaveEmoteImage(ulong id, byte[] data)
+        // todo maybe a helpter method in case the local image is missing
+        /*public EmojiStatistic SaveEmoteImage(ulong id, byte[] data)
         {
             try
             {
@@ -130,7 +191,7 @@ namespace ETHDINFKBot
                 _logger.LogError(ex, ex.Message);
                 return null;
             }
-        }
+        }*/
 
         public DiscordServer GetDiscordServerById(ulong id)
         {
@@ -219,12 +280,15 @@ namespace ETHDINFKBot
         }
 
 
-        public bool CreateDiscordMessage(DiscordMessage message)
+        public bool CreateDiscordMessage(DiscordMessage message, bool checkIfExists = false)
         {
             try
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
+                    if (checkIfExists && context.DiscordMessages.Any(i => i.MessageId == message.MessageId))
+                        return false; // this message exists
+
                     context.DiscordMessages.Add(message);
                     context.SaveChanges();
                 }
@@ -319,6 +383,21 @@ namespace ETHDINFKBot
             }
         }
 
+        public ulong? GetOldestMessageAvailablePerChannel(ulong channelId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordMessages.AsQueryable().Where(i => i.DiscordChannelId == channelId).FirstOrDefault()?.MessageId;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
 
         public int GetRantType(string type)
         {
@@ -460,6 +539,7 @@ namespace ETHDINFKBot
         }
 
 
+        // TODO change to new tables
         public IEnumerable<EmojiStatistic> GetTopEmojiStatisticByBot(int count)
         {
             if (count < 1)
@@ -468,7 +548,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.EmojiStatistics.AsQueryable().OrderByDescending(i => i.UsedByBots).Take(count).ToList();
+                    return null;// context.EmojiStatistics.AsQueryable().OrderByDescending(i => i.UsedByBots).Take(count).ToList();
                 }
             }
             catch (Exception ex)
@@ -479,6 +559,7 @@ namespace ETHDINFKBot
         }
 
 
+        // TODO change to new tables
         public IEnumerable<EmojiStatistic> GetTopEmojiStatisticByText(int count)
         {
             if (count < 1)
@@ -487,7 +568,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.EmojiStatistics.AsQueryable().OrderByDescending(i => i.UsedInText).Take(count).ToList();
+                    return null;// context.EmojiStatistics.AsQueryable().OrderByDescending(i => i.UsedInText).Take(count).ToList();
                 }
             }
             catch (Exception ex)
@@ -496,6 +577,7 @@ namespace ETHDINFKBot
                 return null;
             }
         }
+        // TODO change to new tables
         public IEnumerable<EmojiStatistic> GetTopEmojiStatisticByTextOnce(int count)
         {
             if (count < 1)
@@ -504,7 +586,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.EmojiStatistics.AsQueryable().OrderByDescending(i => i.UsedInTextOnce).Take(count).ToList();
+                    return null;//context.EmojiStatistics.AsQueryable().OrderByDescending(i => i.UsedInTextOnce).Take(count).ToList();
                 }
             }
             catch (Exception ex)
@@ -514,6 +596,7 @@ namespace ETHDINFKBot
             }
         }
 
+        // TODO change to new tables
         public IEnumerable<EmojiStatistic> GetTopEmojiStatisticByReaction(int count)
         {
             if (count < 1)
@@ -522,7 +605,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.EmojiStatistics.AsQueryable().OrderByDescending(i => i.UsedAsReaction).Take(count).ToList();
+                    return null;// context.EmojiStatistics.AsQueryable().OrderByDescending(i => i.UsedAsReaction).Take(count).ToList();
                 }
             }
             catch (Exception ex)
@@ -533,6 +616,7 @@ namespace ETHDINFKBot
         }
 
 
+        // TODO change to new tables
         public IEnumerable<CommandStatistic> GetTopCommandUsage(int count, BotMessageType type)
         {
             if (count < 1)
@@ -542,7 +626,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.CommandStatistics.AsQueryable().Where(i => i.CommandTypeId == (int)type).OrderByDescending(i => i.Count).Take(count).ToList();
+                    return null;// context.CommandStatistics.AsQueryable().Where(i => i.CommandTypeId == (int)type).OrderByDescending(i => i.Count).Take(count).ToList();
                 }
             }
             catch (Exception ex)
@@ -642,7 +726,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.EmojiStatistics.Count();
+                    return context.DiscordEmotes.Count();
                 }
             }
             catch (Exception ex)
@@ -653,7 +737,7 @@ namespace ETHDINFKBot
             return -1;
         }
 
-        public void AddPingStatistic(ulong userId, int count, bool isBot)
+        public void AddPingStatistic(ulong userId, int count, SocketGuildUser sgUser)
         {
             try
             {
@@ -671,10 +755,10 @@ namespace ETHDINFKBot
                         context.PingStatistics.Add(new PingStatistic()
                         {
                             //DiscordUser = user,
-                            PingCount = !isBot ? count : 0,
-                            PingCountOnce = !isBot ? 1 : 0,
-                            PingCountBot = !isBot ? 0 : count,
-                            DiscordUserId = user.DiscordUserId
+                            PingCount = !sgUser.IsBot ? count : 0,
+                            PingCountOnce = !sgUser.IsBot ? 1 : 0,
+                            PingCountBot = !sgUser.IsBot ? 0 : count,
+                            DiscordUserId = userId
                         });
                     }
                     else
@@ -682,9 +766,9 @@ namespace ETHDINFKBot
                         // todo cleanup for perf im just lazy :/
                         var currStat = context.PingStatistics.SingleOrDefault(i => i.DiscordUser.DiscordUserId == userId);
 
-                        currStat.PingCountOnce += !isBot ? 1 : 0;
-                        currStat.PingCount += !isBot ? count : 0;
-                        currStat.PingCountBot += !isBot ? 0 : count;
+                        currStat.PingCountOnce += !sgUser.IsBot ? 1 : 0;
+                        currStat.PingCount += !sgUser.IsBot ? count : 0;
+                        currStat.PingCountBot += !sgUser.IsBot ? 0 : count;
                     }
 
                     context.SaveChanges();
@@ -696,13 +780,33 @@ namespace ETHDINFKBot
             }
         }
 
-        public EmojiStatistic GetEmojiStatisticById(ulong id)
+
+        public DiscordEmote GetDiscordEmoteById(ulong id)
         {
             try
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.EmojiStatistics.SingleOrDefault(i => i.EmojiId == id);
+                    return context.DiscordEmotes.SingleOrDefault(i => i.DiscordEmoteId == id);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public DiscordMessage GetDiscordMessageById(ulong? id)
+        {
+            if (id == null)
+                return null;
+
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordMessages.SingleOrDefault(i => i.MessageId == id);
                 }
             }
             catch (Exception ex)
@@ -776,65 +880,118 @@ namespace ETHDINFKBot
             }
         }
 
-        public EmojiStatistic AddEmojiStatistic(EmojiStatistic statistic, int count, bool isReaction, bool isBot)
+        public DiscordEmote AddDiscordEmote(DiscordEmote discordEmote)
         {
             try
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    var dbEmoji = GetEmojiStatisticById(statistic.EmojiId);
+                    var dbEmote = GetDiscordEmoteById(discordEmote.DiscordEmoteId);
+                    if (dbEmote == null)
+                    {
+                        context.DiscordEmotes.Add(discordEmote);
+                        context.SaveChanges();
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+
+                return GetDiscordEmoteById(discordEmote.DiscordEmoteId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+
+        private string MoveEmoteToDisk(DiscordEmote emote, byte[] imageData)
+        {
+            var emojiDate = SnowflakeUtils.FromSnowflake(emote.DiscordEmoteId);
+
+            string additionalFolder = $"{emojiDate.Year}-{emojiDate.Month:00}";
+            string path = Path.Combine(Program.BasePath, "Emotes", additionalFolder);
+
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+
+            int i = emote.Url.LastIndexOf(".");
+            string fileEnding = emote.Url.Substring(i, emote.Url.Length - i);
+
+            string filePath = Path.Combine(path, $"{emote.DiscordEmoteId}{fileEnding}");
+
+            File.WriteAllBytes(filePath, imageData);
+
+            return filePath;
+        }
+
+        // TODO change for new emote table
+        public async void ProcessDiscordEmote(DiscordEmote emote, ulong? discordMessageId, int count, bool isReaction, SocketGuildUser user)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var dbEmoji = GetDiscordEmoteById(emote.DiscordEmoteId);
                     if (dbEmoji == null)
                     {
                         using (var webClient = new WebClient())
                         {
-                            byte[] bytes = webClient.DownloadData(statistic.Url);
+                            byte[] bytes = webClient.DownloadData(emote.Url);
 
-                            context.EmojiStatistics.Add(new EmojiStatistic()
-                            {
-                                Animated = statistic.Animated,
-                                CreatedAt = statistic.CreatedAt,
-                                EmojiId = statistic.EmojiId,
-                                EmojiName = statistic.EmojiName,
-                                Url = statistic.Url,
-                                UsedAsReaction = !isBot ? statistic.UsedAsReaction : 0,
-                                UsedInText = !isBot ? statistic.UsedInText : 0,
-                                UsedInTextOnce = !isBot ? statistic.UsedInTextOnce : 0,
-                                UsedByBots = !isBot ? 0 : statistic.UsedByBots,
-                                ImageData = bytes
-                            });
+                            string filePath = MoveEmoteToDisk(emote, bytes);
+
+                            emote.LocalPath = filePath;
+
+                            context.DiscordEmotes.Add(emote);
                         }
-                        //context.SaveChanges();
+                        context.SaveChanges();
+                    }
+
+                    var emojiStat = context.DiscordEmoteStatistics.SingleOrDefault(i => i.DiscordEmoteId == emote.DiscordEmoteId);
+                    if (emojiStat == null)
+                    {
+                        context.DiscordEmoteStatistics.Add(new DiscordEmoteStatistic()
+                        {
+                            DiscordEmoteId = emote.DiscordEmoteId,
+                            UsedAsReaction = !user.IsBot && isReaction ? count : 0,
+                            UsedInText = !user.IsBot && !isReaction ? count : 0,
+                            UsedInTextOnce = !user.IsBot && !isReaction ? 1 : 0,
+                            UsedByBots = user.IsBot && !isReaction ? count : 0
+                        });
+
                     }
                     else
                     {
-                        // todo cleanup this mess
-
-                        var emojiStat = context.EmojiStatistics.SingleOrDefault(i => i.EmojiId == statistic.EmojiId);
-
-                        emojiStat.UsedAsReaction += !isBot ? statistic.UsedAsReaction : 0;
-                        emojiStat.UsedInText += !isBot ? statistic.UsedInText : 0;
-                        emojiStat.UsedInTextOnce += !isBot ? 1 : 0;// statistic.UsedInTextOnce;
-                        emojiStat.UsedByBots += !isBot ? 0 : statistic.UsedByBots;
-                        //context.Entry(dbEmoji).State = EntityState.Modified;
-                        //dbEmoji.EmojiInfoId;
+                        emojiStat.UsedAsReaction += !user.IsBot && isReaction ? count : 0;
+                        emojiStat.UsedInText += !user.IsBot && !isReaction ? count : 0;
+                        emojiStat.UsedInTextOnce += !user.IsBot && !isReaction ? 1 : 0;
+                        emojiStat.UsedByBots += user.IsBot && !isReaction ? count : 0;
                     }
 
-                    context.SaveChanges();
+                    var message = GetDiscordMessageById(discordMessageId);
 
-                    //ETHBotDBContext.Entry(dbEmoji).State = EntityState.Detached;
+                    if (message == null)
+                        discordMessageId = null;
 
-                    var eStat = GetEmojiStatisticById(statistic.EmojiId);
 
-                    context.EmojiHistory.Add(new EmojiHistory()
+                    context.DiscordEmoteHistory.Add(new DiscordEmoteHistory()
                     {
                         DateTimePosted = DateTime.Now,
                         Count = count,
                         IsReaction = isReaction,
-                        IsBot = isBot,
-                        EmojiStatisticId = eStat.EmojiInfoId
+
+                        DiscordUserId = user.Id,
+                        DiscordEmoteId = emote.DiscordEmoteId,
+                        DiscordMessageId = discordMessageId
+
                     });
 
-                    //ETHBotDBContext.Entry(dbEmoji).State = EntityState.Detached;
                     context.SaveChanges();
 
                 }
@@ -844,11 +1001,13 @@ namespace ETHDINFKBot
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                return null;
+                return;
             }
 
-            return GetEmojiStatisticById(statistic.EmojiId);
+            //return GetEmojiStatisticById(emote.DiscordEmoteId);
         }
+
+
 
         public CommandStatistic GetCommandStatisticById(BotMessageType type, ulong userId)
         {

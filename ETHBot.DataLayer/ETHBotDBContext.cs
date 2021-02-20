@@ -5,6 +5,7 @@ using ETHBot.DataLayer.Data.Reddit;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using ETHBot.DataLayer.Data;
+using ETHBot.DataLayer.Data.Study;
 
 namespace ETHBot.DataLayer
 {
@@ -34,6 +35,7 @@ namespace ETHBot.DataLayer
             // TODO Setting
 #if DEBUG
             optionbuilder.UseLoggerFactory(loggerFactory).UseSqlite(@"Data Source=I:\ETHBot\ETHBot.db").EnableSensitiveDataLogging();
+            //optionbuilder.UseLoggerFactory(loggerFactory).UseSqlite(@"Data Source=I:\ETHBot\ETHBot_20210111_122855").EnableSensitiveDataLogging();    
 #else
             optionbuilder.UseLoggerFactory(loggerFactory).UseSqlite(@"Data Source=/usr/local/bin/ETHBot/Database/ETHBot.db").EnableSensitiveDataLogging();
 #endif
@@ -47,8 +49,6 @@ namespace ETHBot.DataLayer
         public DbSet<DiscordMessage> DiscordMessages { get; set; }
         public DbSet<DiscordServer> DiscordServers { get; set; }
         public DbSet<DiscordUser> DiscordUsers { get; set; }
-        public DbSet<EmojiHistory> EmojiHistory { get; set; }
-        public DbSet<EmojiStatistic> EmojiStatistics { get; set; }
         public DbSet<PingStatistic> PingStatistics { get; set; }
         public DbSet<SavedMessage> SavedMessages { get; set; }
         public DbSet<BotChannelSetting> BotChannelSettings { get; set; }
@@ -57,9 +57,21 @@ namespace ETHBot.DataLayer
         public DbSet<RedditImage> RedditImages { get; set; }
 
 
+        // migrate table
+        public DbSet<DiscordEmote> DiscordEmotes { get; set; }
+        public DbSet<DiscordEmoteHistory> DiscordEmoteHistory { get; set; }
+        public DbSet<DiscordEmoteStatistic> DiscordEmoteStatistics { get; set; }
+
+
         public DbSet<RantType> RantTypes { get; set; }
         public DbSet<RantMessage> RantMessages { get; set; }
+        /*
 
+        // todo reconsider how to import them
+        public DbSet<Subject> Subjects { get; set; }
+        public DbSet<Exam> Exams { get; set; }
+        public DbSet<Question> Questions { get; set; }
+        */
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -21,5 +21,11 @@ namespace ETHBot.DataLayer.Data.Discord
         [ForeignKey("DiscordUser")]
         public ulong DiscordUserId { get; set; }
         public DiscordUser DiscordUser { get; set; }
+
+        [ForeignKey("ReplyMessage")]
+        public ulong? ReplyMessageId { get; set; }
+        public DiscordMessage ReplyMessage { get; set; }
+
+        public bool Preloaded { get; set; } // for older messages that were loaded afterwards
     }
 }

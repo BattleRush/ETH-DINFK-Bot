@@ -25,9 +25,17 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using Color = System.Drawing.Color;
 using System.Net;
+using ETHDINFKBot.Helpers;
+using SkiaSharp;
+using CSharpMath.SkiaSharp;
+using System.Globalization;
+using System.Diagnostics;
+using Microsoft.Data.Sqlite;
 
 namespace ETHDINFKBot
 {
+
+    //FAA for spacex stuff https://www.faa.gov/data_research/commercial_space_data/launches/
     public class DiscordModule : ModuleBase<SocketCommandContext>
     {
         private readonly ILogger _logger = new Logger<DiscordModule>(Program.Logger);
@@ -94,6 +102,7 @@ namespace ETHDINFKBot
             Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
+
         [Command("help")]
         [Alias("about")]
         public async Task HelpOutput()
@@ -125,9 +134,16 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.AddField("Images", "```.neko[avatar] .fox .waifu .baka .smug .holo .avatar .wallpaper```");
             builder.AddField("Reddit", "```.r[p] <subreddit>|all```");
             builder.AddField("Rant", "```.rant [ types | (<type> <message>) ]```");
-            builder.AddField("SQL", "```.sql (table info) | (query <query>)```");
-            builder.AddField("Emote (can send Nitro emotes for you)", "```.emote <search_string> | .<emote_name>```");
+            builder.AddField("SQL", "```.sql (table info) | (query[d] <query>)```");
+            builder.AddField("Emote (can send Nitro emotes for you)", "```.emote <search_string> [<page>] | .<emote_name>```");
             builder.AddField("React (can only use emotes from this server)", "```.react <message_id> <emote_name>```");
+            builder.AddField("Space (see what it does)", "```.space [<amount>]```");
+            builder.AddField("WIP Command", "```.messagegraph [all|lernphase|bp]```");
+            /*builder.AddField("Write .study to force yourself away from discord", "```May contain spoilers to old exams! Once you receive the study role you will be only to chat for max of 15 mins at a time." + Environment.NewLine +
+               $"If you are in cooldown, the bot will delete all your messages. Every question is designed to be able to solve within 5-10 mins. To recall your message write '.study'" + Environment.NewLine +
+               $"To be able to chat you will need to solve a question each time. (All subject channels are exempt from this rule.)```");*/
+            builder.AddField($"Random Exam Question (for now only LinAlg) Total tracking: {new StudyHelper().GetQuestionCount()} question(s)", $"```.question [Exam] (Exams: {new StudyHelper().GetExams()})```");
+            //builder.AddField(".next", "```Regenerate a new question.```");
 
             Context.Channel.SendMessageAsync("", false, builder.Build());
         }
@@ -256,6 +272,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         }
 
 
+
+
+
         [Command("fox")]
         public async Task Fox()
         {
@@ -378,31 +397,48 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         // TODO dynamic image sizes
         // TODO support 100+
         // TODO gifs -> video?
-        private Stream DrawPreviewImage(List<EmojiStatistic> emojis)
+        private Stream DrawPreviewImage(List<DiscordEmote> emojis, List<GuildEmote> guildEmotes)
         {
             int page = 10;
-            int padding = 50;
-            int paddingY = 35;
 
-            int width = Math.Min(emojis.Count, 10) * 65 + padding;
-            int height = (int)(Math.Ceiling(emojis.Count / 10d) * 70 + paddingY);
+            int padding = 50;
+            int paddingY = 55;
+
+            int imgSize = 48;
+            int blockSize = imgSize + 35;
+
+            int yOffsetFixForImage = 2;
+            int xOffsetFixForText = -3;
+
+            int width = Math.Min(emojis.Count, 10) * blockSize + padding;
+            int height = (int)(Math.Ceiling(emojis.Count / 10d) * blockSize + paddingY);
+
+            width = Math.Max(width + 25, 350); // because of the title
 
             Bitmap Bitmap = new Bitmap(width, height); // TODO insert into constructor
             Graphics Graphics = Graphics.FromImage(Bitmap);
             Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             Graphics.Clear(Color.FromArgb(54, 57, 63));
 
-            Font drawFont = new Font("Arial", 10);
-            Font drawFont2 = new Font("Arial", 16);
-            Brush b = new SolidBrush(Color.White);
-            Pen p = new Pen(b);
+            Font drawFont = new Font("Arial", 10, FontStyle.Bold);
+            Font drawFontTitle = new Font("Arial", 12, FontStyle.Bold);
+            Font drawFontIndex = new Font("Arial", 16, FontStyle.Bold);
 
+            Brush brush = new SolidBrush(Color.White);
+            Brush brushNormal = new SolidBrush(Color.LightSkyBlue);
+            Brush brushGif = new SolidBrush(Color.Coral);
+            Brush brushEmote = new SolidBrush(Color.Gold);
 
+            Graphics.DrawString($"Normal emote", drawFont, brushNormal, new Point(10, 10));
+            Graphics.DrawString($"Gif emote", drawFont, brushGif, new Point(125, 10));
+            Graphics.DrawString($"Server emote", drawFont, brushEmote, new Point(210, 10));
+
+            Pen p = new Pen(brush);
 
             // TODO make it more robust and cleaner
             for (int i = 0; i < page; i++)
             {
-                Graphics.DrawString($"[{i}]", drawFont2, b, new Point(10, i * 70 + 35));
+                Graphics.DrawString($"[{i}]", drawFontIndex, brush, new Point(10, i * blockSize + paddingY + 12));
 
                 for (int j = 0; j < page; j++)
                 {
@@ -414,12 +450,26 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                         var emote = emojis[i * page + j];
 
                         Bitmap bmp;
-                        using (var ms = new MemoryStream(emote.ImageData))
+                        using (var ms = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
                         {
                             bmp = new Bitmap(ms);
                         }
-                        Graphics.DrawImage(bmp, j * 60 + padding, i * 70 + paddingY, 32, 32);
-                        Graphics.DrawString($"{emote.EmojiName}", drawFont, b, new Point(j * 60 + padding, i * 70 + j % 2 * 50 + 20));
+
+                        Brush b = brushNormal;
+
+                        if (emote.Animated)
+                        {
+                            b = brushGif;
+                        }
+
+                        if (guildEmotes.Any(i => i.Id == emote.DiscordEmoteId))
+                        {
+                            // this server contains this emote
+                            b = brushEmote;
+                        }
+
+                        Graphics.DrawImage(bmp, j * blockSize + padding, i * blockSize + paddingY + yOffsetFixForImage, imgSize, imgSize);
+                        Graphics.DrawString($"{emote.EmoteName}", drawFont, b, new Point(j * blockSize + padding + xOffsetFixForText, i * blockSize + j % 2 * (imgSize + 15) + paddingY - 15));
                     }
                     catch (Exception ex)
                     {
@@ -427,7 +477,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     }
                 }
 
-                Graphics.DrawLine(p, new Point(0, i * 70 + 20), new Point(width, i * 70 + 20));
+                Graphics.DrawLine(p, new Point(0, i * blockSize + paddingY - 15), new Point(width, i * blockSize + paddingY - 15));
             }
 
             Stream mst = new MemoryStream();
@@ -449,15 +499,19 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                 var message = await Context.Channel.GetMessageAsync(messageid);
                 await message.AddReactionAsync(emote);
-                Context.Message.DeleteAsync();
             }
+            Context.Message.DeleteAsync();
         }
 
         // TODO duplicate finder -> fingerprint
         // TODO better selection
         [Command("emote")]
-        public async Task EmojiInfo(string search)
+        public async Task EmojiInfo(string search, int page = 0)
         {
+            //await Context.Channel.SendMessageAsync($"Disabled dev", false); // to prevent from db overload
+            //return;
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
 
@@ -473,57 +527,89 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             int count = 0;
 
-            int emotesNotDownloaded = emotes.Count(i => i.ImageData == null || i.ImageData.Length == 0);
-            if (emotesNotDownloaded > 0)
-            {
-                await Context.Channel.SendMessageAsync($"{emotesNotDownloaded} emote(s) need to be downloaded. Please wait...", false);
-            }
-
-            foreach (var emote in emotes)
-            {
-                if (emote.ImageData == null || emote.ImageData.Length == 0)
-                {
-                    // download emote
-                    using (var webClient = new WebClient())
-                    {
-                        byte[] bytes = webClient.DownloadData(emote.Url);
-                        emote.ImageData = bytes;
-
-                        DatabaseManager.SaveEmoteImage(emote.EmojiId, bytes);
-                        count++;
-                    }
-                }
-            }
-
             if (count > 0)
             {
                 await Context.Channel.SendMessageAsync($"Downloaded {count} emote(s)", false);
             }
 
-            // since we cant differenciate between many others
-            emotes = emotes.GroupBy(i => i.EmojiName).Select(i => i.First()).ToList();
+            List<GuildEmote> guildEmotes = new List<GuildEmote>();
 
+            if (Context.Channel is SocketGuildChannel guildChannel)
+                guildEmotes = guildChannel.Guild.Emotes.ToList();
+
+            int total = emotes.Count;
             // limit to 100
 
-            // TODO make it look nice
-            string text = $"**Available({Math.Min(emotes.Count, 100)}/{emotes.Count}) '{search}' emojis to use (Usage .<name>)**" + Environment.NewLine + Environment.NewLine;
+            int rowMax = 10;
+            int columnMax = 10;
+            int pageSize = rowMax * columnMax;
 
-            emotes = emotes.Take(100).ToList();
+
+            string nextPageInfo = "";
+
+            if (total > (page + 1) * pageSize)
+            {
+                nextPageInfo = $" or .emote {search} {page + 1} for next page";
+            }
+
+            emotes = emotes.Skip(page * pageSize).Take(pageSize).ToList();
+
+            // TODO make it look nice
+            string text = $"**Available({page * pageSize}-{Math.Min((page + 1) * pageSize, total)}/{total}) '{search}' emojis to use (Usage .<name>){nextPageInfo}**" + Environment.NewLine;
 
             int countEmotes = 0;
             int row = 0;
+
+            text += "```css" + Environment.NewLine;
+
             text += "[0] ";
+
+            Dictionary<string, int> dupes = new Dictionary<string, int>();
+
+            string sep = ".";
+
             foreach (var emoji in emotes)
             {
-                text += $".{emoji.EmojiName} ";
+                int offset = 0;
+
+                if (dupes.ContainsKey(emoji.EmoteName.ToLower()))
+                {
+                    // we found a dupe
+                    offset = dupes[emoji.EmoteName.ToLower()] += 1;
+                }
+                else
+                {
+                    dupes.Add(emoji.EmoteName.ToLower(), 1);
+                }
+
+                string offsetString = "";
+                if (offset > 0)
+                {
+                    offsetString = $"{sep}{offset}";
+                }
+
+
+                string emoteString = $".{emoji.EmoteName}{offsetString} ";
+
+                if (emoji.Animated)
+                    emoteString = $"[{emoji.EmoteName}{offsetString}] ";
+
+                if (guildEmotes.Any(i => i.Id == emoji.DiscordEmoteId))
+                    emoteString = $"({emoji.EmoteName}{offsetString}) ";
+
+                // not to save but for the preview
+                emoji.EmoteName += offsetString;
+
+                text += emoteString;
+
                 countEmotes++;
 
-                if (countEmotes >= 10)
+                if (countEmotes >= columnMax)
                 {
                     row++;
                     text += Environment.NewLine;
 
-                    if (row < 10)
+                    if (row < rowMax)
                     {
                         text += $"[{row}] ";
                     }
@@ -537,16 +623,158 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 }*/
             }
 
+            text += "```";
+
             //await Context.Channel.SendMessageAsync(, false);
 
-            var stream = DrawPreviewImage(emotes);
+
+
+            var stream = DrawPreviewImage(emotes, guildEmotes);
 
             if (text.Length > 1990)
             {
                 text = text.Substring(0, 1990);
             }
+            watch.Stop();
+            await Context.Channel.SendFileAsync(stream, $"emote_{search}.png", text + $"Time: {watch.ElapsedMilliseconds} ms");
+        }
 
-            await Context.Channel.SendFileAsync(stream, $"emote_{search}.png", text);
+
+        [Command("study", RunMode = RunMode.Async)]
+        public async Task Study(ulong confirmId = 0)
+        {
+            if (confirmId == 0)
+            {
+                await Context.Channel.SendMessageAsync($"May contain spoilers to old exams! Once you receive the study role you will be only to chat for max of 15 mins at a time." + Environment.NewLine +
+                    $"If you are in cooldown, the bot will delete all your messages. Every question is designed to be able to solve within 5-10 mins. To recall your message write '.study'" + Environment.NewLine +
+                    $" To be able to chat you will need to solve a question each time. (All subject channels are exempt from this rule.)" + Environment.NewLine +
+                    $"Enter code: .study {Context.Message.Author.Id}", false);
+            }
+            else if (confirmId == Context.Message.Author.Id)
+            {
+                try
+                {
+                    var user = Context.User;
+                    var role = Context.Guild.Roles.FirstOrDefault(x => x.Id == 798639212818726952); // study role
+                    await (user as IGuildUser).AddRoleAsync(role);
+                    await Context.Channel.SendMessageAsync("Role assigned. Good luck!");
+                }
+                catch (Exception ex)
+                {
+
+                }
+            }
+            else
+            {
+                await Context.Channel.SendMessageAsync("Wrong code");
+            }
+        }
+
+        [Command("question", RunMode = RunMode.Async)]
+        public async Task Question([Remainder] string filter = null)
+        {
+            try
+            {
+                // TODO disable subjects if the exam is behind
+
+                StudyHelper helper = new StudyHelper();
+
+                var question = helper.GetRandomLinalgQuestion(filter);
+                //if (!Program.CurrentActiveQuestion.ContainsKey(Context.Message.Author.Id))
+                //    Program.CurrentActiveQuestion.Add(Context.Message.Author.Id, question);
+
+                PrintQuestion(question);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+
+            // TODO place the question into global
+        }
+
+
+        [Command("repeat", RunMode = RunMode.Async)]
+        public async Task RepeatQuestion()
+        {
+            // TODO disable subjects if the exam is behind
+
+            StudyHelper helper = new StudyHelper();
+
+            Question question = null;
+            if (Program.CurrentActiveQuestion.ContainsKey(Context.Message.Author.Id))
+                question = Program.CurrentActiveQuestion[Context.Message.Author.Id];
+
+            if (question == null)
+                return;
+
+
+            PrintQuestion(question);
+
+            // TODO place the question into global
+        }
+
+
+        [Command("tex", RunMode = RunMode.Async)]
+        public async Task Latex([Remainder] string input)
+        {
+            var painter = new MathPainter
+            {
+                LaTeX = input,
+                TextColor = SKColor.Parse("FFFFFF")
+
+            }; // or TextPainter
+            painter.FontSize = 20;
+
+            var png = painter.DrawAsStream();
+
+
+            var msg = await Context.Channel.SendFileAsync(png, $"test.png", "here you go human");
+
+        }
+
+        private async void PrintQuestion(Question question)
+        {
+            int secWait = 120;
+
+            string obscureAnswer = "";
+
+            Random r = new Random();
+
+            for (int i = 0; i < r.Next(5, 15); i++)
+            {
+                obscureAnswer += " ";
+            }
+
+
+            string image = "";
+
+            if (!string.IsNullOrWhiteSpace(question.ExamQuestionImage))
+            {
+                image = $"Image Name: {question.ExamQuestionImage}{Environment.NewLine}";
+            }
+
+            //string text = $"({question.Source}) Q: {question.Text}{Environment.NewLine}Expected input format: {question.ExpectedInputFormat}{Environment.NewLine}Hint: ||{question.Hint}||{Environment.NewLine}Question will be gone after {secWait} secs. Screenshot it if you need it";
+            string text = $"**({question.Source}) Task: {question.Task} Q: {question.Text}**" +
+                $"{Environment.NewLine}{image}Hint: ||{question.Hint}||" +
+                $"{Environment.NewLine}" +
+                $"{Environment.NewLine}" +
+                $"Answer: ||{obscureAnswer}{question.Answer}{obscureAnswer}||" +
+                $"{Environment.NewLine}Question will be gone after {secWait} secs. Screenshot it if you need it";
+
+            if (question.Image != null)
+            {
+                var msg = await Context.Channel.SendFileAsync(question.Image, $"test.png", text);
+                await Task.Delay(secWait * 1000);
+                msg.DeleteAsync();
+            }
+            else
+            {
+                var msg = await Context.Channel.SendMessageAsync(text);
+                await Task.Delay(secWait * 1000);
+                msg.DeleteAsync();
+            }
         }
 
         [Command("wallpaper", RunMode = RunMode.Async)]
@@ -834,6 +1062,15 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         }
 
 
+        [Command("graph")]
+        public async Task Graph()
+        {
+
+
+
+        }
+
+
         [Command("stats")]
         public async Task Stats()
         {
@@ -953,7 +1190,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         }
 
         [Command("nuke")]
-        public async Task Nuke(int count)
+        public async Task Nuke(int count, bool tts = false)
         {
             var author = Context.Message.Author;
             if (author.Id != ETHDINFKBot.Program.Owner)
@@ -964,12 +1201,69 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             if (count < 0)
                 return;
 
-            if (count > 100)
-                count = 100;
 
-            var messages = await Context.Channel.GetMessagesAsync(count).FlattenAsync(); //defualt is 100
-            await Context.Channel.SendMessageAsync($"Placing a tactical nuke KMN-{count}");
-            await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
+            if (count > 1000)
+            {
+                List<IMessage> nukeMessages = new List<IMessage>() { Context.Message };
+
+                nukeMessages.Add(await Context.Channel.SendMessageAsync($"Setting up a hydrogen bomb...", tts));
+                await Task.Delay(5000);
+                nukeMessages.Add(await Context.Channel.SendMessageAsync($"Designated H2-KM-{count}.", tts));
+                await Task.Delay(5000);
+                nukeMessages.Add(await Context.Channel.SendMessageAsync($"Arming...", tts));
+                await Task.Delay(5000);
+                nukeMessages.Add(await Context.Channel.SendMessageAsync($"5"));
+                await Task.Delay(1000);
+                nukeMessages.Add(await Context.Channel.SendMessageAsync($"4"));
+                await Task.Delay(1000);
+                nukeMessages.Add(await Context.Channel.SendMessageAsync($"3"));
+                await Task.Delay(1000);
+                nukeMessages.Add(await Context.Channel.SendMessageAsync($"2"));
+                await Task.Delay(1000);
+                nukeMessages.Add(await Context.Channel.SendMessageAsync($"1"));
+                await Task.Delay(1000);
+                nukeMessages.Add(await Context.Channel.SendMessageAsync($"H2-KM-{count}. Has been armed. Stand by."));
+                await Task.Delay(4000);
+                nukeMessages.Add(await Context.Channel.SendMessageAsync($"Detonation in 10 seconds", tts));
+                await Task.Delay(2000);
+
+                var messageCountDownHydrogen = await Context.Channel.SendMessageAsync("https://media4.giphy.com/media/tBvPFCFQHSpEI/200.gif");
+                await Task.Delay(9250);
+
+                await messageCountDownHydrogen.DeleteAsync();
+                var nukeImage = await Context.Channel.SendMessageAsync("https://thumbs.gfycat.com/DeepNegligibleCarpenterant-size_restricted.gif");
+                await Task.Delay(7500);
+                await nukeImage.DeleteAsync();
+
+                nukeMessages.Add(await Context.Channel.SendMessageAsync($"For now it was a joke, but next time it might not be...", tts));
+                await Task.Delay(4000);
+
+                await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(nukeMessages);
+
+                return;
+            }
+
+
+            var messages = Context.Channel.GetMessagesAsync(count).FlattenAsync(); //defualt is 100
+
+            var messageCountDown = await Context.Channel.SendMessageAsync("https://media4.giphy.com/media/tBvPFCFQHSpEI/200.gif");
+            Context.Channel.SendMessageAsync($"Placing a tactical nuke KMN-{count}. Scheduled to detonate in 10 seconds.");
+
+            await Task.Delay(9250);
+
+            await messageCountDown.DeleteAsync();
+
+
+            var loadedMessages = await messages;
+
+            var nuke = await Context.Channel.SendMessageAsync($"https://i.pinimg.com/originals/6c/48/5e/6c485efad8b910e5289fc7968ea1d22f.gif");
+            var nukeMsg = await Context.Channel.SendMessageAsync($"kaboom", tts);
+            await Task.Delay(1000);
+            await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(loadedMessages);
+
+            await Task.Delay(5000);
+            await nuke.DeleteAsync();
+            await nukeMsg.DeleteAsync();
         }
 
         [Command("countdown2021")]
@@ -1055,6 +1349,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         }
 
 
+
+
         [Command("test")]
         public async Task Test()
         {
@@ -1077,48 +1373,6 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
-        // TODO Duplicate (SERIOUSLY REWORK THAT SHIT YOU LAZY ASS)
-        private bool ContainsForbiddenQuery(string command)
-        {
-            List<string> forbidden = new List<string>()
-            {
-                "alter",
-                "analyze",
-                "attach",
-                "transaction",
-                "comment",
-                "commit",
-                "create",
-                "delete",
-                "detach",
-                "database",
-                "drop",
-                "insert",
-                "pragma",
-                "reindex",
-                "release",
-                "replace",
-                "rollback",
-                "savepoint",
-                "update",
-                "upsert",
-                "vacuum",
-                "recursive ", // idk why it breaks when i have time ill take a look
-                "with "
-            };
-
-            //.sql query select * from RedditPosts,SubredditInfos,DiscordUsers,BannedLinks,CommandStatistics,CommandTypes,DiscordMessages as x,EmojiStatistics, PingStatistics,SavedMessages,RedditImages where PostTitle = EmojiName or UpvoteCount = x.MessageId
-
-            foreach (var item in forbidden)
-            {
-                if (command.ToLower().Contains(item.ToLower()))
-                    return true;
-            }
-
-            return false;
-        }
-
-
         [Command("r")]
         public async Task Reddit(string subreddit = "")
         {
@@ -1128,7 +1382,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             if (subreddit.Contains("'") || subreddit.Contains("\""))
                 return;
 
-            if (ContainsForbiddenQuery(subreddit))
+            if (CommonHelper.ContainsForbiddenQuery(subreddit))
                 return;
 
             LogManager.ProcessMessage(Context.Message.Author, BotMessageType.Reddit);
@@ -1197,9 +1451,80 @@ ORDER BY RANDOM() LIMIT 1
 */
         }
 
+        [Command("space")]
+        public async Task SpaceCommand(int amount = 1)
+        {
+            if (amount < 1)
+                amount = 1;
+            if (amount > 5)
+                amount = 5;
+
+            List<string> oneTimeEmotes = new List<string>() { "rocket", "ringed_planet", "boom", "comet", "sparkles", "full_moon", "earth_africa", "dizzy", "star", "star2" };
+            try
+            {
+
+                for (int i = 0; i < amount; i++)
+                {
+                    string stars = "...ﾟﾟ✦";
+
+                    Random r = new Random();
+
+                    string message = "";
+
+                    while (message.Length < 2000)
+                    {
+
+                        int randomSpace = r.Next(20);
+
+                        int randomDot = r.Next(4);
+                        int randomEmote = r.Next(50);
+
+                        // add up to 4 normal spaces to introduce "randomness"
+                        message += new String(' ', r.Next(5)) + new String('　', randomSpace);
+
+
+
+                        if (randomEmote == 0 && message.Length < 1980 /*to ensure enough space*/)
+                        {
+                            // reset them if empty
+                            if (oneTimeEmotes.Count == 0)
+                                oneTimeEmotes = new List<string>() { "rocket", "ringed_planet", "boom", "comet", "sparkles", "full_moon", "earth_africa", "dizzy", "star", "star2" };
+
+                            int randomEmoteIndex = r.Next(oneTimeEmotes.Count);
+                            string randomEmoteString = oneTimeEmotes.ElementAt(randomEmoteIndex);
+                            message += $":{randomEmoteString}:";
+
+                            oneTimeEmotes.RemoveAt(randomEmoteIndex);
+                            continue; // do not add a dot
+                        }
+
+                        if (randomDot == 0)
+                        {
+                            int randStar = r.Next(stars.Length);
+                            message += stars.ElementAt(randStar);
+                        }
+                    }
+
+                    if (message.Length > 2000)
+                    {
+                        message = message.Substring(0, 2000);
+                    }
+
+                    Context.Channel.SendMessageAsync(message);
+                }
+            }
+            catch (Exception ex)
+            {
+                Context.Channel.SendMessageAsync(ex.ToString());
+            }
+
+            Context.Message.DeleteAsync();
+        }
+
         [Command("disk")]
         public void DirSizeReddit()
         {
+            return; // disable
             try
             {
                 DirectoryInfo info = new DirectoryInfo("Reddit");
@@ -1240,7 +1565,7 @@ ORDER BY RANDOM() LIMIT 1
             if (subreddit.Contains("'") || subreddit.Contains("\""))
                 return;
 
-            if (ContainsForbiddenQuery(subreddit))
+            if (CommonHelper.ContainsForbiddenQuery(subreddit))
                 return;
 
             LogManager.ProcessMessage(Context.Message.Author, BotMessageType.Reddit);
@@ -1298,6 +1623,7 @@ ORDER BY RANDOM() LIMIT 1";// todo nsfw test
                             }
                         }
 
+                        // TODO handle video as non embed until discord fixes it
 
                         var redditPost = DatabaseManager.GetRedditPostById(postId);
 
@@ -1389,11 +1715,206 @@ ORDER BY RANDOM() LIMIT 1
         }
         */
 
+        // todo dupe code
+
+
+        [Command("messagegraph")]
+        public async Task MessageGraph(string param = null)
+        {
+            try
+            {
+                List<DateTimeOffset> messageTimes = new List<DateTimeOffset>();
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    if (param == null)
+                        messageTimes = context.DiscordMessages.AsQueryable().Where(i => i.DiscordUserId == Context.Message.Author.Id).Select(i => SnowflakeUtils.FromSnowflake(i.MessageId)).ToList();
+                    else if (param == "all")
+                        messageTimes = context.DiscordMessages.AsQueryable().Select(i => SnowflakeUtils.FromSnowflake(i.MessageId)).ToList();
+                    else if (param == "lernphase")
+                        messageTimes = context.DiscordMessages.AsQueryable().Select(i => SnowflakeUtils.FromSnowflake(i.MessageId)).ToList().Where(i => new DateTime(2020, 12, 18) < i && new DateTime(2021, 1, 25) > i).ToList();
+                    else if (param == "bp")
+                        messageTimes = context.DiscordMessages.AsQueryable().Select(i => SnowflakeUtils.FromSnowflake(i.MessageId)).ToList().Where(i => new DateTime(2021, 1, 25) < i && new DateTime(2021, 2, 9) > i).ToList();
+                }
+
+                int bound = 10;
+
+                var groups = messageTimes.GroupBy(x =>
+                {
+                    var stamp = x;
+                    stamp = stamp.AddMinutes(-(stamp.Minute % bound));
+                    stamp = stamp.AddMilliseconds(-stamp.Millisecond - 1000 * stamp.Second);
+                    return stamp;
+                }).Select(g => new { TimeStamp = g.Key, Value = g.Count() }).ToList();
+
+                string reply = "";
+
+                foreach (var group in groups)
+                {
+                    reply += $"{group.TimeStamp}: {group.Value}" + Environment.NewLine;
+
+                    if (reply.Length > 1925)
+                        break;
+                }
+
+
+                Brush b = new SolidBrush(Color.White);
+                Pen p = new Pen(b);
+
+                Brush b2 = new SolidBrush(Color.Red);
+
+                if (param != null)
+                {
+                    b2 = new SolidBrush(Color.Blue);
+                }
+
+                Pen pen2 = new Pen(Color.FromArgb(172, 224, 128, 0), 15);
+
+                pen2.Width = 4;
+
+                Font drawFont2 = new Font("Arial", 16);
+                SolidBrush drawBrush = new SolidBrush(Color.Black);
 
 
 
+                // todo make dynamic 
+
+                Bitmap Bitmap;
+                Graphics Graphics;
+                List<DBTableInfo> DBTableInfo;
+                int width = 1920;
+                int height = 1080;
+
+                Bitmap = new Bitmap(width, height); // TODO insert into constructor
+                Graphics = Graphics.FromImage(Bitmap);
+                Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+                Graphics.Clear(Color.FromArgb(54, 57, 63));
 
 
+                var dayNames = CultureInfo.CurrentCulture.DateTimeFormat.DayNames.ToList();
+                dayNames.Add(DateTimeFormatInfo.CurrentInfo.GetDayName(DayOfWeek.Sunday));
+                dayNames.RemoveAt(0);
+
+                width -= 120;
+
+
+                int xMin = 100;
+                int xMax = 1900;
+                int xSize = xMax - xMin;
+
+                int yMin = 1020;
+                int yMax = 40;
+                int ySize = yMin - yMax;
+
+                Graphics.DrawString($"Graph for param: {param ?? Context.Message.Author.Username}", drawFont2, b, new Point(10, 5));
+
+                for (int i = 0; i < dayNames.Count; i++)
+                {
+                    Graphics.DrawString($"{dayNames[i]}", drawFont2, b, new Point(xMin + 100 + i * (width / dayNames.Count), height - 35));
+                    Graphics.DrawLine(p, new Point(xMin + i * (width / dayNames.Count), 20), new Point(xMin + i * (width / dayNames.Count), ySize + 20));
+
+                }
+
+                decimal maxValue = 1;
+
+                List<int> vals = new List<int>();
+                foreach (var item in groups)
+                {
+                    vals.Add(item.Value);
+                }
+
+                vals.Sort();
+
+                int outlierIgnore = 10;
+
+                if (param != null)
+                    outlierIgnore = 25;
+
+                if (param == "bp")
+                    outlierIgnore = 0;
+
+                // cap top 10 outliers
+                maxValue = vals.ElementAt(vals.Count - outlierIgnore - 1);
+
+                int yNum = 10;
+
+                for (int i = 0; i <= yNum; i++)
+                {
+                    Graphics.DrawString($"{(int)((maxValue / yNum) * i)}", drawFont2, b, new Point(40, 10 + ySize - (ySize / yNum) * i));
+                    Graphics.DrawLine(p, new Point(xMin, 20 + ySize - (ySize / yNum) * i), new Point(xMax, 20 + ySize - (ySize / yNum) * i));
+                }
+
+
+                int daySize = xSize / 7;
+                int maxMinsPerDay = 24 * 60;
+
+                foreach (var item in groups)
+                {
+                    DateTimeOffset time = item.TimeStamp;
+
+                    int xMult = 0;
+
+                    switch (time.DayOfWeek)
+                    {
+                        case DayOfWeek.Sunday:
+                            xMult = 6;
+                            break;
+                        case DayOfWeek.Monday:
+                            xMult = 0;
+                            break;
+                        case DayOfWeek.Tuesday:
+                            xMult = 1;
+                            break;
+                        case DayOfWeek.Wednesday:
+                            xMult = 2;
+                            break;
+                        case DayOfWeek.Thursday:
+                            xMult = 3;
+                            break;
+                        case DayOfWeek.Friday:
+                            xMult = 4;
+                            break;
+                        case DayOfWeek.Saturday:
+                            xMult = 5;
+                            break;
+                        default:
+                            break;
+                    }
+
+                    int dayprefix = xMult * daySize;
+
+                    decimal totalMinsFromLastDay = time.Hour * 60 + time.Minute;
+
+                    if (totalMinsFromLastDay == 0)
+                        totalMinsFromLastDay++;
+
+                    decimal xPercentage = totalMinsFromLastDay / maxMinsPerDay;
+
+
+                    decimal yPercentage = item.Value / maxValue;
+                    if (yPercentage > 1)
+                        yPercentage = 1;
+
+                    int xpos = xMin + (int)(daySize * xPercentage) + dayprefix;
+                    int ypos = ySize - (int)(ySize * yPercentage) + yMax;
+
+
+                    Graphics.FillRectangle(b2, xpos - 3, ypos - 3, 6, 6);
+                }
+
+
+                Graphics.DrawRectangle(pen2, new Rectangle(xMin, yMax, xSize, ySize));
+
+
+                var stream = CommonHelper.GetStream(Bitmap);
+                await Context.Channel.SendFileAsync(stream, "graph.png");
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.ToString().Substring(0, Math.Min(ex.ToString().Length, 1990)));
+            }
+
+        }
 
         [Command("lb")]
         public async Task Leaderboard()
