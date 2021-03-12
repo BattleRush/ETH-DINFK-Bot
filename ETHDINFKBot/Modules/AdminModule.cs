@@ -3,6 +3,9 @@ using Discord.Commands;
 using Discord.WebSocket;
 using ETHBot.DataLayer;
 using ETHBot.DataLayer.Data.Enums;
+using ETHDINFKBot.Drawing;
+using ETHDINFKBot.Helpers;
+using ETHDINFKBot.Log;
 using Reddit;
 using Reddit.Controllers;
 using RedditScrapper;
@@ -178,7 +181,7 @@ namespace ETHDINFKBot.Modules
                 builder.WithCurrentTimestamp();
                 builder.AddField("admin channel help", "This message :)");
                 builder.AddField("admin channel info", "Returns info about the current channel settings");
-                builder.AddField("admin channel preload", "Loads old messages into the DB");
+                builder.AddField("admin channel preload <channelId> <amount>", "Loads old messages into the DB");
                 builder.AddField("admin channel set <permission>", "Set permissions for the current channel");
                 builder.AddField("admin channel all <permission>", "Set the MINIMUM permissions for ALL channels");
                 builder.AddField("admin channel flags", "Returns help with the flag infos");
@@ -200,8 +203,10 @@ namespace ETHDINFKBot.Modules
              }*/
 
             [Command("preload")]
-            public async Task PreloadOldMessages(ulong channelId)
+            public async Task PreloadOldMessages(ulong channelId, int count = 1000)
             {
+                Stopwatch watch = new Stopwatch();
+                watch.Start();
                 // new column preloaded
                 var author = Context.Message.Author;
                 if (author.Id != ETHDINFKBot.Program.Owner)
@@ -218,13 +223,41 @@ namespace ETHDINFKBot.Modules
 
                 //var messages = channel.GetMessagesAsync(100000).FlattenAsync(); //defualt is 100
 
-                var messagesFromMsg = await channel.GetMessagesAsync(oldestMessage.Value, Direction.Before, 500).FlattenAsync();
+                var messagesFromMsg = await channel.GetMessagesAsync(oldestMessage.Value, Direction.Before, count).FlattenAsync();
 
-
-                foreach (var message in messagesFromMsg)
+                LogManager logManager = new LogManager(dbManager);
+                int success = 0;
+                int tags = 0;
+                int newUsers = 0;
+                try
                 {
-                    if (message.Reactions.Count > 0)
+                    foreach (var message in messagesFromMsg)
                     {
+                        var dbUser = dbManager.GetDiscordUserById(message.Author.Id);
+
+                        if (dbUser == null)
+                        {
+                            var user = message.Author;
+                            var socketGuildUser = user as SocketGuildUser;
+
+
+                            var dbUserNew = dbManager.CreateDiscordUser(new ETHBot.DataLayer.Data.Discord.DiscordUser()
+                            {
+                                DiscordUserId = user.Id,
+                                DiscriminatorValue = user.DiscriminatorValue,
+                                AvatarUrl = user.GetAvatarUrl(),
+                                IsBot = user.IsBot,
+                                IsWebhook = user.IsWebhook,
+                                Nickname = socketGuildUser?.Nickname,
+                                Username = user.Username,
+                                JoinedAt = socketGuildUser?.JoinedAt
+                            });
+
+                            if (dbUserNew != null)
+                                newUsers++;
+
+                        }
+
                         var newMessage = dbManager.CreateDiscordMessage(new ETHBot.DataLayer.Data.Discord.DiscordMessage()
                         {
                             //Channel = discordChannel,
@@ -237,49 +270,35 @@ namespace ETHDINFKBot.Modules
                             Preloaded = true
                         });
 
+
                         if (newMessage)
                         {
+                            success++;
+                        }
+                        if (message.Reactions.Count > 0)
+                        {
 
-                            foreach (var item in message.Tags)
+
+                            if (newMessage && message.Tags.Count > 0)
                             {
-                                //foreach (var pingInfo in listOfUsers)
-                                //{
-                                //    DatabaseManager.AddPingStatistic(pingInfo.Key, pingInfo.Value, user);
-                                //}
-                            }
-
-                            foreach (var item in message.Reactions)
-                            {
-
-                                // only if its a new message we process it
-                                var currentEmoteReaction = await message.GetReactionUsersAsync(item.Key, 100).FlattenAsync();
-                                foreach (var currentEmoteReactionUser in currentEmoteReaction)
-                                {
-                                    /*Tag<Emote> tag = (Tag<Emote>)tags.First(i => i.Type == TagType.Emoji && ((Tag<Emote>)i).Value.Id == emote.Key);
-
-                                    var stat = new DiscordEmote()
-                                    {
-                                        Animated = tag.Value.Animated,
-                                        DiscordEmoteId = tag.Value.Id,
-                                        EmoteName = tag.Value.Name,
-                                        Url = tag.Value.Url,
-                                        CreatedAt = tag.Value.CreatedAt,
-                                        Blocked = false,
-                                        LastUpdatedAt = DateTime.Now,
-                                        LocalPath = null
-                                    };
-
-                                    DatabaseManager.ProcessDiscordEmote(stat, discordMessageId, emote.Value, false, user);*/
-                                }
+                                tags += message.Tags.Count;
+                                logManager.ProcessEmojisAndPings(message.Tags, message.Author.Id, message.Id, message.Author as SocketGuildUser);
                             }
                         }
                     }
-                }
+                    watch.Stop();
 
+                    Context.Channel.SendMessageAsync($"Processed {messagesFromMsg.Count()} Added: {success} TagsCount: {tags} From: {SnowflakeUtils.FromSnowflake(messagesFromMsg.First()?.Id ?? 1)} To: {SnowflakeUtils.FromSnowflake(messagesFromMsg.Last()?.Id ?? 1)}" +
+                        $" New Users: {newUsers} In: {watch.ElapsedMilliseconds}ms", false);
+                }
+                catch (Exception ex)
+                {
+
+                }
             }
-          
+
             [Command("info")]
-            public async Task GetChannelInfoAsync()
+            public async Task GetChannelInfoAsync(bool all = false)
             {
                 var author = Context.Message.Author;
                 if (author.Id != ETHDINFKBot.Program.Owner)
@@ -290,49 +309,96 @@ namespace ETHDINFKBot.Modules
 
                 if (Context.Message.Channel is SocketGuildChannel guildChannel)
                 {
-                    var channelInfo = DatabaseManager.Instance().GetChannelSetting(guildChannel.Id);
-
-                    if (channelInfo == null)
+                    if (!all)
                     {
-                        Context.Channel.SendMessageAsync("channelInfo is null bad admin", false);
-                        return;
+                        var channelInfo = DatabaseManager.Instance().GetChannelSetting(guildChannel.Id);
+
+                        if (channelInfo == null)
+                        {
+                            Context.Channel.SendMessageAsync("channelInfo is null bad admin", false);
+                            return;
+                        }
+
+                        EmbedBuilder builder = new EmbedBuilder();
+                        builder.WithTitle($"Channel Info for {guildChannel.Name}");
+                        builder.WithColor(255, 0, 0);
+                        builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+                        builder.WithCurrentTimestamp();
+
+                        builder.AddField("Permission flag", channelInfo.ChannelPermissionFlags);
+
+                        foreach (BotPermissionType flag in Enum.GetValues(typeof(BotPermissionType)))
+                        {
+                            var hasFlag = ((BotPermissionType)channelInfo.ChannelPermissionFlags).HasFlag(flag);
+                            builder.AddField(flag.ToString() + $" ({(int)flag})", $"```diff\r\n{(hasFlag ? "+ YES" : "- NO")}```", true);
+                        }
+
+
+                        Context.Channel.SendMessageAsync("", false, builder.Build());
+
                     }
-
-                    EmbedBuilder builder = new EmbedBuilder();
-
-                    builder.WithTitle($"Channel Info for {guildChannel.Name}");
-
-                    builder.WithColor(255, 0, 0);
-
-                    builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
-                    builder.WithCurrentTimestamp();
-
-
-
-
-                    builder.AddField("Permission flag", channelInfo.ChannelPermissionFlags);
-
-                    //var count = Enum.GetValues(typeof(BotPermissionType)).Length;
-
-                    foreach (BotPermissionType flag in Enum.GetValues(typeof(BotPermissionType)))
+                    else
                     {
-                        if (((BotPermissionType)channelInfo.ChannelPermissionFlags).HasFlag(flag))
+                        var botChannelSettings = DatabaseManager.Instance().GetAllChannelSettings();
+
+                        List<string> header = new List<string>()
                         {
-                            builder.AddField(flag.ToString(), "```diff\r\n+ YES```", true);
-                        }
-                        else
+                            "Channel Id",
+                            "Channel Name",
+                            "Permission value",
+                            "Permission string",
+                            "Preload old",
+                            "Preload new",
+                            "Reached oldest"
+                        };
+
+
+                        List<List<string>> data = new List<List<string>>();
+
+
+                        foreach (var channelSetting in botChannelSettings)
                         {
-                            builder.AddField(flag.ToString(), "```diff\r\n- NO```", true);
+                            List<string> channelInfoRow = new List<string>();
+
+                            var discordChannel = DatabaseManager.Instance().GetDiscordChannel(channelSetting.DiscordChannelId);
+
+                            if (discordChannel.DiscordServerId != guildChannel.Guild.Id)
+                                break; // dont show other server
+
+                            channelInfoRow.Add(discordChannel.DiscordChannelId.ToString());
+                            channelInfoRow.Add(discordChannel.ChannelName);
+                            channelInfoRow.Add(channelSetting.ChannelPermissionFlags.ToString());
+                            List<string> permissionFlagNames = new List<string>();
+                            foreach (BotPermissionType flag in Enum.GetValues(typeof(BotPermissionType)))
+                            {
+                                var hasFlag = ((BotPermissionType)(channelSetting.ChannelPermissionFlags)).HasFlag(flag);
+
+                                if (hasFlag)
+                                    permissionFlagNames.Add($"{flag} ({(int)flag})");
+                            }
+
+                            channelInfoRow.Add(string.Join(", ", permissionFlagNames));
+                            channelInfoRow.Add(channelSetting.OldestPostTimePreloaded?.ToString());
+                            channelInfoRow.Add(channelSetting.NewestPostTimePreloaded?.ToString());
+                            channelInfoRow.Add(channelSetting.ReachedOldestPreload.ToString());
+                            data.Add(channelInfoRow);
                         }
+
+                        var drawTable = new DrawTable(header, data, "");
+
+                        var stream = await drawTable.GetImage();
+                        if (stream == null)
+                            return;// todo some message
+
+                        await Context.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null, new Discord.MessageReference(Context.Message.Id));
+                        stream.Dispose();
                     }
-
-
-                    Context.Channel.SendMessageAsync("", false, builder.Build());
                 }
+
             }
 
             [Command("set")]
-            public async Task SetChannelInfoAsync(int flag)
+            public async Task SetChannelInfoAsync(int flag, ulong? channelId = null)
             {
                 var author = Context.Message.Author;
                 if (author.Id != ETHDINFKBot.Program.Owner)
@@ -340,17 +406,28 @@ namespace ETHDINFKBot.Modules
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
                 }
-
                 if (Context.Message.Channel is SocketGuildChannel guildChannel)
                 {
-                    DatabaseManager.Instance().UpdateChannelSetting(guildChannel.Id, flag);
-                    Context.Channel.SendMessageAsync($"Set flag {flag} for channel {guildChannel.Name}", false);
+                    if (!channelId.HasValue)
+                    {
+
+                        DatabaseManager.Instance().UpdateChannelSetting(guildChannel.Id, flag);
+                        Context.Channel.SendMessageAsync($"Set flag {flag} for channel {guildChannel.Name}", false);
+                    }
+                    else
+                    {
+                        var channel = guildChannel.Guild.GetTextChannel(channelId.Value);
+
+                        DatabaseManager.Instance().UpdateChannelSetting(channel.Id, flag);
+                        Context.Channel.SendMessageAsync($"Set flag {flag} for channel {channel.Name}", false);
+                    }
                 }
             }
 
             [Command("all")]
             public async Task SetAllChannelInfoAsync(int flag)
             {
+                return; // this one is a bit too risky xD
                 var author = Context.Message.Author;
                 if (author.Id != ETHDINFKBot.Program.Owner)
                 {
@@ -364,7 +441,7 @@ namespace ETHDINFKBot.Modules
 
                     foreach (var item in channels)
                     {
-                        DatabaseManager.Instance().UpdateChannelSetting(item.DiscordChannelId, flag, true);
+                        DatabaseManager.Instance().UpdateChannelSetting(item.DiscordChannelId, flag, 0, 0, true);
                         Context.Channel.SendMessageAsync($"Set flag {flag} for channel {item.ChannelName}", false);
                     }
                 }
@@ -514,11 +591,11 @@ namespace ETHDINFKBot.Modules
                     Context.Channel.SendMessageAsync($"Please wait :)", false);
 
 
-                    Task.Factory.StartNew(() => ScrapReddit(allNames));
+                    Task.Factory.StartNew(() => CommonHelper.ScrapReddit(allNames, Context.Channel));
                 }
                 else
                 {
-                    Task.Factory.StartNew(() => ScrapReddit(subredditName));
+                    Task.Factory.StartNew(() => CommonHelper.ScrapReddit(subredditName, Context.Channel));
                 }
             }
 
@@ -551,125 +628,7 @@ namespace ETHDINFKBot.Modules
 
             // TODO cleanup this mess
 
-            private async Task ScrapReddit(List<string> subredditName)
-            {
-                foreach (var item in subredditName)
-                {
-                    //Context.Channel.SendMessageAsync($"Current {item} is being started", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
-                    await ScrapReddit(item);
-                    await Task.Delay(500);
-                }
-                Context.Channel.SendMessageAsync($"Scraper ended :)", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
-            }
-
-            private async Task ScrapReddit(string subredditName)
-            {
-                DatabaseManager.Instance().SetSubredditScaperStatus(subredditName, true);
-                var reddit = new RedditClient(Program.RedditAppId, Program.RedditRefreshToken, Program.RedditAppSecret);
-
-                using (var context = new ETHBotDBContext())
-                {
-                    SubredditManager subManager = new SubredditManager(subredditName, reddit, context);
-
-                    bool ended = subManager.SubredditInfo.ReachedOldest;
-                    try
-                    {
-                        bool beforeWasNotFull = false;
-
-                        string last = "";
-                        DateTime lastTime = subManager.SubredditInfo.ReachedOldest ? DateTime.MinValue : DateTime.MaxValue;
-                        while (true)
-                        {
-
-                            List<Post> posts = null;
-
-                            if (!subManager.SubredditInfo.ReachedOldest)
-                                posts = subManager.GetAfterPosts();
-                            else
-                                posts = subManager.GetBeforePosts();
-
-                            if (!subManager.SubredditInfo.ReachedOldest && posts.Count == 0)
-                            {
-                                //Context.Channel.SendMessageAsync($"{subManager.SubredditName} scraper reached the end. Setting up end flags", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
-
-                                subManager.ConfirmOldestPost(last, lastTime, true);
-                                break;
-                            }
-
-                            if (posts.Count == 0)
-                            {
-                                //Context.Channel.SendMessageAsync($"{subManager.SubredditName} scraper reached the newest post. Setting up end flags", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
-
-                                subManager.ConfirmNewestPost(last, lastTime);
-                                break;
-                            }
-                            string lastPrev = last;
-                            foreach (var post in posts)
-                            {
-                                if (post.Created < lastTime && !subManager.SubredditInfo.ReachedOldest)
-                                {
-                                    last = post.Fullname;
-                                    lastTime = post.Created;
-                                }
-
-                                if (post.Created > lastTime && subManager.SubredditInfo.ReachedOldest)
-                                {
-                                    last = post.Fullname;
-                                    lastTime = post.Created;
-                                }
-
-                                PostManager manager = new PostManager(post, subManager.SubredditInfo, context);
-
-                                if (manager.IsImage())
-                                {
-                                    var imageInfos = manager.DownloadImage(Path.Combine(Program.BasePath, "Reddit")); // TODO send path in contructor
-
-                                    context.RedditImages.AddRange(imageInfos);
-                                    context.SaveChanges();
-
-                                }
-                                else
-                                {
-                                    Console.ForegroundColor = ConsoleColor.Red;
-                                    //Console.WriteLine($"IGNORED {post.Title} at {last}");
-                                    Console.ForegroundColor = ConsoleColor.White;
-                                }
-                            }
-
-                            if (lastPrev == last)
-                            {
-                                // TODO set end reached if its not yet set?
-                                //Context.Channel.SendMessageAsync($"{subManager.SubredditName} stopped because last/first did not change Count ({posts.Count})", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
-                                break;
-                            }
-
-                            if (!subManager.SubredditInfo.ReachedOldest)
-                            {
-                                subManager.ConfirmOldestPost(last, lastTime);
-                                //Context.Channel.SendMessageAsync($"{subManager.SubredditName} scraper is happy and well :) Count ({posts.Count}) after {subManager.SubredditInfo.OldestPost}/{subManager.SubredditInfo.OldestPostDate}", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
-                            }
-                            else
-                            {
-                                subManager.ConfirmNewestPost(last, lastTime);
-                                //subManager.GetBeforePosts();
-                                //Context.Channel.SendMessageAsync($"{subManager.SubredditName} scraper is happy and well :) Count ({posts.Count}) before {subManager.SubredditInfo.NewestPost}/{subManager.SubredditInfo.NewestPostDate}", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
-
-                            }
-
-
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Context.Channel.SendMessageAsync($"{subManager.SubredditName} scraper died RIP {ex.Message}", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
-                    }
-
-                    //if(!ended)
-                    //Context.Channel.SendMessageAsync($"{subManager.SubredditName} scraper ended :D", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
-                }
-
-                DatabaseManager.Instance().SetSubredditScaperStatus(subredditName, false);
-            }
+           
         }
     }
 }

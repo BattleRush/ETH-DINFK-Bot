@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using ETHBot.DataLayer.Data.Discord;
 using ETHBot.DataLayer.Data.Enums;
+using ETHDINFKBot.Helpers;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -11,25 +12,8 @@ using System.Threading.Tasks;
 
 namespace ETHDINFKBot.Log
 {
-    /*
-        public enum BotMessageType
-        {
-            Neko = 0,
-            Search = 1,
-            NekoGif = 2,
-            Holo = 3,
-            Waifu = 4,
-            Baka = 5,
-            Smug = 6,
-            Fox = 7,
-            Avatar = 8,
-            NekoAvatar = 9,
-            Wallpaper = 10,
-            Animalears = 11,
-            Foxgirl = 12,
-            Other = 999
-        }*/
 
+    // TODO OUTSOURCE MOST OF IT OUT
     public class LogManager
     {
         private readonly ILogger _logger = new Logger<LogManager>(Program.Logger);
@@ -40,9 +24,7 @@ namespace ETHDINFKBot.Log
         }
 
         // TODO lock
-
         public static DateTime LastUpdate = DateTime.MinValue;
-
         public static DateTime LastGlobalUpdate = DateTime.MinValue;
         public async void AddReaction(Emote emote, ulong discordMessageId, SocketGuildUser user)
         {
@@ -60,7 +42,7 @@ namespace ETHDINFKBot.Log
                     LocalPath = null
                 };
 
-                DatabaseManager.ProcessDiscordEmote(discordEmote, discordMessageId, 1, true, user);
+                DatabaseManager.ProcessDiscordEmote(discordEmote, discordMessageId, 1, true, user, false);
                 //Program.GlobalStats.EmojiInfoUsage.Single(i => i.EmojiId == emote.Id).UsedAsReaction++;
             }
             catch (Exception ex)
@@ -68,6 +50,7 @@ namespace ETHDINFKBot.Log
 
             }
         }
+
         public async void RemoveReaction(Emote emote, ulong discordMessageId, SocketGuildUser user)
         {
             var discordEmote = new DiscordEmote()
@@ -82,22 +65,10 @@ namespace ETHDINFKBot.Log
                 LocalPath = null
             };
 
-            DatabaseManager.ProcessDiscordEmote(discordEmote, discordMessageId, -1, true, user);
-
-            /*
-            if (Program.GlobalStats.EmojiInfoUsage.Any(i => i.EmojiId == emote.Id))
-            {
-                Program.GlobalStats.EmojiInfoUsage.Single(i => i.EmojiId == emote.Id).UsedAsReaction--;
-            }
-            else
-            {
-                // You shouldnt be here LOL
-
-                Console.WriteLine("DANGER!!!!!!!!!!!!!!!!!!!!!!!!!!");
-            }*/
+            DatabaseManager.ProcessDiscordEmote(discordEmote, discordMessageId, -1, true, user, false);
         }
 
-        public async Task ProcessEmojisAndPings(IReadOnlyCollection<ITag> tags, ulong authorId, ulong discordMessageId, SocketGuildUser user)
+        public async Task ProcessEmojisAndPings(IReadOnlyCollection<ITag> tags, ulong authorId, ulong discordMessageId, SocketGuildUser fromUser, bool isPreload = false)
         {
             try
             {
@@ -133,7 +104,7 @@ namespace ETHDINFKBot.Log
                         LocalPath = null
                     };
 
-                    DatabaseManager.ProcessDiscordEmote(stat, discordMessageId, emote.Value, false, user);
+                    DatabaseManager.ProcessDiscordEmote(stat, discordMessageId, emote.Value, false, fromUser, isPreload);
                 }
 
                 // TODO dont hammer the db after each call (check if any new emotes have been added
@@ -152,6 +123,8 @@ namespace ETHDINFKBot.Log
                 }*/
 
                 Dictionary<ulong, int> listOfUsers = new Dictionary<ulong, int>();
+
+
 
                 foreach (Tag<Discord.IUser> tag in tags.Where(i => i.Type == TagType.UserMention))
                 {
@@ -183,44 +156,73 @@ namespace ETHDINFKBot.Log
 
                 foreach (var pingInfo in listOfUsers)
                 {
-                    DatabaseManager.AddPingStatistic(pingInfo.Key, pingInfo.Value, user);
-                }
-
-                /*
-
-                if (!Program.GlobalStats.PingInformation.Any(i => i.DiscordUser.DiscordId == guildUser?.Id))
-                {
-                    Program.GlobalStats.PingInformation.Add(new PingInformation()
+                    DatabaseManager.AddPingStatistic(pingInfo.Key, pingInfo.Value, fromUser);
+                    DatabaseManager.CreatePingHistory(new PingHistory()
                     {
-                        DiscordUser = new Stats.DiscordUser()
-                        {
-                            DiscordId = guildUser.Id,
-                            DiscordDiscriminator = guildUser.DiscriminatorValue,
-                            DiscordName = guildUser.Username,
-                            ServerUserName = guildUser.Nickname ?? guildUser.Username // User Nickname -> Update
-                        },
-                        PingCount = 1
+                        MessageId = discordMessageId,
+                        DiscordRoleId = null,
+                        DiscordUserId = pingInfo.Key,
+                        FromDiscordUserId = fromUser.Id
                     });
                 }
-                else
+
+                // most of the older roles probably dont exist -> TODO check if they dont exist and then ignore
+                if (!isPreload)
                 {
-                    Program.GlobalStats.PingInformation.Single(i => i.DiscordUser.DiscordId == tag.Value.Id).PingCount++;
+                    foreach (Tag<Discord.IRole> role in tags.Where(i => i.Type == TagType.RoleMention))
+                    {
+                        var dbRole = DatabaseManager.GetDiscordRole(role.Key);
+                        if (dbRole == null)
+                        {
+                            // some role is missing
+                            DiscordHelper.ReloadRoles(fromUser.Guild);
+                        }
+
+                        DatabaseManager.CreatePingHistory(new PingHistory()
+                        {
+                            MessageId = discordMessageId,
+                            DiscordRoleId = role.Key,
+                            DiscordUserId = null,
+                            FromDiscordUserId = fromUser.Id
+                        });
+                    }
                 }
 
-                if (!listOfUsers.Contains(tag.Value.Id))
-                {
-                    Program.GlobalStats.PingInformation.Single(i => i.DiscordUser.DiscordId == tag.Value.Id).PingCountOnce++;
-                    listOfUsers.Add(tag.Value.Id);
+                    /*
+
+                    if (!Program.GlobalStats.PingInformation.Any(i => i.DiscordUser.DiscordId == guildUser?.Id))
+                    {
+                        Program.GlobalStats.PingInformation.Add(new PingInformation()
+                        {
+                            DiscordUser = new Stats.DiscordUser()
+                            {
+                                DiscordId = guildUser.Id,
+                                DiscordDiscriminator = guildUser.DiscriminatorValue,
+                                DiscordName = guildUser.Username,
+                                ServerUserName = guildUser.Nickname ?? guildUser.Username // User Nickname -> Update
+                            },
+                            PingCount = 1
+                        });
+                    }
+                    else
+                    {
+                        Program.GlobalStats.PingInformation.Single(i => i.DiscordUser.DiscordId == tag.Value.Id).PingCount++;
+                    }
+
+                    if (!listOfUsers.Contains(tag.Value.Id))
+                    {
+                        Program.GlobalStats.PingInformation.Single(i => i.DiscordUser.DiscordId == tag.Value.Id).PingCountOnce++;
+                        listOfUsers.Add(tag.Value.Id);
+                    }
                 }
-            }
 
-            if (LastGlobalUpdate < DateTime.Now.AddSeconds(-30))
-            {
-                LastGlobalUpdate = DateTime.Now;
-                Program.SaveGlobalStats();
-            }*/
+                if (LastGlobalUpdate < DateTime.Now.AddSeconds(-30))
+                {
+                    LastGlobalUpdate = DateTime.Now;
+                    Program.SaveGlobalStats();
+                }*/
 
-            }
+                }
             catch (Exception ex)
             {
                 Console.WriteLine("ERROR STATS: " + ex.ToString()); ;

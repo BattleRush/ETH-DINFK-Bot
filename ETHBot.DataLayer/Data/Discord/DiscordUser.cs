@@ -21,6 +21,7 @@ namespace ETHBot.DataLayer.Data.Discord
         public string AvatarUrl { get; set; }
         public DateTimeOffset? JoinedAt { get; set; }
         public string Nickname { get; set; }
+        public int FirstDailyPostCount { get; set; }
         //public IReadOnlyCollection<ulong> RoleIds { get; } // TODO for db
 
         //public ICollection<BannedLink> BannedLinks { get; set; }

@@ -19,5 +19,11 @@ namespace ETHBot.DataLayer.Data
         public ulong DiscordChannelId { get; set; }
 
         public virtual DiscordChannel DiscordChannel { get; set; }
+
+        // we dont save the message id explicitly
+        public DateTimeOffset? OldestPostTimePreloaded { get; set; }
+        public DateTimeOffset? NewestPostTimePreloaded { get; set; }
+        public bool ReachedOldestPreload { get; set; }
+
     }
 }

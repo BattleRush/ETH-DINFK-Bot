@@ -35,7 +35,10 @@ namespace RedditScrapper
             ETHBotDBContext = context;
 
             Subreddit = API.Subreddit(SubredditName);
-            LoadSubredditInfo();
+
+            // dont load info from db if we manually are managing this
+            if (before == null && after == null)
+                LoadSubredditInfo();
         }
 
         public void LoadSubredditInfo()

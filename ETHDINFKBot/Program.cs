@@ -12,7 +12,6 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using DuckSharp;
-using ETHDINFKBot.Stats;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations.Schema;
 using ETHDINFKBot.Log;
@@ -26,6 +25,11 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Net;
 using ETHDINFKBot.Helpers;
+using System.Threading;
+using Microsoft.Extensions.Hosting;
+using ETHDINFKBot.CronJobs;
+using ETHDINFKBot.CronJobs.Jobs;
+using ETHDINFKBot.Handlers;
 
 namespace ETHDINFKBot
 {
@@ -53,78 +57,66 @@ namespace ETHDINFKBot
 
         public static ILoggerFactory Logger { get; set; }
 
+        private static DateTime LastNewDailyMessagePost = DateTime.Now;
 
         private static List<BotChannelSetting> BotChannelSettings;
 
 
-        private static BotStats BotStats = new BotStats()
-        {
-            DiscordUsers = new List<Stats.DiscordUser>()
-        };
+        //private static BotStats BotStats = new BotStats()
+        //{
+        //    DiscordUsers = new List<Stats.DiscordUser>()
+        //};
 
 
-        private static GlobalStats GlobalStats = new GlobalStats()
-        {
-            EmojiInfoUsage = new List<EmojiInfo>(),
-            PingInformation = new List<PingInformation>()
-        };
+        //private static GlobalStats GlobalStats = new GlobalStats()
+        //{
+        //    EmojiInfoUsage = new List<EmojiInfo>(),
+        //    PingInformation = new List<PingInformation>()
+        //};
 
-        private static List<ReportInfo> BlackList = new List<ReportInfo>();
+        //private static List<ReportInfo> BlackList = new List<ReportInfo>();
 
         private DatabaseManager DatabaseManager = DatabaseManager.Instance();
         private LogManager LogManager = new LogManager(DatabaseManager.Instance());
 
-
-
-        private static void CheckDirs()
-        {
-            //if (!Directory.Exists("Database"))
-            //    Directory.CreateDirectory("Database");
-
-            //if (!Directory.Exists("Plugins"))
-            //    Directory.CreateDirectory("Plugins");
-
-            //if (!Directory.Exists("Logs"))
-            //     Directory.CreateDirectory("Logs");
-
-            //if (!Directory.Exists("Stats"))
-            //    Directory.CreateDirectory("Stats");
-
-            //if (!Directory.Exists("Blacklist"))
-            //    Directory.CreateDirectory("Blacklist");
-
-            //if (!Directory.Exists("Blacklist\\Backup"))
-            //    Directory.CreateDirectory("Blacklist\\Backup");
-
-            //if (!Directory.Exists("Stats\\Backup"))
-            //    Directory.CreateDirectory("Stats\\Backup");
-        }
+        public static BotSetting BotSetting;
 
         static void Main(string[] args)
         {
-            CheckDirs();
+
+            // TODO may cause problems if the bot is hosted in a timezone that doesnt switch to daylight at the same time as the hosting region
+            LastNewDailyMessagePost = DateTime.UtcNow.AddHours(DateTime.UtcNow.IsDaylightSavingTime() ? 2 : 1);
+
             Logger = LoggerFactory.Create(builder => { builder.AddConsole(); });
 
-            /* using (ETHBotDBContext context = new ETHBotDBContext())
-             {
 
-                 context.DiscordUsers.Add(new ETHBot.DataLayer.Data.Discord.DiscordUser()
-                 {
-                     AvatarUrl = "",
-                     DiscordUserId = (ulong)new Random().Next(1, 100000),
-                     DiscriminatorValue = 1,
-                     IsBot = false,
-                     IsWebhook = false,
-                     JoinedAt = DateTime.Now,
-                     Nickname = "test1",
-                     Username = "username"
-                 }); ;
+            BotSetting = DatabaseManager.Instance().GetBotSettings();
 
-                 context.SaveChanges();
-             }
-            */
 
-            //CheckDirs();
+            var host = new HostBuilder()
+               .ConfigureServices((hostContext, services) =>
+               {
+                   // TODO read from DB
+
+                   services.AddCronJob<CronJobTest>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"* * * * *"; });
+
+                   // once a day at 1 or 2 AM CET/CEST
+                   services.AddCronJob<CleanUpServerSuggestions>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 0 * * *"; });
+
+                   // TODO adjust for summer time in CET/CEST
+                   services.AddCronJob<DailyStatsJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 23 * * *"; });
+
+                   // TODO adjust for summer time in CET/CEST
+                   services.AddCronJob<PreloadJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"5 20 * * *"; });// 3 am utc -> 4 am cet
+
+                   // TODO adjust for summer time in CET/CEST
+                   services.AddCronJob<SpaceXSubredditJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = "*/2 * * * *"; }); //BotSetting.SpaceXSubredditCheckCronJob
+
+                   // TODO adjust for summer time in CET/CEST
+                   services.AddCronJob<StartAllSubredditsJobs>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"54 21 * * *"; });// 4 am utc -> 5 am cet
+               })
+               .StartAsync();
+
 
             Configuration = new ConfigurationBuilder()
               .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -144,23 +136,6 @@ namespace ETHDINFKBot
 
             new Program().MainAsync(DiscordToken).GetAwaiter().GetResult();
 
-        }
-
-
-        private static Assembly LoadPlugin(string relativePath)
-        {
-            // Navigate up to the solution root
-            string root = Path.GetFullPath(Path.Combine(
-                Path.GetDirectoryName(
-                    Path.GetDirectoryName(
-                        Path.GetDirectoryName(
-                            Path.GetDirectoryName(
-                                Path.GetDirectoryName(typeof(Program).Assembly.Location)))))));
-
-            string pluginLocation = Path.GetFullPath(Path.Combine(root, relativePath.Replace('\\', Path.DirectorySeparatorChar)));
-            Console.WriteLine($"Loading commands from: {pluginLocation}");
-            PluginLoadContext loadContext = new PluginLoadContext(pluginLocation);
-            return loadContext.LoadFromAssemblyName(new AssemblyName(Path.GetFileNameWithoutExtension(pluginLocation)));
         }
 
         public static void BackupDBOnStartup()
@@ -191,11 +166,6 @@ namespace ETHDINFKBot
             }
         }
 
-
-
-
-
-
         public static void LoadChannelSettings()
         {
             BotChannelSettings = DatabaseManager.Instance().GetAllChannelSettings();
@@ -215,6 +185,7 @@ namespace ETHDINFKBot
             Client.ReactionRemoved += Client_ReactionRemoved;
             Client.MessageDeleted += Client_MessageDeleted;
             Client.MessageUpdated += Client_MessageUpdated;
+            Client.RoleCreated += Client_RoleCreated;
 
             await Client.LoginAsync(TokenType.Bot, token);
             await Client.StartAsync();
@@ -226,7 +197,6 @@ namespace ETHDINFKBot
             TotalEmotes = DatabaseManager.Instance().TotalEmoteCount();
             await Client.SetGameAsync($"{TotalEmotes} emotes", null, ActivityType.Watching);
 #endif
-
 
             services = new ServiceCollection()
                 .AddSingleton(Client)
@@ -242,9 +212,21 @@ namespace ETHDINFKBot
             await Task.Delay(-1);
         }
 
+        private Task Client_RoleCreated(SocketRole arg)
+        {
+            DiscordHelper.ReloadRoles(arg.Guild);
+
+            return Task.CompletedTask;
+            //throw new NotImplementedException();
+        }
+
+        // to find ghost pings
         private Task Client_MessageUpdated(Cacheable<IMessage, ulong> before, SocketMessage after, ISocketMessageChannel arg3)
         {
-            if (TempDisableIncomming) 
+            return Task.CompletedTask;
+            // TODO check EditedTimestamp if first edit
+
+            if (TempDisableIncomming)
                 return Task.CompletedTask;
 
             if (before.HasValue)
@@ -288,16 +270,16 @@ namespace ETHDINFKBot
 
             return Task.CompletedTask;
         }
-
-
-
         private Task Client_MessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel arg2)
         {
+            return Task.CompletedTask;
             if (TempDisableIncomming)
                 return Task.CompletedTask;
 
             if (message.HasValue)
             {
+                IMessage messageValue = message.Value;
+
                 if (!AllowedToRun(message.Value.Channel.Id, BotPermissionType.RemovedPingMessage))
                     return Task.CompletedTask;
 
@@ -306,8 +288,8 @@ namespace ETHDINFKBot
                     if (message.Value.Content.StartsWith("$q"))
                         return Task.CompletedTask; // exclude quotes
 
-                    if (message.Value.CreatedAt.UtcDateTime < DateTime.UtcNow.AddMinutes(-15))
-                        return Task.CompletedTask; // only track for first 15 mins
+                    if (message.Value.CreatedAt.UtcDateTime < DateTime.UtcNow.AddSeconds(-30))
+                        return Task.CompletedTask; // only track for first 30 secs
 
                     EmbedBuilder builder = new EmbedBuilder();
                     var guildUser = message.Value.Author as SocketGuildUser;
@@ -319,6 +301,13 @@ namespace ETHDINFKBot
                         string pefixForRole = item.Type == TagType.RoleMention ? "&" : "";
                         messageText += $"Poor <@{pefixForRole}{item.Key}>" + Environment.NewLine;
                     }
+
+                    messageText += Environment.NewLine;
+                    messageText += $"{guildUser.Nickname} you just got a new role <:yay:778745219733520426> Next time dont delete ghost pings" + Environment.NewLine;
+
+                    var socketChannel = messageValue.Channel as SocketGuildChannel;
+
+                    AssignMutedRoleToUser(socketChannel.Guild, guildUser);
 
                     builder.WithDescription(messageText);
                     builder.WithColor(255, 64, 128);
@@ -334,28 +323,52 @@ namespace ETHDINFKBot
             return Task.CompletedTask;
         }
 
-        private Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
+        private async void AssignMutedRoleToUser(SocketGuild guild, SocketGuildUser user)
+        {
+            /*
+            try
+            {
+                var role = guild.Roles.FirstOrDefault(x => x.Name == "STFU"); //765542118701400134
+                await (user as IGuildUser).AddRoleAsync(role);
+
+                Thread.Sleep(TimeSpan.FromMinutes(15));
+
+                await (user as IGuildUser).RemoveRoleAsync(role);
+            }
+            catch (Exception ex)
+            {
+
+            }*/
+        }
+
+        private async void HandleReaction(Cacheable<IUserMessage, ulong> argMessage, ISocketMessageChannel argMessageChannel, SocketReaction argReaction, bool addedReaction)
         {
             if (TempDisableIncomming)
-                return Task.CompletedTask;
+                return;
 
-            if (((SocketGuildUser)arg3.User).IsBot == true)
-                return Task.CompletedTask;
-
-            Console.ForegroundColor = ConsoleColor.Red;
-
-            if (arg3.Emote is Emote)
+            IMessage currentMessage = null;
+            if (argMessage.HasValue)
             {
-                //Console.WriteLine($"Removed emote {arg3.Emote.Name} by {arg3.User.Value.Username}");
-                LogManager.RemoveReaction((Emote)arg3.Emote, arg1.Id, ((SocketGuildUser)arg3.User));
-
-                if (((Emote)arg3.Emote).Id == 780179874656419880)
-                {
-                    // TODO Remove the post from saved
-                }
+                currentMessage = argMessage.Value;
+            }
+            else
+            {
+                currentMessage = await argMessageChannel.GetMessageAsync(argMessage.Id);
             }
 
-            return Task.CompletedTask;
+            var channelSettings = BotChannelSettings?.SingleOrDefault(i => i.DiscordChannelId == argMessageChannel.Id);
+
+            ReactionHandler reactionHandler = new ReactionHandler(currentMessage, argReaction, channelSettings, addedReaction);
+            reactionHandler.Run();
+        }
+        private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> argMessage, ISocketMessageChannel argMessageChannel, SocketReaction argReaction)
+        {
+            HandleReaction(argMessage, argMessageChannel, argReaction, true);
+        }
+
+        private async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> argMessage, ISocketMessageChannel argMessageChannel, SocketReaction argReaction)
+        {
+            HandleReaction(argMessage, argMessageChannel, argReaction, false);
         }
 
         private bool AllowedToRun(ulong channelId, BotPermissionType type)
@@ -373,184 +386,30 @@ namespace ETHDINFKBot
         }
 
 
-        private Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
-        {
-            if (TempDisableIncomming)
-                return Task.CompletedTask;
-
-            try
-            {
-                // only if an emote has been used we dont count emojis yet
-                if (arg3.Emote is Emote)
-                {
-
-                    /*if ( == true)
-                        return Task.CompletedTask;*/
-
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    //Console.WriteLine($"Added emote {arg3.Emote.Name} by {arg3.User.Value.Username}");
-                    LogManager.AddReaction((Emote)arg3.Emote, arg1.Id, ((SocketGuildUser)arg3.User));
-
-                    if (((Emote)arg3.Emote).Id == 780179874656419880 && !arg3.User.Value.IsBot)
-                    {
-                        // Save the post link
-
-                        /*          var user = DatabaseManager.GetDiscordUserById(arg1.Value.Author.Id); // Verify the user is created but should actually be available by this poitn
-                        var saveBy = DatabaseManager.GetDiscordUserById(arg3.User.Value.Id); // Verify the user is created but should actually be available by this poitn
-                        */
-
-                        if (DatabaseManager.IsSaveMessage(arg1.Value.Id, arg3.User.Value.Id))
-                        {
-                            // dont allow double saves
-                            return Task.CompletedTask;
-                        }
-
-                        var guildChannel = (SocketGuildChannel)arg1.Value.Channel;
-                        var link = $"https://discord.com/channels/{guildChannel.Guild.Id}/{guildChannel.Id}/{arg1.Value.Id}";
-                        if (!string.IsNullOrWhiteSpace(arg1.Value.Content))
-                        {
-                            DatabaseManager.SaveMessage(arg1.Value.Id, arg1.Value.Author.Id, arg3.User.Value.Id, link, arg1.Value.Content);
-                            // TODO parse to guild user
-
-                            arg3.User.Value.SendMessageAsync($"Saved post from {arg1.Value.Author.Username}: " +
-                                $"{Environment.NewLine} {arg1.Value.Content} {Environment.NewLine}Direct link: [{guildChannel.Guild.Name}/{guildChannel.Name}/by {arg1.Value.Author.Username}] <{link}>");
-                        }
-
-                        foreach (var item in arg1.Value.Embeds)
-                        {
-                            DatabaseManager.SaveMessage(arg1.Value.Id, arg1.Value.Author.Id, arg3.User.Value.Id, link, "Embed: " + ((Embed)item).ToString());
-                            arg3.User.Value.SendMessageAsync("", false, ((Embed)item));
-                        }
-
-
-                        if (arg1.Value.Attachments.Count > 0)
-                        {
-                            //return Task.CompletedTask;
-
-                            foreach (var item in arg1.Value.Attachments)
-                            {
-                                DatabaseManager.SaveMessage(arg1.Value.Id, arg1.Value.Author.Id, arg3.User.Value.Id, link, item.Url);
-
-                                /*DatabaseManager.SaveMessage(new SavedMessage()
-                                {
-                                    DirectLink = link,
-                                    SendInDM = false,
-                                    Content = item.Url, // todo attachment save to disk
-                                    MessageId = arg1.Value.Id,
-                                    ByDiscordUserId = user.DiscordUserId,
-                                    ByDiscordUser = user,
-                                    SavedByDiscordUserId = saveBy.DiscordUserId,
-                                    SavedByDiscordUser = saveBy
-                                });*/
-                                // TODO markdown
-
-                                arg3.User.Value.SendMessageAsync($"Saved post (Attachment) from {arg1.Value.Author.Username}: " +
-                                    $"{Environment.NewLine} {item.Url}{Environment.NewLine}Direct link: [{guildChannel.Guild.Name}/{guildChannel.Name}/by {arg1.Value.Author.Username}] <{link}>");
-                            }
-
-                        }
-
-                        if (AllowedToRun(arg1.Value.Channel.Id, BotPermissionType.SaveMessage))
-                        {
-                            EmbedBuilder builder = new EmbedBuilder();
-
-                            builder.WithTitle($"{arg3.User.Value.Username} saved a message");
-                            //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
-                            //builder.WithDescription($@"");
-                            builder.WithColor(0, 0, 255);
-
-                            //builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
-
-                            builder.WithCurrentTimestamp();
-                            builder.AddField("Message Link", $"[Message]({link})", true);
-
-                            builder.AddField("Message Author", $"{arg1.Value.Author.Username}", true);
-
-                            // TODO More stats
-
-                            arg1.Value.Channel.SendMessageAsync("", false, builder.Build());
-                        }
-                        // TODO markdown -> guild user also
-                        //arg1.Value.Channel.SendMessageAsync($"{arg3.User.Value.Username} saves <{link}> by {arg1.Value.Author.Username}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-
-            }
-
-            return Task.CompletedTask;
-        }
-
-        private async Task<bool> TryToParseEmoji(SocketUserMessage msg)
-        {
-            if (msg.Channel is SocketGuildChannel guildChannel)
-            {
-                if (msg.Content.StartsWith("."))
-                {
-                    // check if the emoji exists and if the emojis is animated
-                    string name = msg.Content.Substring(1, msg.Content.Length - 1);
-
-                    var emote = DatabaseManager.GetEmoteByName(name);
-
-                    if (emote != null)
-                    {
-                        var guildUser = msg.Author as SocketGuildUser;
-
-                        msg.DeleteAsync();
-
-                        var emoteString = $"<{(emote.Animated ? "a" : "")}:{emote.EmoteName}:{emote.DiscordEmoteId}>";
-
-                        if (guildChannel.Guild.Emotes.Any(i => i.Id == emote.DiscordEmoteId))
-                        {
-                            // we can post the emote as it will be rendered out
-                            await msg.Channel.SendMessageAsync(emoteString);
-                        }
-                        else
-                        {
-                            // TODO store resized images in db for faster reuse
-                            if (emote.Animated)
-                            {
-                                // TODO gif resize
-                                await msg.Channel.SendMessageAsync(emote.Url);
-                            }
-                            else
-                            {
-                                using (WebClient client = new WebClient())
-                                {
-                                    var imageBytes = client.DownloadData(emote.Url);
-
-                                    using (var ms = new MemoryStream(imageBytes))
-                                    {
-                                        var image = System.Drawing.Image.FromStream(ms);
-                                        var resImage = ResizeImage(image, Math.Min(image.Height, 64));
-
-                                        var stream = new MemoryStream();
-
-                                        resImage.Save(stream, resImage.RawFormat);
-                                        stream.Position = 0;
-
-
-                                        await msg.Channel.SendFileAsync(stream, $"{emote.EmoteName}.png");
-                                    }
-                                }
-                            }
-                            // we need to send the image as the current server doesnt have access
-
-                        }
-
-                        await msg.Channel.SendMessageAsync($"(.{name}) by <@{guildUser.Id}>");
-
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
         private static Dictionary<ulong, DateTime> SpamCache = new Dictionary<ulong, DateTime>();
+
+        public static bool SendedAnWChallenge = false;
+        public async void NewAnWChallenge()
+        {
+            var anwChannel = Client.GetGuild(747752542741725244).GetTextChannel(772551551818268702);
+
+            // todo do more dynamic
+
+            string name = "Count the Divisors";
+            string due = "Thursday, March 11, 2021 10:00:59 AM GMT+01:00";
+            int exp = 100;
+
+            EmbedBuilder builder = new EmbedBuilder();
+
+            builder.WithTitle($"A new AnW challenge has been uploaded");
+            builder.WithColor(128, 255, 128);
+            builder.WithDescription($"Task Name: **{name}** " + Environment.NewLine + $"Due date: {due}" + Environment.NewLine + $"EXP: {exp}");
+
+            builder.WithCurrentTimestamp();
+
+            await anwChannel.SendMessageAsync("May the fastest speedrunner win :)", false, builder.Build());
+        }
+
         public async Task HandleCommandAsync(SocketMessage m)
         {
             if (TempDisableIncomming)
@@ -560,76 +419,45 @@ namespace ETHDINFKBot
 
             // check if the emote is a command -> block
             List<CommandInfo> commandList = commands.Commands.ToList();
-            if (!m.Author.IsBot && !commandList.Any(i => i.Name.ToLower() == msg.Content.ToLower().Replace(".", "")) && await TryToParseEmoji(msg))
-                return; // emoji was found and we can exit here
+
+            var channelSettings = BotChannelSettings?.SingleOrDefault(i => i.DiscordChannelId == msg.Channel.Id);
+
+            MessageHandler msgHandler = new MessageHandler(msg, channelSettings);
+            await msgHandler.Run();
+
+
+
+
+            //if (!m.Author.IsBot && !commandList.Any(i => i.Name.ToLower() == msg.Content.ToLower().Replace(".", "")) && await TryToParseEmoji(msg))
+            //    return; // emoji was found and we can exit here
 
             // TODO private channels
 
+            var user = (SocketGuildUser)msg.Author;
+
             var dbManager = DatabaseManager.Instance();
 
-            DiscordServer discordServer = null;
-            DiscordChannel discordChannel = null;
-            BotChannelSetting channelSettings = null;
-            if (msg.Channel is SocketGuildChannel guildChannel)
-            {
-                channelSettings = BotChannelSettings?.SingleOrDefault(i => i.DiscordChannelId == guildChannel.Id);
+            // todo do this in the future as scheduler
 
-                discordServer = dbManager.GetDiscordServerById(guildChannel.Guild.Id);
-                if (discordServer == null)
-                {
-                    discordServer = dbManager.CreateDiscordServer(new ETHBot.DataLayer.Data.Discord.DiscordServer()
-                    {
-                        DiscordServerId = guildChannel.Guild.Id,
-                        ServerName = guildChannel.Guild.Name
-                    });
-                }
+            var openUtcDate = new DateTime(2021, 03, 04, 17, 0, 0, DateTimeKind.Utc);
 
-                discordChannel = dbManager.GetDiscordChannel(guildChannel.Id);
-                if (discordChannel == null)
-                {
-                    discordChannel = dbManager.CreateDiscordChannel(new ETHBot.DataLayer.Data.Discord.DiscordChannel()
-                    {
-                        DiscordChannelId = guildChannel.Id,
-                        ChannelName = guildChannel.Name,
-                        DiscordServerId = discordServer.DiscordServerId
-                    });
-                }
-            }
-            else
+            if (!SendedAnWChallenge && (openUtcDate < DateTime.UtcNow) && (openUtcDate.AddMinutes(5) > DateTime.UtcNow)/*to prevent on restart that it sends again*/)
             {
-                // NO DM Tracking
-                return;
+                SendedAnWChallenge = true;
+                NewAnWChallenge();
             }
 
-            if (channelSettings == null && m.Author.Id != Owner)
-            {
-                // No perms for this channel
-                return;
-            }
+            // TODO may cause problems if the bot is hosted in a timezone that doesnt switch to daylight at the same time as the hosting region
+            var timeNow = DateTime.UtcNow.AddHours(DateTime.UtcNow.IsDaylightSavingTime() ? 2 : 1);
 
-            var dbAuthor = dbManager.GetDiscordUserById(msg.Author.Id);
-            // todo check for update
-            var user = (SocketGuildUser)msg.Author;
-            if (dbAuthor == null)
+            if (LastNewDailyMessagePost.Day != timeNow.Day)
             {
-                // todo check non socket user
+                // Reset time 
+                LastNewDailyMessagePost = DateTime.UtcNow.AddHours(DateTime.UtcNow.IsDaylightSavingTime() ? 2 : 1);
 
-                dbAuthor = dbManager.CreateDiscordUser(new ETHBot.DataLayer.Data.Discord.DiscordUser()
-                {
-                    DiscordUserId = user.Id,
-                    DiscriminatorValue = user.DiscriminatorValue,
-                    AvatarUrl = user.GetAvatarUrl(),
-                    IsBot = user.IsBot,
-                    IsWebhook = user.IsWebhook,
-                    Nickname = user.Nickname,
-                    Username = user.Username,
-                    JoinedAt = user.JoinedAt
-                });
+                // This person is the first one to post a new message
 
-                dbAuthor = dbManager.GetDiscordUserById(msg.Author.Id);
-            }
-            else
-            {
+                var firstPoster = dbManager.GetDiscordUserById(msg.Author.Id);
                 dbManager.UpdateDiscordUser(new ETHBot.DataLayer.Data.Discord.DiscordUser()
                 {
                     DiscordUserId = user.Id,
@@ -639,110 +467,56 @@ namespace ETHDINFKBot
                     IsWebhook = user.IsWebhook,
                     Nickname = user.Nickname,
                     Username = user.Username,
-                    JoinedAt = user.JoinedAt
+                    JoinedAt = user.JoinedAt,
+                    FirstDailyPostCount = firstPoster.FirstDailyPostCount + 1
                 });
-            }
 
 
-            if (m.Author.Id != Owner && !((BotPermissionType)channelSettings?.ChannelPermissionFlags).HasFlag(BotPermissionType.Read))
-            {
-                // Cant read
-                return;
-            }
-            /*
-                        if (channelSettings.DiscordChannelId == 747754931905364000 || channelSettings.DiscordChannelId == 747768907992924192 || channelSettings.DiscordChannelId == 774322847812157450 || channelSettings.DiscordChannelId == 774322031688679454
-                            || channelSettings.DiscordChannelId == 773914288913514546)
-                        {
-                            // staff / bot / adminlog / modlog / teachingassistants
-                            // TODO settings better
-                        }*/
+                EmbedBuilder builder = new EmbedBuilder();
 
-            if (channelSettings != null && ((BotPermissionType)channelSettings?.ChannelPermissionFlags).HasFlag(BotPermissionType.Read))
-            {
-                ulong? referenceMessageId = null;
-                if (msg.Reference != null)
+                builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST POSTER TODAY");
+                builder.WithColor(0, 0, 255);
+                builder.WithDescription($"This is the {firstPoster.FirstDailyPostCount + 1}. time you are the first poster of the day");
+
+                builder.WithAuthor(msg.Author);
+                builder.WithCurrentTimestamp();
+
+                List<string> randomGifs = new List<string>()
                 {
-                    referenceMessageId = (ulong?)msg.Reference.MessageId;
+                    "https://tenor.com/view/confetti-hooray-yay-celebration-party-gif-11214428",
+                    "https://tenor.com/view/qoobee-agapi-confetti-surprise-celebrate-gif-11679728",
+                    "https://tenor.com/view/confetti-celebrate-colorful-celebration-gif-15816997",
+                    "https://tenor.com/view/celebrate-awesome-yay-confetti-party-gif-8571772",
+                    "https://tenor.com/view/mao-mao-cat-hurrah-confetti-gif-9948046",
+                    "https://tenor.com/view/stop-it-oh-spongebob-confetti-gif-13772176",
+                    "https://tenor.com/view/win-confetti-gif-5026830",
+                    "https://tenor.com/view/kawaii-confetti-happiness-confetti-gif-11981055",
+                    "https://tenor.com/view/wow-fireworks-3d-gifs-artist-woohoo-gif-18062148"
+                };
 
-                    if (dbManager.GetDiscordMessageById(referenceMessageId) == null)
-                    {
-                        referenceMessageId = null; // original message is not in the db therefore do not link
-                    }
-                }
+                string randomGif = randomGifs[new Random().Next(randomGifs.Count)];
+                await m.Channel.SendMessageAsync(randomGif);
+                await m.Channel.SendMessageAsync("", false, builder.Build());
 
-                dbManager.CreateDiscordMessage(new ETHBot.DataLayer.Data.Discord.DiscordMessage()
-                {
-                    //Channel = discordChannel,
-                    DiscordChannelId = discordChannel.DiscordChannelId,
-                    //DiscordUser = dbAuthor,
-                    DiscordUserId = dbAuthor.DiscordUserId,
-                    MessageId = msg.Id,
-                    Content = msg.Content,
-                    ReplyMessageId = referenceMessageId
-                }, true);
+                // run it only once a day // todo find better scheduler
+
+                DiscordHelper.ReloadRoles(user.Guild);
             }
 
 
-            await LogManager.ProcessEmojisAndPings(m.Tags, m.Author.Id, m.Id, ((SocketGuildUser)m.Author));
 
-            var message = msg.Content;
-            var randVal = msg.Author.DiscriminatorValue % 10;
+    
+           
+            await LogManager.ProcessEmojisAndPings(m.Tags, m.Author.Id, m.Id, (SocketGuildUser)m.Author);
 
-            // TODO Different color for defcom bot
-            switch (randVal)
-            {
-                case 0:
-                    Console.ForegroundColor = ConsoleColor.Cyan;
-                    break;
-                case 1:
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    break;
-                case 2:
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    break;
-                case 3:
-                    Console.ForegroundColor = ConsoleColor.Magenta;
-                    break;
-                case 4:
-                    Console.ForegroundColor = ConsoleColor.White;
-                    break;
-                case 5:
-                    Console.ForegroundColor = ConsoleColor.Gray;
-                    break;
-                case 6:
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    break;
-                case 7:
-                    Console.ForegroundColor = ConsoleColor.DarkYellow;
-                    break;
-                case 8:
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    break;
-                case 9:
-                    Console.ForegroundColor = ConsoleColor.DarkMagenta;
-                    break;
-                default:
-                    break;
-            }
-
-            //Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss")}] {msg.Author} wrote: {msg.Content}");
-            //File.AppendAllText($"Logs\\ETHDINFK_{DateTime.Now:yyyy_MM_dd}_spam.txt", $"[{DateTime.Now:yyyy.MM.dd HH:mm:ss}] " + msg.Author + " wrote: " + msg.Content + Environment.NewLine);
-
-            if (m.Channel.Id == 747758757395562557 || m.Channel.Id == 758293511514226718 || m.Channel.Id == 747758770393972807 ||
-            m.Channel.Id == 774286694794919989)
-            {
-                // TODO Channel ID as config
-                await m.AddReactionAsync(Emote.Parse("<:this:747783377662378004>"));
-                await m.AddReactionAsync(Emote.Parse("<:that:758262252699779073>"));
-            }
-
-            if (m.Author.IsBot)
+            if (m.Author.IsBot) // make exception for place command
                 return;
 
-            if (user.Roles.Any(i => i.Id == 798639212818726952) && false /* disabled for now */)
+            /* disabled for now */
+            /*if (user.Roles.Any(i => i.Id == 798639212818726952) && false )
             {
                 HandleQuestionAnswer(msg);
-            }
+            }*/
 
             int argPos = 0;
 
@@ -755,8 +529,6 @@ namespace ETHDINFKBot
                 return;
 #endif
 
-
-
             if (m.Author.Id != Owner)
             {
                 if (SpamCache.ContainsKey(m.Author.Id))
@@ -766,7 +538,7 @@ namespace ETHDINFKBot
                         SpamCache[m.Author.Id] = SpamCache[m.Author.Id].AddMilliseconds(750);
 
                         // TODO save last no spam message time
-                        if (new Random().Next(0, 20) == 0)
+                        if (new Random().Next(0, 5) == 0)
                         {
                             // Ignore the user than to reply takes 1 message away from the rate limit
                             m.Channel.SendMessageAsync($"Stop spamming <@{m.Author.Id}> your current timeout is {SpamCache[m.Author.Id]}ms");
@@ -783,16 +555,13 @@ namespace ETHDINFKBot
                 }
             }
 
-            Console.ResetColor();
-
-
-
 
             var context = new SocketCommandContext(Client, msg);
             commands.ExecuteAsync(context, argPos, services);
         }
 
 
+        // TODO move to message handler
         private static async void HandleQuestionAnswer(SocketMessage msg)
         {
             int timeOnFreshAnswer = 2;
@@ -891,47 +660,6 @@ namespace ETHDINFKBot
                 await Task.Delay(10000);
                 await replyMsg.DeleteAsync();
             }
-        }
-
-        // source https://stackoverflow.com/questions/1922040/how-to-resize-an-image-c-sharp
-
-        /// <summary>
-        /// Resize the image to the specified width and height.
-        /// </summary>
-        /// <param name="image">The image to resize.</param>
-        /// <param name="width">The width to resize to.</param>
-        /// <param name="height">The height to resize to.</param>
-        /// <returns>The resized image.</returns>
-        public static Bitmap ResizeImage(System.Drawing.Image image, int height)
-        {
-
-            decimal ratio = image.Width / (decimal)image.Height;
-
-            var destRect = new Rectangle(0, 0, (int)(height * ratio), height);
-            var destImage = new Bitmap((int)(height * ratio), height);
-
-            destImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
-
-            using (var graphics = Graphics.FromImage(destImage))
-            {
-                graphics.CompositingMode = CompositingMode.SourceCopy;
-                graphics.CompositingQuality = CompositingQuality.HighQuality;
-                graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                graphics.SmoothingMode = SmoothingMode.HighQuality;
-                graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-
-                using (var wrapMode = new ImageAttributes())
-                {
-                    wrapMode.SetWrapMode(WrapMode.TileFlipXY);
-                    graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, wrapMode);
-                }
-            }
-
-            return destImage;
-        }
-        private async static void Test()
-        {
-
         }
     }
 }

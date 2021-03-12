@@ -31,6 +31,7 @@ using CSharpMath.SkiaSharp;
 using System.Globalization;
 using System.Diagnostics;
 using Microsoft.Data.Sqlite;
+using ETHDINFKBot.Drawing;
 
 namespace ETHDINFKBot
 {
@@ -272,9 +273,6 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         }
 
 
-
-
-
         [Command("fox")]
         public async Task Fox()
         {
@@ -503,6 +501,59 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             Context.Message.DeleteAsync();
         }
 
+
+        [Command("ping")]
+        public async Task GhostPing()
+        {
+            try
+            {
+                var user = Context.Message.Author as SocketGuildUser;
+
+                List<PingHistory> pingHistory = new List<PingHistory>();
+
+                pingHistory.AddRange(DatabaseManager.GetLastPingHistory(20, user.Id, null));
+
+                foreach (var userRole in user.Roles)
+                {
+                    ulong roleId = DiscordHelper.GetRoleIdFromMention(userRole);
+                    pingHistory.AddRange(DatabaseManager.GetLastPingHistory(5, null, roleId));
+                }
+
+                pingHistory = pingHistory.OrderByDescending(i => i.PingHistoryId).ToList();
+
+                EmbedBuilder builder = new EmbedBuilder();
+                builder.WithTitle($"Your last pings");
+
+                pingHistory = pingHistory.Take(20).ToList();
+
+                string messageText = "";
+                foreach (var item in pingHistory)
+                {
+                    var dbMessage = DatabaseManager.GetDiscordMessageById(item.MessageId);
+
+                    var date = SnowflakeUtils.FromSnowflake(item.MessageId ?? 0);
+                    if (item.DiscordRoleId.HasValue)
+                        messageText += $"<@{item.FromDiscordUserId}> pinged <@&{item.DiscordRoleId}> at {date.ToString("MM.dd hh:mm")} in <#{dbMessage.DiscordChannelId}> {Environment.NewLine}"; // todo check for everyone or here
+                    else
+                        messageText += $"<@{item.FromDiscordUserId}> at {date.ToString("MM.dd hh:mm")} in <#{dbMessage.DiscordChannelId}> {Environment.NewLine}";
+                }
+
+                messageText += Environment.NewLine;
+
+                builder.WithDescription(messageText);
+                builder.WithColor(128, 64, 128);
+
+                builder.WithAuthor(user);
+                builder.WithCurrentTimestamp();
+
+                await Context.Message.Channel.SendMessageAsync("", false, builder.Build());
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
         // TODO duplicate finder -> fingerprint
         // TODO better selection
         [Command("emote")]
@@ -552,6 +603,33 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 nextPageInfo = $" or .emote {search} {page + 1} for next page";
             }
 
+
+            Dictionary<string, int> dupes = new Dictionary<string, int>();
+
+            string sep = "-";
+
+            foreach (var emote in emotes)
+            {
+                int offset = 0;
+
+                if (dupes.ContainsKey(emote.EmoteName.ToLower()))
+                {
+                    // we found a dupe
+                    offset = dupes[emote.EmoteName.ToLower()] += 1;
+                }
+                else
+                {
+                    dupes.Add(emote.EmoteName.ToLower(), 1);
+                }
+
+                string offsetString = "";
+                if (offset > 0)
+                {
+                    emote.EmoteName += $"{sep}{offset}";
+                }
+
+            }
+
             emotes = emotes.Skip(page * pageSize).Take(pageSize).ToList();
 
             // TODO make it look nice
@@ -564,41 +642,18 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             text += "[0] ";
 
-            Dictionary<string, int> dupes = new Dictionary<string, int>();
 
-            string sep = ".";
 
             foreach (var emoji in emotes)
             {
-                int offset = 0;
-
-                if (dupes.ContainsKey(emoji.EmoteName.ToLower()))
-                {
-                    // we found a dupe
-                    offset = dupes[emoji.EmoteName.ToLower()] += 1;
-                }
-                else
-                {
-                    dupes.Add(emoji.EmoteName.ToLower(), 1);
-                }
-
-                string offsetString = "";
-                if (offset > 0)
-                {
-                    offsetString = $"{sep}{offset}";
-                }
-
-
-                string emoteString = $".{emoji.EmoteName}{offsetString} ";
+                string emoteString = $".{emoji.EmoteName} ";
 
                 if (emoji.Animated)
-                    emoteString = $"[{emoji.EmoteName}{offsetString}] ";
+                    emoteString = $"[{emoji.EmoteName}] ";
 
                 if (guildEmotes.Any(i => i.Id == emoji.DiscordEmoteId))
-                    emoteString = $"({emoji.EmoteName}{offsetString}) ";
+                    emoteString = $"({emoji.EmoteName}) ";
 
-                // not to save but for the preview
-                emoji.EmoteName += offsetString;
 
                 text += emoteString;
 
@@ -1071,78 +1126,100 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         }
 
 
-        [Command("stats")]
+        [Command("old_stats")]
         public async Task Stats()
         {
-            if (AllowedToRun(BotPermissionType.EnableType2Commands))
-                return;
-            var author = Context.Message.Author;
-            LogManager.ProcessMessage(author, BotMessageType.Other);
-
-
-            Dictionary<string, CommandStatistic> dbStats = new Dictionary<string, CommandStatistic>();
-
-
-
-
-            // TODO clean up this mess
-            /*
-            var topCommands = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalCommands).Take(5);
-            var topNeko = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalNeko).Take(5);
-            var topNekoGif = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalNekoGif).Take(5);
-            var topHolo = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalHolo).Take(5);
-            var topWaifu = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalWaifu).Take(5);
-            var topBaka = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalBaka).Take(5);
-            var topSmug = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalSmug).Take(5);
-            var topFox = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalFox).Take(5);
-
-            var topAvatar = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalAvatar).Take(5);
-            var topNekopAvatar = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalNekoAvatar).Take(5);
-            var topWallpaper = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalWallpaper).Take(5);
-
-            var topFoxgirl = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalFoxgirl).Take(5);
-            var topAnimalears = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalAnimalears).Take(5);
-
-            var topSearch = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalSearch).Take(5);
-            */
-
-            EmbedBuilder builder = new EmbedBuilder();
-
-            builder.WithTitle("BattleRush's Helper Stats");
-            //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
-
-            builder.WithColor(0, 100, 175);
-
-            // Profile image of top person -> to update
-            //builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
-
-            builder.WithCurrentTimestamp();
-
-
-            foreach (BotMessageType type in Enum.GetValues(typeof(BotMessageType)))
+            try
             {
-                builder.AddField(type.ToString(), DatabaseManager.Instance().GetTopStatisticByType(type).DiscordUser); // TODO take top5 and their count
+                if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                    return;
+                var author = Context.Message.Author;
+                LogManager.ProcessMessage(author, BotMessageType.Other);
+
+
+                Dictionary<string, CommandStatistic> dbStats = new Dictionary<string, CommandStatistic>();
+
+
+
+
+                // TODO clean up this mess
+                /*
+                var topCommands = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalCommands).Take(5);
+                var topNeko = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalNeko).Take(5);
+                var topNekoGif = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalNekoGif).Take(5);
+                var topHolo = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalHolo).Take(5);
+                var topWaifu = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalWaifu).Take(5);
+                var topBaka = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalBaka).Take(5);
+                var topSmug = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalSmug).Take(5);
+                var topFox = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalFox).Take(5);
+
+                var topAvatar = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalAvatar).Take(5);
+                var topNekopAvatar = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalNekoAvatar).Take(5);
+                var topWallpaper = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalWallpaper).Take(5);
+
+                var topFoxgirl = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalFoxgirl).Take(5);
+                var topAnimalears = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalAnimalears).Take(5);
+
+                var topSearch = Program.BotStats.DiscordUsers.OrderByDescending(i => i.Stats.TotalSearch).Take(5);
+                */
+
+                EmbedBuilder builder = new EmbedBuilder();
+
+                builder.WithTitle("BattleRush's Helper Stats");
+                //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
+
+                builder.WithColor(0, 100, 175);
+
+                // Profile image of top person -> to update
+                //builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+
+                builder.WithCurrentTimestamp();
+
+
+                foreach (BotMessageType type in Enum.GetValues(typeof(BotMessageType)))
+                {
+                    var userStats = DatabaseManager.Instance().GetTopStatisticByType(type);
+
+                    builder.AddField(type.ToString(), GetStatsRankingString(userStats), true); // TODO take top5 and their count
+                }
+
+                /*
+                builder.AddField("Total Commands", GetRankingString(topCommands.Select(i => i.ServerUserName + ": " + i.Stats.TotalCommands)));
+                builder.AddField("Total Search", GetRankingString(topSearch.Select(i => i.ServerUserName + ": " + i.Stats.TotalSearch)), true);
+                builder.AddField("Total Neko", GetRankingString(topNeko.Select(i => i.ServerUserName + ": " + i.Stats.TotalNeko)), true);
+                builder.AddField("Total Neko gifs", GetRankingString(topNekoGif.Select(i => i.ServerUserName + ": " + i.Stats.TotalNekoGif)), true);
+                builder.AddField("Total Holo", GetRankingString(topHolo.Select(i => i.ServerUserName + ": " + i.Stats.TotalHolo)), true);
+                builder.AddField("Total Waifu", GetRankingString(topWaifu.Select(i => i.ServerUserName + ": " + i.Stats.TotalWaifu)), true);
+                builder.AddField("Total Baka", GetRankingString(topBaka.Select(i => i.ServerUserName + ": " + i.Stats.TotalBaka)), true);
+                builder.AddField("Total Smug", GetRankingString(topSmug.Select(i => i.ServerUserName + ": " + i.Stats.TotalSmug)), true);
+                builder.AddField("Total Fox", GetRankingString(topFox.Select(i => i.ServerUserName + ": " + i.Stats.TotalFox)), true);
+
+                builder.AddField("Total Avatar", GetRankingString(topAvatar.Select(i => i.ServerUserName + ": " + i.Stats.TotalAvatar)), true);
+                builder.AddField("Total Neko Avatar", GetRankingString(topNekopAvatar.Select(i => i.ServerUserName + ": " + i.Stats.TotalNekoAvatar)), true);
+                builder.AddField("Total Wallpaper", GetRankingString(topWallpaper.Select(i => i.ServerUserName + ": " + i.Stats.TotalWallpaper)), true);
+
+                builder.AddField("Total Foxgirl", GetRankingString(topFoxgirl.Select(i => i.ServerUserName + ": " + i.Stats.TotalFoxgirl)), true);
+                builder.AddField("Total Animalears", GetRankingString(topAnimalears.Select(i => i.ServerUserName + ": " + i.Stats.TotalAnimalears)), true);
+                */
+                Context.Channel.SendMessageAsync("", false, builder.Build());
             }
+            catch(Exception ex)
+            {
 
-            /*
-            builder.AddField("Total Commands", GetRankingString(topCommands.Select(i => i.ServerUserName + ": " + i.Stats.TotalCommands)));
-            builder.AddField("Total Search", GetRankingString(topSearch.Select(i => i.ServerUserName + ": " + i.Stats.TotalSearch)), true);
-            builder.AddField("Total Neko", GetRankingString(topNeko.Select(i => i.ServerUserName + ": " + i.Stats.TotalNeko)), true);
-            builder.AddField("Total Neko gifs", GetRankingString(topNekoGif.Select(i => i.ServerUserName + ": " + i.Stats.TotalNekoGif)), true);
-            builder.AddField("Total Holo", GetRankingString(topHolo.Select(i => i.ServerUserName + ": " + i.Stats.TotalHolo)), true);
-            builder.AddField("Total Waifu", GetRankingString(topWaifu.Select(i => i.ServerUserName + ": " + i.Stats.TotalWaifu)), true);
-            builder.AddField("Total Baka", GetRankingString(topBaka.Select(i => i.ServerUserName + ": " + i.Stats.TotalBaka)), true);
-            builder.AddField("Total Smug", GetRankingString(topSmug.Select(i => i.ServerUserName + ": " + i.Stats.TotalSmug)), true);
-            builder.AddField("Total Fox", GetRankingString(topFox.Select(i => i.ServerUserName + ": " + i.Stats.TotalFox)), true);
+            }
+        }
 
-            builder.AddField("Total Avatar", GetRankingString(topAvatar.Select(i => i.ServerUserName + ": " + i.Stats.TotalAvatar)), true);
-            builder.AddField("Total Neko Avatar", GetRankingString(topNekopAvatar.Select(i => i.ServerUserName + ": " + i.Stats.TotalNekoAvatar)), true);
-            builder.AddField("Total Wallpaper", GetRankingString(topWallpaper.Select(i => i.ServerUserName + ": " + i.Stats.TotalWallpaper)), true);
-
-            builder.AddField("Total Foxgirl", GetRankingString(topFoxgirl.Select(i => i.ServerUserName + ": " + i.Stats.TotalFoxgirl)), true);
-            builder.AddField("Total Animalears", GetRankingString(topAnimalears.Select(i => i.ServerUserName + ": " + i.Stats.TotalAnimalears)), true);
-            */
-            Context.Channel.SendMessageAsync("", false, builder.Build());
+        private static string GetStatsRankingString(IEnumerable<CommandStatistic> commandStats)
+        {
+            string rankingString = "";
+            int pos = 1;
+            foreach (var commandStat in commandStats)
+            {
+                string boldText = pos == 1 ? " ** " : "";
+                rankingString += $"{boldText}{pos}) <@!{commandStat.DiscordUserId}> {commandStat.Count}{boldText}{Environment.NewLine}";
+                pos++;
+            }
+            return rankingString.Length > 0 ? rankingString : "n/a";
         }
 
         [Command("say")]
@@ -1717,6 +1794,48 @@ ORDER BY RANDOM() LIMIT 1
 
         // todo dupe code
 
+        [Command("drawtest")]
+        public async Task drawtest()
+        {
+            try
+            {
+                DateTime from = new DateTime(2021, 03, 08);
+                DateTime to = new DateTime(2021, 03, 09);
+
+                using (var stream = StatsHelper.GetMessageGraph(from, to))
+                    await Context.Channel.SendFileAsync(stream, "graph.png");
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.ToString().Substring(0, Math.Min(ex.ToString().Length, 1990)));
+            }
+
+        }
+
+
+        [Command("testpiechart")]
+        public async Task testpiechart()
+        {
+            try
+            {
+                List<string> labels = new List<string>()
+                {
+                    "one", "two", "three", "four", "five", "six", "seven", "eight",
+                }; 
+                
+                List<int> data = new List<int>()
+                {
+                    5,84,63,45,127,12,55,95
+                };
+
+                using (var stream = new PieChart2D(labels, data).DrawChart())
+                    await Context.Channel.SendFileAsync(stream, "graph.png");
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.ToString().Substring(0, Math.Min(ex.ToString().Length, 1990)));
+            }
+        }
 
         [Command("messagegraph")]
         public async Task MessageGraph(string param = null)

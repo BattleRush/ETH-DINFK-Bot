@@ -3,14 +3,16 @@ using System;
 using ETHBot.DataLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ETHBot.DataLayer.Migrations
 {
     [DbContext(typeof(ETHBotDBContext))]
-    partial class ETHBotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20210303225529_AddFirstPosterOfTheDayCount")]
+    partial class AddFirstPosterOfTheDayCount
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -28,37 +30,11 @@ namespace ETHBot.DataLayer.Migrations
                     b.Property<ulong>("DiscordChannelId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset?>("NewestPostTimePreloaded")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTimeOffset?>("OldestPostTimePreloaded")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("ReachedOldestPreload")
-                        .HasColumnType("INTEGER");
-
                     b.HasKey("BotChannelSettingId");
 
                     b.HasIndex("DiscordChannelId");
 
                     b.ToTable("BotChannelSettings");
-                });
-
-            modelBuilder.Entity("ETHBot.DataLayer.Data.BotSetting", b =>
-                {
-                    b.Property<int>("BotSettingId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("LastSpaceXRedditPost")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("SpaceXSubredditCheckCronJob")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("BotSettingId");
-
-                    b.ToTable("BotSetting");
                 });
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.BannedLink", b =>
@@ -258,42 +234,6 @@ namespace ETHBot.DataLayer.Migrations
                     b.ToTable("DiscordMessages");
                 });
 
-            modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.DiscordRole", b =>
-                {
-                    b.Property<ulong>("DiscordRoleId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("ColorHex")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<ulong?>("DiscordServerId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsHoisted")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsManaged")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsMentionable")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Position")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("DiscordRoleId");
-
-                    b.HasIndex("DiscordServerId");
-
-                    b.ToTable("DiscordRoles");
-                });
-
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.DiscordServer", b =>
                 {
                     b.Property<ulong>("DiscordServerId")
@@ -339,37 +279,6 @@ namespace ETHBot.DataLayer.Migrations
                     b.HasKey("DiscordUserId");
 
                     b.ToTable("DiscordUsers");
-                });
-
-            modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.PingHistory", b =>
-                {
-                    b.Property<int>("PingHistoryId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<ulong?>("DiscordRoleId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<ulong?>("DiscordUserId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<ulong>("FromDiscordUserId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<ulong?>("MessageId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("PingHistoryId");
-
-                    b.HasIndex("DiscordRoleId");
-
-                    b.HasIndex("DiscordUserId");
-
-                    b.HasIndex("FromDiscordUserId");
-
-                    b.HasIndex("MessageId");
-
-                    b.ToTable("PingHistory");
                 });
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.PingStatistic", b =>
@@ -710,44 +619,6 @@ namespace ETHBot.DataLayer.Migrations
                     b.Navigation("DiscordUser");
 
                     b.Navigation("ReplyMessage");
-                });
-
-            modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.DiscordRole", b =>
-                {
-                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordServer", "DiscordServer")
-                        .WithMany()
-                        .HasForeignKey("DiscordServerId");
-
-                    b.Navigation("DiscordServer");
-                });
-
-            modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.PingHistory", b =>
-                {
-                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordRole", "DiscordRole")
-                        .WithMany()
-                        .HasForeignKey("DiscordRoleId");
-
-                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordUser", "DiscordUser")
-                        .WithMany()
-                        .HasForeignKey("DiscordUserId");
-
-                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordUser", "FromDiscordUser")
-                        .WithMany()
-                        .HasForeignKey("FromDiscordUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordMessage", "DiscordMessage")
-                        .WithMany()
-                        .HasForeignKey("MessageId");
-
-                    b.Navigation("DiscordMessage");
-
-                    b.Navigation("DiscordRole");
-
-                    b.Navigation("DiscordUser");
-
-                    b.Navigation("FromDiscordUser");
                 });
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.PingStatistic", b =>

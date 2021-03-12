@@ -45,17 +45,24 @@ namespace ETHBot.DataLayer
         public DbSet<BannedLink> BannedLinks { get; set; }
         public DbSet<CommandStatistic> CommandStatistics { get; set; }
         public DbSet<CommandType> CommandTypes { get; set; }
+
         public DbSet<DiscordChannel> DiscordChannels { get; set; }
         public DbSet<DiscordMessage> DiscordMessages { get; set; }
         public DbSet<DiscordServer> DiscordServers { get; set; }
         public DbSet<DiscordUser> DiscordUsers { get; set; }
+        public DbSet<DiscordRole> DiscordRoles { get; set; }
+
         public DbSet<PingStatistic> PingStatistics { get; set; }
+        public DbSet<PingHistory> PingHistory { get; set; }
         public DbSet<SavedMessage> SavedMessages { get; set; }
+
         public DbSet<BotChannelSetting> BotChannelSettings { get; set; }
+
         public DbSet<SubredditInfo> SubredditInfos { get; set; }
         public DbSet<RedditPost> RedditPosts { get; set; }
         public DbSet<RedditImage> RedditImages { get; set; }
 
+        public DbSet<BotSetting> BotSetting { get; set; }
 
         // migrate table
         public DbSet<DiscordEmote> DiscordEmotes { get; set; }

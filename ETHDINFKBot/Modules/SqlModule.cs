@@ -19,6 +19,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
 using Discord;
+using ETHDINFKBot.Drawing;
 
 namespace ETHDINFKBot.Modules
 {
@@ -31,27 +32,26 @@ namespace ETHDINFKBot.Modules
         {
             Stopwatch watch = new Stopwatch();
             watch.Start();
-            var queryResult = await GetQueryResults("SELECT name FROM sqlite_master WHERE type ='table' AND name NOT LIKE 'sqlite%';", true, 50);
-
-
-
-
+            var queryResult = await GetQueryResults(@"
+SELECT 
+    name 
+FROM sqlite_master 
+WHERE type ='table' AND name NOT LIKE 'sqlite%' 
+ORDER BY name DESC;", true, 50);
 
             EmbedBuilder builder = new EmbedBuilder();
 
             builder.WithTitle("BattleRush's Helper Help");
-            //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
             builder.WithDescription(@"SQL Tables 
 To get the diagram type: '.sql table info'");
             builder.WithColor(65, 17, 187);
 
             builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
-            //builder.WithFooter($"If you can read this then ping Mert | TroNiiXx | [13]");
             builder.WithCurrentTimestamp();
-            //builder.WithAuthor(author);
 
             int totalRows = 0;
 
+            string rowCountString = "";
             foreach (var row in queryResult.Data)
             {
                 string tableName = row.ElementAt(0);
@@ -63,20 +63,22 @@ To get the diagram type: '.sql table info'");
                 if (int.TryParse(rowCountStr, out int rowCount))
                 {
                     totalRows += rowCount;
-                    builder.AddField(tableName, $"Rows: {rowCount.ToString("N0")}", true);
+                    rowCountString += $"{tableName} ({rowCount:N0})" + Environment.NewLine;
                 }
 
             }
 
+            builder.AddField("Row count", rowCountString);
+
             var dbSizeInfo = await GetQueryResults($"SELECT page_count *page_size / 1024 / 1024 as size FROM pragma_page_count(), pragma_page_size()", true, 1);
-
             string dbSizeStr = dbSizeInfo.Data.FirstOrDefault().FirstOrDefault(); // todo rework this first first thing
-
 
             if (int.TryParse(dbSizeStr, out int dbSize))
             {
                 watch.Stop();
-                builder.AddField("Total", $"Rows: {totalRows.ToString("N0")} {Environment.NewLine} Query time: {watch.ElapsedMilliseconds.ToString("N0")}ms");
+                builder.AddField("Total", $"Rows: {totalRows.ToString("N0")} {Environment.NewLine}" +
+                    $"DB Size: {dbSize.ToString("N0")} MB {Environment.NewLine}" + 
+                    $"Query time: {watch.ElapsedMilliseconds.ToString("N0")}ms");
             }
 
             Context.Channel.SendMessageAsync("", false, builder.Build());
@@ -217,7 +219,7 @@ To get the diagram type: '.sql table info'");
 
 
 
-
+            // todo maybe move to a seperate class
             private List<DBTableInfo> GetAllDBTableInfos()
             {
                 List<string> tableList = new List<string>()
@@ -367,7 +369,9 @@ To get the diagram type: '.sql table info'");
                 return;
 
             await Context.Channel.SendMessageAsync("<:pepegun:747783377716904008>", false);
-            await Context.Channel.SendMessageAsync($"<@!{Program.Owner}> someone tried to kill me with: {query.Substring(0, Math.Min(query.Length, 1900))}", false);
+            await Context.Channel.SendMessageAsync($"<@!{Program.Owner}> someone tried to kill me with: {query.Substring(0, Math.Min(query.Length, 1000))}", false);
+            if (query.Length > 1000)
+                await Context.Channel.SendMessageAsync($"{query.Substring(1000, query.Length - 1000)}", false);
             //connect.Close();
             //command.Cancel();
 
@@ -380,69 +384,33 @@ To get the diagram type: '.sql table info'");
 
             result += $"**{string.Join("\t", header)}**" + Environment.NewLine;
 
-            foreach (var row in data)
+            if (data.Count > 0)
             {
-                result += $"{string.Join("\t", row)}" + Environment.NewLine;
+                result += "```";
+                foreach (var row in data)
+                {
+                    string rowString = string.Join("\t", row);
+
+                    // escape string
+                    rowString = rowString.Replace("`", "");
+
+                    result += rowString + Environment.NewLine;
+
+                    if (result.Length > 2000)
+                        break;
+                }
+                result = result.Substring(0, Math.Min(result.Length, 1900));
+                result += "```";
             }
-            return result.Substring(0, Math.Min(result.Length, 1900));
+            else
+            {
+                result += "No row(s) returned";
+            }
+
+            return result;
         }
 
-        private async Task<string> GetRowStringFromReader(SqliteDataReader reader, bool getHeader)
-        {
-            string resultString = "";
-
-            if (getHeader)
-            {
-                resultString += "**";
-                for (int i = 0; i < reader.FieldCount; i++)
-                {
-                    resultString += reader.GetName(i)?.ToString() + "\t";
-                }
-                resultString += "**";
-                resultString += Environment.NewLine + "```";
-            }
-
-            // do something with result
-            for (int i = 0; i < reader.FieldCount; i++)
-            {
-                try
-                {
-                    var type = reader.GetFieldType(i)?.FullName;
-                    var fieldString = "null";
-
-                    if (DBNull.Value.Equals(reader.GetValue(i)))
-                    {
-                        resultString += fieldString + "\t";
-                        continue;
-                    }
-
-                    switch (type)
-                    {
-                        case "System.Int64":
-                            fieldString = reader.GetInt64(i).ToString();
-                            break;
-
-                        case "System.String":
-                            fieldString = reader.GetValue(i).ToString()?.Replace("`", "");
-                            break;
-
-                        default:
-                            fieldString = $"{type} is unknown";
-                            break;
-                    }
-
-                    resultString += fieldString + "\t";
-                }
-                catch (Exception ex)
-                {
-                    throw ex;
-                }
-
-            }
-            resultString += Environment.NewLine;
-
-            return resultString;
-        }
+       
 
 
 
@@ -467,262 +435,29 @@ To get the diagram type: '.sql table info'");
 
             try
             {
-                SqlCommand(commandSql);
+                /*
+                CancellationTokenSource cts = new CancellationTokenSource();
+                CancellationToken token = cts.Token;
+
+                object commandResponse = null;
+                Thread thread = new Thread(() => {
+                    //Some work...
+                    commandResponse = SqlCommand(commandSql);
+                });
+                thread.Start();
+                thread.Join(3000);
+                thread.int();
+
+                */
+                var commandResponse = await SqlCommand(commandSql);
+                await Context.Channel.SendMessageAsync(commandResponse, false);
+
             }
             catch (Exception ex)
             {
                 Context.Channel.SendMessageAsync("Is this all you got <:kekw:768912035928735775> " + ex.ToString(), false);
             }
         }
-
-        private int DrawRow(Graphics g, List<string> row, int padding, int currentHeight, Brush brush, Font font, List<int> widths)
-        {
-            float highestSize = 0;
-            int currentWidthStart = padding;
-            for (int i = 0; i < row.Count; i++)
-            {
-                int offsetX = currentWidthStart;
-                int cellWidth = widths.ElementAt(i);
-
-                string text = row.ElementAt(i);
-
-                Rectangle headerDestRect = new Rectangle(offsetX, currentHeight, cellWidth, 500);
-
-                var size = new SizeF();
-                try
-                {
-                    size = g.MeasureString(text, font, new SizeF(cellWidth, 500), null);
-                }
-                catch (Exception ex)
-                {
-                    Context.Channel.SendMessageAsync("debug: " + text);
-                    // todo log the text for future bugfix
-                    text = Encoding.ASCII.GetString(Encoding.Convert(Encoding.UTF8, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback(string.Empty), new DecoderExceptionFallback()), Encoding.UTF8.GetBytes(text)));
-
-                    Context.Channel.SendMessageAsync("debug2: " + text);
-                    // recalculate the size again
-                    size = g.MeasureString(text, font, new SizeF(cellWidth, 500), null);
-                }
-
-                if (size.Height > highestSize)
-                    highestSize = size.Height;
-
-                //g.DrawRectangle(Pens.Red, headerDestRect);
-                using (StringFormat sf = new StringFormat())
-                {
-                    g.DrawString(text, font, brush, headerDestRect, sf);
-                }
-                currentWidthStart += cellWidth;
-            }
-
-            //currentHeight += (int)highestSize + padding / 5;
-
-            currentWidthStart = padding;
-            for (int i = 0; i < row.Count; i++)
-            {
-                int offsetX = currentWidthStart;
-                int cellWidth = widths.ElementAt(i);
-                Rectangle headerDestRect = new Rectangle(offsetX, padding, cellWidth, (int)highestSize + 1);
-                //g.DrawRectangle(Pens.Red, headerDestRect);
-
-                currentWidthStart += cellWidth;
-            }
-
-            return (int)highestSize;
-        }
-
-        private List<int> DefineTableCellWidths(List<string> header, List<List<string>> data, int normalCellWidth, Font font)
-        {
-            Graphics g;
-            var b = new Bitmap(2000, 2000); // TODO insert into constructor
-            g = Graphics.FromImage(b);
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-
-            g.Clear(CommonHelper.DiscordBackgroundColor);
-
-            // a cell can be max 1000 pixels wide
-            var maxSize = new SizeF(1000, 1000);
-
-            int[] maxWidthNeeded = new int[header.Count];
-
-            // the minimum size is the header text size
-            for (int i = 0; i < header.Count; i++)
-            {
-                var size = g.MeasureString(header.ElementAt(i), font, maxSize, null);
-                maxWidthNeeded[i] = (int)size.Width + 10;
-            }
-
-            // find the max column size in the content
-            for (int i = 0; i < maxWidthNeeded.Length; i++)
-            {
-                foreach (var row in data)
-                {
-                    var size = g.MeasureString(row.ElementAt(i), font, maxSize, null);
-
-                    int currentWidth = (int)size.Width + 10;
-
-                    if (maxWidthNeeded[i] < currentWidth)
-                        maxWidthNeeded[i] = currentWidth;
-                }
-            }
-            // find columns that need the flex property
-            List<int> flexColumns = new List<int>();
-            int freeRoom = 0;
-            int flexContent = 0;
-            for (int i = 0; i < maxWidthNeeded.Length; i++)
-            {
-                if (maxWidthNeeded[i] > normalCellWidth)
-                {
-                    flexColumns.Add(i);
-                    flexContent += maxWidthNeeded[i] - normalCellWidth; // only the oversize
-                }
-                else
-                {
-                    freeRoom += normalCellWidth - maxWidthNeeded[i];
-                }
-            }
-
-
-            if (flexColumns.Count == 0)
-            {
-                // no columns need flex so we distribute all even
-                for (int i = 0; i < maxWidthNeeded.Length; i++)
-                    maxWidthNeeded[i] = normalCellWidth;
-            }
-            else
-            {
-                // we need to distribute the free room over the flexContent by %
-                foreach (var column in flexColumns)
-                {
-                    float percentNeeded = (maxWidthNeeded[column] - normalCellWidth) / flexContent;
-                    float gettingFreeSpace = freeRoom * percentNeeded;
-                    maxWidthNeeded[column] = normalCellWidth + (int)gettingFreeSpace;
-                }
-            }
-
-            g.Dispose();
-            b.Dispose();
-
-            return maxWidthNeeded.ToList();
-        }
-
-        private async Task<Stream> GetQueryResultImage(List<string> Header, List<List<string>> Data, int totalRows, long Time)
-        {
-            Stopwatch watchDraw = new Stopwatch();
-            watchDraw.Start();
-
-            Brush brush = new SolidBrush(System.Drawing.Color.White);
-            Pen whitePen = new Pen(brush);
-
-            Font fontMain = new Font("Arial", 18);
-            Font font = new Font("Arial", 16);
-
-
-            // todo make dynamic 
-
-            Bitmap Bitmap;
-            Graphics Graphics;
-            List<DBTableInfo> DBTableInfo;
-            int width = 1920;
-            int height = 8000;
-
-            Bitmap = new Bitmap(width, height); // TODO insert into constructor
-            Graphics = Graphics.FromImage(Bitmap);
-            Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-
-            Graphics.Clear(CommonHelper.DiscordBackgroundColor);
-
-            int padding = 20;
-
-            int xSize = width - padding * 2;
-
-            if (Header.Count == 0)
-            {
-                await Context.Channel.SendMessageAsync("No results", false, null, null, null, new Discord.MessageReference(Context.Message.Id));
-                return null;
-            }
-
-            int cellWidth = xSize / Header.Count;
-
-            int currentHeight = padding;
-
-            List<int> widths = DefineTableCellWidths(Header, Data, cellWidth, font);
-
-            string cellWithInfo = "normal" + cellWidth + " " + string.Join(", ", widths);
-
-            //await Context.Channel.SendMessageAsync(cellWithInfo, false, null, null, null, new Discord.MessageReference(Context.Message.Id));
-
-
-            currentHeight += DrawRow(Graphics, Header, padding, currentHeight, brush, font, widths);
-
-            int failedDrawLineCount = 0;
-            foreach (var row in Data)
-            {
-                try
-                {
-                    Graphics.DrawLine(whitePen, padding, currentHeight, Math.Max(width - padding, 0), currentHeight);
-                }
-                catch (Exception ex)
-                {
-                    failedDrawLineCount++;
-                }
-                try
-                {
-                    currentHeight += DrawRow(Graphics, row, padding, currentHeight, brush, font, widths);
-                }
-                catch(Exception ex)
-                {
-                    Context.Channel.SendMessageAsync(ex.ToString());
-                    break;
-                }
-            }
-
-            try
-            {
-                Graphics.DrawLine(whitePen, padding, currentHeight, Math.Max(width - padding, 0), currentHeight);
-            }
-            catch (Exception ex)
-            {
-                failedDrawLineCount++;
-            }
-
-            if(failedDrawLineCount > 0)
-            {
-                Context.Channel.SendMessageAsync($"Failed to draw {failedDrawLineCount} lines, widths: {string.Join(",", widths)}");
-            }
-
-            watchDraw.Stop();
-
-            Graphics.DrawString($"Total row(s) affected: {totalRows.ToString("N0")} QueryTime: {Time.ToString("N0")}ms DrawTime: {watchDraw.ElapsedMilliseconds.ToString("N0")}ms", fontMain, new SolidBrush(System.Drawing.Color.Yellow), new Point(padding, currentHeight + padding));
-
-
-
-            List<int> rowHeight = new List<int>();
-
-            Rectangle DestinationRectangle = new Rectangle(10, 10, cellWidth, 500);
-
-
-            //var size = Graphics.MeasureCharacterRanges("", drawFont2, DestinationRectangle, null);
-
-            //Graphics.DrawString($"{(int)((maxValue / yNum) * i)}", drawFont2, b, new Point(40, 10 + ySize - (ySize / yNum) * i));
-
-
-            Bitmap = cropImage(Bitmap, new Rectangle(0, 0, 1920, currentHeight + padding * 3));
-
-
-
-            var stream = CommonHelper.GetStream(Bitmap);
-            Bitmap.Dispose();
-            Graphics.Dispose();
-            return stream;
-        }
-
-
-        private static Bitmap cropImage(Bitmap bmpImage, Rectangle cropArea)
-        {
-            return bmpImage.Clone(cropArea, bmpImage.PixelFormat);
-        }
-
 
         [Command("queryd")] // better name xD
         public async Task SqlD([Remainder] string commandSql)
@@ -733,14 +468,16 @@ To get the diagram type: '.sql table info'");
             if (ForbiddenQuery(commandSql, Context.Message.Author.Id))
                 return;
 
-
             try
             {
                 var queryResult = await GetQueryResults(commandSql, true, 50);
+                string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
 
-                var stream = await GetQueryResultImage(queryResult.Header, queryResult.Data, queryResult.TotalResults, queryResult.Time);
+                var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString);
+
+                var stream = await drawTable.GetImage();
                 if (stream == null)
-                    return;
+                    return;// todo some message
 
                 await Context.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null, new Discord.MessageReference(Context.Message.Id));
                 stream.Dispose();
@@ -790,7 +527,7 @@ To get the diagram type: '.sql table info'");
                                 {
                                     string fieldName = reader.GetName(i)?.ToString();
                                     Header.Add(fieldName);
-                                    currentContentLength = fieldName.Length;
+                                    currentContentLength += fieldName.Length;
                                 }
                             }
 
@@ -807,7 +544,7 @@ To get the diagram type: '.sql table info'");
 
                                         if (DBNull.Value.Equals(reader.GetValue(i)))
                                         {
-                                            currentContentLength = fieldString.Length;
+                                            currentContentLength += fieldString.Length;
                                             row.Add(fieldString);
                                             continue;
                                         }
@@ -827,7 +564,7 @@ To get the diagram type: '.sql table info'");
                                                 break;
                                         }
 
-                                        currentContentLength = fieldString.Length;
+                                        currentContentLength += fieldString.Length;
                                         row.Add(fieldString);
                                     }
                                     catch (Exception ex)
@@ -866,70 +603,14 @@ To get the diagram type: '.sql table info'");
             return (Header, Data, TotalResults, Time);
         }
 
-        private async void SqlCommand(string commandSql)
+        private async Task<string> SqlCommand(string commandSql)
         {
             var author = Context.Message.Author;
 
-
-            CancellationTokenSource cts = new CancellationTokenSource();
-            WorkaroundForTimeoutNotWorking(cts, commandSql, author.Id == ETHDINFKBot.Program.Owner);
-
-            var queryResult = await GetQueryResults(commandSql, false, 2000);
+            var queryResult = await GetQueryResults(commandSql.ToString(), false, 2000);
             var resultString = GetRowStringFromResult(queryResult.Header, queryResult.Data);
 
-            cts.Cancel();
-
-
-
-            try
-            {
-             /*   bool header = false;
-                string resultString = "";
-                int rowCount = 0;
-
-                int maxRows = 25;
-
-                Stopwatch watch = new Stopwatch();
-                watch.Start();
-
-                using (var connection = new SqliteConnection(Program.ConnectionString))
-                {
-                    using (var command = new SqliteCommand(commandSql, connection))
-                    {
-                        command.CommandTimeout = 4;
-                        connection.Open();
-
-                        WorkaroundForTimeoutNotWorking(cts, commandSql, author.Id == ETHDINFKBot.Program.Owner);
-
-                        var reader = await command.ExecuteReaderAsync();
-                        while (reader.Read())
-                        {
-                            if (rowCount < maxRows || resultString.Length < 2000)
-                            {
-                                string line = await GetRowStringFromReader(reader, !header);
-                                resultString += line;
-                                header = true;
-                            }
-                            rowCount++;
-                        }
-                    }
-                }
-                cts.Cancel();
-                watch.Stop();
-                if (resultString.Length > 1950)
-                    resultString = resultString.Substring(0, 1950);
-
-                if (rowCount != 0)
-                    resultString += "```";*/
-
-                await Context.Channel.SendMessageAsync(resultString + Environment.NewLine + $"{queryResult.TotalResults.ToString("N0")} Row(s) affected Time: {queryResult.Time.ToString("N0")}ms", false);
-            }
-            catch (Exception ex)
-            {
-                cts.Cancel();
-                await Context.Channel.SendMessageAsync("Error: " + ex.Message, false);
-            }
+            return resultString + Environment.NewLine + $"{queryResult.TotalResults.ToString("N0")} Row(s) affected Time: {queryResult.Time.ToString("N0")}ms";
         }
     }
-
 }

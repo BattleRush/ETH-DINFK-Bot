@@ -125,6 +125,12 @@ namespace ETHDINFKBot
                         changes = true;
                     }
 
+                    // only update if new value is higher
+                    if (dbUser.FirstDailyPostCount < user.FirstDailyPostCount)
+                    {
+                        dbUser.FirstDailyPostCount = user.FirstDailyPostCount;
+                        changes = true;
+                    }
 
                     if (changes)
                         context.SaveChanges();
@@ -169,6 +175,80 @@ namespace ETHDINFKBot
             }
         }
 
+        public List<DiscordEmote> GetEmotesByDirectName(string name)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    // todo improve and better search
+                    return context.DiscordEmotes.AsQueryable().Where(i => i.EmoteName.ToLower() == name.ToLower()).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+
+        public void UpdateBotSettings(BotSetting setting)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var dbSetting = context.BotSetting.FirstOrDefault();
+
+                    if (dbSetting == null)
+                        return;
+
+                    dbSetting.SpaceXSubredditCheckCronJob = setting.SpaceXSubredditCheckCronJob;
+                    dbSetting.LastSpaceXRedditPost = setting.LastSpaceXRedditPost;
+
+                    context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return;
+            }
+        }
+
+        public BotSetting GetBotSettings()
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    // todo improve and better search
+                    var settings = context.BotSetting.FirstOrDefault();
+
+                    // temp workaround
+                    if (settings == null)
+                    {
+                        // create empty record
+                        context.BotSetting.Add(new BotSetting()
+                        {
+                            LastSpaceXRedditPost = null,
+                            SpaceXSubredditCheckCronJob = "*/5 * * * *"
+                        });
+                        context.SaveChanges();
+
+                        settings = context.BotSetting.FirstOrDefault();
+                    }
+
+                    return settings;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
 
         // todo maybe a helpter method in case the local image is missing
         /*public EmojiStatistic SaveEmoteImage(ulong id, byte[] data)
@@ -832,7 +912,141 @@ namespace ETHDINFKBot
             }
         }
 
-        public void UpdateChannelSetting(ulong channelId, int permission, bool onlyIfNew = false)
+        public DiscordRole GetDiscordRole(ulong roleId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordRoles.SingleOrDefault(i => i.DiscordRoleId == roleId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+
+        public DiscordRole GetDiscordRole(DiscordRole role)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    // TODO Update role
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public DiscordRole CreateRole(DiscordRole role)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var dbRole = GetDiscordRole(role.DiscordRoleId);
+                    if (dbRole != null)
+                        return dbRole;
+
+                    context.DiscordRoles.Add(role);
+                    context.SaveChanges();
+
+                    // get the created role -> could prob just return the role object
+                    dbRole = GetDiscordRole(role.DiscordRoleId);
+
+                    return dbRole;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public void CreatePingHistory(PingHistory history)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    context.PingHistory.Add(history);
+                    context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+        }
+
+        public List<PingHistory> GetLastPingHistory(int amount, ulong? userId, ulong? roleId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.PingHistory.AsQueryable().Where(i => i.DiscordRoleId == roleId && i.DiscordUserId == userId).OrderByDescending(i => i.PingHistoryId).Take(amount).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+        public List<DiscordEmoteHistory> GetEmoteHistoryUsage(DateTime from, DateTime to)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordEmoteHistory.AsQueryable().Where(i => i.DateTimePosted > from && i.DateTimePosted < to).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public Dictionary<DateTimeOffset, int> GetMessageCountGrouped(DateTime from, DateTime to, int groupByMinutes)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var messageTimes = context.DiscordMessages.AsQueryable().Select(i => SnowflakeUtils.FromSnowflake(i.MessageId)).ToList().Where(i => from < i && i < to).ToList();
+
+
+                    var groups = messageTimes.GroupBy(x =>
+                    {
+                        var stamp = x;
+                        stamp = stamp.AddMinutes(-(stamp.Minute % groupByMinutes));
+                        stamp = stamp.AddMilliseconds(-stamp.Millisecond - 1000 * stamp.Second);
+                        return stamp;
+                    }).Select(g => new { TimeStamp = g.Key, Value = g.Count() });
+
+                    return groups.ToDictionary(g => g.TimeStamp, g => g.Value);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public void UpdateChannelSetting(ulong channelId, int permission, ulong oldestMessageId = 0, ulong newestMessageId = 0, bool? reachedEnd = null, bool onlyIfNew = false)
         {
             try
             {
@@ -849,8 +1063,17 @@ namespace ETHDINFKBot
                     }
                     else if (!onlyIfNew)
                     {
-                        // TODO reuse object from above
-                        context.BotChannelSettings.Single(i => i.DiscordChannelId == channelId).ChannelPermissionFlags = permission;
+                        var settings = context.BotChannelSettings.Single(i => i.DiscordChannelId == channelId);
+
+                        if (permission > -1)
+                            settings.ChannelPermissionFlags = permission;
+
+                        if (oldestMessageId > 0)
+                            settings.OldestPostTimePreloaded = SnowflakeUtils.FromSnowflake(oldestMessageId);
+                        if (newestMessageId > 0)
+                            settings.NewestPostTimePreloaded = SnowflakeUtils.FromSnowflake(newestMessageId);
+                        if (reachedEnd.HasValue)
+                            settings.ReachedOldestPreload = reachedEnd.Value;
                     }
                     context.SaveChanges();
 
@@ -930,8 +1153,9 @@ namespace ETHDINFKBot
             return filePath;
         }
 
+
         // TODO change for new emote table
-        public async void ProcessDiscordEmote(DiscordEmote emote, ulong? discordMessageId, int count, bool isReaction, SocketGuildUser user)
+        public async void ProcessDiscordEmote(DiscordEmote emote, ulong? discordMessageId, int count, bool isReaction, SocketGuildUser user, bool isPreload)
         {
             try
             {
@@ -976,13 +1200,21 @@ namespace ETHDINFKBot
 
                     var message = GetDiscordMessageById(discordMessageId);
 
+
+
                     if (message == null)
                         discordMessageId = null;
 
+                    DateTime posted = DateTime.Now;
+
+                    if (isPreload && discordMessageId.HasValue)
+                    {
+                        posted = SnowflakeUtils.FromSnowflake(discordMessageId.Value).UtcDateTime;
+                    }
 
                     context.DiscordEmoteHistory.Add(new DiscordEmoteHistory()
                     {
-                        DateTimePosted = DateTime.Now,
+                        DateTimePosted = posted,
                         Count = count,
                         IsReaction = isReaction,
 
@@ -1033,7 +1265,8 @@ namespace ETHDINFKBot
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
-                var dbCommand = GetCommandStatisticById(type, userId);
+                //var dbCommand = GetCommandStatisticById(type, userId);
+                var dbCommand = context.CommandStatistics.SingleOrDefault(i => i.DiscordUserId == userId && i.CommandTypeId == (int)type);
                 if (dbCommand == null)
                 {
                     var dbUser = GetDiscordUserById(userId);// maybe not even needed
@@ -1056,11 +1289,13 @@ namespace ETHDINFKBot
             }
         }
 
-        public CommandStatistic GetTopStatisticByType(BotMessageType type)
+
+        // TODO LOGS
+        public IEnumerable<CommandStatistic> GetTopStatisticByType(BotMessageType type, int amount = 10)
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
-                return context.CommandStatistics.AsQueryable().Where(i => i.Type.CommandTypeId == (int)type).OrderByDescending(i => i.Count).First(); // TODO check it works
+                return context.CommandStatistics.AsQueryable().Where(i => i.Type.CommandTypeId == (int)type).OrderByDescending(i => i.Count).Take(amount).ToList(); // TODO check it works
             }
         }
 

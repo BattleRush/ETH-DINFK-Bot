@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ETHDINFKBot.Drawing;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -19,7 +20,7 @@ namespace ETHDINFKBot.Helpers
             Graphics = Graphics.FromImage(Bitmap);
             Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             DBTableInfo = dbInfos;
-            Graphics.Clear(CommonHelper.DiscordBackgroundColor);
+            Graphics.Clear(DrawingHelper.DiscordBackgroundColor);
         }
 
         public void Dispose()

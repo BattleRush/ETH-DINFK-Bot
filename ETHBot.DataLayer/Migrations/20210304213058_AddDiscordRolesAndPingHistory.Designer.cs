@@ -3,14 +3,16 @@ using System;
 using ETHBot.DataLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ETHBot.DataLayer.Migrations
 {
     [DbContext(typeof(ETHBotDBContext))]
-    partial class ETHBotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20210304213058_AddDiscordRolesAndPingHistory")]
+    partial class AddDiscordRolesAndPingHistory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -28,37 +30,11 @@ namespace ETHBot.DataLayer.Migrations
                     b.Property<ulong>("DiscordChannelId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset?>("NewestPostTimePreloaded")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTimeOffset?>("OldestPostTimePreloaded")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("ReachedOldestPreload")
-                        .HasColumnType("INTEGER");
-
                     b.HasKey("BotChannelSettingId");
 
                     b.HasIndex("DiscordChannelId");
 
                     b.ToTable("BotChannelSettings");
-                });
-
-            modelBuilder.Entity("ETHBot.DataLayer.Data.BotSetting", b =>
-                {
-                    b.Property<int>("BotSettingId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("LastSpaceXRedditPost")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("SpaceXSubredditCheckCronJob")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("BotSettingId");
-
-                    b.ToTable("BotSetting");
                 });
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.BannedLink", b =>
@@ -356,7 +332,7 @@ namespace ETHBot.DataLayer.Migrations
                     b.Property<ulong>("FromDiscordUserId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<ulong?>("MessageId")
+                    b.Property<ulong>("MessageId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("PingHistoryId");
@@ -739,7 +715,9 @@ namespace ETHBot.DataLayer.Migrations
 
                     b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordMessage", "DiscordMessage")
                         .WithMany()
-                        .HasForeignKey("MessageId");
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("DiscordMessage");
 
