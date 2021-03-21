@@ -24,6 +24,5 @@ namespace ETHBot.DataLayer.Data
         public DateTimeOffset? OldestPostTimePreloaded { get; set; }
         public DateTimeOffset? NewestPostTimePreloaded { get; set; }
         public bool ReachedOldestPreload { get; set; }
-
     }
 }

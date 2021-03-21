@@ -68,8 +68,15 @@ namespace RedditScrapper
         }
 
         public List<Post> GetBeforePosts()
-        {
-            return Subreddit.Posts.GetNew("", NewestPost);
+        {   
+            try
+            {
+                return Subreddit.Posts.GetNew("", NewestPost);
+            }
+            catch(Exception ex)
+            {
+                return null;
+            }
         }
         public List<Post> GetBetweenPosts()
         {

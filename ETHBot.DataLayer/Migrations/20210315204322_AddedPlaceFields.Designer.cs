@@ -3,14 +3,16 @@ using System;
 using ETHBot.DataLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ETHBot.DataLayer.Migrations
 {
     [DbContext(typeof(ETHBotDBContext))]
-    partial class ETHBotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20210315204322_AddedPlaceFields")]
+    partial class AddedPlaceFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -52,9 +54,6 @@ namespace ETHBot.DataLayer.Migrations
 
                     b.Property<string>("LastSpaceXRedditPost")
                         .HasColumnType("TEXT");
-
-                    b.Property<bool>("PlaceLocked")
-                        .HasColumnType("INTEGER");
 
                     b.Property<string>("SpaceXSubredditCheckCronJob")
                         .HasColumnType("TEXT");

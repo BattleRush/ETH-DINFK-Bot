@@ -36,21 +36,27 @@ namespace ETHDINFKBot.Handlers
             // TODO DM reactions handling
 
             Message = message;
-            SocketReaction = socketReaction;
-            SocketGuildMessageUser = message.Author as SocketGuildUser;
-            SocketGuildReactionUser = socketReaction.User.Value as SocketGuildUser; // TODO make sure user is never null
-            SocketGuildChannel = message.Channel as SocketGuildChannel;
-            SocketTextChannel = SocketGuildChannel as SocketTextChannel;
-            SocketGuild = SocketGuildChannel.Guild;
+            if (Message != null)
+            {
+                SocketReaction = socketReaction;
+                SocketGuildMessageUser = message.Author as SocketGuildUser;
+                SocketGuildReactionUser = socketReaction.User.Value as SocketGuildUser; // TODO make sure user is never null
+                SocketGuildChannel = message.Channel as SocketGuildChannel;
+                SocketTextChannel = SocketGuildChannel as SocketTextChannel;
+                SocketGuild = SocketGuildChannel.Guild;
 
-            ChannelSettings = channelSettings;
-            DatabaseManager = DatabaseManager.Instance();
+                ChannelSettings = channelSettings;
+                DatabaseManager = DatabaseManager.Instance();
 
-            AddedReaction = addedReaction;
+                AddedReaction = addedReaction;
+            }
         }
 
         public async void Run()
         {
+            if (Message == null)
+                return; // ignore?
+
             EnsureDBMessageCreated();
 
             if (SocketReaction.Emote is Emote ReactionEmote)

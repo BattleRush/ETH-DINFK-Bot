@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -40,7 +41,9 @@ namespace ETHDINFKBot.CronJobs.Jobs
             _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
             Console.WriteLine("Run");
 
-            BackupDB("", ""); // todo get these 2 from settings and create 2. connection string dynamic
+            var dbBackupPath = Path.Combine(Program.BasePath, "Database", "Backup", $"ETHBot_Job_{DateTime.Now.ToString("yyyyMMdd_HHmmss")}.db");
+
+            BackupDB(Program.ConnectionString, $"Data Source={dbBackupPath}"); // todo get these 2 from settings and create 2. connection string dynamic
 
             // TODO check if we can delete any older backups
 

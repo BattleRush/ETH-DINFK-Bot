@@ -6,6 +6,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using ETHBot.DataLayer.Data;
 using ETHBot.DataLayer.Data.Study;
+using ETHBot.DataLayer.Data.Fun;
+using System.Linq;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ETHBot.DataLayer
 {
@@ -20,7 +24,7 @@ namespace ETHBot.DataLayer
 
         public ETHBotDBContext()
         {
-            //dotnet ef migrations add AddRantTables --project ETHBot.DataLayer/  --startup-project ETHDINFKBot/
+            //dotnet ef migrations add AddRantTables --project ETHBot.DataLayer/  --startup-project ETHDINFKBot/ -v
 
             if (!_created)
             {
@@ -72,6 +76,14 @@ namespace ETHBot.DataLayer
 
         public DbSet<RantType> RantTypes { get; set; }
         public DbSet<RantMessage> RantMessages { get; set; }
+
+
+        // ETH Place
+
+        public DbSet<PlaceBoardPixel> PlaceBoardPixels { get; set; }
+
+        public DbSet<PlaceBoardHistory> PlaceBoardHistory { get; set; }
+
         /*
 
         // todo reconsider how to import them
@@ -82,7 +94,27 @@ namespace ETHBot.DataLayer
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            https://github.com/dotnet/efcore/issues/11003#issuecomment-492333796
+            // get all composite keys (entity decorated by more than 1 [Key] attribute
+            foreach (var entity in modelBuilder.Model.GetEntityTypes()
+                .Where(t =>
+                    t.ClrType.GetProperties()
+                        .Count(p => p.CustomAttributes.Any(a => a.AttributeType == typeof(KeyAttribute))) > 1))
+            {
+                // get the keys in the appropriate order
+                var orderedKeys = entity.ClrType
+                    .GetProperties()
+                    .Where(p => p.CustomAttributes.Any(a => a.AttributeType == typeof(KeyAttribute)))
+                    .OrderBy(p =>
+                        p.CustomAttributes.Single(x => x.AttributeType == typeof(ColumnAttribute))?
+                            .NamedArguments?.Single(y => y.MemberName == nameof(ColumnAttribute.Order))
+                            .TypedValue.Value ?? 0)
+                    .Select(x => x.Name)
+                    .ToArray();
 
+                // apply the keys to the model builder
+                modelBuilder.Entity(entity.ClrType).HasKey(orderedKeys);
+            }
         }
     }
 }

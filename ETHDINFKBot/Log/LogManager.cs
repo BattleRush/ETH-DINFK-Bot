@@ -112,7 +112,8 @@ namespace ETHDINFKBot.Log
                 if (Program.TotalEmotes != emoteCount)
                 {
                     Program.TotalEmotes = emoteCount;
-                    await Program.Client.SetGameAsync($"{Program.TotalEmotes} emotes", null, ActivityType.Watching);
+                    // place pixels is now tracked
+                    //await Program.Client.SetGameAsync($"{Program.TotalEmotes} emotes", null, ActivityType.Watching);
                 }
 
                 /*
@@ -157,13 +158,17 @@ namespace ETHDINFKBot.Log
                 foreach (var pingInfo in listOfUsers)
                 {
                     DatabaseManager.AddPingStatistic(pingInfo.Key, pingInfo.Value, fromUser);
-                    DatabaseManager.CreatePingHistory(new PingHistory()
+                    var dbMessage = DatabaseManager.GetDiscordMessageById(discordMessageId);
+                    if (dbMessage != null)
                     {
-                        MessageId = discordMessageId,
-                        DiscordRoleId = null,
-                        DiscordUserId = pingInfo.Key,
-                        FromDiscordUserId = fromUser.Id
-                    });
+                        DatabaseManager.CreatePingHistory(new PingHistory()
+                        {
+                            MessageId = discordMessageId,
+                            DiscordRoleId = null,
+                            DiscordUserId = pingInfo.Key,
+                            FromDiscordUserId = fromUser.Id
+                        });
+                    }
                 }
 
                 // most of the older roles probably dont exist -> TODO check if they dont exist and then ignore
@@ -178,51 +183,55 @@ namespace ETHDINFKBot.Log
                             DiscordHelper.ReloadRoles(fromUser.Guild);
                         }
 
-                        DatabaseManager.CreatePingHistory(new PingHistory()
+                        var dbMessage = DatabaseManager.GetDiscordMessageById(discordMessageId);
+                        if (dbMessage != null)
                         {
-                            MessageId = discordMessageId,
-                            DiscordRoleId = role.Key,
-                            DiscordUserId = null,
-                            FromDiscordUserId = fromUser.Id
-                        });
-                    }
-                }
-
-                    /*
-
-                    if (!Program.GlobalStats.PingInformation.Any(i => i.DiscordUser.DiscordId == guildUser?.Id))
-                    {
-                        Program.GlobalStats.PingInformation.Add(new PingInformation()
-                        {
-                            DiscordUser = new Stats.DiscordUser()
+                            DatabaseManager.CreatePingHistory(new PingHistory()
                             {
-                                DiscordId = guildUser.Id,
-                                DiscordDiscriminator = guildUser.DiscriminatorValue,
-                                DiscordName = guildUser.Username,
-                                ServerUserName = guildUser.Nickname ?? guildUser.Username // User Nickname -> Update
-                            },
-                            PingCount = 1
-                        });
-                    }
-                    else
-                    {
-                        Program.GlobalStats.PingInformation.Single(i => i.DiscordUser.DiscordId == tag.Value.Id).PingCount++;
-                    }
-
-                    if (!listOfUsers.Contains(tag.Value.Id))
-                    {
-                        Program.GlobalStats.PingInformation.Single(i => i.DiscordUser.DiscordId == tag.Value.Id).PingCountOnce++;
-                        listOfUsers.Add(tag.Value.Id);
+                                MessageId = discordMessageId,
+                                DiscordRoleId = role.Key,
+                                DiscordUserId = null,
+                                FromDiscordUserId = fromUser.Id
+                            });
+                        }
                     }
                 }
 
-                if (LastGlobalUpdate < DateTime.Now.AddSeconds(-30))
+                /*
+
+                if (!Program.GlobalStats.PingInformation.Any(i => i.DiscordUser.DiscordId == guildUser?.Id))
                 {
-                    LastGlobalUpdate = DateTime.Now;
-                    Program.SaveGlobalStats();
-                }*/
-
+                    Program.GlobalStats.PingInformation.Add(new PingInformation()
+                    {
+                        DiscordUser = new Stats.DiscordUser()
+                        {
+                            DiscordId = guildUser.Id,
+                            DiscordDiscriminator = guildUser.DiscriminatorValue,
+                            DiscordName = guildUser.Username,
+                            ServerUserName = guildUser.Nickname ?? guildUser.Username // User Nickname -> Update
+                        },
+                        PingCount = 1
+                    });
                 }
+                else
+                {
+                    Program.GlobalStats.PingInformation.Single(i => i.DiscordUser.DiscordId == tag.Value.Id).PingCount++;
+                }
+
+                if (!listOfUsers.Contains(tag.Value.Id))
+                {
+                    Program.GlobalStats.PingInformation.Single(i => i.DiscordUser.DiscordId == tag.Value.Id).PingCountOnce++;
+                    listOfUsers.Add(tag.Value.Id);
+                }
+            }
+
+            if (LastGlobalUpdate < DateTime.Now.AddSeconds(-30))
+            {
+                LastGlobalUpdate = DateTime.Now;
+                Program.SaveGlobalStats();
+            }*/
+
+            }
             catch (Exception ex)
             {
                 Console.WriteLine("ERROR STATS: " + ex.ToString()); ;

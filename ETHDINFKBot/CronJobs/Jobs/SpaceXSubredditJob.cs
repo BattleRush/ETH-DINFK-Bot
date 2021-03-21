@@ -17,7 +17,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
         private readonly string Name = "SpaceXSubredditJob";
 
         private readonly ulong GuildId = 747752542741725244;
-        private readonly ulong SpamChannelId = 768600365602963496; // todo config?
+        private readonly ulong ChannelId = 817846795367481344; // todo config?
 
         public SpaceXSubredditJob(IScheduleConfig<SpaceXSubredditJob> config, ILogger<SpaceXSubredditJob> logger)
             : base(config.CronExpression, config.TimeZoneInfo)
@@ -35,7 +35,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
         {
             _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
             var guild = Program.Client.GetGuild(GuildId);
-            var textChannel = guild.GetTextChannel(SpamChannelId);
+            var textChannel = guild.GetTextChannel(ChannelId);
 
             var dbManager = DatabaseManager.Instance();
             var settings = dbManager.GetBotSettings(); // could prob use the object from program cs
@@ -59,6 +59,9 @@ namespace ETHDINFKBot.CronJobs.Jobs
             // TODO maybe use MonitorNew ?
 
             var posts = subManager.GetBeforePosts();
+
+            if (posts == null)
+                return Task.CompletedTask;
 
             if (posts.Count > 0)
             {

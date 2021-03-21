@@ -45,6 +45,7 @@ namespace ETHDINFKBot.Modules
             builder.AddField("admin reddit help", "Help for reddit command");
             builder.AddField("admin rant help", "Help for rant command");
             builder.AddField("admin kill", "Do I really need to explain this one");
+            builder.AddField("admin blockemote <id> <block>", "Block an emote from being selectable");
 
             Context.Channel.SendMessageAsync("", false, builder.Build());
         }
@@ -60,6 +61,28 @@ namespace ETHDINFKBot.Modules
             }
             Context.Channel.SendMessageAsync("I'll be back!", false);
             Process.GetCurrentProcess().Kill();
+        }
+
+        [Command("blockemote")]
+        public async Task BlockEmote(ulong emoteId, bool blockStatus)
+        {
+            var author = Context.Message.Author;
+            if (author.Id != ETHDINFKBot.Program.Owner)
+            {
+                Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
+            bool success = DatabaseManager.Instance().SetEmoteBlockStatus(emoteId, blockStatus);
+
+            if (success)
+            {
+                Context.Channel.SendMessageAsync($"Successfully set block status of emote {emoteId} to: {blockStatus}", false);
+            }
+            else
+            {
+                Context.Channel.SendMessageAsync($"Failed to set block status of emote {emoteId}", false);
+            }
         }
 
 
@@ -377,7 +400,7 @@ namespace ETHDINFKBot.Modules
                                     permissionFlagNames.Add($"{flag} ({(int)flag})");
                             }
 
-                            channelInfoRow.Add(string.Join(", ", permissionFlagNames));
+                            channelInfoRow.Add(string.Join(", "+ Environment.NewLine, permissionFlagNames));
                             channelInfoRow.Add(channelSetting.OldestPostTimePreloaded?.ToString());
                             channelInfoRow.Add(channelSetting.NewestPostTimePreloaded?.ToString());
                             channelInfoRow.Add(channelSetting.ReachedOldestPreload.ToString());

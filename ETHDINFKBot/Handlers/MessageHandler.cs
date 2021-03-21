@@ -39,6 +39,8 @@ namespace ETHDINFKBot.Handlers
             SocketGuildUser = socketMessage.Author as SocketGuildUser;
             SocketTextChannel = socketMessage.Channel as SocketTextChannel;
             SocketGuildChannel = socketMessage.Channel as SocketGuildChannel;
+            if (SocketGuildChannel == null)
+                return;
             SocketGuild = SocketGuildChannel.Guild;
 
             ChannelSettings = channelSettings;
@@ -49,7 +51,7 @@ namespace ETHDINFKBot.Handlers
         // TODO do it in pararel 
         public async Task<bool> Run()
         {
-            if (SocketMessage.Author.IsWebhook)
+            if (SocketMessage.Author.IsWebhook || SocketGuildChannel == null)
                 return false; // slash commands are webhooks ???
 
             AdministratorBait();
@@ -94,18 +96,24 @@ namespace ETHDINFKBot.Handlers
 
         private async Task<bool> CreateDiscordChannelDBEntry()
         {
+            // TODO UPDATE CHANNEL IF NEEDED
             if (SocketGuildChannel != null)
             {
-                var discordChannel = DatabaseManager.GetDiscordChannel(SocketGuildChannel.Id);
-                if (discordChannel == null)
+                var discordChannel = new DiscordChannel()
                 {
-                    var newDiscordChannelEntry = DatabaseManager.CreateDiscordChannel(new ETHBot.DataLayer.Data.Discord.DiscordChannel()
-                    {
-                        DiscordChannelId = SocketGuildChannel.Id,
-                        ChannelName = SocketGuildChannel.Name,
-                        DiscordServerId = SocketGuild.Id
-                    });
+                    DiscordChannelId = SocketGuildChannel.Id,
+                    ChannelName = SocketGuildChannel.Name,
+                    DiscordServerId = SocketGuild.Id
+                };
+                var dbDiscordChannel = DatabaseManager.GetDiscordChannel(SocketGuildChannel.Id);
+                if (dbDiscordChannel == null)
+                {
+                    var newDiscordChannelEntry = DatabaseManager.CreateDiscordChannel(discordChannel);
                     return newDiscordChannelEntry != null;
+                }
+                else
+                {
+                    DatabaseManager.UpdateDiscordChannel(discordChannel);
                 }
                 return true;
             }
@@ -314,28 +322,35 @@ namespace ETHDINFKBot.Handlers
                 }
                 else
                 {
-                    await SocketMessage.DeleteAsync(); // hide it from others
+                    try
+                    {
+                        await SocketMessage.DeleteAsync(); // hide it from others
 
-                    // *bonk* go to muted jail
-                    var shameMessage = await SocketTextChannel.SendMessageAsync($"What did you expect to happen <@{SocketGuildUser.Id}>? Message an Admin in full shame and tell them what you just tried." + Environment.NewLine +
-                        $"https://tenor.com/view/shame-go-t-game-of-thrones-walk-of-shame-shameful-gif-4949558");
+                        // *bonk* go to muted jail
+                        var shameMessage = await SocketTextChannel.SendMessageAsync($"What did you expect to happen <@{SocketGuildUser.Id}>? Message an Admin in full shame and tell them what you just tried." + Environment.NewLine +
+                            $"https://tenor.com/view/shame-go-t-game-of-thrones-walk-of-shame-shameful-gif-4949558");
 
-                    var adminChannel = SocketGuild.GetTextChannel(DiscordChannels["staff"]);
+                        var adminChannel = SocketGuild.GetTextChannel(DiscordChannels["staff"]);
 
-                    var caveBobEmoteId = DiscordEmotes["cavebob"];
+                        var caveBobEmoteId = DiscordEmotes["cavebob"];
 
-                    EmbedBuilder builder = new EmbedBuilder();
+                        EmbedBuilder builder = new EmbedBuilder();
 
-                    builder.WithTitle($"{username} just got muted because they were curious :P");
-                    builder.WithColor(255, 0, 0);
-                    builder.WithDescription($"{username} tried to be sneaky and requested the admin role <:cavebob:{caveBobEmoteId}> You might get messaged soon xD");
+                        builder.WithTitle($"{username} just got muted because they were curious :P");
+                        builder.WithColor(255, 0, 0);
+                        builder.WithDescription($"{username} tried to be sneaky and requested the admin role <:cavebob:{caveBobEmoteId}> You might get messaged soon xD");
 
-                    builder.WithAuthor(SocketGuildUser);
-                    builder.WithCurrentTimestamp();
+                        builder.WithAuthor(SocketGuildUser);
+                        builder.WithCurrentTimestamp();
 
-                    await adminChannel.SendMessageAsync("", false, builder.Build());
+                        await adminChannel.SendMessageAsync("", false, builder.Build());
 
-                    DiscordHelper.DeleteMessage(shameMessage, TimeSpan.FromSeconds(30), $"{username} has been a little bit too curious...");
+                        DiscordHelper.DeleteMessage(shameMessage, TimeSpan.FromSeconds(30), $"{username} has been a little bit too curious...");
+                    }
+                    catch(Exception ex)
+                    {
+                        // can cause an exception if the message gets deleted
+                    }
                 }
             }
         }

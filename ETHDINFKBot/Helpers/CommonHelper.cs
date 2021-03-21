@@ -155,6 +155,9 @@ namespace ETHDINFKBot.Helpers
                         else
                             posts = subManager.GetBeforePosts();
 
+                        if (posts == null)
+                            return; // see what to do
+
                         if (!subManager.SubredditInfo.ReachedOldest && posts.Count == 0)
                         {
                             //Context.Channel.SendMessageAsync($"{subManager.SubredditName} scraper reached the end. Setting up end flags", false); // NSFW: {subManager.SubredditInfo.IsNSFW}

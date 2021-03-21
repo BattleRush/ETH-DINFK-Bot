@@ -30,6 +30,7 @@ using Microsoft.Extensions.Hosting;
 using ETHDINFKBot.CronJobs;
 using ETHDINFKBot.CronJobs.Jobs;
 using ETHDINFKBot.Handlers;
+using TimeZoneConverter;
 
 namespace ETHDINFKBot
 {
@@ -55,6 +56,7 @@ namespace ETHDINFKBot
         public static Dictionary<ulong, Question> CurrentActiveQuestion = new Dictionary<ulong, Question>();
         public static Dictionary<ulong, DateTime> CurrentDiscordOutOfJailTime = new Dictionary<ulong, DateTime>();
 
+        public static TimeZoneInfo TimeZoneInfo = TZConvert.GetTimeZoneInfo("Europe/Zurich");
         public static ILoggerFactory Logger { get; set; }
 
         private static DateTime LastNewDailyMessagePost = DateTime.Now;
@@ -83,15 +85,12 @@ namespace ETHDINFKBot
 
         static void Main(string[] args)
         {
-
             // TODO may cause problems if the bot is hosted in a timezone that doesnt switch to daylight at the same time as the hosting region
-            LastNewDailyMessagePost = DateTime.UtcNow.AddHours(DateTime.UtcNow.IsDaylightSavingTime() ? 2 : 1);
+            LastNewDailyMessagePost = DateTime.UtcNow.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1);
 
             Logger = LoggerFactory.Create(builder => { builder.AddConsole(); });
 
-
             BotSetting = DatabaseManager.Instance().GetBotSettings();
-
 
             var host = new HostBuilder()
                .ConfigureServices((hostContext, services) =>
@@ -107,13 +106,16 @@ namespace ETHDINFKBot
                    services.AddCronJob<DailyStatsJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 23 * * *"; });
 
                    // TODO adjust for summer time in CET/CEST
-                   services.AddCronJob<PreloadJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"5 20 * * *"; });// 3 am utc -> 4 am cet
+                   //services.AddCronJob<PreloadJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 3 * * *"; });// 3 am utc -> 4 am cet
 
                    // TODO adjust for summer time in CET/CEST
-                   services.AddCronJob<SpaceXSubredditJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = "*/2 * * * *"; }); //BotSetting.SpaceXSubredditCheckCronJob
+                   services.AddCronJob<SpaceXSubredditJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = BotSetting.SpaceXSubredditCheckCronJob; }); //BotSetting.SpaceXSubredditCheckCronJob "*/ 10 * * * *"
 
                    // TODO adjust for summer time in CET/CEST
-                   services.AddCronJob<StartAllSubredditsJobs>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"54 21 * * *"; });// 4 am utc -> 5 am cet
+                   services.AddCronJob<StartAllSubredditsJobs>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 * * *"; });// 4 am utc -> 5 am cet
+
+                   // TODO adjust for summer time in CET/CEST
+                   services.AddCronJob<BackupDBJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 0 * * *"; });// 0 am utc
                })
                .StartAsync();
 
@@ -415,101 +417,115 @@ namespace ETHDINFKBot
             if (TempDisableIncomming)
                 return;
 
-            if (!(m is SocketUserMessage msg)) return;
+            if (m is not SocketUserMessage msg) return;
+
+            if (msg.Channel is not SocketGuildChannel guildChannel)
+            {
+                // no DM parsing for now (maybe delete saved post) in the future
+                return;
+            }
 
             // check if the emote is a command -> block
             List<CommandInfo> commandList = commands.Commands.ToList();
 
             var channelSettings = BotChannelSettings?.SingleOrDefault(i => i.DiscordChannelId == msg.Channel.Id);
 
-            MessageHandler msgHandler = new MessageHandler(msg, channelSettings);
-            await msgHandler.Run();
-
-
-
-
-            //if (!m.Author.IsBot && !commandList.Any(i => i.Name.ToLower() == msg.Content.ToLower().Replace(".", "")) && await TryToParseEmoji(msg))
-            //    return; // emoji was found and we can exit here
-
-            // TODO private channels
-
-            var user = (SocketGuildUser)msg.Author;
-
-            var dbManager = DatabaseManager.Instance();
-
-            // todo do this in the future as scheduler
-
-            var openUtcDate = new DateTime(2021, 03, 04, 17, 0, 0, DateTimeKind.Utc);
-
-            if (!SendedAnWChallenge && (openUtcDate < DateTime.UtcNow) && (openUtcDate.AddMinutes(5) > DateTime.UtcNow)/*to prevent on restart that it sends again*/)
+            // ignore this channel -> high msg volume
+            if (msg.Channel.Id != 819966095070330950)
             {
-                SendedAnWChallenge = true;
-                NewAnWChallenge();
+                MessageHandler msgHandler = new MessageHandler(msg, channelSettings);
+                await msgHandler.Run();
+
+
+                //if (!m.Author.IsBot && !commandList.Any(i => i.Name.ToLower() == msg.Content.ToLower().Replace(".", "")) && await TryToParseEmoji(msg))
+                //    return; // emoji was found and we can exit here
+
+                // TODO private channels
+
+                var user = (SocketGuildUser)msg.Author;
+
+                var dbManager = DatabaseManager.Instance();
+
+                // todo do this in the future as scheduler
+
+                var openUtcDate = new DateTime(2021, 03, 04, 17, 0, 0, DateTimeKind.Utc);
+
+                if (!SendedAnWChallenge && (openUtcDate < DateTime.UtcNow) && (openUtcDate.AddMinutes(5) > DateTime.UtcNow)/*to prevent on restart that it sends again*/)
+                {
+                    SendedAnWChallenge = true;
+                    NewAnWChallenge();
+                }
+
+                // Use discord snowflake
+                // TODO may cause problems if the bot is hosted in a timezone that doesnt switch to daylight at the same time as the hosting region
+                var timeNow = SnowflakeUtils.FromSnowflake(m.Id).AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1); // CEST CONVERSION
+
+                if (LastNewDailyMessagePost.Day != timeNow.Day && !user.IsBot)
+                {
+                    // Reset time 
+                    LastNewDailyMessagePost = DateTime.UtcNow.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1);
+
+                    // This person is the first one to post a new message
+
+                    var firstPoster = dbManager.GetDiscordUserById(msg.Author.Id);
+                    dbManager.UpdateDiscordUser(new ETHBot.DataLayer.Data.Discord.DiscordUser()
+                    {
+                        DiscordUserId = user.Id,
+                        DiscriminatorValue = user.DiscriminatorValue,
+                        AvatarUrl = user.GetAvatarUrl(),
+                        IsBot = user.IsBot,
+                        IsWebhook = user.IsWebhook,
+                        Nickname = user.Nickname,
+                        Username = user.Username,
+                        JoinedAt = user.JoinedAt,
+                        FirstDailyPostCount = firstPoster.FirstDailyPostCount + 1
+                    });
+
+
+                    EmbedBuilder builder = new EmbedBuilder();
+
+                    builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST POSTER TODAY");
+                    builder.WithColor(0, 0, 255);
+                    builder.WithDescription($"This is the {firstPoster.FirstDailyPostCount + 1}. time you are the first poster of the day");
+
+                    builder.WithAuthor(msg.Author);
+                    builder.WithCurrentTimestamp();
+
+                    List<string> randomGifs = new List<string>()
+                    {
+                        "https://tenor.com/view/confetti-hooray-yay-celebration-party-gif-11214428",
+                        "https://tenor.com/view/qoobee-agapi-confetti-surprise-celebrate-gif-11679728",
+                        "https://tenor.com/view/confetti-celebrate-colorful-celebration-gif-15816997",
+                        "https://tenor.com/view/celebrate-awesome-yay-confetti-party-gif-8571772",
+                        "https://tenor.com/view/mao-mao-cat-hurrah-confetti-gif-9948046",
+                        "https://tenor.com/view/stop-it-oh-spongebob-confetti-gif-13772176",
+                        "https://tenor.com/view/win-confetti-gif-5026830",
+                        "https://tenor.com/view/kawaii-confetti-happiness-confetti-gif-11981055",
+                        "https://tenor.com/view/wow-fireworks-3d-gifs-artist-woohoo-gif-18062148"
+                    };
+
+                    string randomGif = randomGifs[new Random().Next(randomGifs.Count)];
+                    await m.Channel.SendMessageAsync(randomGif);
+                    await m.Channel.SendMessageAsync("", false, builder.Build());
+
+                    // run it only once a day // todo find better scheduler
+                    DiscordHelper.ReloadRoles(user.Guild);
+
+                }
+
+                //Discord.Image img = new Discord.Image(new Stream()); // stream
+                //await user.Guild.ModifyAsync(msg => msg.Banner = img);
+
+                await LogManager.ProcessEmojisAndPings(m.Tags, m.Author.Id, m.Id, (SocketGuildUser)m.Author);
             }
 
-            // TODO may cause problems if the bot is hosted in a timezone that doesnt switch to daylight at the same time as the hosting region
-            var timeNow = DateTime.UtcNow.AddHours(DateTime.UtcNow.IsDaylightSavingTime() ? 2 : 1);
-
-            if (LastNewDailyMessagePost.Day != timeNow.Day)
+            List<string> allowedBotCommands = new List<string>()
             {
-                // Reset time 
-                LastNewDailyMessagePost = DateTime.UtcNow.AddHours(DateTime.UtcNow.IsDaylightSavingTime() ? 2 : 1);
+                ".place setpixel ",
+                ".place pixelverify "
+            };
 
-                // This person is the first one to post a new message
-
-                var firstPoster = dbManager.GetDiscordUserById(msg.Author.Id);
-                dbManager.UpdateDiscordUser(new ETHBot.DataLayer.Data.Discord.DiscordUser()
-                {
-                    DiscordUserId = user.Id,
-                    DiscriminatorValue = user.DiscriminatorValue,
-                    AvatarUrl = user.GetAvatarUrl(),
-                    IsBot = user.IsBot,
-                    IsWebhook = user.IsWebhook,
-                    Nickname = user.Nickname,
-                    Username = user.Username,
-                    JoinedAt = user.JoinedAt,
-                    FirstDailyPostCount = firstPoster.FirstDailyPostCount + 1
-                });
-
-
-                EmbedBuilder builder = new EmbedBuilder();
-
-                builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST POSTER TODAY");
-                builder.WithColor(0, 0, 255);
-                builder.WithDescription($"This is the {firstPoster.FirstDailyPostCount + 1}. time you are the first poster of the day");
-
-                builder.WithAuthor(msg.Author);
-                builder.WithCurrentTimestamp();
-
-                List<string> randomGifs = new List<string>()
-                {
-                    "https://tenor.com/view/confetti-hooray-yay-celebration-party-gif-11214428",
-                    "https://tenor.com/view/qoobee-agapi-confetti-surprise-celebrate-gif-11679728",
-                    "https://tenor.com/view/confetti-celebrate-colorful-celebration-gif-15816997",
-                    "https://tenor.com/view/celebrate-awesome-yay-confetti-party-gif-8571772",
-                    "https://tenor.com/view/mao-mao-cat-hurrah-confetti-gif-9948046",
-                    "https://tenor.com/view/stop-it-oh-spongebob-confetti-gif-13772176",
-                    "https://tenor.com/view/win-confetti-gif-5026830",
-                    "https://tenor.com/view/kawaii-confetti-happiness-confetti-gif-11981055",
-                    "https://tenor.com/view/wow-fireworks-3d-gifs-artist-woohoo-gif-18062148"
-                };
-
-                string randomGif = randomGifs[new Random().Next(randomGifs.Count)];
-                await m.Channel.SendMessageAsync(randomGif);
-                await m.Channel.SendMessageAsync("", false, builder.Build());
-
-                // run it only once a day // todo find better scheduler
-
-                DiscordHelper.ReloadRoles(user.Guild);
-            }
-
-
-
-    
-           
-            await LogManager.ProcessEmojisAndPings(m.Tags, m.Author.Id, m.Id, (SocketGuildUser)m.Author);
-
-            if (m.Author.IsBot) // make exception for place command
+            if (m.Author.IsBot && !allowedBotCommands.Any(i => !m.Content.StartsWith(i))) // make exception for place command
                 return;
 
             /* disabled for now */
@@ -529,7 +545,7 @@ namespace ETHDINFKBot
                 return;
 #endif
 
-            if (m.Author.Id != Owner)
+            if (m.Author.Id != Owner && !m.Author.IsBot)
             {
                 if (SpamCache.ContainsKey(m.Author.Id))
                 {

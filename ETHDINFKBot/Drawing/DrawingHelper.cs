@@ -72,7 +72,7 @@ namespace ETHDINFKBot.Drawing
     {
         public static (Graphics Graphics, Bitmap Bitmap) GetEmptyGraphics(int width = 1920, int height = 1080)
         {
-            var bitmap = new Bitmap(width, height);
+            var bitmap = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format24bppRgb); // TODO see if needed format
             var graphics = Graphics.FromImage(bitmap);
             graphics.SmoothingMode = SmoothingMode.AntiAlias;
             graphics.Clear(DrawingHelper.DiscordBackgroundColor);
@@ -242,6 +242,7 @@ namespace ETHDINFKBot.Drawing
         {
             get { return new Font("Arial", 11); }
         }
+
         public static Font LargerTextFont
         {
             get { return new Font("Arial", 14); }

@@ -14,5 +14,6 @@ namespace ETHBot.DataLayer.Data
 
         public string SpaceXSubredditCheckCronJob { get; set; }
         public string LastSpaceXRedditPost { get; set; }
+        public bool PlaceLocked { get; set; }
     }
 }

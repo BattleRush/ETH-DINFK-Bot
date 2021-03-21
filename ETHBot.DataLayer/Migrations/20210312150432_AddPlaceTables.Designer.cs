@@ -3,14 +3,16 @@ using System;
 using ETHBot.DataLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ETHBot.DataLayer.Migrations
 {
     [DbContext(typeof(ETHBotDBContext))]
-    partial class ETHBotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20210312150432_AddPlaceTables")]
+    partial class AddPlaceTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -52,9 +54,6 @@ namespace ETHBot.DataLayer.Migrations
 
                     b.Property<string>("LastSpaceXRedditPost")
                         .HasColumnType("TEXT");
-
-                    b.Property<bool>("PlaceLocked")
-                        .HasColumnType("INTEGER");
 
                     b.Property<string>("SpaceXSubredditCheckCronJob")
                         .HasColumnType("TEXT");
@@ -501,16 +500,13 @@ namespace ETHBot.DataLayer.Migrations
                     b.Property<byte>("R")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("Removed")
-                        .HasColumnType("INTEGER");
-
                     b.Property<ulong>("SnowflakeTimePlaced")
                         .HasColumnType("INTEGER");
 
-                    b.Property<short>("XPos")
+                    b.Property<int>("XPos")
                         .HasColumnType("INTEGER");
 
-                    b.Property<short>("YPos")
+                    b.Property<int>("YPos")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("PlaceBoardHistoryId");
@@ -524,10 +520,10 @@ namespace ETHBot.DataLayer.Migrations
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.Fun.PlaceBoardPixel", b =>
                 {
-                    b.Property<short>("XPos")
+                    b.Property<int>("XPos")
                         .HasColumnType("INTEGER");
 
-                    b.Property<short>("YPos")
+                    b.Property<int>("YPos")
                         .HasColumnType("INTEGER");
 
                     b.Property<byte>("B")

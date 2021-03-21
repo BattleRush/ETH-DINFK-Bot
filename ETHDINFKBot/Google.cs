@@ -10,7 +10,7 @@ using System.Web;
 
 namespace ETHDINFKBot
 {
-    public class Engine
+    public class GoogleEngine
     {
         public bool cacheResponses = true; //Indicates If A Cache Of All Search Results Should Be Saved To Increase Speed And Lower Actual Queries
         public WebClient client = new WebClient(); //WebClient Used To Fetch Google Search Results

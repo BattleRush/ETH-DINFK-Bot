@@ -6,19 +6,19 @@ using System.Text;
 
 namespace ETHBot.DataLayer.Data.Fun
 {
-    public class PlaceBoard
+    public class PlaceBoardPixel
     {
         // to encode pos in 3 bytes would save 1 byte * 1M = 1MB which is negligible 
 
         // 2 bytes
-        [Key]
+        [Key, Column(Order = 0)]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        public int XPos { get; set; }
+        public short XPos { get; set; }
 
         // 2 bytes
-        [Key]
+        [Key, Column(Order = 1)]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        public int YPos { get; set; }
+        public short YPos { get; set; }
 
         // 3 bytes
         public byte R { get; set; }

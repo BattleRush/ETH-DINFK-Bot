@@ -17,11 +17,11 @@ namespace ETHBot.DataLayer.Data.Fun
         public int PlaceBoardHistoryId { get; set; }
 
         // 4 bytes
-        public int XPos { get; set; }
-        public int YPos { get; set; }
+        public short XPos { get; set; }
+        public short YPos { get; set; }
 
         [ForeignKey("XPos, YPos")]
-        public virtual PlaceBoard PlaceBoard { get; set; }
+        public virtual PlaceBoardPixel PlaceBoard { get; set; }
 
         // 3 bytes
         public byte R { get; set; }
@@ -36,5 +36,8 @@ namespace ETHBot.DataLayer.Data.Fun
 
         // 8bytes
         public ulong SnowflakeTimePlaced { get; set; }
+
+        // 1 bit
+        public bool Removed { get; set; }
     }
 }

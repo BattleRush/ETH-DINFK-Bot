@@ -158,6 +158,29 @@ namespace ETHDINFKBot
             }
         }
 
+        public bool SetEmoteBlockStatus(ulong emoteId, bool blockStatus)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var emote = context.DiscordEmotes.FirstOrDefault(i => i.DiscordEmoteId == emoteId);
+                    if(emote != null)
+                    {
+                        emote.Blocked = blockStatus;
+                        context.SaveChanges();
+                        return true;
+                    }
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return false;
+            }
+        }
+
         public List<DiscordEmote> GetEmotesByName(string name)
         {
             try
@@ -165,7 +188,7 @@ namespace ETHDINFKBot
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
                     // todo improve and better search
-                    return context.DiscordEmotes.AsQueryable().Where(i => i.EmoteName.ToLower().Contains(name)).ToList();
+                    return context.DiscordEmotes.AsQueryable().Where(i => i.EmoteName.ToLower().Contains(name) && !i.Blocked).ToList();
                 }
             }
             catch (Exception ex)
@@ -182,7 +205,7 @@ namespace ETHDINFKBot
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
                     // todo improve and better search
-                    return context.DiscordEmotes.AsQueryable().Where(i => i.EmoteName.ToLower() == name.ToLower()).ToList();
+                    return context.DiscordEmotes.AsQueryable().Where(i => i.EmoteName.ToLower() == name.ToLower() && !i.Blocked).ToList();
                 }
             }
             catch (Exception ex)
@@ -191,7 +214,6 @@ namespace ETHDINFKBot
                 return null;
             }
         }
-
 
         public void UpdateBotSettings(BotSetting setting)
         {
@@ -321,6 +343,33 @@ namespace ETHDINFKBot
             {
                 _logger.LogError(ex, ex.Message);
                 return null;
+            }
+        }
+
+        public void UpdateDiscordChannel(DiscordChannel channel)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var dbDiscordChannel = context.DiscordChannels.SingleOrDefault(i => i.DiscordChannelId == channel.DiscordChannelId);
+                    if (dbDiscordChannel == null)
+                        CreateDiscordChannel(channel);
+
+                    bool changes = false;
+                    if (dbDiscordChannel.ChannelName != channel.ChannelName)
+                    {
+                        dbDiscordChannel.ChannelName = channel.ChannelName;
+                        changes = true;
+                    }
+
+                    if (changes)
+                        context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
             }
         }
 

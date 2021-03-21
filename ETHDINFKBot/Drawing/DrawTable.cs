@@ -176,7 +176,7 @@ namespace ETHDINFKBot.Drawing
             Graphics Graphics;
 
             int width = 1920;
-            int height = 8000;
+            int height = 10000;
 
             Bitmap = new Bitmap(width, height); // TODO insert into constructor
             Graphics = Graphics.FromImage(Bitmap);

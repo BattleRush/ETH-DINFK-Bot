@@ -140,6 +140,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.AddField("React (can only use emotes from this server)", "```.react <message_id> <emote_name>```");
             builder.AddField("Space (see what it does)", "```.space [<amount>]```");
             builder.AddField("WIP Command", "```.messagegraph [all|lernphase|bp]```");
+            builder.AddField("ETH DINFK Place", "```Type '.place help' for more information```");
+
             /*builder.AddField("Write .study to force yourself away from discord", "```May contain spoilers to old exams! Once you receive the study role you will be only to chat for max of 15 mins at a time." + Environment.NewLine +
                $"If you are in cooldown, the bot will delete all your messages. Every question is designed to be able to solve within 5-10 mins. To recall your message write '.study'" + Environment.NewLine +
                $"To be able to chat you will need to solve a question each time. (All subject channels are exempt from this rule.)```");*/
@@ -205,7 +207,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             LogManager.ProcessMessage(userInfo, BotMessageType.Search);
 
-            var reply = new Engine().Search(searchString);
+            var reply = new GoogleEngine().Search(searchString);
 
             EmbedBuilder builder = new EmbedBuilder();
 
@@ -501,7 +503,6 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             Context.Message.DeleteAsync();
         }
 
-
         [Command("ping")]
         public async Task GhostPing()
         {
@@ -533,9 +534,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                     var date = SnowflakeUtils.FromSnowflake(item.MessageId ?? 0);
                     if (item.DiscordRoleId.HasValue)
-                        messageText += $"<@{item.FromDiscordUserId}> pinged <@&{item.DiscordRoleId}> at {date.ToString("MM.dd hh:mm")} in <#{dbMessage.DiscordChannelId}> {Environment.NewLine}"; // todo check for everyone or here
+                        messageText += $"<@{item.FromDiscordUserId}> pinged <@&{item.DiscordRoleId}> at {date.ToString("MM.dd HH:mm")} in <#{dbMessage.DiscordChannelId}> {Environment.NewLine}"; // todo check for everyone or here
                     else
-                        messageText += $"<@{item.FromDiscordUserId}> at {date.ToString("MM.dd hh:mm")} in <#{dbMessage.DiscordChannelId}> {Environment.NewLine}";
+                        messageText += $"<@{item.FromDiscordUserId}> at {date.ToString("MM.dd HH:mm")} in <#{dbMessage.DiscordChannelId}> {Environment.NewLine}";
                 }
 
                 messageText += Environment.NewLine;
@@ -557,7 +558,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         // TODO duplicate finder -> fingerprint
         // TODO better selection
         [Command("emote")]
-        public async Task EmojiInfo(string search, int page = 0)
+        public async Task EmojiInfo(string search, int page = 0, bool debug = false)
         {
             //await Context.Channel.SendMessageAsync($"Disabled dev", false); // to prevent from db overload
             //return;
@@ -591,7 +592,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             int total = emotes.Count;
             // limit to 100
 
-            int rowMax = 10;
+            int rowMax = debug ? 8 : 10; // since it will reach the char count
             int columnMax = 10;
             int pageSize = rowMax * columnMax;
 
@@ -623,11 +624,17 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 }
 
                 string offsetString = "";
-                if (offset > 0)
+                if (debug)
                 {
-                    emote.EmoteName += $"{sep}{offset}";
+                    emote.EmoteName = emote.DiscordEmoteId.ToString();
                 }
-
+                else
+                {
+                    if (offset > 0)
+                    {
+                        emote.EmoteName += $"{sep}{offset}";
+                    }
+                }
             }
 
             emotes = emotes.Skip(page * pageSize).Take(pageSize).ToList();
@@ -1203,7 +1210,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 */
                 Context.Channel.SendMessageAsync("", false, builder.Build());
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
 
             }
@@ -1821,8 +1828,8 @@ ORDER BY RANDOM() LIMIT 1
                 List<string> labels = new List<string>()
                 {
                     "one", "two", "three", "four", "five", "six", "seven", "eight",
-                }; 
-                
+                };
+
                 List<int> data = new List<int>()
                 {
                     5,84,63,45,127,12,55,95

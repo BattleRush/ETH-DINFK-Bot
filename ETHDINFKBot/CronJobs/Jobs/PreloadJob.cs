@@ -193,7 +193,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                             if (!botChannelSetting.ReachedOldestPreload)
                             {
                                 // should be 50 calls -> around 1 min per channel
-                                int amount = 10_000; // we do only 50k a day to not overload the requests + db
+                                int amount = 20_000; // we do only 50k a day to not overload the requests + db
 
                                 // we still need to go back
                                 DateTimeOffset fromDate = DateTimeOffset.Now;
@@ -219,7 +219,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                                     result += $"{channel.Name} no new messages. Reached the end..." + Environment.NewLine;
 
                                     // reached the end
-                                    DatabaseManager.Instance().UpdateChannelSetting(botChannelSetting.DiscordChannelId, -1, processResponse.OldestMessageId, processResponse.NewestMessageId);
+                                    DatabaseManager.Instance().UpdateChannelSetting(botChannelSetting.DiscordChannelId, -1, processResponse.OldestMessageId, processResponse.NewestMessageId, true);
                                 }
                                 else
                                 {
