@@ -363,15 +363,15 @@ To get the diagram type: '.sql table info'");
         public async void WorkaroundForTimeoutNotWorking(CancellationTokenSource cts, string query, bool owner)
         {
             // normal 5 sec; owner 60 sec
-            await Task.Delay(5000 * (owner ? 12 : 1));
+            await Task.Delay(7000 * (owner ? 12 : 1));
 
             if (cts.IsCancellationRequested)
                 return;
 
             await Context.Channel.SendMessageAsync("<:pepegun:747783377716904008>", false);
-            await Context.Channel.SendMessageAsync($"<@!{Program.Owner}> someone tried to kill me with: {query.Substring(0, Math.Min(query.Length, 1000))}", false);
-            if (query.Length > 1000)
-                await Context.Channel.SendMessageAsync($"{query.Substring(1000, query.Length - 1000)}", false);
+            await Context.Channel.SendMessageAsync($"<@!{Program.Owner}> someone tried to kill me with: {query.Substring(0, Math.Min(query.Length, 1500))}", false);
+            if (query.Length > 1500)
+                await Context.Channel.SendMessageAsync($"{query.Substring(1500, query.Length - 1500)}", false);
             //connect.Close();
             //command.Cancel();
 
@@ -513,7 +513,7 @@ To get the diagram type: '.sql table info'");
                 {
                     using (var command = new SqliteCommand(commandSql, connection))
                     {
-                        command.CommandTimeout = 5;
+                        command.CommandTimeout = 10;
                         connection.Open();
 
                         WorkaroundForTimeoutNotWorking(cts, commandSql, author.Id == ETHDINFKBot.Program.Owner);

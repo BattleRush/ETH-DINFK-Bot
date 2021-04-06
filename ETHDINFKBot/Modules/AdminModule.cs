@@ -6,6 +6,7 @@ using ETHBot.DataLayer.Data.Enums;
 using ETHDINFKBot.Drawing;
 using ETHDINFKBot.Helpers;
 using ETHDINFKBot.Log;
+using Newtonsoft.Json;
 using Reddit;
 using Reddit.Controllers;
 using RedditScrapper;
@@ -19,9 +20,73 @@ using System.Threading.Tasks;
 
 namespace ETHDINFKBot.Modules
 {
+
+    public class Class1
+    {
+        public ulong id { get; set; }
+        public string nick { get; set; }
+        public string top_role_name { get; set; }
+        public ulong top_role_id { get; set; }
+    }
+
+
+
     [Group("admin")]
     public class AdminModule : ModuleBase<SocketCommandContext>
     {
+        [Command("renameback")]
+        public async Task Test()
+        {
+            return; // disable again
+            var author = Context.Message.Author;
+            if (author.Id != ETHDINFKBot.Program.Owner)
+            {
+                Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+            try
+            {
+                var allUsers = await Context.Guild.GetUsersAsync().FlattenAsync();
+                Context.Channel.SendMessageAsync("users " + allUsers.Count().ToString(), false);
+
+                Random r = new Random();
+
+                var jsonString = File.ReadAllText("");
+
+                var jsonUsers = JsonConvert.DeserializeObject<Class1[]>(jsonString).ToList();
+
+                Context.Channel.SendMessageAsync("json " + jsonUsers.Count.ToString(), false);
+
+
+                foreach (SocketGuildUser user in allUsers)
+                {
+                    var targerUser = jsonUsers.SingleOrDefault(i => i.id == user.Id);
+
+                    if (targerUser == null || targerUser.nick == user.Nickname)
+                        continue;
+
+                    try
+                    {
+                        await user.ModifyAsync(i =>
+                        {
+                            i.Nickname = targerUser.nick;
+                        });
+
+                        Context.Channel.SendMessageAsync("Fixing " + user.Username, false);
+
+                    }
+                    catch (Exception ex)
+                    {
+                        Context.Channel.SendMessageAsync(ex.Message + " on " + user.Username, false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Context.Channel.SendMessageAsync(ex.Message, false);
+            }
+        }
+
         [Command("help")]
         public async Task AdminHelp()
         {
@@ -400,7 +465,7 @@ namespace ETHDINFKBot.Modules
                                     permissionFlagNames.Add($"{flag} ({(int)flag})");
                             }
 
-                            channelInfoRow.Add(string.Join(", "+ Environment.NewLine, permissionFlagNames));
+                            channelInfoRow.Add(string.Join(", " + Environment.NewLine, permissionFlagNames));
                             channelInfoRow.Add(channelSetting.OldestPostTimePreloaded?.ToString());
                             channelInfoRow.Add(channelSetting.NewestPostTimePreloaded?.ToString());
                             channelInfoRow.Add(channelSetting.ReachedOldestPreload.ToString());
@@ -651,7 +716,7 @@ namespace ETHDINFKBot.Modules
 
             // TODO cleanup this mess
 
-           
+
         }
     }
 }

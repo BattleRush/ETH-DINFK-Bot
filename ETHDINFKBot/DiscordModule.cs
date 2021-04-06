@@ -781,6 +781,13 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         [Command("tex", RunMode = RunMode.Async)]
         public async Task Latex([Remainder] string input)
         {
+            var author = Context.Message.Author;
+            if (author.Id != ETHDINFKBot.Program.Owner)
+            {
+                Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
             var painter = new MathPainter
             {
                 LaTeX = input,

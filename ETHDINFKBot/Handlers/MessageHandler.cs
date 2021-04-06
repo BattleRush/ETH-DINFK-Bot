@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 using ETHBot.DataLayer.Data;
 using ETHBot.DataLayer.Data.Discord;
@@ -30,8 +31,9 @@ namespace ETHDINFKBot.Handlers
 
         private DatabaseManager DatabaseManager;
         private BotChannelSetting ChannelSettings;
+        private List<CommandInfo> CommandInfos;
 
-        public MessageHandler(SocketUserMessage socketMessage, BotChannelSetting channelSettings = null)
+        public MessageHandler(SocketUserMessage socketMessage, List<CommandInfo> commandList, BotChannelSetting channelSettings = null)
         {
             SocketMessage = socketMessage;
 
@@ -44,6 +46,7 @@ namespace ETHDINFKBot.Handlers
             SocketGuild = SocketGuildChannel.Guild;
 
             ChannelSettings = channelSettings;
+            CommandInfos = commandList;
 
             DatabaseManager = DatabaseManager.Instance();
         }
@@ -235,6 +238,10 @@ namespace ETHDINFKBot.Handlers
         {
             if (SocketGuildChannel != null)
             {
+                // this emote cant be send because its occupied by a command
+                if (CommandInfos.Any(i => i.Name.ToLower() == SocketMessage.Content.ToLower().Replace(".", "")))
+                    return;
+
                 if (SocketMessage.Content.StartsWith("."))
                 {
                     // check if the emoji exists and if the emojis is animated
@@ -267,10 +274,10 @@ namespace ETHDINFKBot.Handlers
                     {
                         SocketMessage.DeleteAsync();
 
-                        var emoteString = $"<{(emote.Animated ? "a" : "")}:{emote.EmoteName}:{emote.DiscordEmoteId}>";
-
                         if (SocketGuild.Emotes.Any(i => i.Id == emote.DiscordEmoteId))
                         {
+                            var emoteString = $"<{(emote.Animated ? "a" : "")}:{SocketGuild.Emotes.First(i => i.Id == emote.DiscordEmoteId).Name}:{emote.DiscordEmoteId}>";
+
                             // we can post the emote as it will be rendered out
                             await SocketTextChannel.SendMessageAsync(emoteString);
                         }

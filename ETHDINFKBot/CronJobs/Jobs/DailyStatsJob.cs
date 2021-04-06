@@ -29,13 +29,13 @@ namespace ETHDINFKBot.CronJobs.Jobs
         public override Task DoWork(CancellationToken cancellationToken)
         {
             _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
-            Console.WriteLine("Run");
+            Console.WriteLine("Run DailyStatsJob");
             foreach (var item in Program.Client.Guilds)
             {
                 var generalChannel = item.GetTextChannel(GeneralChatId);
                 if (generalChannel != null)
                 {
-                    generalChannel.SendMessageAsync($"{Name} is running");
+                    //generalChannel.SendMessageAsync($"{Name} is running");
                 }
             }
             return Task.CompletedTask;

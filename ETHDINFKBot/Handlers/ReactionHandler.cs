@@ -61,11 +61,44 @@ namespace ETHDINFKBot.Handlers
 
             if (SocketReaction.Emote is Emote ReactionEmote)
             {
+                await CreateOrUpdateDBUser();
                 ProcessEmote(ReactionEmote);
 
                 SaveReaction(ReactionEmote);
                 UpvoteReactionToPullRequests(ReactionEmote);
             }
+        }
+
+        // DUPE From Message handler (since some like to react before typing xD)
+        private async Task<bool> CreateOrUpdateDBUser()
+        {
+            var dbAuthor = DatabaseManager.GetDiscordUserById(SocketGuildReactionUser.Id);
+
+            var discordUser = new DiscordUser()
+            {
+                DiscordUserId = SocketGuildReactionUser.Id,
+                DiscriminatorValue = SocketGuildReactionUser.DiscriminatorValue,
+                AvatarUrl = SocketGuildReactionUser.GetAvatarUrl(),
+                IsBot = SocketGuildReactionUser.IsBot,
+                IsWebhook = SocketGuildReactionUser.IsWebhook,
+                Nickname = SocketGuildReactionUser.Nickname,
+                Username = SocketGuildReactionUser.Username,
+                JoinedAt = SocketGuildReactionUser.JoinedAt,
+                FirstDailyPostCount = dbAuthor?.FirstDailyPostCount ?? 0
+            };
+
+            if (dbAuthor == null)
+            {
+                // todo check non socket user
+                dbAuthor = DatabaseManager.CreateDiscordUser(discordUser);
+                //dbAuthor = DatabaseManager.GetDiscordUserById(SocketGuildUser.Id);
+            }
+            else
+            {
+                DatabaseManager.UpdateDiscordUser(discordUser);
+            }
+
+            return true;
         }
 
         public async void ProcessEmote(Emote emote)

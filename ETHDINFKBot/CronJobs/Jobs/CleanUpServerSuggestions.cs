@@ -12,7 +12,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 { 
     public class CleanUpServerSuggestions : CronJobService
     {
-        private readonly ulong ServerSuggestion = 747752542741725247; // todo config?
+        private readonly ulong ServerSuggestion = 816776685407043614; // todo config?
         private readonly ILogger<CleanUpServerSuggestions> _logger;
         private readonly string Name = "CleanUpServerSuggestions";
 
@@ -32,8 +32,12 @@ namespace ETHDINFKBot.CronJobs.Jobs
             DateTime oneWeekAgo = DateTime.Now.Add(toDeleteOlderThan);
             ulong oneWeekAgoSnowflake = SnowflakeUtils.ToSnowflake(oneWeekAgo);
             var oldMessages = await channel.GetMessagesAsync(oneWeekAgoSnowflake, Direction.Before, 100/*100 should be enought for a while*/).FlattenAsync();
-            //await channel.DeleteMessagesAsync(oldMessages);
-            await channel.SendMessageAsync($"Deleting {oldMessages} messages"); // enable when this message is correct
+            await channel.DeleteMessagesAsync(oldMessages);
+            var messageDelete = await channel.SendMessageAsync($"Deleting {oldMessages.Count()} messages"); // enable when this message is correct
+
+            Task.Delay(TimeSpan.FromMinutes(5));
+
+            messageDelete.DeleteAsync();
         }
 
         public override Task DoWork(CancellationToken cancellationToken)

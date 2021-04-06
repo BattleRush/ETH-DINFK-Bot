@@ -31,6 +31,7 @@ using ETHDINFKBot.CronJobs;
 using ETHDINFKBot.CronJobs.Jobs;
 using ETHDINFKBot.Handlers;
 using TimeZoneConverter;
+using WebSocketSharp.Server;
 
 namespace ETHDINFKBot
 {
@@ -62,6 +63,15 @@ namespace ETHDINFKBot
         private static DateTime LastNewDailyMessagePost = DateTime.Now;
 
         private static List<BotChannelSetting> BotChannelSettings;
+
+        private static List<string> AllowedBotCommands = new List<string>()
+        {
+            ".place setpixel ",
+            ".place pixelverify "
+        };
+
+        public static WebSocketServer PlaceWebsocket;
+
 
 
         //private static BotStats BotStats = new BotStats()
@@ -97,7 +107,7 @@ namespace ETHDINFKBot
                {
                    // TODO read from DB
 
-                   services.AddCronJob<CronJobTest>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"* * * * *"; });
+                   //services.AddCronJob<CronJobTest>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"* * * * *"; });
 
                    // once a day at 1 or 2 AM CET/CEST
                    services.AddCronJob<CleanUpServerSuggestions>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 0 * * *"; });
@@ -163,7 +173,7 @@ namespace ETHDINFKBot
                         return;
                 }
 
-                var path2 = Path.Combine(BasePath, "Database", "Backup", $"ETHBot_{DateTime.Now.ToString("yyyyMMdd_HHmmss")}.db");
+                var path2 = Path.Combine(BasePath, "Database", "Backup", $"ETHBot_{DateTime.Now:yyyyMMdd_HHmmss}.db");
                 File.Copy(path, path2);
             }
         }
@@ -175,11 +185,20 @@ namespace ETHDINFKBot
 
         public async Task MainAsync(string token)
         {
+            PlaceWebsocket = new WebSocketServer(9000);
+            PlaceWebsocket.AddWebSocketService<PlaceWebsocket>("/place");
+            PlaceWebsocket.Start();
+
             DatabaseManager.Instance().SetAllSubredditsStatus();
             LoadChannelSettings();
 
 
-            var config = new DiscordSocketConfig { MessageCacheSize = 250 };
+            var config = new DiscordSocketConfig
+            {
+                MessageCacheSize = 250,
+                AlwaysDownloadUsers = true
+            };
+
             Client = new DiscordSocketClient(config);
 
             Client.MessageReceived += HandleCommandAsync;
@@ -428,12 +447,14 @@ namespace ETHDINFKBot
             // check if the emote is a command -> block
             List<CommandInfo> commandList = commands.Commands.ToList();
 
-            var channelSettings = BotChannelSettings?.SingleOrDefault(i => i.DiscordChannelId == msg.Channel.Id);
+
 
             // ignore this channel -> high msg volume
             if (msg.Channel.Id != 819966095070330950)
             {
-                MessageHandler msgHandler = new MessageHandler(msg, channelSettings);
+                var channelSettings = BotChannelSettings?.SingleOrDefault(i => i.DiscordChannelId == msg.Channel.Id);
+
+                MessageHandler msgHandler = new MessageHandler(msg, commandList, channelSettings);
                 await msgHandler.Run();
 
 
@@ -510,23 +531,26 @@ namespace ETHDINFKBot
 
                     // run it only once a day // todo find better scheduler
                     DiscordHelper.ReloadRoles(user.Guild);
-
                 }
 
                 //Discord.Image img = new Discord.Image(new Stream()); // stream
                 //await user.Guild.ModifyAsync(msg => msg.Banner = img);
 
-                await LogManager.ProcessEmojisAndPings(m.Tags, m.Author.Id, m.Id, (SocketGuildUser)m.Author);
+                try
+                {
+                    await LogManager.ProcessEmojisAndPings(m.Tags, m.Author.Id, m.Id, (SocketGuildUser)m.Author);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
             }
 
-            List<string> allowedBotCommands = new List<string>()
-            {
-                ".place setpixel ",
-                ".place pixelverify "
-            };
 
-            if (m.Author.IsBot && !allowedBotCommands.Any(i => !m.Content.StartsWith(i))) // make exception for place command
-                return;
+
+            if (!(m.Channel.Id == 819966095070330950 && AllowedBotCommands.Any(i => !m.Content.StartsWith(i))))
+                if (m.Author.IsBot) // make exception for place command
+                    return;
 
             /* disabled for now */
             /*if (user.Roles.Any(i => i.Id == 798639212818726952) && false )
@@ -545,7 +569,7 @@ namespace ETHDINFKBot
                 return;
 #endif
 
-            if (m.Author.Id != Owner && !m.Author.IsBot)
+            if (!m.Author.IsBot && m.Author.Id != Owner)
             {
                 if (SpamCache.ContainsKey(m.Author.Id))
                 {
@@ -557,7 +581,7 @@ namespace ETHDINFKBot
                         if (new Random().Next(0, 5) == 0)
                         {
                             // Ignore the user than to reply takes 1 message away from the rate limit
-                            m.Channel.SendMessageAsync($"Stop spamming <@{m.Author.Id}> your current timeout is {SpamCache[m.Author.Id]}ms");
+                            m.Channel.SendMessageAsync($"Stop spamming <@{m.Author.Id}> your current timeout is {SpamCache[m.Author.Id]} UTC");
                         }
 
                         return;

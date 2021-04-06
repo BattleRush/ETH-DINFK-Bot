@@ -173,6 +173,13 @@ namespace ETHDINFKBot.CronJobs.Jobs
             var botChannelSettings = DatabaseManager.Instance().GetAllChannelSettings(); // TODO filter for guild
 
             string result = "";
+
+            // todo config
+            ulong guildId = 747752542741725244;
+            ulong spamChannel = 768600365602963496;
+            var guild = Program.Client.GetGuild(guildId);
+            var textChannel = guild.GetTextChannel(spamChannel);
+
             foreach (var item in Program.Client.Guilds)
             {
                 if (item.Id != 747752542741725244)
@@ -277,17 +284,17 @@ namespace ETHDINFKBot.CronJobs.Jobs
                     {
                         result += $"Ignored {channel?.Name ?? "Channel not found"}" + Environment.NewLine;
                     }
+                    if (result.Length > 1500)
+                    {
+                        textChannel.SendMessageAsync(result.Substring(0, Math.Min(2000, result.Length)));
+                        result = "";
+                    }
                 }
             }
 
-            if(result.Length > 0)
+            if (result.Length > 0)
             {
-                ulong guildId = 747752542741725244;
-                ulong spamChannel = 768600365602963496;
-                var guild = Program.Client.GetGuild(guildId);
-                var textChannel = guild.GetTextChannel(spamChannel);
-
-                textChannel.SendMessageAsync(result.Substring(0, Math.Min(2000, result.Length)));
+                textChannel.SendMessageAsync(result.Substring(0, Math.Min(2000, result.Length))); 
             }
 
 

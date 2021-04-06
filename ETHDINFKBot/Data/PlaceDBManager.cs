@@ -1,6 +1,7 @@
 ﻿using Discord;
 using ETHBot.DataLayer;
 using ETHBot.DataLayer.Data.Fun;
+using ETHDINFKBot.Enums;
 using ETHDINFKBot.Modules;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
@@ -82,6 +83,22 @@ namespace ETHDINFKBot.Data
             }
         }
 
+        public List<PlaceBoardPixel> GetImageByYLines(int yFrom, int yUntil)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.PlaceBoardPixels.AsQueryable().Where(i => i.YPos >= yFrom && i.YPos < yUntil).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
         public List<PlaceBoardHistory> GetBoardHistory(List<ulong> discordUserIds)
         {
             try
@@ -132,6 +149,62 @@ namespace ETHDINFKBot.Data
             }
         }
 
+        public List<PlaceBoardHistory> GetBoardHistory(int from, int amount = 100_000)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    // we might taking a hit by doing a tolist premature but sqlite doesnt like ulong ordering for whatever reason
+                    // TODO maybe use Take last
+                    return context.PlaceBoardHistory.AsQueryable().Skip(from).Take(amount).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        // this is to reduce the id size from 8 bytes down to 1 byte
+        public Dictionary<ulong, byte> GetPlaceUserIds()
+        {
+            var returnVal = new Dictionary<ulong, byte>();
+            try
+            {
+                var sqlQuery = $@"
+SELECT DISTINCT DiscordUserId
+FROM PlaceBoardHistory 
+ORDER BY PlaceBoardHistoryId ASC";
+
+                using (var connection = new SqliteConnection(Program.ConnectionString))
+                {
+                    using (var command = new SqliteCommand(sqlQuery, connection))
+                    {
+                        command.CommandTimeout = 10;
+                        connection.Open();
+
+                        var reader = command.ExecuteReader();
+                        byte count = 1;
+
+                        while (reader.Read())
+                        {
+                            ulong userId = Convert.ToUInt64(reader.GetString(0));
+
+                            returnVal.Add(userId, count);
+                            count++;
+                        }
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+            return returnVal;
+        }
+
         public long RemovePixels(ulong discordUserId, int minutes, int xStart, int xEnd, int yStart, int yEnd)
         {
             try
@@ -175,7 +248,7 @@ WHERE DiscordUserId = {discordUserId} AND SnowflakeTimePlaced > {fromSnowflake} 
                     }
                 }
 
-                if(oldestHistoryId < 0)
+                if (oldestHistoryId < 0)
                 {
                     return -1;
                 }
@@ -262,38 +335,47 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
             }
         }
 
-        public bool PlacePixel(short x, short y, byte r, byte g, byte b, ulong discordUserId)
+        public bool PlacePixel(short x, short y, System.Drawing.Color color, ulong discordUserId)
         {
             if (x < 0 || x >= 1000 || y < 0 || y >= 1000)
                 return false; // reject these entries
 
             try
             {
-                if (PlaceModule.LastRefresh.Add(TimeSpan.FromMinutes(10)) > DateTime.Now)
+                PlaceModule.CurrentPlaceBitmap?.SetPixel(x, y, color);
+
+                var sessions = Program.PlaceWebsocket.WebSocketServices["/place"].Sessions;
+
+                if (sessions != null)
                 {
-                    var element = PlaceModule.PixelsCache.SingleOrDefault(i => i.XPos == x && i.YPos == y);
-                    if (element == null)
-                    {
-                        PlaceModule.PixelsCache.Add(new PlaceBoardPixel()
-                        {
-                            XPos = x,
-                            YPos = y,
-                            R = r,
-                            G = g,
-                            B = b
-                        });
-                    }
-                    else
-                    {
-                        element.R = r;
-                        element.G = g;
-                        element.B = b;
-                    }
+                    byte[] data = new byte[9];
+
+                    byte[] xBytes = BitConverter.GetBytes(x);
+                    byte[] yBytes = BitConverter.GetBytes(y);
+
+                    data[0] = (byte)MessageEnum.LivePixel; // identifier
+
+                    data[1] = xBytes[0];
+                    data[2] = xBytes[1];
+                    data[3] = yBytes[0];
+                    data[4] = yBytes[1];
+
+                    data[5] = color.R;
+                    data[6] = color.G;
+                    data[7] = color.B;
+
+                    if(PlaceModule.UserIdInfos.ContainsKey(discordUserId))
+                        data[8] = PlaceModule.UserIdInfos[discordUserId];
+
+                    //Console.WriteLine($"Send: {x}/{y} paint R:{color.R}|G:{color.G}|B:{color.B}");
+
+                    sessions.Broadcast(data);
                 }
             }
             catch (Exception ex)
             {
                 // ignore
+                Console.WriteLine($"Failed to draw on Bitmap: {x}/{y}");
             }
 
 
@@ -305,32 +387,31 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
                     var currentPixel = context.PlaceBoardPixels.AsQueryable().SingleOrDefault(i => i.XPos == x && i.YPos == y);
                     if (currentPixel == null)
                     {
-                        // create the pixel
+                        // create the pixel -> can soon be disabled
                         context.PlaceBoardPixels.Add(new PlaceBoardPixel()
                         {
                             XPos = x,
                             YPos = y,
-                            R = r,
-                            G = g,
-                            B = b
+                            R = color.R,
+                            G = color.G,
+                            B = color.B,
                         });
                     }
                     else
                     {
-                        currentPixel.R = r;
-                        currentPixel.G = g;
-                        currentPixel.B = b;
+                        currentPixel.R = color.R;
+                        currentPixel.G = color.G;
+                        currentPixel.B = color.B;
                     }
-
 
                     context.PlaceBoardHistory.Add(new PlaceBoardHistory()
                     {
                         DiscordUserId = discordUserId,
                         XPos = x,
                         YPos = y,
-                        R = r,
-                        G = g,
-                        B = b,
+                        R = color.R,
+                        G = color.G,
+                        B = color.B,
                         SnowflakeTimePlaced = SnowflakeUtils.ToSnowflake(DateTimeOffset.UtcNow)
                     });
 

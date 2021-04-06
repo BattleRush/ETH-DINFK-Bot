@@ -4,11 +4,13 @@ using Discord.WebSocket;
 using ETHBot.DataLayer.Data.Fun;
 using ETHDINFKBot.Data;
 using ETHDINFKBot.Drawing;
+using ETHDINFKBot.Enums;
 using ETHDINFKBot.Helpers;
 using FFMediaToolkit;
 using FFMediaToolkit.Encoding;
 using FFMediaToolkit.Graphics;
 using ImageMagick;
+using Newtonsoft.Json;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
@@ -19,7 +21,9 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ETHDINFKBot.Modules
@@ -104,13 +108,29 @@ namespace ETHDINFKBot.Modules
     [Group("place")]
     public class PlaceModule : ModuleBase<SocketCommandContext>
     {
-        public static List<PlaceBoardPixel> PixelsCache = new List<PlaceBoardPixel>();
+        //public static List<PlaceBoardPixel> PixelsCache = new List<PlaceBoardPixel>();
         public static DateTime LastRefresh = DateTime.MinValue;
 
         public static bool? LockedBoard = null;
 
+        public static Bitmap CurrentPlaceBitmap;
+        public static int LastYRefreshed = 0;
+
         private bool IsPlaceLocked()
         {
+            if (CurrentPlaceBitmap == null)
+            {
+                var board = DrawingHelper.GetEmptyGraphics(1000, 1000);
+                CurrentPlaceBitmap = board.Bitmap;
+
+                // load the entire image on startup
+                for (int i = 0; i < 10; i++)
+                {
+                    RefreshBoard(100);
+                    Thread.Sleep(50);
+                }
+            }
+
             PlaceDBManager dbManager = PlaceDBManager.Instance();
             if (LockedBoard == null)
                 LockedBoard = dbManager.GetBoardStatus();
@@ -164,235 +184,138 @@ namespace ETHDINFKBot.Modules
         private static bool LoadedLib = false; // TODO Do better
 
 
-        // FOR HEATMAP BUT ITS WAY TO SLOW
+        public static Dictionary<ulong, byte> UserIdInfos = new Dictionary<ulong, byte>();
 
-        //http://dylanvester.com/2015/10/creating-heat-maps-with-net-20-c-sharp/
-        private Bitmap CreateIntensityMask(Bitmap bSurface, List<PlacePixel> aHeatPoints, ulong time)
+        [Command("usertest")]
+        public async Task UserTest()
         {
-            // Create new graphics surface from memory bitmap
-            Graphics DrawSurface = Graphics.FromImage(bSurface);
-            // Set background color to white so that pixels can be correctly colorized
-            DrawSurface.Clear(System.Drawing.Color.White);
-            // Traverse heat point data and draw masks for each heat point
-            foreach (PlacePixel DataPoint in aHeatPoints)
+            PlaceDBManager dbManager = PlaceDBManager.Instance();
+
+            UserIdInfos = dbManager.GetPlaceUserIds();
+
+            string text = "";
+            foreach (var item in UserIdInfos)
             {
-                // Render current heat point on draw surface
-                DrawHeatPoint(DrawSurface, DataPoint, 2, time);
+                text += $"{item.Key}|{item.Value}" + Environment.NewLine;
+
+                if (text.Length > 1900)
+                {
+                    await Context.Channel.SendMessageAsync(text, false);
+                    text = "";
+                }
             }
-            return bSurface;
-        }
-        private void DrawHeatPoint(Graphics Canvas, PlacePixel HeatPoint, int Radius, ulong time)
-        {
-            // Create points generic list of points to hold circumference points
-            List<System.Drawing.Point> CircumferencePointsList = new List<System.Drawing.Point>();
-            // Create an empty point to predefine the point struct used in the circumference loop
-            System.Drawing.Point CircumferencePoint;
-            // Create an empty array that will be populated with points from the generic list
-            System.Drawing.Point[] CircumferencePointsArray;
-            // Calculate ratio to scale byte intensity range from 0-255 to 0-1
-            float fRatio = 1F / Byte.MaxValue;
-            // Precalulate half of byte max value
-            byte bHalf = Byte.MaxValue / 2;
-            // Flip intensity on it's center value from low-high to high-low
-            int iIntensity = (byte)(HeatPoint.Intensity(time) - ((HeatPoint.Intensity(time) - bHalf) * 2));
-            // Store scaled and flipped intensity value for use with gradient center location
-            float fIntensity = iIntensity * fRatio;
-            // Loop through all angles of a circle
-            // Define loop variable as a double to prevent casting in each iteration
-            // Iterate through loop on 10 degree deltas, this can change to improve performance
-            for (double i = 0; i <= 360; i += 10)
-            {
-                // Replace last iteration point with new empty point struct
-                CircumferencePoint = new System.Drawing.Point();
-                // Plot new point on the circumference of a circle of the defined radius
-                // Using the point coordinates, radius, and angle
-                // Calculate the position of this iterations point on the circle
-                CircumferencePoint.X = Convert.ToInt32(HeatPoint.XPos + Radius * Math.Cos(ConvertDegreesToRadians(i)));
-                CircumferencePoint.Y = Convert.ToInt32(HeatPoint.YPos + Radius * Math.Sin(ConvertDegreesToRadians(i)));
-                // Add newly plotted circumference point to generic point list
-                CircumferencePointsList.Add(CircumferencePoint);
-            }
-            // Populate empty points system array from generic points array list
-            // Do this to satisfy the datatype of the PathGradientBrush and FillPolygon methods
-            CircumferencePointsArray = CircumferencePointsList.ToArray();
-            // Create new PathGradientBrush to create a radial gradient using the circumference points
-            PathGradientBrush GradientShaper = new PathGradientBrush(CircumferencePointsArray);
-            // Create new color blend to tell the PathGradientBrush what colors to use and where to put them
-            ColorBlend GradientSpecifications = new ColorBlend(3);
-            // Define positions of gradient colors, use intesity to adjust the middle color to
-            // show more mask or less mask
-            GradientSpecifications.Positions = new float[3] { 0, fIntensity, 1 };
-            // Define gradient colors and their alpha values, adjust alpha of gradient colors to match intensity
-            GradientSpecifications.Colors = new System.Drawing.Color[3]
-            {
-                System.Drawing.Color.FromArgb(0, System.Drawing.Color.White),
-                System.Drawing.Color.FromArgb(HeatPoint.Intensity(time), System.Drawing.Color.Black),
-                System.Drawing.Color.FromArgb(HeatPoint.Intensity(time), System.Drawing.Color.Black)
-            };
-            // Pass off color blend to PathGradientBrush to instruct it how to generate the gradient
-            GradientShaper.InterpolationColors = GradientSpecifications;
-            // Draw polygon (circle) using our point array and gradient brush
-            Canvas.FillPolygon(GradientShaper, CircumferencePointsArray);
-        }
-        private static ColorMap[] CreatePaletteIndex(byte Alpha)
-        {
-            ColorMap[] OutputMap = new ColorMap[256];
-            // Change this path to wherever you saved the palette image.
-            Bitmap Palette = (Bitmap)Bitmap.FromFile(@"C:\Github\BattleRush\ETH-DINFK-Bot\ETHDINFKBot\bin\Debug\net5.0\Images\intensity-mask.jpg");
-            // Loop through each pixel and create a new color mapping
-            for (int X = 0; X <= 255; X++)
-            {
-                OutputMap[X] = new ColorMap();
-                OutputMap[X].OldColor = System.Drawing.Color.FromArgb(X, X, X);
-                OutputMap[X].NewColor = System.Drawing.Color.FromArgb(Alpha, Palette.GetPixel(X, 0));
-            }
-            return OutputMap;
-        }
-        public static Bitmap Colorize(Bitmap Mask, byte Alpha)
-        {
-            // Create new bitmap to act as a work surface for the colorization process
-            Bitmap Output = new Bitmap(Mask.Width, Mask.Height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-            // Create a graphics object from our memory bitmap so we can draw on it and clear it's drawing surface
-            Graphics Surface = Graphics.FromImage(Output);
-            Surface.Clear(System.Drawing.Color.Transparent);
-            // Build an array of color mappings to remap our greyscale mask to full color
-            // Accept an alpha byte to specify the transparancy of the output image
-            ColorMap[] Colors = CreatePaletteIndex(Alpha);
-            // Create new image attributes class to handle the color remappings
-            // Inject our color map array to instruct the image attributes class how to do the colorization
-            ImageAttributes Remapper = new ImageAttributes();
-            Remapper.SetRemapTable(Colors);
-            // Draw our mask onto our memory bitmap work surface using the new color mapping scheme
-            Surface.DrawImage(Mask, new System.Drawing.Rectangle(0, 0, Mask.Width, Mask.Height), 0, 0, Mask.Width, Mask.Height, GraphicsUnit.Pixel, Remapper);
-            // Send back newly colorized memory bitmap
-            return Output;
-        }
-        private double ConvertDegreesToRadians(double degrees)
-        {
-            double radians = (Math.PI / 180) * degrees;
-            return (radians);
+
+            await Context.Channel.SendMessageAsync(text, false);
         }
 
-        [Command("test")]
-        public async Task test()
+        [Command("genchunk")]
+        public async Task GenerateChunks()
         {
-            return;
-            PlaceBoard board = new PlaceBoard();
+            var author = Context.Message.Author;
+            if (author.Id != ETHDINFKBot.Program.Owner)
+            {
+                Context.Channel.SendMessageAsync("You aren't allowed to run this command.", false);
+                return;
+            }
+
+            var chunkFolder = Path.Combine(Program.BasePath, "TimelapseChunks");
+
+            if (!Directory.Exists(chunkFolder))
+                Directory.CreateDirectory(chunkFolder);
+
 
             PlaceDBManager dbManager = PlaceDBManager.Instance();
-            var pixelHistory = dbManager.GetBoardHistory(null).OrderBy(i => i.SnowflakeTimePlaced);
 
-            int secs = 80;
-            int imagesPerSec = 60; // 60fps?
+            UserIdInfos = dbManager.GetPlaceUserIds();
 
-            int frames = secs * imagesPerSec;
+            int size = 100_000;
 
-            ulong step = (pixelHistory.Last().SnowflakeTimePlaced - pixelHistory.First().SnowflakeTimePlaced) / (ulong)frames;
+            var totalPixelsPlaced = dbManager.GetBoardHistoryCount();
+            await Context.Channel.SendMessageAsync($"Total pixels to load {totalPixelsPlaced.ToString("N0")}", false);
 
-            ulong last = 0;
+            short chunkId = 0;
 
-
-            int frameCounter = 0;
-
-
-            if (!LoadedLib)
+            for (int i = 0; i < totalPixelsPlaced; i += size)
             {
-                // TODO dont hardcode
-                FFmpegLoader.FFmpegPath = @"C:\Github\BattleRush\ETH-DINFK-Bot\ETHDINFKBot\bin\Debug\net5.0\ffmpeg\x86_64";
-            }
-            LoadedLib = true;
+                chunkId++;
 
-            // You can set there codec, bitrate, frame rate and many other options.
-            var settings = new VideoEncoderSettings(width: 1000, height: 1000, framerate: imagesPerSec, codec: VideoCodec.H264);
-            settings.EncoderPreset = EncoderPreset.Fast;
+                // check if this chunk is fully done yet
+                if (i + size > totalPixelsPlaced)
+                    break;
 
-            settings.CRF = 17;
-            using (var file = MediaBuilder.CreateContainer(Path.Combine(Directory.GetCurrentDirectory(), "TimelapseOutput", "heatmap.mp4")).WithVideo(settings).Create())
-            {
-                try
+                string file = $"Chunk_{chunkId}.dat";
+                string filePath = Path.Combine(chunkFolder, file);
+
+                if (File.Exists(filePath))
+                    continue; // this chunk has been generated to disk already
+
+                byte[] data = new byte[3 + size * 12];
+                data[0] = (byte)MessageEnum.GetChunk_Response; // id of response
+
+                // Chunk identifier
+                byte[] chunkIdBytes = BitConverter.GetBytes(chunkId);
+                data[1] = chunkIdBytes[0];
+                data[2] = chunkIdBytes[1];
+
+
+
+                // 1 entry 12 bytes -> chunk size = 1.2MB
+
+                // Repeating rel pos
+                // 0-3 | ID (int32)
+                // 4-5 | XPos (int16)
+                // 6-7 | XPos (int16)
+                // 8 | R color (byte)
+                // 9 | G color (byte)
+                // 10 | B color (byte)
+                // 11 | UserId (byte) 
+
+                // TODO Optimizations
+                // Store x/y in 10 bits each (-1.5 bytes)
+                // do aux table for users and store them in 1 byte instead of 8 bytes (-7 bytes)
+                // add custom timestamp (in seconds to save even more space) (+3/4 bytes)
+
+                int counter = 3;
+
+                var pixelHistory = dbManager.GetBoardHistory(i, size);
+
+                foreach (var item in pixelHistory)
                 {
-                    // Create new memory bitmap the same size as the picture box
-                    Bitmap bMap = new Bitmap(1000, 1000, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+                    byte[] idBytes = BitConverter.GetBytes(item.PlaceBoardHistoryId);
 
-                    var frame = CreateIntensityMask(bMap, board.Pixels, last);
-                    frame = Colorize(frame, 255);
-                    //var frame2 = CopyAndDrawOnBitmap(frame, "", 0, 0, new System.Drawing.Size(1000, 1000));
+                    byte[] xBytes = BitConverter.GetBytes(item.XPos);
+                    byte[] yBytes = BitConverter.GetBytes(item.YPos);
 
-                    file.Video.AddFrame(ToImageData(frame));
+                    data[counter] = idBytes[0];
+                    data[counter + 1] = idBytes[1];
+                    data[counter + 2] = idBytes[2];
+                    data[counter + 3] = idBytes[3];
+                    counter += 4;
 
+                    data[counter] = xBytes[0];
+                    data[counter + 1] = xBytes[1];
+                    data[counter + 2] = yBytes[0];
+                    data[counter + 3] = yBytes[1];
+                    counter += 4;
 
+                    data[counter] = item.R;
+                    data[counter + 1] = item.G;
+                    data[counter + 2] = item.B;
+                    counter += 3;
 
+                    // get user id (limited currently to 255)
+                    data[counter] = UserIdInfos[item.DiscordUserId];
 
-                    //board.Bitmap.Save(Path.Combine("Timelapse", $"{fileName}{frameCounter.ToString("D6")}.png"));
-                    //frameCounter++;
-
-
-                    foreach (var history in pixelHistory)
-                    {
-
-
-                        var color = System.Drawing.Color.FromArgb(history.R, history.G, history.B);
-                        //board.Bitmap.SetPixel(history.XPos - x, history.YPos - y, color);
-
-                        board.AddPixel(history);
-
-
-                        if (last + step < history.SnowflakeTimePlaced)
-                        {
-                            // generate a new frame
-                            last = history.SnowflakeTimePlaced;
-
-                            bMap = new Bitmap(1000, 1000, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-
-                            frame = CreateIntensityMask(bMap, board.Pixels, last);
-                            frame = Colorize(frame, 255);
-                            //var frame2 = CopyAndDrawOnBitmap(frame, "", 0, 0, new System.Drawing.Size(1000, 1000));
-
-                            file.Video.AddFrame(ToImageData(frame));
-
-
-
-
-                            //board.Graphics.DrawString($"{SnowflakeUtils.FromSnowflake(last).ToString()}", font, brush, new System.Drawing.Point(40, 40));
-
-
-                            //board.Bitmap.Save(Path.Combine("Timelapse", $"{fileName}{frameCounter.ToString("D6")}.png"));
-                            frameCounter++;
-                        }
-                    }
-
-
-                    //text = $"{SnowflakeUtils.FromSnowflake(last).ToString("yyyy-MM-dd HH:mm:ss")} PixelsPlaced: {pixelCount.ToString("N0")} Users participated: {users.Count.ToString("N0")}";
-
-                    //frame = CopyAndDrawOnBitmap(board.Bitmap, text, 10, boardSize.Height - textPadding + 5, boardSize);
-
-                    // still image for 2 sec 
-                    //for (int i = 0; i < imagesPerSec * 2; i++)
-                    //{
-                    //    file.Video.AddFrame(ToImageData(frame));
-                    //}
-
-
-
-                    //board.Graphics.DrawString($"{SnowflakeUtils.FromSnowflake(last).ToString()}", font, brush, new System.Drawing.Point(40, 40));
-
-
-                    // just the final image
-                    //board.Bitmap.Save(Path.Combine("Timelapse", $"{fileName}{frameCounter.ToString("D6")}.png"));
-                    frameCounter++;
-
-                }
-                catch (Exception ex)
-                {
-
+                    counter += 1;
                 }
 
+
+                await Context.Channel.SendMessageAsync($"Saved {file}", false);
+                File.WriteAllBytes(filePath, data);
             }
 
+            await Context.Channel.SendMessageAsync($"Done", false);
         }
-
-        // END HEATMAP BUT ITS WAY TO SLOW
-
 
         [Command("help")]
         public async Task Help()
@@ -403,7 +326,8 @@ namespace ETHDINFKBot.Modules
             //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
             builder.WithDescription(@"Rules: There are none. However everything that is forbidden by the serverrules, is also forbidden to 'draw' on the board.
 
-If you violate the server rules your pixels will be removed.");
+If you violate the server rules your pixels will be removed.
+**LIVE Website: http://ethplace.spclr.ch:81/**");
             builder.WithColor(0, 255, 0);
 
             //builder.WithThumbnailUrl("https://avatars0.githubusercontent.com/u/11750584");
@@ -414,10 +338,7 @@ If you violate the server rules your pixels will be removed.");
                 ".place remove <userId> <x> <y> <xSize> <ySize> [<minutes>|1440]```");
 
             builder.AddField("Pixel verify (sends a 100x100 image for pixel verification) (45 sec cooldown)", "```.place pixelverify <x> <y>```");
-            builder.AddField("Timelapse (admin only for size > 250) (DISABLED UNTIL FFMPEG WORKS xD)", "```.place timelapse (admin only)" + Environment.NewLine +
-                ".place timelapse {<@user>} (admin only)" + Environment.NewLine +
-                ".place timelapse <x> <y> <size>" + Environment.NewLine +
-                ".place timelapse <x> <y> <size> {<@user>} ```");
+            builder.AddField("Timelapse (Web View only)", "http://ethplace.spclr.ch:81/");
             builder.AddField("View full board (May contain outdated cache status)", "```.place view [(admin only) <force_load>]```");
             builder.AddField("Pixel history of a pixel/all", "```.place history <x> <y>" + Environment.NewLine +
                 ".place history all```");
@@ -426,7 +347,7 @@ If you violate the server rules your pixels will be removed.");
                 ".place grid <x> <y> <size>```");
 
             builder.AddField("Set single pixel", "```.place setpixel <x> <y> #<hex_color>```");
-            builder.AddField("Set multiple pixel (user only) Min. 10", "```.place setmultiplepixels {<x> <y> #<hex_color>[|]}```");
+            builder.AddField("Set multiple pixel (user only) Min: 10 Max: 3'600", "```.place setmultiplepixels {<x> <y> #<hex_color>[|]}```");
 
             builder.WithThumbnailUrl(ownerUser.GetAvatarUrl());
             builder.WithAuthor(ownerUser);
@@ -533,9 +454,9 @@ If you violate the server rules your pixels will be removed.");
         {
             int padding = 50;
 
-            if (x + size > 1000 || y + size > 1000 || x < 0 || y < 0 || size < 50 || size > 1000)
+            if (size < 50 || size > 1000 || CurrentPlaceBitmap == null)
             {
-                await Context.Channel.SendMessageAsync("Size can only be between 50 and 1000 or out of bounds.");
+                await Context.Channel.SendMessageAsync("Size can only be between 50 and 1000 or CurrentPlaceBitmap is null");
                 return;
             }
 
@@ -552,9 +473,9 @@ If you violate the server rules your pixels will be removed.");
             int step = size / 10;
 
 
-            List<PlaceBoardPixel> boardPixels;
+            //List<PlaceBoardPixel> boardPixels;
 
-            if (LastRefresh.Add(TimeSpan.FromMinutes(10)) > DateTime.Now)
+            /*if (LastRefresh.Add(TimeSpan.FromMinutes(10)) > DateTime.Now)
             {
                 // cache is still new
                 boardPixels = PixelsCache;
@@ -566,10 +487,41 @@ If you violate the server rules your pixels will be removed.");
                 boardPixels = dbManager.GetCurrentImage();
                 PixelsCache = boardPixels;
                 LastRefresh = DateTime.Now;
+            }*/
+
+            // do 25 lines
+            RefreshBoard(25);
+
+            List<PlaceBoardPixel> boardPixels = new List<PlaceBoardPixel>();
+            // workaround for now to replace quicker the db load TODO Rework
+            for (int i = 0; i < size; i++)
+            {
+                for (int j = 0; j < size; j++)
+                {
+                    short xNow = (short)(x + i);
+                    short yNow = (short)(y + j);
+
+                    if (xNow < 0 || yNow < 0 || xNow >= 1000 || yNow >= 1000)
+                    {
+                        continue;
+                    }
+
+                    var color = CurrentPlaceBitmap.GetPixel(xNow, yNow);
+
+                    boardPixels.Add(new PlaceBoardPixel()
+                    {
+                        XPos = xNow,
+                        YPos = yNow,
+                        R = color.R,
+                        G = color.G,
+                        B = color.B
+                    });
+                }
             }
 
-            boardPixels = boardPixels.Where(i => i.XPos >= x && i.XPos < x + size && i.YPos >= y && i.YPos < y + size).ToList();
-            boardPixels = boardPixels.OrderBy(i => i.XPos).OrderBy(i => i.YPos).ToList();
+
+            //boardPixels = boardPixels.Where(i => i.XPos >= x && i.XPos < x + size && i.YPos >= y && i.YPos < y + size).ToList();
+            //boardPixels = boardPixels.OrderBy(i => i.XPos).OrderBy(i => i.YPos).ToList();
 
             var board = DrawingHelper.GetEmptyGraphics(boardSize + padding * 2, boardSize + padding * 2);
             watch.Stop();
@@ -587,6 +539,27 @@ If you violate the server rules your pixels will be removed.");
             var pen = DrawingHelper.Pen_White;
             var font = DrawingHelper.LargerTextFont;
             var brush = DrawingHelper.SolidBrush_White;
+
+            try
+            {
+                if (x < 0 || y < 0 || x + size >= 1000 || y + size >= 1000)
+                {
+                    for (int i = 0; i < boardSize; i++)
+                    {
+                        for (int j = 0; j < boardSize; j++)
+                        {
+                            if ((i + j) % 20 < 5)
+                            {
+                                board.Bitmap.SetPixel(padding + i, padding + j, redColor);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
 
             foreach (var pixel in boardPixels)
             {
@@ -619,6 +592,7 @@ If you violate the server rules your pixels will be removed.");
 
                         if (yZero % step == 0 || pixel.YPos == y + size - 1)
                         {
+                            // TODO on out of bounce this doesnt show
 
                             board.Bitmap.SetPixel(padding + (pixel.XPos - x) * pixelSize + i, padding + (pixel.YPos - y) * pixelSize + j, redColor);
 
@@ -630,11 +604,8 @@ If you violate the server rules your pixels will be removed.");
                                 minYText = yZero;
                             }
                         }
-
                     }
                 }
-
-
             }
             watch.Stop();
 
@@ -890,6 +861,52 @@ If you violate the server rules your pixels will be removed.");
             Console.WriteLine(message);
         }
 
+
+
+        private static bool Refreshing = false;
+
+
+
+        private void RefreshBoard(int ySize)
+        {
+            // use lock and stuff but lazy to do it properly haha xD and the db is dying atm (just for future myself)
+            if (Refreshing)
+                return;
+
+            if (IsPlaceLocked())
+                return; // no db stuff when place locked and also totaly not to make sure the bitmap is empty hehe :/
+
+            PlaceDBManager dbManager = PlaceDBManager.Instance();
+            try
+            {
+                Refreshing = true;
+
+                int from = LastYRefreshed;
+                int until = LastYRefreshed + ySize;
+
+                var pixels = dbManager.GetImageByYLines(from, until);
+
+                foreach (var pixel in pixels)
+                    CurrentPlaceBitmap.SetPixel(pixel.XPos, pixel.YPos, System.Drawing.Color.FromArgb(pixel.R, pixel.G, pixel.B));
+
+                LastYRefreshed = until;
+                if (LastYRefreshed > 999)
+                    LastYRefreshed = 0;
+            }
+            catch (Exception ex)
+            {
+
+            }
+            finally
+            {
+                Refreshing = false;
+            }
+        }
+
+
+
+        public static Dictionary<ulong, DateTimeOffset> ViewTimeout = new Dictionary<ulong, DateTimeOffset>();
+
         [Command("view")]
         public async Task ViewBoard(bool forceReload = false)
         {
@@ -902,54 +919,75 @@ If you violate the server rules your pixels will be removed.");
                     return;
                 }
 
+                ulong userId = Context.Message.Author.Id;
+
+                // Verify if the current user is locked
+                if (ViewTimeout.ContainsKey(userId) && ViewTimeout[userId] > DateTime.UtcNow)
+                {
+                    //if (new Random().Next(0, 2) % 2 == 0)
+                    Context.Channel.SendMessageAsync($"Still in timeout for {Math.Round((ViewTimeout[userId] - DateTime.UtcNow).TotalSeconds, 3)} seconds");
+
+                    return;
+                }
+
+                var blockUntil = DateTime.UtcNow.AddSeconds(15);
+
+                if (ViewTimeout.ContainsKey(userId))
+                    ViewTimeout[userId] = blockUntil;
+                else
+                    ViewTimeout.Add(userId, blockUntil);
+
 
                 long msDbTime = -1;
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
 
-                PlaceDBManager dbManager = PlaceDBManager.Instance();
+                //PlaceDBManager dbManager = PlaceDBManager.Instance();
 
                 List<PlaceBoardPixel> boardPixels;
 
-                if (LastRefresh.Add(TimeSpan.FromMinutes(10)) > DateTime.Now && !forceReload)
+                RefreshBoard(50);
+
+                // old system overload the db often too much
+                /*if (LastRefresh.Add(TimeSpan.FromMinutes(10)) > DateTime.Now && !forceReload)
                 {
                     // cache is still new
                     boardPixels = PixelsCache;
                 }
                 else
                 {
+                    Refreshing = true;
+                    LastRefresh = DateTime.Now;
                     Context.Channel.SendMessageAsync("Cache miss. It will take a few seconds to refresh and generate.");
+                    // reset old cache
+                    PixelsCache = new List<PlaceBoardPixel>();
 
                     boardPixels = dbManager.GetCurrentImage();
-                    PixelsCache = boardPixels;
-                    LastRefresh = DateTime.Now;
-                }
+                    PixelsCache = boardPixels; 
+                    Refreshing = false;
+                }*/
 
                 watch.Stop();
 
                 msDbTime = watch.ElapsedMilliseconds;
-
+                /*
                 watch.Restart();
 
-                watch.Restart();
                 var board = DrawingHelper.GetEmptyGraphics(1000, 1000);
 
-                int size = boardPixels.Count;
-                var array = new PlaceBoardPixel[size];
-
-                boardPixels.CopyTo(0, array, 0, size);
-
-                foreach (var pixel in array)
+                for (int i = 0; i < boardPixels.Count; i++)
                 {
+                    var pixel = boardPixels[i];
                     var color = System.Drawing.Color.FromArgb(pixel.R, pixel.G, pixel.B);
                     board.Bitmap.SetPixel(pixel.XPos, pixel.YPos, color);
                 }
 
-                watch.Stop();
+                watch.Stop();*/
 
                 // TODO Dispose stuff
-                var stream = CommonHelper.GetStream(board.Bitmap);
-                await Context.Channel.SendFileAsync(stream, "place.png", $"DB Time: {msDbTime}ms Draw Time: {watch.ElapsedMilliseconds}ms");
+                var stream = CommonHelper.GetStream(CurrentPlaceBitmap);
+                //await Context.Channel.SendFileAsync(stream, "place.png", $"DB Time: {msDbTime}ms Draw Time: {watch.ElapsedMilliseconds}ms");
+                await Context.Channel.SendFileAsync(stream, "place.png", $"DB Time: {msDbTime}ms Web Viewer: http://ethplace.spclr.ch:81/ (dev)");
             }
             catch (Exception ex)
             {
@@ -1032,14 +1070,36 @@ If you violate the server rules your pixels will be removed.");
             await Context.Message.Channel.SendMessageAsync($"DB Time: {watch.ElapsedMilliseconds}ms", false, builder.Build());
         }
 
+        public static Dictionary<ulong, DateTimeOffset> ZoomTimeout = new Dictionary<ulong, DateTimeOffset>();
+
+
+        // TODO move maybe to bitmap image
+
         [Command("zoom")]
-        public async Task ZoomIntoTheBoard(int x, int y, int size = 1000)
+        public async Task ZoomIntoTheBoard(int x, int y, int size = 100)
         {
-            if (size > 500 || size < 10)
+            if (size > 250 || size < 10)
             {
-                await Context.Channel.SendMessageAsync("Size can only be between 10 and 500");
+                await Context.Channel.SendMessageAsync("Size can only be between 10 and 250");
                 return;
             }
+            ulong userId = Context.Message.Author.Id;
+
+            // Verify if the current user is locked
+            if (ZoomTimeout.ContainsKey(userId) && ZoomTimeout[userId] > DateTime.UtcNow)
+            {
+                //if (new Random().Next(0, 2) % 2 == 0)
+                Context.Channel.SendMessageAsync($"Still in timeout for {Math.Round((ZoomTimeout[userId] - DateTime.UtcNow).TotalSeconds, 3)} seconds");
+
+                return;
+            }
+
+            var blockUntil = DateTime.UtcNow.AddSeconds(size / 25); // 1 per second
+
+            if (ZoomTimeout.ContainsKey(userId))
+                ZoomTimeout[userId] = blockUntil;
+            else
+                ZoomTimeout.Add(userId, blockUntil);
 
             long msDbTime = -1;
 
@@ -1133,11 +1193,12 @@ If you violate the server rules your pixels will be removed.");
                 return;
             }
 
-            // prevent people placing multipixels from placing single pixels
-            if (!Context.Message.Author.IsBot)
-            {
-                ulong userId = Context.Message.Author.Id;
+            var isBot = Context.Message.Author.IsBot;
+            ulong userId = Context.Message.Author.Id;
 
+            // prevent people placing multipixels from placing single pixels
+            if (!isBot)
+            {
                 // Verify if the current user is locked
                 if (MultiPlacement.ContainsKey(userId) && MultiPlacement[userId] > DateTime.UtcNow)
                 {
@@ -1155,16 +1216,23 @@ If you violate the server rules your pixels will be removed.");
 
             PlaceDBManager dbManager = PlaceDBManager.Instance();
 
-            if (LastStatusRefresh.Add(TimeSpan.FromSeconds(30)) < DateTime.Now)
+            if (LastStatusRefresh.Add(TimeSpan.FromSeconds(60)) < DateTime.Now)
             {
                 LastStatusRefresh = DateTime.Now;
                 var totalPixelsPlaced = dbManager.GetBoardHistoryCount();
                 await Program.Client.SetGameAsync($"{totalPixelsPlaced:N0} pixels", null, ActivityType.Watching);
+                RefreshBoard(10);
+
+                //if (DateTime.Now.Minute == 0)
+                //{
+                // refresh the db users incase any new
+                UserIdInfos = dbManager.GetPlaceUserIds();
+                //}
             }
 
-            var successfull = dbManager.PlacePixel(x, y, color.R, color.G, color.B, Context.Message.Author.Id);
+            var successfull = dbManager.PlacePixel(x, y, color, userId);
 
-            if (!Context.Message.Author.IsBot && successfull)
+            if (!isBot && successfull)
             {
                 Context.Channel.SendMessageAsync($"Placed {color.R}.{color.G}.{color.B} on X: {x} Y: {y}");
             }
@@ -1175,7 +1243,7 @@ If you violate the server rules your pixels will be removed.");
         public static DateTime LastStatusRefresh = DateTime.MinValue;
 
         [Command("setmultiplepixels")]
-        public async Task PlaceMultipleColor([Remainder] string input)
+        public async Task PlaceMultipleColor([Remainder] string input = "")
         {
             if (IsPlaceLocked() || Context.Message.Author.IsBot)
             {
@@ -1208,6 +1276,30 @@ If you violate the server rules your pixels will be removed.");
                     return;
                 }
 
+                var attachments = Context.Message.Attachments;
+
+                if (attachments.Count == 1)
+                {
+                    var firstAttachment = attachments.First();
+
+                    using (var client = new WebClient())
+                    {
+                        byte[] buffer = client.DownloadData(firstAttachment.Url);
+
+                        string download = Encoding.UTF8.GetString(buffer);
+
+                        if (download.Contains('|'))
+                        {
+                            int lines = download.Split('|').Count();
+
+                            // only if attachment has min 10 lines then use it
+                            if (lines > 10)
+                                input = download;
+                        }
+                    }
+                }
+
+
                 input = input.Trim();
 
                 List<string> instructions = input.Split('|', StringSplitOptions.RemoveEmptyEntries).ToList();
@@ -1215,7 +1307,13 @@ If you violate the server rules your pixels will be removed.");
                 if (instructions.Count < 10)
                 {
                     // reject if less than 10 instructions queued
-                    //Context.Channel.SendMessageAsync($"REJECTED TOO_FEW {userId}");
+                    Context.Channel.SendMessageAsync($"REJECTED TOO_FEW {userId}");
+                    return;
+                }
+
+                if (instructions.Count > 3_600)
+                {
+                    Context.Channel.SendMessageAsync($"REJECTED TOO_MANY {userId}");
                     return;
                 }
 
@@ -1226,7 +1324,7 @@ If you violate the server rules your pixels will be removed.");
                 else
                     MultiPlacement.Add(userId, blockUntil);
 
-                Context.Channel.SendMessageAsync($"ACCEPTED <@{userId}>");
+                Context.Channel.SendMessageAsync($"ACCEPTED {instructions.Count} <@{userId}>");
                 foreach (var item in instructions)
                 {
                     var delay = Task.Delay(1000);
@@ -1237,7 +1335,7 @@ If you violate the server rules your pixels will be removed.");
 
                     System.Drawing.Color color = ColorTranslator.FromHtml(commands[2]);
 
-                    dbManager.PlacePixel(x, y, color.R, color.G, color.B, Context.Message.Author.Id);
+                    dbManager.PlacePixel(x, y, color, Context.Message.Author.Id);
 
                     await delay; // ensure 1 placement / sec
                 }

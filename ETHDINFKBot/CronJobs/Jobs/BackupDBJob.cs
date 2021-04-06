@@ -39,7 +39,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
         public override Task DoWork(CancellationToken cancellationToken)
         {
             _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
-            Console.WriteLine("Run");
+            Console.WriteLine("Run BACKUP");
 
             var dbBackupPath = Path.Combine(Program.BasePath, "Database", "Backup", $"ETHBot_Job_{DateTime.Now.ToString("yyyyMMdd_HHmmss")}.db");
 

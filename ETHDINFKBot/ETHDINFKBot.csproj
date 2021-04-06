@@ -39,6 +39,7 @@
     <PackageReference Include="System.Drawing.Common" Version="5.0.1" />
     <PackageReference Include="TheMulti0.DuckSharp" Version="1.0.2" />
     <PackageReference Include="TimeZoneConverter" Version="3.4.0" />
+    <PackageReference Include="websocketsharp.core" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>

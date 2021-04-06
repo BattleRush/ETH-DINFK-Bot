@@ -66,7 +66,8 @@ namespace ETHDINFKBot.Helpers
         public static Stream GetStream(Bitmap bitmap)
         {
             Stream ms = new MemoryStream();
-            bitmap.Save(ms, ImageFormat.Png);
+            if(bitmap != null)
+                bitmap.Save(ms, ImageFormat.Png);
             ms.Position = 0;
 
             return ms;

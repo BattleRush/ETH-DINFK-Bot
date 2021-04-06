@@ -1226,6 +1226,7 @@ namespace ETHDINFKBot
                         context.SaveChanges();
                     }
 
+
                     var emojiStat = context.DiscordEmoteStatistics.SingleOrDefault(i => i.DiscordEmoteId == emote.DiscordEmoteId);
                     if (emojiStat == null)
                     {

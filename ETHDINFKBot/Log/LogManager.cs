@@ -104,6 +104,20 @@ namespace ETHDINFKBot.Log
                         LocalPath = null
                     };
 
+                    if (emote.Value == 10 && tag.Value?.Id == 747783377146347590)
+                    {
+                        var guildUser = (fromUser as IGuildUser);
+                        ulong caveBobGang = 824425544333656104;
+
+                        if (!guildUser.RoleIds.Contains(caveBobGang))
+                        {
+                            var role = guildUser.Guild.Roles.FirstOrDefault(x => x.Id == caveBobGang);
+
+                            // cavebob gang role
+                            await guildUser.AddRoleAsync(role);
+                        }
+                    }
+
                     DatabaseManager.ProcessDiscordEmote(stat, discordMessageId, emote.Value, false, fromUser, isPreload);
                 }
 
@@ -159,16 +173,14 @@ namespace ETHDINFKBot.Log
                 {
                     DatabaseManager.AddPingStatistic(pingInfo.Key, pingInfo.Value, fromUser);
                     var dbMessage = DatabaseManager.GetDiscordMessageById(discordMessageId);
-                    if (dbMessage != null)
+
+                    DatabaseManager.CreatePingHistory(new PingHistory()
                     {
-                        DatabaseManager.CreatePingHistory(new PingHistory()
-                        {
-                            MessageId = discordMessageId,
-                            DiscordRoleId = null,
-                            DiscordUserId = pingInfo.Key,
-                            FromDiscordUserId = fromUser.Id
-                        });
-                    }
+                        MessageId = dbMessage != null ? discordMessageId : null,
+                        DiscordRoleId = null,
+                        DiscordUserId = pingInfo.Key,
+                        FromDiscordUserId = fromUser.Id
+                    });
                 }
 
                 // most of the older roles probably dont exist -> TODO check if they dont exist and then ignore
@@ -184,16 +196,14 @@ namespace ETHDINFKBot.Log
                         }
 
                         var dbMessage = DatabaseManager.GetDiscordMessageById(discordMessageId);
-                        if (dbMessage != null)
+                        DatabaseManager.CreatePingHistory(new PingHistory()
                         {
-                            DatabaseManager.CreatePingHistory(new PingHistory()
-                            {
-                                MessageId = discordMessageId,
-                                DiscordRoleId = role.Key,
-                                DiscordUserId = null,
-                                FromDiscordUserId = fromUser.Id
-                            });
-                        }
+                            MessageId = dbMessage != null ? discordMessageId : null,
+                            DiscordRoleId = role.Key,
+                            DiscordUserId = null,
+                            FromDiscordUserId = fromUser.Id
+                        });
+
                     }
                 }
 
