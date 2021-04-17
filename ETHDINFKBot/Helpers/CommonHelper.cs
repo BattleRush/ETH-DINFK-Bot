@@ -177,6 +177,7 @@ namespace ETHDINFKBot.Helpers
                         string lastPrev = last;
                         foreach (var post in posts)
                         {
+                            await Task.Delay(25);
                             if (post.Created < lastTime && !subManager.SubredditInfo.ReachedOldest)
                             {
                                 last = post.Fullname;

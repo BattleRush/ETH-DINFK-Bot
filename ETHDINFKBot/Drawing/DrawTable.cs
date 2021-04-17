@@ -204,8 +204,6 @@ namespace ETHDINFKBot.Drawing
             string cellWithInfo = "normal" + cellWidth + " " + string.Join(", ", widths);
 
             //await Context.Channel.SendMessageAsync(cellWithInfo, false, null, null, null, new Discord.MessageReference(Context.Message.Id));
-
-
             currentHeight += DrawRow(Graphics, Header, padding, currentHeight, widths);
 
             int failedDrawLineCount = 0;
@@ -252,22 +250,13 @@ namespace ETHDINFKBot.Drawing
                 DrawingHelper.SolidBrush_Yellow, 
                 new Point(padding, currentHeight + padding));
 
-
-
-
             //List<int> rowHeight = new List<int>();
-
             //Rectangle DestinationRectangle = new Rectangle(10, 10, cellWidth, 500);
 
-
             //var size = Graphics.MeasureCharacterRanges("", drawFont2, DestinationRectangle, null);
-
             //Graphics.DrawString($"{(int)((maxValue / yNum) * i)}", drawFont2, b, new Point(40, 10 + ySize - (ySize / yNum) * i));
 
-
-            Bitmap = cropImage(Bitmap, new Rectangle(0, 0, 1920, currentHeight + padding * 3));
-
-
+            Bitmap = CropImage(Bitmap, new Rectangle(0, 0, 1920, currentHeight + padding * 3));
 
             var stream = CommonHelper.GetStream(Bitmap);
             Bitmap.Dispose();
@@ -275,12 +264,10 @@ namespace ETHDINFKBot.Drawing
             return stream;
         }
 
-        private static Bitmap cropImage(Bitmap bmpImage, Rectangle cropArea)
+        private static Bitmap CropImage(Bitmap bmpImage, Rectangle cropArea)
         {
             return bmpImage.Clone(cropArea, bmpImage.PixelFormat);
         }
-
-
         // end drawing
     }
 }

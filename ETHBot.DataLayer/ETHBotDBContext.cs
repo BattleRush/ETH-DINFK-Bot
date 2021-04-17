@@ -79,10 +79,13 @@ namespace ETHBot.DataLayer
 
 
         // ETH Place
-
         public DbSet<PlaceBoardPixel> PlaceBoardPixels { get; set; }
-
         public DbSet<PlaceBoardHistory> PlaceBoardHistory { get; set; }
+        public DbSet<PlacePerformanceInfo> PlacePerformanceInfos { get; set; }
+
+
+
+        public DbSet<BotStartUpTime> BotStartUpTimes { get; set; }
 
         /*
 

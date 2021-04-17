@@ -49,23 +49,36 @@ To get the diagram type: '.sql table info'");
             builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
             builder.WithCurrentTimestamp();
 
-            int totalRows = 0;
+            long totalRows = 0;
+
+            List<string> largeTables = new List<string>()
+            {
+                "RedditPosts",
+                "RedditImages",
+                "PlaceBoardPixels",
+                "PlaceBoardHistory",
+                "DiscordEmoteHistory"
+            };
 
             string rowCountString = "";
             foreach (var row in queryResult.Data)
             {
                 string tableName = row.ElementAt(0);
 
-                var rowCountInfo = await GetQueryResults($"SELECT COUNT(*) FROM {tableName}", true, 1);
+                string query = $"SELECT COUNT(*) FROM {tableName}";
+
+                if (largeTables.Contains(tableName))
+                    query = $@"SELECT MAX(_ROWID_) FROM ""{tableName}"" LIMIT 1;";
+
+                var rowCountInfo = await GetQueryResults(query, true, 1);
 
                 string rowCountStr = rowCountInfo.Data.FirstOrDefault().FirstOrDefault(); // todo rework this first first thing
 
-                if (int.TryParse(rowCountStr, out int rowCount))
+                if (long.TryParse(rowCountStr, out long rowCount))
                 {
                     totalRows += rowCount;
                     rowCountString += $"{tableName} ({rowCount:N0})" + Environment.NewLine;
                 }
-
             }
 
             builder.AddField("Row count", rowCountString);
@@ -77,7 +90,7 @@ To get the diagram type: '.sql table info'");
             {
                 watch.Stop();
                 builder.AddField("Total", $"Rows: {totalRows.ToString("N0")} {Environment.NewLine}" +
-                    $"DB Size: {dbSize.ToString("N0")} MB {Environment.NewLine}" + 
+                    $"DB Size: {Math.Round(dbSize/1024d, 2)} GB {Environment.NewLine}" + 
                     $"Query time: {watch.ElapsedMilliseconds.ToString("N0")}ms");
             }
 
@@ -244,7 +257,17 @@ To get the diagram type: '.sql table info'");
 
                     "DiscordEmoteHistory",
                     "DiscordEmotes",
-                    "DiscordEmoteStatistics"
+                    "DiscordEmoteStatistics",
+
+                    "PlaceBoardPixels",
+                    "PlaceBoardHistory",
+                    "PingHistory",
+                    "DiscordRoles",
+                    "BotSetting",
+
+                    "PlacePerformanceInfos",
+                    "BotStartUpTimes",
+                    "__EFMigrationsHistory"
                 };
 
 

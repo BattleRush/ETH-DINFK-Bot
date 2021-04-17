@@ -2093,7 +2093,45 @@ ORDER BY RANDOM() LIMIT 1
             }
         }
 
+        [Command("cloud_gen")]
+        public async Task GenerateCloud()
+        {
+            var author = Context.Message.Author;
+            if (author.Id != ETHDINFKBot.Program.Owner)
+            {
+                return;
+            }
 
+            var txtFile = Path.Combine(Program.BasePath, "Database", "MessagesText.txt");
+
+            File.WriteAllText(txtFile, ""); // reset file
+
+            int count = 0;
+
+            while (true)
+            {
+                var messagesToProcess = DatabaseManager.GetDiscordMessagesPaged(count);
+
+                if(messagesToProcess.Count == 0)
+                {
+                    Context.Channel.SendMessageAsync("Done", false);
+
+                    break;
+                }
+
+                string textToAdd = "";
+                foreach (var item in messagesToProcess)
+                {
+                    textToAdd += item.Content + " ";
+                }
+
+                count += messagesToProcess.Count;
+
+                File.AppendAllText(txtFile, textToAdd);
+
+                Context.Channel.SendMessageAsync($"Processed {messagesToProcess.Count}/{count} messages", false);
+            }
+        }
 
         private BannedLink GetReportInfoByImage(string imageUrl)
         {

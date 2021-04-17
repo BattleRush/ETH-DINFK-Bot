@@ -122,7 +122,7 @@ namespace ETHDINFKBot.Log
                 }
 
                 // TODO dont hammer the db after each call (check if any new emotes have been added
-                int emoteCount = DatabaseManager.Instance().TotalEmoteCount();
+                long emoteCount = DatabaseManager.Instance().TotalEmoteCount();
                 if (Program.TotalEmotes != emoteCount)
                 {
                     Program.TotalEmotes = emoteCount;

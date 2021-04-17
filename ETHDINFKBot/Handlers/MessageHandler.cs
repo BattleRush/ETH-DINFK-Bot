@@ -267,6 +267,11 @@ namespace ETHDINFKBot.Handlers
                     else
                     {
                         emote = emotes?.Skip(index - 1)?.FirstOrDefault();
+
+                        // prevent null ref error
+                        if (emote == null)
+                            return;
+
                         emote.EmoteName += $"-{index}";
                     }
 

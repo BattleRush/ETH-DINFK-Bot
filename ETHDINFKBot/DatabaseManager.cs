@@ -5,6 +5,7 @@ using ETHBot.DataLayer.Data;
 using ETHBot.DataLayer.Data.Discord;
 using ETHBot.DataLayer.Data.Enums;
 using ETHBot.DataLayer.Data.Reddit;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
@@ -165,7 +166,7 @@ namespace ETHDINFKBot
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
                     var emote = context.DiscordEmotes.FirstOrDefault(i => i.DiscordEmoteId == emoteId);
-                    if(emote != null)
+                    if (emote != null)
                     {
                         emote.Blocked = blockStatus;
                         context.SaveChanges();
@@ -650,7 +651,21 @@ namespace ETHDINFKBot
             }
         }
 
-
+        public List<DiscordMessage> GetDiscordMessagesPaged(int skip)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordMessages.AsQueryable().Where(i => i.DiscordUser.IsBot == false).Skip(skip).Take(15_000).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
         public BannedLink GetBannedLink(string link)
         {
             try
@@ -849,13 +864,26 @@ namespace ETHDINFKBot
             }
         }
 
-        public int TotalEmoteCount()
+        public long TotalEmoteCount()
         {
             try
             {
-                using (ETHBotDBContext context = new ETHBotDBContext())
+                //using (ETHBotDBContext context = new ETHBotDBContext())
+                //{
+                //    return context.DiscordEmotes.Count();
+                //}
+
+                var sqlSelect = $@"SELECT COUNT(*) FROM DiscordEmotes";
+
+                using (var connection = new SqliteConnection(Program.ConnectionString))
                 {
-                    return context.DiscordEmotes.Count();
+                    using (var command = new SqliteCommand(sqlSelect, connection))
+                    {
+                        command.CommandTimeout = 5;
+                        connection.Open();
+
+                        return (long)command.ExecuteScalar();
+                    }
                 }
             }
             catch (Exception ex)
@@ -864,6 +892,26 @@ namespace ETHDINFKBot
             }
 
             return -1;
+        }
+
+        public void AddBotStartUp()
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    context.BotStartUpTimes.Add(new BotStartUpTime()
+                    {
+                        StartUpTime = DateTime.UtcNow
+                    });
+
+                    context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
         }
 
         public void AddPingStatistic(ulong userId, int count, SocketGuildUser sgUser)
@@ -1068,7 +1116,7 @@ namespace ETHDINFKBot
             }
         }
 
-        public Dictionary<DateTimeOffset, int> GetMessageCountGrouped(DateTime from, DateTime to, int groupByMinutes)
+        public Dictionary<DateTime, int> GetMessageCountGrouped(DateTime from, DateTime to, int groupByMinutes)
         {
             try
             {
@@ -1085,7 +1133,7 @@ namespace ETHDINFKBot
                         return stamp;
                     }).Select(g => new { TimeStamp = g.Key, Value = g.Count() });
 
-                    return groups.ToDictionary(g => g.TimeStamp, g => g.Value);
+                    return groups.ToDictionary(g => g.TimeStamp.DateTime, g => g.Value);
                 }
             }
             catch (Exception ex)

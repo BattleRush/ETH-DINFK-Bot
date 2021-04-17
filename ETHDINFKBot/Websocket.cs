@@ -130,7 +130,7 @@ namespace ETHDINFKBot
             PlaceDBManager dbManager = PlaceDBManager.Instance();
 
             // current limit 2.147 B pixels
-            var totalPixelsPlaced = dbManager.GetBoardHistoryCount();
+            var totalPixelsPlaced = Convert.ToInt32(dbManager.GetBoardHistoryCount());
 
             byte[] pixelAmountBytes = BitConverter.GetBytes(totalPixelsPlaced);
             returnData[1] = pixelAmountBytes[0];

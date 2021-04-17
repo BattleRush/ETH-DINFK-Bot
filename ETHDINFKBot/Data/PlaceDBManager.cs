@@ -1,5 +1,6 @@
 ﻿using Discord;
 using ETHBot.DataLayer;
+using ETHBot.DataLayer.Data;
 using ETHBot.DataLayer.Data.Fun;
 using ETHDINFKBot.Enums;
 using ETHDINFKBot.Modules;
@@ -114,13 +115,26 @@ namespace ETHDINFKBot.Data
                 return null;
             }
         }
-        public int GetBoardHistoryCount()
+        public long GetBoardHistoryCount()
         {
             try
             {
-                using (ETHBotDBContext context = new ETHBotDBContext())
+                /*using (ETHBotDBContext context = new ETHBotDBContext())
                 {
                     return context.PlaceBoardHistory.Count();
+                }*/
+
+                var sqlSelect = $@"SELECT MAX(_ROWID_) FROM ""PlaceBoardHistory"" LIMIT 1;"; // since no rows are deleted we can use this query to quickly find the row count
+
+                using (var connection = new SqliteConnection(Program.ConnectionString))
+                {
+                    using (var command = new SqliteCommand(sqlSelect, connection))
+                    {
+                        command.CommandTimeout = 5;
+                        connection.Open();
+
+                        return (long)command.ExecuteScalar();
+                    }
                 }
             }
             catch (Exception ex)
@@ -149,9 +163,62 @@ namespace ETHDINFKBot.Data
             }
         }
 
-        public List<PlaceBoardHistory> GetBoardHistory(int from, int amount = 100_000)
+        public bool AddPlacePerfRecord(PlacePerformanceInfo placePerfRecord)
         {
             try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    context.PlacePerformanceInfos.Add(placePerfRecord);
+                    context.SaveChanges();
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return false;
+            }
+        }
+
+        // 1440 = last day
+        public List<PlacePerformanceInfo> GetPlacePerformanceInfo(int lastMinutes = 1440)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.PlacePerformanceInfos.AsQueryable().Where(i => i.DateTime > DateTime.UtcNow.AddMinutes(-lastMinutes)).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        // TODO maybe move to normal db manager
+        public List<BotStartUpTime> GetBotStartUpTimes(DateTime from, DateTime until)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.BotStartUpTimes.AsQueryable().Where(i => i.StartUpTime >= from && i.StartUpTime <= until).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public List<PlaceBoardHistory> GetBoardHistory(int from, int amount = 100_000)
+        {
+            /*try
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
@@ -164,7 +231,63 @@ namespace ETHDINFKBot.Data
             {
                 _logger.LogError(ex, ex.Message);
                 return null;
+            }*/
+
+            var returnVal = new List<PlaceBoardHistory>();
+            try
+            {
+                // TODO consider deleted records
+                // TODO ensure order by is not needed
+                var sqlQuery = $@"
+SELECT *
+FROM PlaceBoardHistory
+WHERE PlaceBoardHistoryId > {from}
+LIMIT {amount};";
+
+                using (var connection = new SqliteConnection(Program.ConnectionString))
+                {
+                    using (var command = new SqliteCommand(sqlQuery, connection))
+                    {
+                        command.CommandTimeout = 10;
+                        connection.Open();
+
+                        var reader = command.ExecuteReader();
+
+                        while (reader.Read())
+                        {
+                            int placeBoardHistoryId = Convert.ToInt32(reader.GetString(0));
+                            short xPos = reader.GetInt16(1);
+                            short yPos = reader.GetInt16(2);
+
+                            byte r = reader.GetByte(3);
+                            byte g = reader.GetByte(4);
+                            byte b = reader.GetByte(5);
+
+                            ulong discordUserId = Convert.ToUInt64(reader.GetString(6));
+                            ulong snowflakeTimePlaced = Convert.ToUInt64(reader.GetString(7));
+                            bool removed = reader.GetBoolean(8);
+
+                            returnVal.Add(new PlaceBoardHistory()
+                            {
+                                PlaceBoardHistoryId = placeBoardHistoryId,
+                                XPos = xPos,
+                                YPos = yPos,
+                                R = r,
+                                G = g,
+                                B = b,
+                                DiscordUserId = discordUserId,
+                                SnowflakeTimePlaced = snowflakeTimePlaced,
+                                Removed = removed
+                            });
+                        }
+                    }
+                }
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+            return returnVal;
         }
 
         // this is to reduce the id size from 8 bytes down to 1 byte
@@ -198,7 +321,7 @@ ORDER BY PlaceBoardHistoryId ASC";
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
             }
@@ -364,7 +487,7 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
                     data[6] = color.G;
                     data[7] = color.B;
 
-                    if(PlaceModule.UserIdInfos.ContainsKey(discordUserId))
+                    if (PlaceModule.UserIdInfos.ContainsKey(discordUserId))
                         data[8] = PlaceModule.UserIdInfos[discordUserId];
 
                     //Console.WriteLine($"Send: {x}/{y} paint R:{color.R}|G:{color.G}|B:{color.B}");
@@ -378,8 +501,11 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
                 Console.WriteLine($"Failed to draw on Bitmap: {x}/{y}");
             }
 
+            // old query doing over entity framework
 
             // TODO create history automatically
+
+            /*
             try
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
@@ -426,6 +552,41 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
 
                 return false;
                 //return null;
+            }
+            */
+
+            string sqlQuery = $@"
+-- update the pixel on the live board
+UPDATE PlaceBoardPixels
+SET R = {color.R}, G = {color.G}, B = {color.B}
+WHERE XPos = {x} AND YPos = {y};
+
+-- insert a new entry into history
+INSERT INTO PlaceBoardHistory (DiscordUserId, XPos, YPos, R, G, B, SnowflakeTimePlaced)
+VALUES ({discordUserId},{x},{y},{color.R},{color.G},{color.B},{SnowflakeUtils.ToSnowflake(DateTimeOffset.UtcNow)})";
+
+
+            using (var connection = new SqliteConnection(Program.ConnectionString))
+            {
+                using (var command = new SqliteCommand(sqlQuery, connection))
+                {
+                    try
+                    {
+                        command.CommandTimeout = 5;
+                        connection.Open();
+
+                        int count = command.ExecuteNonQuery();
+
+                        return count == 2; // update pixel and insert 1 record -> TODO track the failures
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, ex.Message);
+
+                        return false;
+                        //return null;
+                    }
+                }
             }
         }
     }

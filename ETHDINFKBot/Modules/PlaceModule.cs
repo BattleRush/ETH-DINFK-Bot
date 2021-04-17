@@ -127,13 +127,15 @@ namespace ETHDINFKBot.Modules
                 for (int i = 0; i < 10; i++)
                 {
                     RefreshBoard(100);
-                    Thread.Sleep(50);
+                    Thread.Sleep(100);
                 }
             }
 
-            PlaceDBManager dbManager = PlaceDBManager.Instance();
             if (LockedBoard == null)
+            {
+                PlaceDBManager dbManager = PlaceDBManager.Instance();
                 LockedBoard = dbManager.GetBoardStatus();
+            }
 
             return LockedBoard.Value;
         }
@@ -208,6 +210,7 @@ namespace ETHDINFKBot.Modules
             await Context.Channel.SendMessageAsync(text, false);
         }
 
+        // TODO DUPLICATE Func and to be removed
         [Command("genchunk")]
         public async Task GenerateChunks()
         {
@@ -348,6 +351,7 @@ If you violate the server rules your pixels will be removed.
 
             builder.AddField("Set single pixel", "```.place setpixel <x> <y> #<hex_color>```");
             builder.AddField("Set multiple pixel (user only) Min: 10 Max: 3'600", "```.place setmultiplepixels {<x> <y> #<hex_color>[|]}```");
+            builder.AddField("View place performance", "```.place perf [<graph_mode>] [<last_records_amount>]```");
 
             builder.WithThumbnailUrl(ownerUser.GetAvatarUrl());
             builder.WithAuthor(ownerUser);
@@ -1179,6 +1183,232 @@ If you violate the server rules your pixels will be removed.
 
         }
 
+        [Command("perf")]
+        public async Task PlacePerf(bool graphMode = true, int lastSize = 1440)
+        {
+            PlaceDBManager dbManager = PlaceDBManager.Instance();
+
+            var list = dbManager.GetPlacePerformanceInfo(lastSize);
+
+            var startTime = list.First().DateTime;
+            var endTime = list.Last().DateTime;
+
+            var listStartUpTimes = dbManager.GetBotStartUpTimes(startTime, endTime);
+
+            if (graphMode)
+            {
+                // TODO optimize some lines + move to draw helper
+                var dataPointsAvg = list.ToDictionary(i => i.DateTime, i => i.AvgTimeInMs);
+                var dataPointsCount = list.ToDictionary(i => i.DateTime, i => i.Count);
+
+                var drawInfo = DrawingHelper.GetEmptyGraphics();
+                var padding = DrawingHelper.DefaultPadding;
+                var labels = DrawingHelper.GetLabels(dataPointsAvg, 6, 10, true, startTime, endTime, " ms");
+                var labelsCount = DrawingHelper.GetLabels(dataPointsCount, 6, 10, true, startTime, endTime);
+                var gridSize = new GridSize(drawInfo.Bitmap, padding);
+                var dataPointListAvg = DrawingHelper.GetPoints(dataPointsAvg, gridSize, true, startTime, endTime);
+                var dataPointListCount = DrawingHelper.GetPoints(dataPointsCount, gridSize, true, startTime, endTime);
+
+                DrawingHelper.DrawGrid(drawInfo.Graphics, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, $"Place Perf {list.Count} mins", labelsCount.YAxisLabels);
+                // todo add 2. y Axis on the right
+
+                DrawingHelper.DrawLine(drawInfo.Graphics, drawInfo.Bitmap, dataPointListAvg, 6, new Pen(System.Drawing.Color.LightGreen), "Avg in ms / min", 0, true);
+                DrawingHelper.DrawLine(drawInfo.Graphics, drawInfo.Bitmap, dataPointListCount, 6, new Pen(System.Drawing.Color.Yellow), "Count / min", 1, true);
+
+                // TODO add methods to the drawing lib
+                if (listStartUpTimes.Count > 0)
+                {
+                    int totalMins = (int)(endTime - startTime).TotalMinutes;
+                    foreach (var startUpTimes in listStartUpTimes)
+                    {
+                        double percent = (startUpTimes.StartUpTime - startTime).TotalMinutes / totalMins;
+                        drawInfo.Graphics.DrawLine(new Pen(System.Drawing.Color.Red),
+                            new System.Drawing.Point((int)(gridSize.XMin + gridSize.XSize * percent), gridSize.YMin), new System.Drawing.Point((int)(gridSize.XMin + gridSize.XSize * percent), gridSize.YMax));
+                    }
+                }
+
+                var stream = CommonHelper.GetStream(drawInfo.Bitmap);
+
+                drawInfo.Bitmap.Dispose();
+                drawInfo.Graphics.Dispose();
+
+                await Context.Channel.SendFileAsync(stream, "place_perf.png", $"");
+            }
+            else
+            {
+                list = list.Take(250).ToList(); // max 250
+
+                string output = "```";
+                foreach (var item in list)
+                {
+                    output += $"{item.DateTime.ToString("dd.MM HH:mm")} Count: {item.Count.ToString("N0")} Avg: {item.AvgTimeInMs}{Environment.NewLine}";
+
+                    if (output.Length > 1950)
+                    {
+                        output += "```";
+                        await Context.Channel.SendMessageAsync(output);
+                        output = "```";
+                    }
+                }
+
+                if (output.Length > 0)
+                {
+                    output += "```";
+                    await Context.Channel.SendMessageAsync(output);
+                }
+            }
+        }
+
+        static List<long> PixelPlacementTimeLastMinute = new List<long>();
+
+        private static readonly object PlaceAggregateObj = new object();
+        static long OldPixelCountMod = -1;
+        private void AggregatePlace(PlaceDBManager dbManager)
+        {
+            double avgPixelTime = PixelPlacementTimeLastMinute.Average();
+
+
+            dbManager.AddPlacePerfRecord(new PlacePerformanceInfo()
+            {
+                DateTime = DateTime.UtcNow,
+                AvgTimeInMs = (int)avgPixelTime,
+                Count = PixelPlacementTimeLastMinute.Count
+            });
+
+            PixelPlacementTimeLastMinute = new List<long>();
+
+            LastStatusRefresh = DateTime.Now;
+            var totalPixelsPlaced = dbManager.GetBoardHistoryCount();
+
+            if (OldPixelCountMod > totalPixelsPlaced % 100_000)
+            {
+                // we can generate a new chunk
+                AutomaticGenChunk();
+            }
+
+            OldPixelCountMod = totalPixelsPlaced % 100_000;
+
+            Program.Client.SetGameAsync($"{totalPixelsPlaced:N0} pixels", null, ActivityType.Watching);
+            RefreshBoard(10);
+
+            if (DateTime.Now.Minute % 60 == 0 && DateTime.Now.Hour % 12 == 3 || UserIdInfos.Count == 0)
+            {
+                // refresh the db users incase any new
+                UserIdInfos = dbManager.GetPlaceUserIds();
+            }
+        }
+
+        // DUPLICATE CODE WITH genchunk (which could be removed if this automatic code works)
+        private async void AutomaticGenChunk()
+        {
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+            // todo config
+            ulong guildId = 747752542741725244;
+            ulong spamChannel = 768600365602963496;
+            var guild = Program.Client.GetGuild(guildId);
+            var textChannel = guild.GetTextChannel(spamChannel);
+
+            var chunkFolder = Path.Combine(Program.BasePath, "TimelapseChunks");
+
+            if (!Directory.Exists(chunkFolder))
+                Directory.CreateDirectory(chunkFolder);
+
+            PlaceDBManager dbManager = PlaceDBManager.Instance();
+
+            UserIdInfos = dbManager.GetPlaceUserIds();
+
+            int size = 100_000;
+
+            var totalPixelsPlaced = dbManager.GetBoardHistoryCount();
+            await textChannel.SendMessageAsync($"Total pixels to load {totalPixelsPlaced.ToString("N0")}", false);
+
+            short chunkId = 0;
+
+            for (int i = 0; i < totalPixelsPlaced; i += size)
+            {
+                chunkId++;
+
+                // check if this chunk is fully done yet
+                if (i + size > totalPixelsPlaced)
+                    break;
+
+                string file = $"Chunk_{chunkId}.dat";
+                string filePath = Path.Combine(chunkFolder, file);
+
+                if (File.Exists(filePath))
+                    continue; // this chunk has been generated to disk already
+
+                byte[] data = new byte[3 + size * 12];
+                data[0] = (byte)MessageEnum.GetChunk_Response; // id of response
+
+                // Chunk identifier
+                byte[] chunkIdBytes = BitConverter.GetBytes(chunkId);
+                data[1] = chunkIdBytes[0];
+                data[2] = chunkIdBytes[1];
+
+
+
+                // 1 entry 12 bytes -> chunk size = 1.2MB
+
+                // Repeating rel pos
+                // 0-3 | ID (int32)
+                // 4-5 | XPos (int16)
+                // 6-7 | XPos (int16)
+                // 8 | R color (byte)
+                // 9 | G color (byte)
+                // 10 | B color (byte)
+                // 11 | UserId (byte) 
+
+                // TODO Optimizations
+                // Store x/y in 10 bits each (-1.5 bytes)
+                // do aux table for users and store them in 1 byte instead of 8 bytes (-7 bytes)
+                // add custom timestamp (in seconds to save even more space) (+3/4 bytes)
+
+                int counter = 3;
+
+                var pixelHistory = dbManager.GetBoardHistory(i, size);
+
+                foreach (var item in pixelHistory)
+                {
+                    byte[] idBytes = BitConverter.GetBytes(item.PlaceBoardHistoryId);
+
+                    byte[] xBytes = BitConverter.GetBytes(item.XPos);
+                    byte[] yBytes = BitConverter.GetBytes(item.YPos);
+
+                    data[counter] = idBytes[0];
+                    data[counter + 1] = idBytes[1];
+                    data[counter + 2] = idBytes[2];
+                    data[counter + 3] = idBytes[3];
+                    counter += 4;
+
+                    data[counter] = xBytes[0];
+                    data[counter + 1] = xBytes[1];
+                    data[counter + 2] = yBytes[0];
+                    data[counter + 3] = yBytes[1];
+                    counter += 4;
+
+                    data[counter] = item.R;
+                    data[counter + 1] = item.G;
+                    data[counter + 2] = item.B;
+                    counter += 3;
+
+                    // get user id (limited currently to 255)
+                    data[counter] = UserIdInfos[item.DiscordUserId];
+
+                    counter += 1;
+                }
+
+
+                await textChannel.SendMessageAsync($"Saved {file}", false);
+                File.WriteAllBytes(filePath, data);
+            }
+
+            watch.Stop();
+
+            await textChannel.SendMessageAsync($"Done. Timelapse has been updated automatically in {watch.ElapsedMilliseconds}ms", false);
+        }
+
         [Command("setpixel")]
         public async Task PlaceColor(short x, short y, string colorString, [Remainder] string comment = "")
         {
@@ -1192,6 +1422,9 @@ If you violate the server rules your pixels will be removed.
 
                 return;
             }
+
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
 
             var isBot = Context.Message.Author.IsBot;
             ulong userId = Context.Message.Author.Id;
@@ -1216,21 +1449,17 @@ If you violate the server rules your pixels will be removed.
 
             PlaceDBManager dbManager = PlaceDBManager.Instance();
 
-            if (LastStatusRefresh.Add(TimeSpan.FromSeconds(60)) < DateTime.Now)
-            {
-                LastStatusRefresh = DateTime.Now;
-                var totalPixelsPlaced = dbManager.GetBoardHistoryCount();
-                await Program.Client.SetGameAsync($"{totalPixelsPlaced:N0} pixels", null, ActivityType.Watching);
-                RefreshBoard(10);
-
-                //if (DateTime.Now.Minute == 0)
-                //{
-                // refresh the db users incase any new
-                UserIdInfos = dbManager.GetPlaceUserIds();
-                //}
-            }
-
             var successfull = dbManager.PlacePixel(x, y, color, userId);
+
+            watch.Stop();
+
+            PixelPlacementTimeLastMinute.Add(watch.ElapsedMilliseconds);
+
+            lock (PlaceAggregateObj)
+            {
+                if (LastStatusRefresh.Add(TimeSpan.FromSeconds(60)) < DateTime.Now)
+                    AggregatePlace(dbManager);
+            }
 
             if (!isBot && successfull)
             {
@@ -1239,7 +1468,6 @@ If you violate the server rules your pixels will be removed.
         }
 
         public static Dictionary<ulong, DateTimeOffset> MultiPlacement = new Dictionary<ulong, DateTimeOffset>();
-
         public static DateTime LastStatusRefresh = DateTime.MinValue;
 
         [Command("setmultiplepixels")]
@@ -1249,20 +1477,12 @@ If you violate the server rules your pixels will be removed.
             {
                 // 1 in 5 send a message
                 if (!Context.Message.Author.IsBot && new Random().Next(0, 5) % 5 == 0)
-                {
                     await Context.Channel.SendMessageAsync("Board is locked");
-                }
 
                 return;
             }
 
             PlaceDBManager dbManager = PlaceDBManager.Instance();
-            if (LastStatusRefresh.Add(TimeSpan.FromSeconds(30)) < DateTime.Now)
-            {
-                LastStatusRefresh = DateTime.Now;
-                var totalPixelsPlaced = dbManager.GetBoardHistoryCount();
-                await Program.Client.SetGameAsync($"{totalPixelsPlaced:N0} pixels", null, ActivityType.Watching);
-            }
 
             try
             {
@@ -1290,7 +1510,7 @@ If you violate the server rules your pixels will be removed.
 
                         if (download.Contains('|'))
                         {
-                            int lines = download.Split('|').Count();
+                            int lines = download.Split('|').Length;
 
                             // only if attachment has min 10 lines then use it
                             if (lines > 10)
@@ -1328,6 +1548,10 @@ If you violate the server rules your pixels will be removed.
                 foreach (var item in instructions)
                 {
                     var delay = Task.Delay(1000);
+
+                    Stopwatch watch = new Stopwatch();
+                    watch.Start();
+
                     var commands = item.Split(' ');
 
                     short x = short.Parse(commands[0]);
@@ -1336,6 +1560,9 @@ If you violate the server rules your pixels will be removed.
                     System.Drawing.Color color = ColorTranslator.FromHtml(commands[2]);
 
                     dbManager.PlacePixel(x, y, color, Context.Message.Author.Id);
+
+                    watch.Stop();
+                    PixelPlacementTimeLastMinute.Add(watch.ElapsedMilliseconds);
 
                     await delay; // ensure 1 placement / sec
                 }
@@ -1350,5 +1577,12 @@ If you violate the server rules your pixels will be removed.
                 await Context.Channel.SendMessageAsync(ex.Message);
             }
         }
+    }
+
+    public class PlacePixelPerfEntry
+    {
+        public DateTimeOffset DateTime { get; set; }
+        public int Count { get; set; }
+        public double Avg { get; set; }
     }
 }

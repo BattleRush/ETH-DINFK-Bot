@@ -82,7 +82,7 @@ namespace ETHDINFKBot.Drawing
 
 
         // TODO duplicate params similar to GetPoints
-        public static (List<string> XAxisLables, List<string> YAxisLabels) GetLabels(Dictionary<DateTimeOffset, int> data, int columns, int rows, bool yZeroIndexed = true, DateTime? minDate = null, DateTime? maxDate = null)
+        public static (List<string> XAxisLables, List<string> YAxisLabels) GetLabels(Dictionary<DateTime, int> data, int columns, int rows, bool yZeroIndexed = true, DateTime? minDate = null, DateTime? maxDate = null, string suffix = "")
         {
             if (columns < 1)
                 columns = 1;
@@ -91,8 +91,8 @@ namespace ETHDINFKBot.Drawing
 
 
             // dupe code from GetPoints
-            DateTimeOffset firstDateTime = minDate ?? data.First().Key;
-            DateTimeOffset lastDateTime = maxDate ?? data.Last().Key;
+            DateTime firstDateTime = minDate ?? data.First().Key;
+            DateTime lastDateTime = maxDate ?? data.Last().Key;
 
             long totalSec = (long)(lastDateTime - firstDateTime).TotalSeconds; // sec granularity
             int minVal = int.MaxValue;
@@ -114,12 +114,12 @@ namespace ETHDINFKBot.Drawing
 
             List<string> xAxisLabels = new List<string>();
             DateTimeOffset currentDate = firstDateTime;
-            xAxisLabels.Add(currentDate.ToString("yyyy.MM.dd HH:mm"));
+            xAxisLabels.Add(currentDate.ToString("MM.dd\nHH:mm"));
 
             for (int i = 0; i < columns; i++)
             {
                 currentDate = currentDate.AddSeconds(intervalColumn);
-                xAxisLabels.Add(currentDate.ToString("yyyy.MM.dd HH:mm"));
+                xAxisLabels.Add(currentDate.ToString("MM.dd\nHH:mm"));
             }
 
 
@@ -134,13 +134,13 @@ namespace ETHDINFKBot.Drawing
             for (int i = 0; i < columns; i++)
             {
                 currentValue += intervalRow;
-                yAxisLabels.Add(currentValue.ToString());
+                yAxisLabels.Add(currentValue.ToString() + suffix);
             }
 
             return (xAxisLabels, yAxisLabels);
         }
 
-        public static List<Point> GetPoints(Dictionary<DateTimeOffset, int> data, GridSize gridSize, bool yZeroIndexed = true, DateTime? minDate = null, DateTime? maxDate = null, bool overlapDays = false)
+        public static List<Point> GetPoints(Dictionary<DateTime, int> data, GridSize gridSize, bool yZeroIndexed = true, DateTime? minDate = null, DateTime? maxDate = null, bool overlapDays = false)
         {
             // TODO implement overlap days
 
@@ -149,8 +149,8 @@ namespace ETHDINFKBot.Drawing
             // assume the dictionary is ordered
             // todo ensure that just in case
 
-            DateTimeOffset firstDateTime = minDate ?? data.First().Key;
-            DateTimeOffset lastDateTime = maxDate ?? data.Last().Key;
+            DateTime firstDateTime = minDate ?? data.First().Key;
+            DateTime lastDateTime = maxDate ?? data.Last().Key;
 
             long totalSec = (long)(lastDateTime - firstDateTime).TotalSeconds; // sec granularity
 
@@ -185,15 +185,60 @@ namespace ETHDINFKBot.Drawing
             return dataPoints;
         }
 
-        public static void DrawPoints(Graphics graphics, List<Point> points)
+        public static void DrawPoints(Graphics graphics, Bitmap bitmap, List<Point> points, int size = 6, Pen pen = null, string text = "", int index = 0)
         {
+            if (pen == null)
+                pen = Pen_Blue_Transparent;
+
             foreach (var point in points)
-            {
-                graphics.DrawRectangle(Pen_Blue_Transparent, new Rectangle(point.X - 3, point.Y - 3, 6, 6));
-            }
+                graphics.DrawRectangle(pen, new Rectangle(point.X - size / 2, point.Y - size / 2, size, size));
+
+            // draw Legend
+
+            int heigth = bitmap.Height;
+            int labelWidth = 250;
+
+            int yOffset = 50;
+            int xOffset = 110;
+
+            graphics.DrawRectangle(pen, new Rectangle(xOffset - 5 + labelWidth * index - size / 2, heigth - yOffset + 10 - size / 2, size, size));
+            graphics.DrawString(text, TitleFont, pen.Brush, new Point(xOffset + labelWidth * index, heigth - yOffset));
         }
 
-        public static void DrawGrid(Graphics graphics, GridSize gridSize, Padding padding, List<string> xAxis, List<string> yAxis)
+        public static void DrawLine(Graphics graphics, Bitmap bitmap, List<Point> points, int size = 6, Pen pen = null, string text = "", int index = 0, bool drawPoint = false)
+        {
+            if (pen == null)
+                pen = Pen_Blue_Transparent;
+
+            Point prevPoint = points.First();
+            foreach (var point in points)
+            {
+                if (drawPoint)
+                    graphics.DrawRectangle(pen, new Rectangle(point.X - size / 2, point.Y - size / 2, size, size));
+
+                graphics.DrawLine(pen, prevPoint, point);
+                prevPoint = point;
+            }
+
+            // draw Legend
+
+            int heigth = bitmap.Height;
+            int labelWidth = 250;
+
+            int yOffset = 50;
+            int xOffset = 120;
+
+            int iconDist = 20;
+
+            if (drawPoint)
+                graphics.DrawRectangle(pen, new Rectangle(xOffset - iconDist / 2 + labelWidth * index - size / 2, heigth - yOffset + 10 - size / 2, size, size));
+
+            pen.Width = 2;
+            graphics.DrawLine(pen, new Point(xOffset - iconDist + labelWidth * index, heigth - yOffset + 10), new Point(xOffset + labelWidth * index, heigth - yOffset + 10));
+            graphics.DrawString(text, TitleFont, pen.Brush, new Point(xOffset + labelWidth * index, heigth - yOffset));
+        }
+
+        public static void DrawGrid(Graphics graphics, GridSize gridSize, Padding padding, List<string> xAxis, List<string> yAxis, string title, List<string> secondYAxis = null)
         {
             var pen = Pen_White;
             var font = TitleFont;
@@ -208,7 +253,7 @@ namespace ETHDINFKBot.Drawing
             // draw columns
             for (int i = 0; i <= columns; i++)
             {
-                graphics.DrawString($"{xAxis[i]}", font, brush, new Point(gridSize.XMin + (i * (gridSize.XSize / columns)), gridSize.YMin + fontHeight));
+                graphics.DrawString($"{xAxis[i]}", font, brush, new Point(gridSize.XMin + (i * (gridSize.XSize / columns)) - 25, gridSize.YMin + fontHeight-3));
 
                 if (i < columns)
                     graphics.DrawLine(pen, new Point(gridSize.XMin + (i * (gridSize.XSize / columns)), gridSize.YMin), new Point(gridSize.XMin + (i * (gridSize.XSize / columns)), gridSize.YMax));
@@ -218,12 +263,17 @@ namespace ETHDINFKBot.Drawing
             // draw rows
             for (int i = 0; i <= rows; i++)
             {
-                graphics.DrawString($"{yAxis[i]}", font, brush, new Point(40, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i - fontHeight / 2 /* to center it vertically */));
+                graphics.DrawString($"{yAxis[i]}", font, brush, new Point(20, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i - fontHeight / 2 /* to center it vertically */));
+                if (secondYAxis != null)
+                    graphics.DrawString($"{secondYAxis[i]}", font, brush, new Point(gridSize.XMax + 10, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i - fontHeight / 2 /* to center it vertically */));
 
                 if (i < rows)
                     graphics.DrawLine(pen, new Point(gridSize.XMin, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i), new Point(gridSize.XMax, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i));
             }
             graphics.DrawLine(pen, new Point(gridSize.XMin, gridSize.YMax), new Point(gridSize.XMax, gridSize.YMax));
+
+            // Draw title
+            graphics.DrawString(title, font, brush, new Point(100, 20));
         }
 
 
@@ -235,7 +285,7 @@ namespace ETHDINFKBot.Drawing
 
         public static Padding DefaultPadding
         {
-            get { return new Padding(100, 50, 100, 100); }
+            get { return new Padding(75, 100, 125, 100); }
         }
 
         public static Font NormalTextFont

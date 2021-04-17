@@ -53,8 +53,10 @@ namespace ETHDINFKBot.CronJobs.Jobs
         // this one needs some reworking
         private async Task<PreloadResponse> ProcessLoadedMessages(ISocketMessageChannel textChannel, ulong messageIdFrom, Direction direction, int count = 50_000)
         {
-            PreloadResponse response = new PreloadResponse();
-            response.OldestMessageId = UInt64.MaxValue;
+            PreloadResponse response = new()
+            {
+                OldestMessageId = UInt64.MaxValue
+            };
 
             Stopwatch watch = new Stopwatch();
             watch.Start();

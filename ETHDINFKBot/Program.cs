@@ -44,7 +44,7 @@ namespace ETHDINFKBot
         private static IConfiguration Configuration;
         private static string DiscordToken { get; set; }
         public static ulong Owner { get; set; }
-        public static int TotalEmotes { get; set; }
+        public static long TotalEmotes { get; set; }
 
         // TODO one object and somewhere else but im lazy
         public static string RedditAppId { get; set; }
@@ -116,13 +116,13 @@ namespace ETHDINFKBot
                    services.AddCronJob<DailyStatsJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 23 * * *"; });
 
                    // TODO adjust for summer time in CET/CEST
-                   //services.AddCronJob<PreloadJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 3 * * *"; });// 3 am utc -> 4 am cet
+                   services.AddCronJob<PreloadJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 3 * * *"; });// 3 am utc -> 4 am cet
 
                    // TODO adjust for summer time in CET/CEST
                    services.AddCronJob<SpaceXSubredditJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = BotSetting.SpaceXSubredditCheckCronJob; }); //BotSetting.SpaceXSubredditCheckCronJob "*/ 10 * * * *"
 
                    // TODO adjust for summer time in CET/CEST
-                   services.AddCronJob<StartAllSubredditsJobs>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 * * *"; });// 4 am utc -> 5 am cet
+                   //services.AddCronJob<StartAllSubredditsJobs>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 * * *"; });// 4 am utc -> 5 am cet
 
                    // TODO adjust for summer time in CET/CEST
                    services.AddCronJob<BackupDBJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 0 * * *"; });// 0 am utc
@@ -191,7 +191,7 @@ namespace ETHDINFKBot
 
             DatabaseManager.Instance().SetAllSubredditsStatus();
             LoadChannelSettings();
-
+            DatabaseManager.Instance().AddBotStartUp(); // register bot startup time
 
             var config = new DiscordSocketConfig
             {
