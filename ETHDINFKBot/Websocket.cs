@@ -190,19 +190,26 @@ namespace ETHDINFKBot
 
             using (var webClient = new WebClient())
             {
-                var imageBytes = webClient.DownloadData(discordUser.AvatarUrl);
+                try
+                {
+                    var imageBytes = webClient.DownloadData(discordUser.AvatarUrl);
 
-                byte[] returnData = new byte[3 + imageBytes.Length];
-                returnData[0] = (byte)MessageEnum.GetUserProfileImage_Response;
+                    byte[] returnData = new byte[3 + imageBytes.Length];
+                    returnData[0] = (byte)MessageEnum.GetUserProfileImage_Response;
 
-                byte[] userIdBytes = BitConverter.GetBytes(userId);
-                returnData[1] = userIdBytes[0];
-                returnData[2] = userIdBytes[1];
+                    byte[] userIdBytes = BitConverter.GetBytes(userId);
+                    returnData[1] = userIdBytes[0];
+                    returnData[2] = userIdBytes[1];
 
-                for (int i = 0; i < imageBytes.Length; i++)
-                    returnData[3 + i] = imageBytes[i];
+                    for (int i = 0; i < imageBytes.Length; i++)
+                        returnData[3 + i] = imageBytes[i];
 
-                return returnData;
+                    return returnData;
+                }
+                catch (Exception ex)
+                {
+                    return new byte[1];
+                }
             }
         }
 
@@ -320,8 +327,8 @@ namespace ETHDINFKBot
 
                         byte[] userIdBytes = data.Skip(1).Take(2).ToArray();
                         short userId = BitConverter.ToInt16(userIdBytes, 0);
-                        var userImageBytes = GetUserImageBytes(userId); 
-  
+                        var userImageBytes = GetUserImageBytes(userId);
+
                         Send(userImageBytes);
                         break;
 

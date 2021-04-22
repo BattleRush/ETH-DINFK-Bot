@@ -534,12 +534,14 @@ To get the diagram type: '.sql table info'");
 
                 using (var connection = new SqliteConnection(Program.ConnectionString))
                 {
+                    connection.DefaultTimeout = 1;
                     using (var command = new SqliteCommand(commandSql, connection))
                     {
-                        command.CommandTimeout = 10;
+                        command.CommandTimeout = 1;
+
                         connection.Open();
 
-                        WorkaroundForTimeoutNotWorking(cts, commandSql, author.Id == ETHDINFKBot.Program.Owner);
+                        //WorkaroundForTimeoutNotWorking(cts, commandSql, author.Id == ETHDINFKBot.Program.Owner);
 
                         var reader = await command.ExecuteReaderAsync();
                         while (reader.Read())

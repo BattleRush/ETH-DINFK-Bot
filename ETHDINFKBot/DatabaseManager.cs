@@ -1025,6 +1025,23 @@ namespace ETHDINFKBot
             }
         }
 
+        public bool VerifyDiscordUserForPlace(ulong userId, bool verify)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    context.DiscordUsers.SingleOrDefault(i => i.DiscordUserId == userId).AllowedPlaceMultipixel = verify; // we ignore the possible null ref error since only admins can invoke
+                    context.SaveChanges();
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return false;
+            }
+        }
 
         public DiscordRole GetDiscordRole(DiscordRole role)
         {

@@ -255,10 +255,12 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                                 if (processResponse?.SuccessCount > 0 || processResponse?.DuplicateCount > 0)
                                 {
-                                    // we synced some successfully
-                                    result += $"{channel.Name} synced (new). Msg: {processResponse.SuccessCount}/{processResponse.DuplicateCount} Users: {processResponse.NewUsers} Emotes: {processResponse.EmotesAdded} " +
-                                        $"Time: {processResponse.ElapsedMilliseconds / 1000}s Time: {SnowflakeUtils.FromSnowflake(processResponse.OldestMessageId)}/{SnowflakeUtils.FromSnowflake(processResponse.NewestMessageId)}" + Environment.NewLine;
-
+                                    if (processResponse.SuccessCount > 0)
+                                    {
+                                        // we synced some successfully
+                                        result += $"{channel.Name} synced (new). Msg: {processResponse.SuccessCount}/{processResponse.DuplicateCount} Users: {processResponse.NewUsers} Emotes: {processResponse.EmotesAdded} " +
+                                            $"Time: {processResponse.ElapsedMilliseconds / 1000}s Time: {SnowflakeUtils.FromSnowflake(processResponse.OldestMessageId)}/{SnowflakeUtils.FromSnowflake(processResponse.NewestMessageId)}" + Environment.NewLine;
+                                    }
                                     DatabaseManager.Instance().UpdateChannelSetting(botChannelSetting.DiscordChannelId, -1, processResponse.OldestMessageId, processResponse.NewestMessageId);
                                 }
                                 else
@@ -279,13 +281,14 @@ namespace ETHDINFKBot.CronJobs.Jobs
                         }
                         else
                         {
-                            result += $"Ignored {channel?.Name ?? "Channel deleted but has active settings"}" + Environment.NewLine;
+                            //result += $"Ignored {channel?.Name ?? "Channel deleted but has active settings"}" + Environment.NewLine;
                         }
                     }
                     else
                     {
-                        result += $"Ignored {channel?.Name ?? "Channel not found"}" + Environment.NewLine;
+                        //result += $"Ignored {channel?.Name ?? "Channel not found"}" + Environment.NewLine;
                     }
+
                     if (result.Length > 1500)
                     {
                         textChannel.SendMessageAsync(result.Substring(0, Math.Min(2000, result.Length)));

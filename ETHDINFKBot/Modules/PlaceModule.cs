@@ -337,6 +337,7 @@ If you violate the server rules your pixels will be removed.
 
             var ownerUser = Program.Client.GetUser(Program.Owner);
 
+            // TODO move admin commands to the admin module
             builder.AddField("Admin ONLY", "```.place lock <true|false>" + Environment.NewLine +
                 ".place remove <userId> <x> <y> <xSize> <ySize> [<minutes>|1440]```");
 
@@ -350,7 +351,7 @@ If you violate the server rules your pixels will be removed.
                 ".place grid <x> <y> <size>```");
 
             builder.AddField("Set single pixel", "```.place setpixel <x> <y> #<hex_color>```");
-            builder.AddField("Set multiple pixel (user only) Min: 10 Max: 3'600", "```.place setmultiplepixels {<x> <y> #<hex_color>[|]}```");
+            builder.AddField("Set multiple pixel (user only) Min: 10 Max: 86'400", "```.place setmultiplepixels {<x> <y> #<hex_color>[|]}```");
             builder.AddField("View place performance", "```.place perf [<graph_mode>] [<last_records_amount>]```");
 
             builder.WithThumbnailUrl(ownerUser.GetAvatarUrl());
@@ -1082,9 +1083,9 @@ If you violate the server rules your pixels will be removed.
         [Command("zoom")]
         public async Task ZoomIntoTheBoard(int x, int y, int size = 100)
         {
-            if (size > 250 || size < 10)
+            if (size > 350 || size < 10)
             {
-                await Context.Channel.SendMessageAsync("Size can only be between 10 and 250");
+                await Context.Channel.SendMessageAsync("Size can only be between 10 and 350");
                 return;
             }
             ulong userId = Context.Message.Author.Id;
@@ -1127,23 +1128,14 @@ If you violate the server rules your pixels will be removed.
 
 
             var redColor = System.Drawing.Color.FromArgb(255, 0, 0);
+
             try
             {
                 if (x < 0 || y < 0 || x + size >= 1000 || y + size >= 1000)
-                {
                     for (int i = 0; i < boardSize; i++)
-                    {
                         for (int j = 0; j < boardSize; j++)
-                        {
                             if ((i + j) % 20 < 5)
-                            {
                                 board.Bitmap.SetPixel(i, j, redColor);
-                            }
-                        }
-                    }
-                }
-
-
             }
             catch (Exception ex)
             {
@@ -1468,7 +1460,7 @@ If you violate the server rules your pixels will be removed.
         }
 
         public static Dictionary<ulong, DateTimeOffset> MultiPlacement = new Dictionary<ulong, DateTimeOffset>();
-        public static DateTime LastStatusRefresh = DateTime.MinValue;
+        public static DateTime LastStatusRefresh = DateTime.Now; // set to now to prevent recordw in perf with count = 1
 
         [Command("setmultiplepixels")]
         public async Task PlaceMultipleColor([Remainder] string input = "")
@@ -1482,11 +1474,22 @@ If you violate the server rules your pixels will be removed.
                 return;
             }
 
-            PlaceDBManager dbManager = PlaceDBManager.Instance();
+            // TODO make it possible to restart a canceled job
+
+            PlaceDBManager placeDBManager = PlaceDBManager.Instance();
+            DatabaseManager databaseManager = DatabaseManager.Instance();
+
 
             try
             {
                 ulong userId = Context.Message.Author.Id;
+                var discordUser = databaseManager.GetDiscordUserById(userId);
+
+                if (!discordUser.AllowedPlaceMultipixel)
+                {
+                    Context.Channel.SendMessageAsync($"REJECTED NOT_VERIFIED <@{userId}>");
+                    return;
+                }
 
                 // Verify if the current user is locked
                 if (MultiPlacement.ContainsKey(userId) && MultiPlacement[userId] > DateTime.UtcNow)
@@ -1527,13 +1530,13 @@ If you violate the server rules your pixels will be removed.
                 if (instructions.Count < 10)
                 {
                     // reject if less than 10 instructions queued
-                    Context.Channel.SendMessageAsync($"REJECTED TOO_FEW {userId}");
+                    Context.Channel.SendMessageAsync($"REJECTED TOO_FEW <@{userId}>");
                     return;
                 }
 
-                if (instructions.Count > 3_600)
+                if (instructions.Count > 86_400)
                 {
-                    Context.Channel.SendMessageAsync($"REJECTED TOO_MANY {userId}");
+                    Context.Channel.SendMessageAsync($"REJECTED TOO_MANY <@{userId}>");
                     return;
                 }
 
@@ -1559,7 +1562,7 @@ If you violate the server rules your pixels will be removed.
 
                     System.Drawing.Color color = ColorTranslator.FromHtml(commands[2]);
 
-                    dbManager.PlacePixel(x, y, color, Context.Message.Author.Id);
+                    placeDBManager.PlacePixel(x, y, color, Context.Message.Author.Id);
 
                     watch.Stop();
                     PixelPlacementTimeLastMinute.Add(watch.ElapsedMilliseconds);

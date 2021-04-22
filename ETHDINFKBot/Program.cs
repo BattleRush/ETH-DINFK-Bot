@@ -95,59 +95,65 @@ namespace ETHDINFKBot
 
         static void Main(string[] args)
         {
-            // TODO may cause problems if the bot is hosted in a timezone that doesnt switch to daylight at the same time as the hosting region
-            LastNewDailyMessagePost = DateTime.UtcNow.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1);
+            try
+            {
+                // TODO may cause problems if the bot is hosted in a timezone that doesnt switch to daylight at the same time as the hosting region
+                LastNewDailyMessagePost = DateTime.UtcNow.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1);
 
-            Logger = LoggerFactory.Create(builder => { builder.AddConsole(); });
+                Logger = LoggerFactory.Create(builder => { builder.AddConsole(); });
 
-            BotSetting = DatabaseManager.Instance().GetBotSettings();
+                BotSetting = DatabaseManager.Instance().GetBotSettings();
 
-            var host = new HostBuilder()
-               .ConfigureServices((hostContext, services) =>
-               {
-                   // TODO read from DB
+                var host = new HostBuilder()
+                   .ConfigureServices((hostContext, services) =>
+                   {
+                       // TODO read from DB
 
-                   //services.AddCronJob<CronJobTest>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"* * * * *"; });
+                       //services.AddCronJob<CronJobTest>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"* * * * *"; });
 
-                   // once a day at 1 or 2 AM CET/CEST
-                   services.AddCronJob<CleanUpServerSuggestions>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 0 * * *"; });
+                       // once a day at 1 or 2 AM CET/CEST
+                       services.AddCronJob<CleanUpServerSuggestions>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 0 * * *"; });
 
-                   // TODO adjust for summer time in CET/CEST
-                   services.AddCronJob<DailyStatsJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 23 * * *"; });
+                       // TODO adjust for summer time in CET/CEST
+                       services.AddCronJob<DailyStatsJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 23 * * *"; });
 
-                   // TODO adjust for summer time in CET/CEST
-                   services.AddCronJob<PreloadJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 3 * * *"; });// 3 am utc -> 4 am cet
+                       // TODO adjust for summer time in CET/CEST
+                       services.AddCronJob<PreloadJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 3 * * *"; });// 3 am utc -> 4 am cet
 
-                   // TODO adjust for summer time in CET/CEST
-                   services.AddCronJob<SpaceXSubredditJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = BotSetting.SpaceXSubredditCheckCronJob; }); //BotSetting.SpaceXSubredditCheckCronJob "*/ 10 * * * *"
+                       // TODO adjust for summer time in CET/CEST
+                       services.AddCronJob<SpaceXSubredditJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = BotSetting.SpaceXSubredditCheckCronJob; }); //BotSetting.SpaceXSubredditCheckCronJob "*/ 10 * * * *"
 
-                   // TODO adjust for summer time in CET/CEST
-                   //services.AddCronJob<StartAllSubredditsJobs>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 * * *"; });// 4 am utc -> 5 am cet
+                       // TODO adjust for summer time in CET/CEST
+                       //services.AddCronJob<StartAllSubredditsJobs>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 * * *"; });// 4 am utc -> 5 am cet
 
-                   // TODO adjust for summer time in CET/CEST
-                   services.AddCronJob<BackupDBJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 0 * * *"; });// 0 am utc
-               })
-               .StartAsync();
-
-
-            Configuration = new ConfigurationBuilder()
-              .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-              .Build();
-
-            DiscordToken = Configuration["DiscordToken"];
-            Owner = Convert.ToUInt64(Configuration["Owner"]);
-            BasePath = Configuration["BasePath"];
-            ConnectionString = Configuration["ConnectionString"];
-
-            RedditAppId = Configuration["Reddit:AppId"];
-            RedditRefreshToken = Configuration["Reddit:RefreshToken"];
-            RedditAppSecret = Configuration["Reddit:AppSecret"];
+                       // TODO adjust for summer time in CET/CEST
+                       services.AddCronJob<BackupDBJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 * * *"; });// 0 am utc
+                   })
+                   .StartAsync();
 
 
-            BackupDBOnStartup();
+                Configuration = new ConfigurationBuilder()
+                  .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                  .Build();
 
-            new Program().MainAsync(DiscordToken).GetAwaiter().GetResult();
+                DiscordToken = Configuration["DiscordToken"];
+                Owner = Convert.ToUInt64(Configuration["Owner"]);
+                BasePath = Configuration["BasePath"];
+                ConnectionString = Configuration["ConnectionString"];
 
+                RedditAppId = Configuration["Reddit:AppId"];
+                RedditRefreshToken = Configuration["Reddit:RefreshToken"];
+                RedditAppSecret = Configuration["Reddit:AppSecret"];
+
+
+                //BackupDBOnStartup();
+
+                new Program().MainAsync(DiscordToken).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("CRITICAL ERROR: " + ex.ToString());
+            }
         }
 
         public static void BackupDBOnStartup()
@@ -364,23 +370,30 @@ namespace ETHDINFKBot
 
         private async void HandleReaction(Cacheable<IUserMessage, ulong> argMessage, ISocketMessageChannel argMessageChannel, SocketReaction argReaction, bool addedReaction)
         {
-            if (TempDisableIncomming)
-                return;
-
-            IMessage currentMessage = null;
-            if (argMessage.HasValue)
+            try
             {
-                currentMessage = argMessage.Value;
+                if (TempDisableIncomming)
+                    return;
+
+                IMessage currentMessage = null;
+                if (argMessage.HasValue)
+                {
+                    currentMessage = argMessage.Value;
+                }
+                else
+                {
+                    currentMessage = await argMessageChannel.GetMessageAsync(argMessage.Id);
+                }
+
+                var channelSettings = BotChannelSettings?.SingleOrDefault(i => i.DiscordChannelId == argMessageChannel.Id);
+
+                ReactionHandler reactionHandler = new ReactionHandler(currentMessage, argReaction, channelSettings, addedReaction);
+                reactionHandler.Run();
             }
-            else
+            catch (Exception ex)
             {
-                currentMessage = await argMessageChannel.GetMessageAsync(argMessage.Id);
+
             }
-
-            var channelSettings = BotChannelSettings?.SingleOrDefault(i => i.DiscordChannelId == argMessageChannel.Id);
-
-            ReactionHandler reactionHandler = new ReactionHandler(currentMessage, argReaction, channelSettings, addedReaction);
-            reactionHandler.Run();
         }
         private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> argMessage, ISocketMessageChannel argMessageChannel, SocketReaction argReaction)
         {

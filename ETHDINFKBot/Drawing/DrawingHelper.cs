@@ -131,7 +131,7 @@ namespace ETHDINFKBot.Drawing
             List<string> yAxisLabels = new List<string>();
             yAxisLabels.Add(currentValue.ToString());
 
-            for (int i = 0; i < columns; i++)
+            for (int i = 0; i < rows; i++)
             {
                 currentValue += intervalRow;
                 yAxisLabels.Add(currentValue.ToString() + suffix);

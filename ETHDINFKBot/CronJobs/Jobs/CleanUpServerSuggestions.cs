@@ -27,30 +27,39 @@ namespace ETHDINFKBot.CronJobs.Jobs
             _logger.LogInformation("{Name} starts.");
             return base.StartAsync(cancellationToken);
         }
+
         private async void CleanUpOldMessages(SocketTextChannel channel, TimeSpan toDeleteOlderThan)
         {
             DateTime oneWeekAgo = DateTime.Now.Add(toDeleteOlderThan);
             ulong oneWeekAgoSnowflake = SnowflakeUtils.ToSnowflake(oneWeekAgo);
             var oldMessages = await channel.GetMessagesAsync(oneWeekAgoSnowflake, Direction.Before, 100/*100 should be enought for a while*/).FlattenAsync();
             await channel.DeleteMessagesAsync(oldMessages);
-            var messageDelete = await channel.SendMessageAsync($"Deleting {oldMessages.Count()} messages"); // enable when this message is correct
 
-            Task.Delay(TimeSpan.FromMinutes(5));
-
-            messageDelete.DeleteAsync();
+            //var messageDelete = await channel.SendMessageAsync($"Deleting {oldMessages.Count()} messages"); // enable when this message is correct
+            //Task.Delay(TimeSpan.FromMinutes(5));
+            //messageDelete.DeleteAsync();
         }
 
         public override Task DoWork(CancellationToken cancellationToken)
         {
             _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
-            foreach (var item in Program.Client.Guilds)
+
+            try
             {
-                var channel = item.GetTextChannel(ServerSuggestion);
-                if (channel != null)
+                foreach (var item in Program.Client.Guilds)
                 {
-                    CleanUpOldMessages(channel, TimeSpan.FromDays(-7));
+                    var channel = item.GetTextChannel(ServerSuggestion);
+                    if (channel != null)
+                    {
+                        CleanUpOldMessages(channel, TimeSpan.FromDays(-7));
+                    }
                 }
             }
+            catch(Exception ex)
+            {
+                _logger.LogError("Error cleaning up suggestions", ex);
+            }
+
             return Task.CompletedTask;
         }
 

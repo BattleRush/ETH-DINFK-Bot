@@ -109,6 +109,7 @@ namespace ETHDINFKBot.Modules
             builder.AddField("admin channel help", "Help for channel command");
             builder.AddField("admin reddit help", "Help for reddit command");
             builder.AddField("admin rant help", "Help for rant command");
+            builder.AddField("admin place help", "Help for place command");
             builder.AddField("admin kill", "Do I really need to explain this one");
             builder.AddField("admin blockemote <id> <block>", "Block an emote from being selectable");
 
@@ -567,6 +568,48 @@ namespace ETHDINFKBot.Modules
             }
         }
 
+        [Group("place")]
+        public class PlaceAdminModule : ModuleBase<SocketCommandContext>
+        {
+            [Command("help")]
+            public async Task PlaceAdminHelp()
+            {
+                var author = Context.Message.Author;
+                if (author.Id != ETHDINFKBot.Program.Owner)
+                {
+                    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                EmbedBuilder builder = new EmbedBuilder();
+
+                builder.WithTitle("PLace Admin Help");
+
+                builder.WithColor(0, 0, 255);
+
+                builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+                builder.WithCurrentTimestamp();
+                builder.AddField("admin place help", "This message :)");
+                builder.AddField("admin place verify <user> <true|false>", "Used to verify user for multipixel feature");
+
+                Context.Channel.SendMessageAsync("", false, builder.Build());
+            }
+
+            [Command("verify")]
+            public async Task VerifyPlaceUser(SocketUser user, bool verified)
+            {
+                var author = Context.Message.Author;
+                if (author.Id != ETHDINFKBot.Program.Owner)
+                {
+                    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                var success = DatabaseManager.Instance().VerifyDiscordUserForPlace(user.Id, verified);
+
+                await Context.Channel.SendMessageAsync($"Set <@{user.Id}> to {verified} Success: {success}", false);
+            }
+        }
 
         [Group("reddit")]
         public class RedditAdminModule : ModuleBase<SocketCommandContext>

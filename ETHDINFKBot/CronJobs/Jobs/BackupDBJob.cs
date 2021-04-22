@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using Discord.WebSocket;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -28,18 +29,34 @@ namespace ETHDINFKBot.CronJobs.Jobs
         }
         public void BackupDB(string sourceConnectionString, string targetConnectionString)
         {
-            using (var location = new SqliteConnection(sourceConnectionString))
-            using (var destination = new SqliteConnection(targetConnectionString))
+            try
             {
-                location.Open();
-                destination.Open();
-                location.BackupDatabase(destination, "main", "main");
+                using (var location = new SqliteConnection(sourceConnectionString))
+                using (var destination = new SqliteConnection(targetConnectionString))
+                {
+                    location.Open();
+                    destination.Open();
+                    location.BackupDatabase(destination);
+                }
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Failed Backup");
+                //textChannel.SendMessageAsync("Failed DB Backup: " + ex.Message);
             }
         }
         public override Task DoWork(CancellationToken cancellationToken)
-        {
+        {   
+            // todo config
+            //ulong guildId = 747752542741725244;
+            //ulong spamChannel = 768600365602963496;
+            //var guild = Program.Client.GetGuild(guildId);
+            //var textChannel = guild.GetTextChannel(spamChannel);
+
             _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
+
             Console.WriteLine("Run BACKUP");
+            //textChannel.SendMessageAsync("Starting DB Backup");
 
             var dbBackupPath = Path.Combine(Program.BasePath, "Database", "Backup", $"ETHBot_Job_{DateTime.Now.ToString("yyyyMMdd_HHmmss")}.db");
 
@@ -47,6 +64,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
             // TODO check if we can delete any older backups
 
+            //textChannel.SendMessageAsync("DB Backup ended");
             return Task.CompletedTask;
         }
 
