@@ -28,6 +28,7 @@ namespace ETHDINFKBot.Handlers
         private SocketTextChannel SocketTextChannel;
         private SocketGuildChannel SocketGuildChannel;
         private SocketGuild SocketGuild;
+        private SocketCommandContext Context;
 
         private DatabaseManager DatabaseManager;
         private BotChannelSetting ChannelSettings;
@@ -44,6 +45,7 @@ namespace ETHDINFKBot.Handlers
             if (SocketGuildChannel == null)
                 return;
             SocketGuild = SocketGuildChannel.Guild;
+            Context = new SocketCommandContext(new DiscordSocketClient(), socketMessage);
 
             ChannelSettings = channelSettings;
             CommandInfos = commandList;
@@ -297,7 +299,14 @@ namespace ETHDINFKBot.Handlers
 
                                 using (var stream = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
                                 {
-                                    await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.gif");
+                                    if (Context.Message.ReferencedMessage != null)
+                                    {
+                                        await Context.Channel.SendFileAsync(stream, $"{emote.EmoteName}.gif", "", false, null, null, false, null, new Discord.MessageReference(Context.Message.ReferencedMessage.Id));
+                                    } 
+                                    else
+                                    {
+                                        await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.gif");
+                                    }
                                 }
                             }
                             else
@@ -310,7 +319,14 @@ namespace ETHDINFKBot.Handlers
                                 var resImage = CommonHelper.ResizeImage(bmp, Math.Min(bmp.Height, 64));
                                 var stream = CommonHelper.GetStream(resImage);
 
-                                await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.png");
+                                if (Context.Message.ReferencedMessage != null)
+                                {
+                                    await Context.Channel.SendFileAsync(stream, $"{emote.EmoteName}.png", "", false, null, null, false, null, new Discord.MessageReference(Context.Message.ReferencedMessage.Id));
+                                }
+                                else
+                                {
+                                    await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.png");
+                                }
 
                             }
                         }
