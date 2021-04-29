@@ -297,7 +297,7 @@ namespace ETHDINFKBot.Handlers
 
                                 using (var stream = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
                                 {
-                                    await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.gif");
+                                    await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.gif", "", false, null, null, false, null, new Discord.MessageReference(SocketMessage.ReferencedMessage?.Id));
                                 }
                             }
                             else
@@ -310,8 +310,7 @@ namespace ETHDINFKBot.Handlers
                                 var resImage = CommonHelper.ResizeImage(bmp, Math.Min(bmp.Height, 64));
                                 var stream = CommonHelper.GetStream(resImage);
 
-                                await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.png");
-
+                                await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.png", "", false, null, null, false, null, new Discord.MessageReference(SocketMessage.ReferencedMessage?.Id));
                             }
                         }
 
