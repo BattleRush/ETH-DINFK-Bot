@@ -20,6 +20,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using Discord;
 using ETHDINFKBot.Drawing;
+using MySqlConnector;
 
 namespace ETHDINFKBot.Modules
 {
@@ -33,20 +34,18 @@ namespace ETHDINFKBot.Modules
             Stopwatch watch = new Stopwatch();
             watch.Start();
             var queryResult = await GetQueryResults(@"
-SELECT 
-    name 
-FROM sqlite_master 
-WHERE type ='table' AND name NOT LIKE 'sqlite%' 
-ORDER BY name DESC;", true, 50);
+SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'ethbot_dev' 
+ORDER BY table_name DESC;", true, 50);
 
             EmbedBuilder builder = new EmbedBuilder();
 
-            builder.WithTitle("BattleRush's Helper Help");
+            builder.WithTitle($"{Program.Client.CurrentUser.Username} DB INFO");
             builder.WithDescription(@"SQL Tables 
 To get the diagram type: '.sql table info'");
             builder.WithColor(65, 17, 187);
 
-            builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+            builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
             builder.WithCurrentTimestamp();
 
             long totalRows = 0;
@@ -60,6 +59,10 @@ To get the diagram type: '.sql table info'");
                 "DiscordEmoteHistory"
             };
 
+            // TODO check if db name is needed
+
+            long dbSizeInBytes = 0;
+
             string rowCountString = "";
             foreach (var row in queryResult.Data)
             {
@@ -68,31 +71,43 @@ To get the diagram type: '.sql table info'");
                 string query = $"SELECT COUNT(*) FROM {tableName}";
 
                 if (largeTables.Contains(tableName))
-                    query = $@"SELECT MAX(_ROWID_) FROM ""{tableName}"" LIMIT 1;";
+                    query = $@"SELECT AUTO_INCREMENT
+FROM   information_schema.TABLES
+WHERE  TABLE_SCHEMA = 'ethbot_dev' and TABLE_NAME = '{tableName}'";
 
                 var rowCountInfo = await GetQueryResults(query, true, 1);
 
                 string rowCountStr = rowCountInfo.Data.FirstOrDefault().FirstOrDefault(); // todo rework this first first thing
 
-                if (long.TryParse(rowCountStr, out long rowCount))
+                // TODO could be done with one query
+                string tableSizeQuery = $@"SELECT
+    ROUND((DATA_LENGTH + INDEX_LENGTH)) AS `Size`
+FROM
+  information_schema.TABLES
+WHERE
+  TABLE_SCHEMA = 'ethbot_dev' and TABLE_NAME = '{tableName}'";
+
+                var tableSize = await GetQueryResults(tableSizeQuery, true, 1);
+                var sizeInBytesStr = tableSize.Data.FirstOrDefault()?.FirstOrDefault();
+
+                if (long.TryParse(rowCountStr, out long rowCount) && long.TryParse(sizeInBytesStr, out long sizeInBytes))
                 {
                     totalRows += rowCount;
-                    rowCountString += $"{tableName} ({rowCount:N0})" + Environment.NewLine;
+                    rowCountString += $"{tableName} ({rowCount:N0}) {Math.Round(sizeInBytes / 1024d / 1024d, 2)} MB" + Environment.NewLine;
+                    dbSizeInBytes += sizeInBytes;
                 }
             }
 
             builder.AddField("Row count", rowCountString);
 
-            var dbSizeInfo = await GetQueryResults($"SELECT page_count *page_size / 1024 / 1024 as size FROM pragma_page_count(), pragma_page_size()", true, 1);
-            string dbSizeStr = dbSizeInfo.Data.FirstOrDefault().FirstOrDefault(); // todo rework this first first thing
+            //var dbSizeInfo = await GetQueryResults($"SELECT page_count *page_size / 1024 / 1024 as size FROM pragma_page_count(), pragma_page_size()", true, 1);
+            //string dbSizeStr = dbSizeInfo.Data.FirstOrDefault().FirstOrDefault(); // todo rework this first first thing
 
-            if (int.TryParse(dbSizeStr, out int dbSize))
-            {
-                watch.Stop();
-                builder.AddField("Total", $"Rows: {totalRows.ToString("N0")} {Environment.NewLine}" +
-                    $"DB Size: {Math.Round(dbSize/1024d, 2)} GB {Environment.NewLine}" + 
-                    $"Query time: {watch.ElapsedMilliseconds.ToString("N0")}ms");
-            }
+
+            watch.Stop();
+            builder.AddField("Total", $"Rows: {totalRows.ToString("N0")} {Environment.NewLine}" +
+                $"DB Size: {Math.Round(dbSizeInBytes / 1024d / 1024d / 1024d, 2)} GB {Environment.NewLine}" +
+                $"Query time: {watch.ElapsedMilliseconds.ToString("N0")}ms");
 
             Context.Channel.SendMessageAsync("", false, builder.Build());
         }
@@ -433,7 +448,7 @@ To get the diagram type: '.sql table info'");
             return result;
         }
 
-       
+
 
 
 
@@ -525,32 +540,52 @@ To get the diagram type: '.sql table info'");
             int currentRowCount = 0;
 
 
-            CancellationTokenSource cts = new CancellationTokenSource();
+            //ancellationTokenSource cts = new CancellationTokenSource();
 
             try
             {
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
 
-                using (var connection = new SqliteConnection(Program.ConnectionString))
+                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionstring))
                 {
-                    connection.DefaultTimeout = 1;
-                    using (var command = new SqliteCommand(commandSql, connection))
+                    using (var command = new MySqlCommand(commandSql, connection))
                     {
-                        command.CommandTimeout = 1;
+                        command.CommandTimeout = 30;
 
                         connection.Open();
 
                         //WorkaroundForTimeoutNotWorking(cts, commandSql, author.Id == ETHDINFKBot.Program.Owner);
 
-                        var reader = await command.ExecuteReaderAsync();
+                        var reader = command.ExecuteReader();
+
+
+
                         while (reader.Read())
                         {
+                            // cap at 10k records to return in count (as temp fix if the query returns millions of rows)
+                            if (TotalResults == 10_000)
+                            {
+                                command.Cancel();
+                                break;
+                            }
+
+                            if (TotalResults > 250)
+                            {
+                                TotalResults++;
+                                continue;
+                            }
+
+
+
                             if (Header.Count == 0)
                             {
                                 for (int i = 0; i < reader.FieldCount; i++)
                                 {
                                     string fieldName = reader.GetName(i)?.ToString();
+                                    if (currentContentLength + fieldName.Length > 1980)
+                                        break;
+
                                     Header.Add(fieldName);
                                     currentContentLength += fieldName.Length;
                                 }
@@ -585,7 +620,9 @@ To get the diagram type: '.sql table info'");
                                                 break;
 
                                             default:
-                                                fieldString = $"{type} is unknown";
+                                                //fieldString = $"{type} is unknown";
+                                                fieldString = reader.GetValue(i).ToString()?.Replace("`", "");
+
                                                 break;
                                         }
 
@@ -611,17 +648,24 @@ To get the diagram type: '.sql table info'");
 
                             TotalResults++;
                         }
+                        /*
+                        int totalRow = 0;
+                        reader.NextResult(); // 
+                        if (reader.Read())
+                        {
+                            TotalResults = (int)reader[0];
+                        }*/
                     }
+
+                    connection.Close();
                 }
-
-                cts.Cancel();
                 watch.Stop();
-
                 Time = watch.ElapsedMilliseconds;
+                //cts.Cancel();
             }
             catch (Exception ex)
             {
-                cts.Cancel();
+                //cts.Cancel();
                 await Context.Channel.SendMessageAsync("Error: " + ex.Message, false);
             }
 

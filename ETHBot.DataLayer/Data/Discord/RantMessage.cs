@@ -17,6 +17,7 @@ namespace ETHBot.DataLayer.Data.Discord
         public int RantTypeId { get; set; }
         public RantType RantType { get; set; }
 
+        [StringLength(2000)]
         public string Content { get; set; }
 
 

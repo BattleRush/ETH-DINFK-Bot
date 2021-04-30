@@ -12,6 +12,8 @@ namespace ETHBot.DataLayer.Data.Discord
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
 
         public ulong DiscordServerId { get; set; }
+
+        [StringLength(2000)]
         public string ServerName { get; set; }
         // TODO Perm
     }

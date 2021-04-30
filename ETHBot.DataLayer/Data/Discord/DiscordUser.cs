@@ -17,9 +17,15 @@ namespace ETHBot.DataLayer.Data.Discord
         public bool IsBot { get; set; }
 
         public bool IsWebhook { get; set; }
+
+        [StringLength(255)]
         public string Username { get; set; }
+
+        [StringLength(255)]
         public string AvatarUrl { get; set; }
         public DateTimeOffset? JoinedAt { get; set; }
+
+        [StringLength(255)]
         public string Nickname { get; set; }
         public int FirstDailyPostCount { get; set; }
         public bool AllowedPlaceMultipixel { get; set; }

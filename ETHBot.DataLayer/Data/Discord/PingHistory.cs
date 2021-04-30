@@ -19,9 +19,9 @@ namespace ETHBot.DataLayer.Data.Discord
         [ForeignKey("DiscordUser")]
         public ulong? DiscordUserId { get; set; }
         public DiscordUser DiscordUser { get; set; }
-        public ulong? MessageId { get; set; }
+        public ulong? DiscordMessageId { get; set; }
 
-        [ForeignKey("MessageId")]
+        [ForeignKey("DiscordMessageId")]
         public virtual DiscordMessage DiscordMessage { get; set; }
 
         [ForeignKey("FromDiscordUser")]

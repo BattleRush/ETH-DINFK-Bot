@@ -11,16 +11,26 @@ namespace ETHBot.DataLayer.Data.Discord
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public ulong DiscordEmoteId { get; set; }
+
+        [StringLength(255)]
         public string EmoteName { get; set; }
+
         public bool Animated { get; set; }
+
+        [StringLength(255)]
         public string Url { get; set; }
+
+        [StringLength(255)]
         public string LocalPath { get; set; }
+
         public bool Blocked { get; set; }
+
 
         // to be added when i figure a good way to do this
         //public string Fingerprint { get; set; }
 
         public DateTimeOffset CreatedAt { get; set; }
+
         public DateTimeOffset LastUpdatedAt { get; set; }
     }
 }

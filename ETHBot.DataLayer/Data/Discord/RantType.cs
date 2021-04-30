@@ -11,6 +11,8 @@ namespace ETHBot.DataLayer.Data.Discord
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int RantTypeId { get; set; }
+
+        [StringLength(100)]
         public string Name { get; set; }
     }
 }

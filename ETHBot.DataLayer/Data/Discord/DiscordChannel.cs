@@ -12,11 +12,15 @@ namespace ETHBot.DataLayer.Data.Discord
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
 
         public ulong DiscordChannelId { get; set; }
+
+        [StringLength(255)]
         public string ChannelName { get; set; }
+
 
         [ForeignKey("DiscordServer")]
         public ulong DiscordServerId { get; set; }
         public DiscordServer DiscordServer { get; set; }
+
         // TODO Perm
     }
 }

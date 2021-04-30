@@ -11,11 +11,13 @@ namespace ETHBot.DataLayer.Data.Discord
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int BannedLinkId { get; set; }
+
+        [StringLength(1000)]
         public string Link { get; set; }
         public DateTimeOffset ReportTime { get; set; }
 
         [ForeignKey("ByUser")]
-        public ulong ByUserId { get; set; }
-        public DiscordUser ByUser { get; set; }
+        public ulong AddedByDiscordUserId { get; set; }
+        public DiscordUser AddedByDiscordUser { get; set; }
     }
 }

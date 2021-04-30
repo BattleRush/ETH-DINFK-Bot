@@ -91,7 +91,7 @@ namespace ETHDINFKBot.Modules
                     B = pixel.B
                 };
 
-                newPixel.Placements.Add(pixel.SnowflakeTimePlaced, pixel.DiscordUserId);
+                //newPixel.Placements.Add(pixel.SnowflakeTimePlaced, pixel.PlaceDiscordUserId);
                 Pixels.Add(newPixel);
             }
             else
@@ -99,7 +99,7 @@ namespace ETHDINFKBot.Modules
                 listPixel.R = pixel.R;
                 listPixel.G = pixel.G;
                 listPixel.B = pixel.B;
-                listPixel.Placements.Add(pixel.SnowflakeTimePlaced, pixel.DiscordUserId);
+                //listPixel.Placements.Add(pixel.SnowflakeTimePlaced, pixel.PlaceDiscordUserId);
             }
         }
     }
@@ -185,20 +185,20 @@ namespace ETHDINFKBot.Modules
 
         private static bool LoadedLib = false; // TODO Do better
 
-
-        public static Dictionary<ulong, byte> UserIdInfos = new Dictionary<ulong, byte>();
+        // Redesign it from not being public static and doing it properly
+        public static List<PlaceDiscordUser> PlaceDiscordUsers = new List<PlaceDiscordUser>();
 
         [Command("usertest")]
         public async Task UserTest()
         {
             PlaceDBManager dbManager = PlaceDBManager.Instance();
 
-            UserIdInfos = dbManager.GetPlaceUserIds();
+            PlaceDiscordUsers = dbManager.GetPlaceDiscordUsers();
 
             string text = "";
-            foreach (var item in UserIdInfos)
+            foreach (var item in PlaceDiscordUsers)
             {
-                text += $"{item.Key}|{item.Value}" + Environment.NewLine;
+                text += $"{item.PlaceDiscordUserId}|{item.DiscordUserId}" + Environment.NewLine;
 
                 if (text.Length > 1900)
                 {
@@ -214,6 +214,9 @@ namespace ETHDINFKBot.Modules
         [Command("genchunk")]
         public async Task GenerateChunks()
         {
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+
             var author = Context.Message.Author;
             if (author.Id != ETHDINFKBot.Program.Owner)
             {
@@ -229,7 +232,7 @@ namespace ETHDINFKBot.Modules
 
             PlaceDBManager dbManager = PlaceDBManager.Instance();
 
-            UserIdInfos = dbManager.GetPlaceUserIds();
+            PlaceDiscordUsers = dbManager.GetPlaceDiscordUsers();
 
             int size = 100_000;
 
@@ -259,8 +262,6 @@ namespace ETHDINFKBot.Modules
                 byte[] chunkIdBytes = BitConverter.GetBytes(chunkId);
                 data[1] = chunkIdBytes[0];
                 data[2] = chunkIdBytes[1];
-
-
 
                 // 1 entry 12 bytes -> chunk size = 1.2MB
 
@@ -307,7 +308,7 @@ namespace ETHDINFKBot.Modules
                     counter += 3;
 
                     // get user id (limited currently to 255)
-                    data[counter] = UserIdInfos[item.DiscordUserId];
+                    data[counter] = Convert.ToByte(item.PlaceDiscordUserId);
 
                     counter += 1;
                 }
@@ -317,7 +318,9 @@ namespace ETHDINFKBot.Modules
                 File.WriteAllBytes(filePath, data);
             }
 
-            await Context.Channel.SendMessageAsync($"Done", false);
+            watch.Stop();
+
+            await Context.Channel.SendMessageAsync($"Done. Timelapse has been updated automatically in {watch.ElapsedMilliseconds}ms", false);
         }
 
         [Command("help")]
@@ -674,7 +677,7 @@ If you violate the server rules your pixels will be removed.
 
         private async void GenerateTimelapseCommans(int x, int y, int size, List<SocketUser> socketUsers)
         {
-            //return;
+            return;
             try
             {
                 int textPadding = 50;
@@ -686,16 +689,17 @@ If you violate the server rules your pixels will be removed.
 
                 IEnumerable<PlaceBoardHistory> pixelHistory;
 
-                List<ulong> userIds = new List<ulong>();
+                List<short> userIds = new List<short>();
 
-                foreach (var item in socketUsers)
-                    userIds.Add(item.Id);
+                // TODO
+                //foreach (var item in socketUsers)
+                    //userIds.Add(item.Id);
 
                 if (size < 0)
                 {
                     // no zoom
                     size = 1000;
-                    pixelHistory = dbManager.GetBoardHistory(userIds).OrderBy(i => i.SnowflakeTimePlaced);
+                    pixelHistory = dbManager.GetBoardHistory(userIds).OrderBy(i => i.PlaceBoardHistoryId);
                     x = 0;
                     y = 0;
                 }
@@ -704,16 +708,16 @@ If you violate the server rules your pixels will be removed.
                     if (size < 10)
                         size = 10; // 10 is min size
 
-                    pixelHistory = dbManager.GetBoardHistory(x, y, size, userIds).OrderBy(i => i.SnowflakeTimePlaced);
+                    // TODO
+                    //pixelHistory = dbManager.GetBoardHistory(x, y, size, userIds).OrderBy(i => i.SnowflakeTimePlaced);
                 }
-
 
                 int secs = 30;
                 int imagesPerSec = 60; // 60fps?
 
                 int frames = secs * imagesPerSec;
 
-                ulong step = (pixelHistory.Last().SnowflakeTimePlaced - pixelHistory.First().SnowflakeTimePlaced) / (ulong)frames;
+                ulong step = 1;// (pixelHistory.Last().SnowflakeTimePlaced - pixelHistory.First().SnowflakeTimePlaced) / (ulong)frames;
 
                 ulong last = 0;
 
@@ -747,7 +751,7 @@ If you violate the server rules your pixels will be removed.
                 var font = DrawingHelper.TitleFont;
                 var brush = DrawingHelper.SolidBrush_White;
 
-                List<ulong> users = new System.Collections.Generic.List<ulong>();
+                List<short> users = new System.Collections.Generic.List<short>();
                 int pixelCount = 0;
 
                 if (!LoadedLib)
@@ -791,8 +795,9 @@ If you violate the server rules your pixels will be removed.
 
                     foreach (var history in pixelHistory)
                     {
-                        if (!users.Contains(history.DiscordUserId))
-                            users.Add(history.DiscordUserId);
+
+                        if (!users.Contains(history.PlaceDiscordUserId))
+                            users.Add(history.PlaceDiscordUserId);
 
                         var color = System.Drawing.Color.FromArgb(history.R, history.G, history.B);
                         //board.Bitmap.SetPixel(history.XPos - x, history.YPos - y, color);
@@ -807,11 +812,11 @@ If you violate the server rules your pixels will be removed.
 
                         pixelCount++;
 
-
+                        /*
                         if (last + step < history.SnowflakeTimePlaced)
                         {
                             // generate a new frame
-                            last = history.SnowflakeTimePlaced;
+                            //last = history.SnowflakeTimePlaced;
 
 
                             text = $"{SnowflakeUtils.FromSnowflake(last).ToString("yyyy-MM-dd HH:mm:ss")} PixelsPlaced: {pixelCount.ToString("N0")} Users participated: {users.Count.ToString("N0")}";
@@ -826,7 +831,7 @@ If you violate the server rules your pixels will be removed.
 
                             //board.Bitmap.Save(Path.Combine("Timelapse", $"{fileName}{frameCounter.ToString("D6")}.png"));
                             frameCounter++;
-                        }
+                        }*/
                     }
 
 
@@ -1055,10 +1060,12 @@ If you violate the server rules your pixels will be removed.
                 var color = System.Drawing.Color.FromArgb(pixel.R, pixel.G, pixel.B);
                 var stringHex = ColorTranslator.ToHtml(color);
 
+                // TODO Convert PlaceDiscordUserId to DiscordUserId
+
                 if (all?.ToLower() == "all")
-                    messageText += $"<@{pixel.DiscordUserId}> placed ({stringHex}) at {pixel.XPos}/{pixel.YPos} {SnowflakeUtils.FromSnowflake(pixel.SnowflakeTimePlaced).ToString("MM.dd HH:mm:ss")} {Environment.NewLine}"; // todo check for everyone or here
+                    messageText += $"<@{pixel.PlaceDiscordUserId}> placed ({stringHex}) at {pixel.XPos}/{pixel.YPos} {pixel.PlacedDateTime.ToString("MM.dd HH:mm:ss")} {Environment.NewLine}"; // todo check for everyone or here
                 else
-                    messageText += $"<@{pixel.DiscordUserId}> placed ({stringHex}) at {SnowflakeUtils.FromSnowflake(pixel.SnowflakeTimePlaced).ToString("MM.dd HH:mm")} {Environment.NewLine}"; // todo check for everyone or here
+                    messageText += $"<@{pixel.PlaceDiscordUserId}> placed ({stringHex}) at {pixel.PlacedDateTime.ToString("MM.dd HH:mm")} {Environment.NewLine}"; // todo check for everyone or here
 
             }
 
@@ -1191,7 +1198,7 @@ If you violate the server rules your pixels will be removed.
             {
                 // TODO optimize some lines + move to draw helper
                 var dataPointsAvg = list.ToDictionary(i => i.DateTime, i => i.AvgTimeInMs);
-                var dataPointsCount = list.ToDictionary(i => i.DateTime, i => i.Count);
+                var dataPointsCount = list.ToDictionary(i => i.DateTime, i => i.SuccessCount);
 
                 var drawInfo = DrawingHelper.GetEmptyGraphics();
                 var padding = DrawingHelper.DefaultPadding;
@@ -1233,7 +1240,7 @@ If you violate the server rules your pixels will be removed.
                 string output = "```";
                 foreach (var item in list)
                 {
-                    output += $"{item.DateTime.ToString("dd.MM HH:mm")} Count: {item.Count.ToString("N0")} Avg: {item.AvgTimeInMs}{Environment.NewLine}";
+                    output += $"{item.DateTime.ToString("dd.MM HH:mm")} Count: {item.SuccessCount.ToString("N0")} Avg: {item.AvgTimeInMs}{Environment.NewLine}";
 
                     if (output.Length > 1950)
                     {
@@ -1252,6 +1259,7 @@ If you violate the server rules your pixels will be removed.
         }
 
         static List<long> PixelPlacementTimeLastMinute = new List<long>();
+        static int FailedPixelPlacements = 0;
 
         private static readonly object PlaceAggregateObj = new object();
         static long OldPixelCountMod = -1;
@@ -1259,14 +1267,15 @@ If you violate the server rules your pixels will be removed.
         {
             double avgPixelTime = PixelPlacementTimeLastMinute.Average();
 
-
             dbManager.AddPlacePerfRecord(new PlacePerformanceInfo()
             {
                 DateTime = DateTime.UtcNow,
                 AvgTimeInMs = (int)avgPixelTime,
-                Count = PixelPlacementTimeLastMinute.Count
+                SuccessCount = PixelPlacementTimeLastMinute.Count,
+                FailedCount = FailedPixelPlacements
             });
 
+            FailedPixelPlacements = 0;
             PixelPlacementTimeLastMinute = new List<long>();
 
             LastStatusRefresh = DateTime.Now;
@@ -1283,10 +1292,10 @@ If you violate the server rules your pixels will be removed.
             Program.Client.SetGameAsync($"{totalPixelsPlaced:N0} pixels", null, ActivityType.Watching);
             RefreshBoard(10);
 
-            if (DateTime.Now.Minute % 60 == 0 && DateTime.Now.Hour % 12 == 3 || UserIdInfos.Count == 0)
+            if (DateTime.Now.Minute % 60 == 0 || PlaceDiscordUsers.Count == 0)
             {
                 // refresh the db users incase any new
-                UserIdInfos = dbManager.GetPlaceUserIds();
+                PlaceDiscordUsers = dbManager.GetPlaceDiscordUsers();
             }
         }
 
@@ -1308,7 +1317,7 @@ If you violate the server rules your pixels will be removed.
 
             PlaceDBManager dbManager = PlaceDBManager.Instance();
 
-            UserIdInfos = dbManager.GetPlaceUserIds();
+            PlaceDiscordUsers = dbManager.GetPlaceDiscordUsers();
 
             int size = 100_000;
 
@@ -1386,7 +1395,7 @@ If you violate the server rules your pixels will be removed.
                     counter += 3;
 
                     // get user id (limited currently to 255)
-                    data[counter] = UserIdInfos[item.DiscordUserId];
+                    data[counter] = Convert.ToByte(item.PlaceDiscordUserId);
 
                     counter += 1;
                 }
@@ -1445,7 +1454,18 @@ If you violate the server rules your pixels will be removed.
 
             watch.Stop();
 
-            PixelPlacementTimeLastMinute.Add(watch.ElapsedMilliseconds);
+            if (successfull)
+            {
+                PixelPlacementTimeLastMinute.Add(watch.ElapsedMilliseconds);
+            }
+            else
+            {
+                lock (PlaceAggregateObj)
+                {
+                    FailedPixelPlacements++;
+                }
+            }
+
 
             lock (PlaceAggregateObj)
             {

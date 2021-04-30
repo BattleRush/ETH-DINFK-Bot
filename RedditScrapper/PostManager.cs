@@ -151,7 +151,7 @@ namespace RedditScrapper
                     IsNSFW = Post.NSFW,
                     Permalink = Post.Permalink,
                     SubredditInfo = SubredditInfo,
-                    Url = Post.Listing.URL,
+                    Url = Post.Listing.URL.Substring(0, Math.Min(500, Post.Listing.URL.Length)),
                     IsText = Post.Listing.IsSelf,
                     Content = Post.Listing.IsSelf ? Post.Listing.SelfText : null
                 });;

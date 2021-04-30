@@ -33,6 +33,9 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
         public override Task DoWork(CancellationToken cancellationToken)
         {
+            if (Program.Client == null)
+                return Task.CompletedTask;
+
             _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
             var guild = Program.Client.GetGuild(GuildId);
             var textChannel = guild.GetTextChannel(ChannelId);
@@ -43,7 +46,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
             // TODO DEV Only
             //settings.LastSpaceXRedditPost = "t3_m2x82i";
 
-            if (settings.LastSpaceXRedditPost == null)
+            if (settings?.LastSpaceXRedditPost == null)
             {
                 _logger.LogInformation($"{DateTime.Now:hh:mm:ss} No SpaceX subreddit info defined. Abort.");
                 return Task.CompletedTask;

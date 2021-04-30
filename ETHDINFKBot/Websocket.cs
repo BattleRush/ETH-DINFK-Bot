@@ -172,21 +172,12 @@ namespace ETHDINFKBot
 
         private byte[] GetUserImageBytes(short userId)
         {
-            var userIds = PlaceModule.UserIdInfos;
-
-            ulong discordUserId = 0;
-            foreach (var userIdInfo in userIds)
-            {
-                if (userIdInfo.Value == userId)
-                {
-                    discordUserId = userIdInfo.Key;
-                    break;
-                }
-            }
-
+            var placeUser = PlaceModule.PlaceDiscordUsers.SingleOrDefault(i => i.PlaceDiscordUserId == userId);
+            if (placeUser == null)
+                return new byte[1];
 
             DatabaseManager dbManager = DatabaseManager.Instance();
-            var discordUser = dbManager.GetDiscordUserById(discordUserId);
+            var discordUser = dbManager.GetDiscordUserById(placeUser.DiscordUserId);
 
             using (var webClient = new WebClient())
             {
@@ -220,12 +211,13 @@ namespace ETHDINFKBot
                 PlaceDBManager placeDbManager = PlaceDBManager.Instance();
                 DatabaseManager dbManager = DatabaseManager.Instance();
 
-                var userIds = PlaceModule.UserIdInfos;
                 var discordUserInfos = new List<DiscordUser>();
+                short userCount = Convert.ToInt16(PlaceModule.PlaceDiscordUsers.Count);
 
+                // TODO Load with PlaceDiscordUsers the DiscordUser table aswel
                 // todo do with 1 query only -> faster
-                foreach (var userId in userIds)
-                    discordUserInfos.Add(dbManager.GetDiscordUserById(userId.Key));
+                foreach (var user in PlaceModule.PlaceDiscordUsers)
+                    discordUserInfos.Add(dbManager.GetDiscordUserById(user.DiscordUserId));
 
                 /// 0 | ID
                 /// 1-2 | Amount of users loaded
@@ -234,12 +226,12 @@ namespace ETHDINFKBot
                 /// 2-97 Username (utf8 3 bytes per char)
                 /// 98-197 | Url of the Profile (10 chars around spare) ASCII 1 byte per char
                 /// 198 | IsBot 1 byte (could move 1 bit to user id as we wont need all 16 bits but me lazy)
-                byte[] response = new byte[3 + userIds.Count * (2 + 32 * 3 + 100 + 1)];
+                byte[] response = new byte[3 + userCount * (2 + 32 * 3 + 100 + 1)];
 
                 response[0] = (byte)MessageEnum.GetUsers_Response;
 
 
-                byte[] userAmountBytes = BitConverter.GetBytes(userIds.Count);
+                byte[] userAmountBytes = BitConverter.GetBytes(userCount);
                 response[1] = userAmountBytes[0];
                 response[2] = userAmountBytes[1];
 
@@ -247,7 +239,7 @@ namespace ETHDINFKBot
 
                 foreach (var discordUser in discordUserInfos)
                 {
-                    short userId = userIds[discordUser.DiscordUserId];
+                    short userId = PlaceModule.PlaceDiscordUsers.Single(i => i.DiscordUserId == discordUser.DiscordUserId).PlaceDiscordUserId;
                     string name = discordUser.Nickname ?? discordUser.Username;
                     string url = discordUser.AvatarUrl ?? "";
 

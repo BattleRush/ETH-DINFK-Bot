@@ -176,7 +176,7 @@ namespace ETHDINFKBot.Handlers
                 {
                     DiscordChannelId = SocketGuildChannel.Id,
                     DiscordUserId = SocketGuildUser.Id,
-                    MessageId = SocketMessage.Id,
+                    DiscordMessageId = SocketMessage.Id,
                     Content = SocketMessage.Content,
                     ReplyMessageId = referenceMessageId
                 }, true);
@@ -294,23 +294,30 @@ namespace ETHDINFKBot.Handlers
                             {
                                 // TODO gif resize
                                 //await SocketTextChannel.SendMessageAsync(emote.Url);
-
-                                using (var stream = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
+                                try
                                 {
-                                    await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.gif", "", false, null, null, false, null, new Discord.MessageReference(SocketMessage.ReferencedMessage?.Id));
+                                    using (var stream = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
+                                      await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.gif", "", false, null, null, false, null, new Discord.MessageReference(SocketMessage.ReferencedMessage?.Id));
                                 }
+                                catch (Exception ex) { }
                             }
                             else
                             {
-                                Bitmap bmp;
-                                using (var ms = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
+                                try
                                 {
-                                    bmp = new Bitmap(ms);
-                                }
-                                var resImage = CommonHelper.ResizeImage(bmp, Math.Min(bmp.Height, 64));
-                                var stream = CommonHelper.GetStream(resImage);
+                                    Bitmap bmp;
+                                    using (var ms = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
+                                    {
+                                        bmp = new Bitmap(ms);
+                                    }
+                                    var resImage = CommonHelper.ResizeImage(bmp, Math.Min(bmp.Height, 64));
+                                    var stream = CommonHelper.GetStream(resImage);
 
-                                await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.png", "", false, null, null, false, null, new Discord.MessageReference(SocketMessage.ReferencedMessage?.Id));
+                                    await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.png", "", false, null, null, false, null, new Discord.MessageReference(SocketMessage.ReferencedMessage?.Id));
+                                }
+                                catch (Exception ex) 
+                                { 
+                                }
                             }
                         }
 
@@ -358,7 +365,7 @@ namespace ETHDINFKBot.Handlers
 
                         DiscordHelper.DeleteMessage(shameMessage, TimeSpan.FromSeconds(30), $"{username} has been a little bit too curious...");
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         // can cause an exception if the message gets deleted
                     }

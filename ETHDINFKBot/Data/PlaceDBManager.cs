@@ -6,6 +6,7 @@ using ETHDINFKBot.Enums;
 using ETHDINFKBot.Modules;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
+using MySqlConnector;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -100,13 +101,13 @@ namespace ETHDINFKBot.Data
             }
         }
 
-        public List<PlaceBoardHistory> GetBoardHistory(List<ulong> discordUserIds)
+        public List<PlaceBoardHistory> GetBoardHistory(List<short> placeDiscordUserIds)
         {
             try
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.PlaceBoardHistory.AsQueryable().Where(i => !i.Removed && (discordUserIds.Count == 0 || discordUserIds.Contains(i.DiscordUserId))).ToList();
+                    return context.PlaceBoardHistory.AsQueryable().Where(i => !i.Removed && (placeDiscordUserIds.Count == 0 || placeDiscordUserIds.Contains(i.PlaceDiscordUserId))).ToList();
                 }
             }
             catch (Exception ex)
@@ -115,6 +116,7 @@ namespace ETHDINFKBot.Data
                 return null;
             }
         }
+
         public long GetBoardHistoryCount()
         {
             try
@@ -124,16 +126,20 @@ namespace ETHDINFKBot.Data
                     return context.PlaceBoardHistory.Count();
                 }*/
 
-                var sqlSelect = $@"SELECT MAX(_ROWID_) FROM ""PlaceBoardHistory"" LIMIT 1;"; // since no rows are deleted we can use this query to quickly find the row count
 
-                using (var connection = new SqliteConnection(Program.ConnectionString))
+                //var sqlSelect = $@"SELECT MAX(_ROWID_) FROM ""PlaceBoardHistory"" LIMIT 1;"; // since no rows are deleted we can use this query to quickly find the row count
+                var sqlSelect = $@"SELECT AUTO_INCREMENT
+FROM   information_schema.TABLES
+WHERE  TABLE_NAME = 'PlaceBoardHistory'"; // since no rows are deleted we can use this query to quickly find the row count
+
+                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionstring))
                 {
-                    using (var command = new SqliteCommand(sqlSelect, connection))
+                    using (var command = new MySqlCommand(sqlSelect, connection))
                     {
                         command.CommandTimeout = 5;
                         connection.Open();
 
-                        return (long)command.ExecuteScalar();
+                        return Convert.ToInt64(command.ExecuteScalar()) - 1;
                     }
                 }
             }
@@ -144,7 +150,7 @@ namespace ETHDINFKBot.Data
             }
         }
 
-        public List<PlaceBoardHistory> GetBoardHistory(int x, int y, int size, List<ulong> discordUserIds)
+        public List<PlaceBoardHistory> GetBoardHistory(int x, int y, int size, List<short> discordUserIds)
         {
             try
             {
@@ -152,7 +158,7 @@ namespace ETHDINFKBot.Data
                 {
                     return context.PlaceBoardHistory
                         .AsQueryable()
-                        .Where(i => i.XPos >= x && i.XPos < x + size && i.YPos >= y && i.YPos < y + size && !i.Removed && (discordUserIds.Count == 0 || discordUserIds.Contains(i.DiscordUserId)))
+                        .Where(i => i.XPos >= x && i.XPos < x + size && i.YPos >= y && i.YPos < y + size && !i.Removed && (discordUserIds.Count == 0 || discordUserIds.Contains(i.PlaceDiscordUserId)))
                         .ToList();
                 }
             }
@@ -160,6 +166,41 @@ namespace ETHDINFKBot.Data
             {
                 _logger.LogError(ex, ex.Message);
                 return null;
+            }
+        }
+
+        public List<PlaceDiscordUser> GetPlaceDiscordUsers()
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.PlaceDiscordUsers.ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public bool AddPlaceDiscordUser(ulong discordUserId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    context.PlaceDiscordUsers.Add(new PlaceDiscordUser() { DiscordUserId = discordUserId });
+                    context.SaveChanges();
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return false;
             }
         }
 
@@ -244,9 +285,9 @@ FROM PlaceBoardHistory
 WHERE PlaceBoardHistoryId > {from}
 LIMIT {amount};";
 
-                using (var connection = new SqliteConnection(Program.ConnectionString))
+                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionstring))
                 {
-                    using (var command = new SqliteCommand(sqlQuery, connection))
+                    using (var command = new MySqlCommand(sqlQuery, connection))
                     {
                         command.CommandTimeout = 10;
                         connection.Open();
@@ -255,7 +296,7 @@ LIMIT {amount};";
 
                         while (reader.Read())
                         {
-                            int placeBoardHistoryId = Convert.ToInt32(reader.GetString(0));
+                            int placeBoardHistoryId = reader.GetInt32(0);
                             short xPos = reader.GetInt16(1);
                             short yPos = reader.GetInt16(2);
 
@@ -263,8 +304,8 @@ LIMIT {amount};";
                             byte g = reader.GetByte(4);
                             byte b = reader.GetByte(5);
 
-                            ulong discordUserId = Convert.ToUInt64(reader.GetString(6));
-                            ulong snowflakeTimePlaced = Convert.ToUInt64(reader.GetString(7));
+                            short placeDiscordUserId = reader.GetInt16(6);
+                            ulong snowflakeTimePlaced = reader.GetUInt64(7);
                             bool removed = reader.GetBoolean(8);
 
                             returnVal.Add(new PlaceBoardHistory()
@@ -275,8 +316,8 @@ LIMIT {amount};";
                                 R = r,
                                 G = g,
                                 B = b,
-                                DiscordUserId = discordUserId,
-                                SnowflakeTimePlaced = snowflakeTimePlaced,
+                                PlaceDiscordUserId = placeDiscordUserId,
+                                PlacedDateTime = SnowflakeUtils.FromSnowflake(snowflakeTimePlaced).UtcDateTime,
                                 Removed = removed
                             });
                         }
@@ -290,8 +331,9 @@ LIMIT {amount};";
             return returnVal;
         }
 
+        // TO BE REMOVED SINCE NOW THERE IS AN AUX TABLE
         // this is to reduce the id size from 8 bytes down to 1 byte
-        public Dictionary<ulong, byte> GetPlaceUserIds()
+        /*public Dictionary<ulong, byte> GetPlaceUserIds()
         {
             var returnVal = new Dictionary<ulong, byte>();
             try
@@ -326,7 +368,7 @@ ORDER BY PlaceBoardHistoryId ASC";
                 _logger.LogError(ex, ex.Message);
             }
             return returnVal;
-        }
+        }*/
 
         public long RemovePixels(ulong discordUserId, int minutes, int xStart, int xEnd, int yStart, int yEnd)
         {
@@ -360,9 +402,9 @@ WHERE DiscordUserId = {discordUserId} AND SnowflakeTimePlaced > {fromSnowflake} 
 ";
 
 
-                using (var connection = new SqliteConnection(Program.ConnectionString))
+                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionstring))
                 {
-                    using (var command = new SqliteCommand(sqlSelect, connection))
+                    using (var command = new MySqlCommand(sqlSelect, connection))
                     {
                         command.CommandTimeout = 5;
                         connection.Open();
@@ -386,9 +428,9 @@ SET R = 255, G = 255, B = 255
 WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
 
 
-                using (var connection = new SqliteConnection(Program.ConnectionString))
+                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionstring))
                 {
-                    using (var command = new SqliteCommand(sqlQuery, connection))
+                    using (var command = new MySqlCommand(sqlSelect, connection))
                     {
                         command.CommandTimeout = 5;
                         connection.Open();
@@ -463,6 +505,27 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
             if (x < 0 || x >= 1000 || y < 0 || y >= 1000)
                 return false; // reject these entries
 
+            // TODO REPLOAD THE BEFORE
+            if(PlaceModule.PlaceDiscordUsers.Count == 0)
+                PlaceModule.PlaceDiscordUsers = GetPlaceDiscordUsers();
+
+            var placeUser = PlaceModule.PlaceDiscordUsers.SingleOrDefault(i => i.DiscordUserId == discordUserId);
+
+            if (placeUser == null)
+            {
+                // If the user has been added then refresh the list
+                if (AddPlaceDiscordUser(discordUserId))
+                {
+                    PlaceModule.PlaceDiscordUsers = GetPlaceDiscordUsers();
+                    placeUser = PlaceModule.PlaceDiscordUsers.SingleOrDefault(i => i.DiscordUserId == discordUserId);
+                }
+            }
+           
+            if (placeUser == null)
+            {
+                return false;
+            }
+
             try
             {
                 PlaceModule.CurrentPlaceBitmap?.SetPixel(x, y, color);
@@ -487,8 +550,7 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
                     data[6] = color.G;
                     data[7] = color.B;
 
-                    if (PlaceModule.UserIdInfos.ContainsKey(discordUserId))
-                        data[8] = PlaceModule.UserIdInfos[discordUserId];
+                    data[8] = Convert.ToByte(placeUser.PlaceDiscordUserId);
 
                     //Console.WriteLine($"Send: {x}/{y} paint R:{color.R}|G:{color.G}|B:{color.B}");
 
@@ -562,13 +624,13 @@ SET R = {color.R}, G = {color.G}, B = {color.B}
 WHERE XPos = {x} AND YPos = {y};
 
 -- insert a new entry into history
-INSERT INTO PlaceBoardHistory (DiscordUserId, XPos, YPos, R, G, B, SnowflakeTimePlaced)
-VALUES ({discordUserId},{x},{y},{color.R},{color.G},{color.B},{SnowflakeUtils.ToSnowflake(DateTimeOffset.UtcNow)})";
+INSERT INTO PlaceBoardHistory (PlaceDiscordUserId, XPos, YPos, R, G, B, SnowflakeTimePlaced)
+VALUES ({placeUser.PlaceDiscordUserId},{x},{y},{color.R},{color.G},{color.B},{SnowflakeUtils.ToSnowflake(DateTimeOffset.UtcNow)})";
 
 
-            using (var connection = new SqliteConnection(Program.ConnectionString))
+            using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionstring))
             {
-                using (var command = new SqliteCommand(sqlQuery, connection))
+                using (var command = new MySqlCommand(sqlQuery, connection))
                 {
                     try
                     {

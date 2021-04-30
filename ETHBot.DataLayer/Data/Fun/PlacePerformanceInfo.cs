@@ -13,7 +13,8 @@ namespace ETHBot.DataLayer.Data.Fun
         public int PlacePerformanceHistoryId { get; set; }
 
         public DateTime DateTime { get; set; }
-        public int Count { get; set; }
+        public int SuccessCount { get; set; }
+        public int FailedCount { get; set; }
         public int AvgTimeInMs { get; set; }
     }
 }

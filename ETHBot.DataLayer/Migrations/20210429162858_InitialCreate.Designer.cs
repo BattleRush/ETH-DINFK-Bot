@@ -9,26 +9,36 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ETHBot.DataLayer.Migrations
 {
     [DbContext(typeof(ETHBotDBContext))]
-    [Migration("20210220230211_AddPreloadColumnForDiscordMessages")]
-    partial class AddPreloadColumnForDiscordMessages
+    [Migration("20210429162858_InitialCreate")]
+    partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasAnnotation("Relational:MaxIdentifierLength", 64)
                 .HasAnnotation("ProductVersion", "5.0.3");
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.BotChannelSetting", b =>
                 {
                     b.Property<int>("BotChannelSettingId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("ChannelPermissionFlags")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<ulong>("DiscordChannelId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<DateTimeOffset?>("NewestPostTimePreloaded")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTimeOffset?>("OldestPostTimePreloaded")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("ReachedOldestPreload")
+                        .HasColumnType("tinyint(1)");
 
                     b.HasKey("BotChannelSettingId");
 
@@ -37,24 +47,61 @@ namespace ETHBot.DataLayer.Migrations
                     b.ToTable("BotChannelSettings");
                 });
 
+            modelBuilder.Entity("ETHBot.DataLayer.Data.BotSetting", b =>
+                {
+                    b.Property<int>("BotSettingId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("LastSpaceXRedditPost")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
+
+                    b.Property<bool>("PlaceLocked")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("SpaceXSubredditCheckCronJob")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
+
+                    b.HasKey("BotSettingId");
+
+                    b.ToTable("BotSetting");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.BotStartUpTime", b =>
+                {
+                    b.Property<int>("BotStartUpTimeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartUpTime")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("BotStartUpTimeId");
+
+                    b.ToTable("BotStartUpTimes");
+                });
+
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.BannedLink", b =>
                 {
                     b.Property<int>("BannedLinkId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
-                    b.Property<ulong>("ByUserId")
-                        .HasColumnType("INTEGER");
+                    b.Property<ulong>("AddedByDiscordUserId")
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<string>("Link")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000) CHARACTER SET utf8mb4");
 
                     b.Property<DateTimeOffset>("ReportTime")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("BannedLinkId");
 
-                    b.HasIndex("ByUserId");
+                    b.HasIndex("AddedByDiscordUserId");
 
                     b.ToTable("BannedLinks");
                 });
@@ -63,16 +110,16 @@ namespace ETHBot.DataLayer.Migrations
                 {
                     b.Property<int>("CommandStatisticId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("CommandTypeId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("Count")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<ulong>("DiscordUserId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.HasKey("CommandStatisticId");
 
@@ -86,10 +133,11 @@ namespace ETHBot.DataLayer.Migrations
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.CommandType", b =>
                 {
                     b.Property<int>("CommandTypeId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("Name")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
 
                     b.HasKey("CommandTypeId");
 
@@ -99,13 +147,14 @@ namespace ETHBot.DataLayer.Migrations
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.DiscordChannel", b =>
                 {
                     b.Property<ulong>("DiscordChannelId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<string>("ChannelName")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
 
                     b.Property<ulong>("DiscordServerId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.HasKey("DiscordChannelId");
 
@@ -117,28 +166,31 @@ namespace ETHBot.DataLayer.Migrations
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.DiscordEmote", b =>
                 {
                     b.Property<ulong>("DiscordEmoteId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<bool>("Animated")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("Blocked")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("EmoteName")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
 
                     b.Property<DateTimeOffset>("LastUpdatedAt")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("LocalPath")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
 
                     b.Property<string>("Url")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
 
                     b.HasKey("DiscordEmoteId");
 
@@ -147,29 +199,29 @@ namespace ETHBot.DataLayer.Migrations
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.DiscordEmoteHistory", b =>
                 {
-                    b.Property<int>("EmoteHistoryId")
+                    b.Property<int>("DiscordEmoteHistoryId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("Count")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("DateTimePosted")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<ulong>("DiscordEmoteId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong?>("DiscordMessageId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong?>("DiscordUserId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<bool>("IsReaction")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
-                    b.HasKey("EmoteHistoryId");
+                    b.HasKey("DiscordEmoteHistoryId");
 
                     b.HasIndex("DiscordEmoteId");
 
@@ -183,19 +235,19 @@ namespace ETHBot.DataLayer.Migrations
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.DiscordEmoteStatistic", b =>
                 {
                     b.Property<ulong>("DiscordEmoteId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<int>("UsedAsReaction")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("UsedByBots")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("UsedInText")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("UsedInTextOnce")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.HasKey("DiscordEmoteId");
 
@@ -204,26 +256,27 @@ namespace ETHBot.DataLayer.Migrations
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.DiscordMessage", b =>
                 {
-                    b.Property<ulong>("MessageId")
+                    b.Property<ulong>("DiscordMessageId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<string>("Content")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000) CHARACTER SET utf8mb4");
 
                     b.Property<ulong>("DiscordChannelId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong>("DiscordUserId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<bool>("Preloaded")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<ulong?>("ReplyMessageId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
-                    b.HasKey("MessageId");
+                    b.HasKey("DiscordMessageId");
 
                     b.HasIndex("DiscordChannelId");
 
@@ -234,13 +287,52 @@ namespace ETHBot.DataLayer.Migrations
                     b.ToTable("DiscordMessages");
                 });
 
+            modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.DiscordRole", b =>
+                {
+                    b.Property<ulong>("DiscordRoleId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<string>("ColorHex")
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10) CHARACTER SET utf8mb4");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<ulong?>("DiscordServerId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<bool>("IsHoisted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsManaged")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsMentionable")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000) CHARACTER SET utf8mb4");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("int");
+
+                    b.HasKey("DiscordRoleId");
+
+                    b.HasIndex("DiscordServerId");
+
+                    b.ToTable("DiscordRoles");
+                });
+
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.DiscordServer", b =>
                 {
                     b.Property<ulong>("DiscordServerId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<string>("ServerName")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000) CHARACTER SET utf8mb4");
 
                     b.HasKey("DiscordServerId");
 
@@ -250,51 +342,91 @@ namespace ETHBot.DataLayer.Migrations
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.DiscordUser", b =>
                 {
                     b.Property<ulong>("DiscordUserId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<bool>("AllowedPlaceMultipixel")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("AvatarUrl")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
 
                     b.Property<ushort>("DiscriminatorValue")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("smallint unsigned");
+
+                    b.Property<int>("FirstDailyPostCount")
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsBot")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("IsWebhook")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<DateTimeOffset?>("JoinedAt")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("Nickname")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
 
                     b.Property<string>("Username")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
 
                     b.HasKey("DiscordUserId");
 
                     b.ToTable("DiscordUsers");
                 });
 
+            modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.PingHistory", b =>
+                {
+                    b.Property<int>("PingHistoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<ulong?>("DiscordMessageId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<ulong?>("DiscordRoleId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<ulong?>("DiscordUserId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<ulong>("FromDiscordUserId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.HasKey("PingHistoryId");
+
+                    b.HasIndex("DiscordMessageId");
+
+                    b.HasIndex("DiscordRoleId");
+
+                    b.HasIndex("DiscordUserId");
+
+                    b.HasIndex("FromDiscordUserId");
+
+                    b.ToTable("PingHistory");
+                });
+
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.PingStatistic", b =>
                 {
                     b.Property<int>("PingInfoId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<ulong>("DiscordUserId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<int>("PingCount")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("PingCountBot")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("PingCountOnce")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.HasKey("PingInfoId");
 
@@ -307,22 +439,23 @@ namespace ETHBot.DataLayer.Migrations
                 {
                     b.Property<int>("RantMessageId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("Content")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000) CHARACTER SET utf8mb4");
 
                     b.Property<ulong>("DiscordChannelId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong>("DiscordMessageId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong>("DiscordUserId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<int>("RantTypeId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.HasKey("RantMessageId");
 
@@ -341,10 +474,11 @@ namespace ETHBot.DataLayer.Migrations
                 {
                     b.Property<int>("RantTypeId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("Name")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100) CHARACTER SET utf8mb4");
 
                     b.HasKey("RantTypeId");
 
@@ -355,60 +489,168 @@ namespace ETHBot.DataLayer.Migrations
                 {
                     b.Property<int>("SavedMessageId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<ulong>("ByDiscordUserId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<string>("Content")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000) CHARACTER SET utf8mb4");
 
                     b.Property<string>("DirectLink")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128) CHARACTER SET utf8mb4");
 
-                    b.Property<ulong>("MessageId")
-                        .HasColumnType("INTEGER");
+                    b.Property<ulong>("DiscordMessageId")
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong>("SavedByDiscordUserId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<bool>("SendInDM")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.HasKey("SavedMessageId");
 
                     b.HasIndex("ByDiscordUserId");
 
-                    b.HasIndex("MessageId");
+                    b.HasIndex("DiscordMessageId");
 
                     b.HasIndex("SavedByDiscordUserId");
 
                     b.ToTable("SavedMessages");
                 });
 
+            modelBuilder.Entity("ETHBot.DataLayer.Data.Fun.PlaceBoardHistory", b =>
+                {
+                    b.Property<int>("PlaceBoardHistoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<byte>("B")
+                        .HasColumnType("tinyint unsigned");
+
+                    b.Property<byte>("G")
+                        .HasColumnType("tinyint unsigned");
+
+                    b.Property<short>("PlaceDiscordUserId")
+                        .HasColumnType("smallint");
+
+                    b.Property<DateTime>("PlacedDateTime")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<byte>("R")
+                        .HasColumnType("tinyint unsigned");
+
+                    b.Property<bool>("Removed")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<short>("XPos")
+                        .HasColumnType("smallint");
+
+                    b.Property<short>("YPos")
+                        .HasColumnType("smallint");
+
+                    b.HasKey("PlaceBoardHistoryId");
+
+                    b.HasIndex("PlaceDiscordUserId");
+
+                    b.HasIndex("XPos", "YPos");
+
+                    b.ToTable("PlaceBoardHistory");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.Fun.PlaceBoardPixel", b =>
+                {
+                    b.Property<short>("XPos")
+                        .HasColumnType("smallint");
+
+                    b.Property<short>("YPos")
+                        .HasColumnType("smallint");
+
+                    b.Property<byte>("B")
+                        .HasColumnType("tinyint unsigned");
+
+                    b.Property<byte>("G")
+                        .HasColumnType("tinyint unsigned");
+
+                    b.Property<byte>("R")
+                        .HasColumnType("tinyint unsigned");
+
+                    b.HasKey("XPos", "YPos");
+
+                    b.ToTable("PlaceBoardPixels");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.Fun.PlaceDiscordUser", b =>
+                {
+                    b.Property<short>("PlaceDiscordUserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("smallint");
+
+                    b.Property<ulong>("DiscordUserId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<int>("TotalPixelsPlaced")
+                        .HasColumnType("int");
+
+                    b.HasKey("PlaceDiscordUserId");
+
+                    b.HasIndex("DiscordUserId")
+                        .IsUnique();
+
+                    b.ToTable("PlaceDiscordUsers");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.Fun.PlacePerformanceInfo", b =>
+                {
+                    b.Property<int>("PlacePerformanceHistoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<int>("AvgTimeInMs")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("FailedCount")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SuccessCount")
+                        .HasColumnType("int");
+
+                    b.HasKey("PlacePerformanceHistoryId");
+
+                    b.ToTable("PlacePerformanceInfos");
+                });
+
             modelBuilder.Entity("ETHBot.DataLayer.Data.Reddit.RedditImage", b =>
                 {
                     b.Property<int>("RedditImageId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<bool>("Downloaded")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("IsBlockedManually")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("IsNSFW")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Link")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000) CHARACTER SET utf8mb4");
 
                     b.Property<string>("LocalPath")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
 
                     b.Property<int>("RedditPostId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.HasKey("RedditImageId");
 
@@ -421,43 +663,48 @@ namespace ETHBot.DataLayer.Migrations
                 {
                     b.Property<int>("RedditPostId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("Author")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100) CHARACTER SET utf8mb4");
 
                     b.Property<string>("Content")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("longtext CHARACTER SET utf8mb4");
 
                     b.Property<int>("DownvoteCount")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsNSFW")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("IsText")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Permalink")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100) CHARACTER SET utf8mb4");
 
                     b.Property<string>("PostId")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100) CHARACTER SET utf8mb4");
 
                     b.Property<string>("PostTitle")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500) CHARACTER SET utf8mb4");
 
                     b.Property<DateTime>("PostedAt")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<int>("SubredditInfoId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("UpvoteCount")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("Url")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500) CHARACTER SET utf8mb4");
 
                     b.HasKey("RedditPostId");
 
@@ -470,37 +717,41 @@ namespace ETHBot.DataLayer.Migrations
                 {
                     b.Property<int>("SubredditId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsManuallyBanned")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("IsNSFW")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("IsScraping")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("NewestPost")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100) CHARACTER SET utf8mb4");
 
                     b.Property<DateTime>("NewestPostDate")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("OldestPost")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100) CHARACTER SET utf8mb4");
 
                     b.Property<DateTime>("OldestPostDate")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<bool>("ReachedOldest")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("SubredditDescription")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
 
                     b.Property<string>("SubredditName")
-                        .HasColumnType("TEXT");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
 
                     b.HasKey("SubredditId");
 
@@ -520,13 +771,13 @@ namespace ETHBot.DataLayer.Migrations
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.BannedLink", b =>
                 {
-                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordUser", "ByUser")
+                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordUser", "AddedByDiscordUser")
                         .WithMany()
-                        .HasForeignKey("ByUserId")
+                        .HasForeignKey("AddedByDiscordUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ByUser");
+                    b.Navigation("AddedByDiscordUser");
                 });
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.CommandStatistic", b =>
@@ -618,6 +869,44 @@ namespace ETHBot.DataLayer.Migrations
                     b.Navigation("ReplyMessage");
                 });
 
+            modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.DiscordRole", b =>
+                {
+                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordServer", "DiscordServer")
+                        .WithMany()
+                        .HasForeignKey("DiscordServerId");
+
+                    b.Navigation("DiscordServer");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.PingHistory", b =>
+                {
+                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordMessage", "DiscordMessage")
+                        .WithMany()
+                        .HasForeignKey("DiscordMessageId");
+
+                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordRole", "DiscordRole")
+                        .WithMany()
+                        .HasForeignKey("DiscordRoleId");
+
+                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordUser", "DiscordUser")
+                        .WithMany()
+                        .HasForeignKey("DiscordUserId");
+
+                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordUser", "FromDiscordUser")
+                        .WithMany()
+                        .HasForeignKey("FromDiscordUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DiscordMessage");
+
+                    b.Navigation("DiscordRole");
+
+                    b.Navigation("DiscordUser");
+
+                    b.Navigation("FromDiscordUser");
+                });
+
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.PingStatistic", b =>
                 {
                     b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordUser", "DiscordUser")
@@ -674,7 +963,7 @@ namespace ETHBot.DataLayer.Migrations
 
                     b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordMessage", "DiscordMessage")
                         .WithMany()
-                        .HasForeignKey("MessageId")
+                        .HasForeignKey("DiscordMessageId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -689,6 +978,36 @@ namespace ETHBot.DataLayer.Migrations
                     b.Navigation("DiscordMessage");
 
                     b.Navigation("SavedByDiscordUser");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.Fun.PlaceBoardHistory", b =>
+                {
+                    b.HasOne("ETHBot.DataLayer.Data.Fun.PlaceDiscordUser", "PlaceDiscordUser")
+                        .WithMany()
+                        .HasForeignKey("PlaceDiscordUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ETHBot.DataLayer.Data.Fun.PlaceBoardPixel", "PlaceBoard")
+                        .WithMany()
+                        .HasForeignKey("XPos", "YPos")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PlaceBoard");
+
+                    b.Navigation("PlaceDiscordUser");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.Fun.PlaceDiscordUser", b =>
+                {
+                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordUser", "DiscordUser")
+                        .WithMany()
+                        .HasForeignKey("DiscordUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DiscordUser");
                 });
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.Reddit.RedditImage", b =>

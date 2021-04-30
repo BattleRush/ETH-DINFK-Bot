@@ -119,7 +119,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                         DiscordChannelId = textChannel.Id,
                         //DiscordUser = dbAuthor,
                         DiscordUserId = message.Author.Id,
-                        MessageId = message.Id,
+                        DiscordMessageId = message.Id,
                         Content = message.Content,
                         //ReplyMessageId = message.Reference.MessageId,
                         Preloaded = true
