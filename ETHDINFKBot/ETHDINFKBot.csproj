@@ -5,6 +5,8 @@
     <TargetFramework>net5.0</TargetFramework>
 
     <MinVerSkip Condition="'$(Configuration)' == 'Debug'">true</MinVerSkip>
+    <AssemblyInformationalVersion Condition="'$(GitCommit)' != ''">$(MinVerVersion)+$(GitCommit)</AssemblyInformationalVersion>
+
   </PropertyGroup>
 
   <ItemGroup>
@@ -82,9 +84,4 @@
     <Folder Include="ExamQuestions\" />
   </ItemGroup>
     
-  <Target Name="MyTarget" AfterTargets="MinVer">
-    <PropertyGroup>
-        <AssemblyInformationalVersion Condition="'$(GitCommit)' != ''">$(MinVerVersion)+$(GitCommit)</AssemblyInformationalVersion>
-    </PropertyGroup>
-  </Target>
 </Project>
