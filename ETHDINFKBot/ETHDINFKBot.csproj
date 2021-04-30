@@ -6,8 +6,6 @@
 
     <MinVerTagPrefix>v</MinVerTagPrefix>
     <MinVerSkip Condition="'$(Configuration)' == 'Debug'">true</MinVerSkip>
-    <MinVerMinimumMajorMinor>1.0</MinVerMinimumMajorMinor>
-    <AssemblyInformationalVersion Condition="'$(GitSha)' != ''">$(MinVerVersion)+$(GitSha)</AssemblyInformationalVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -84,5 +82,10 @@
   <ItemGroup>
     <Folder Include="ExamQuestions\" />
   </ItemGroup>
-
+    
+  <Target Name="MyTarget" AfterTargets="MinVer">
+    <PropertyGroup>
+        <AssemblyInformationalVersion Condition="'$(GitSha)' != ''">$(MinVerVersion)+$(GitSha)</AssemblyInformationalVersion>
+    </PropertyGroup>
+  </Target>
 </Project>
