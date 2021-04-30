@@ -12,7 +12,10 @@ namespace ETHBot.DataLayer.Data
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int BotSettingId { get; set; }
 
+        [StringLength(255)]
         public string SpaceXSubredditCheckCronJob { get; set; }
+
+        [StringLength(255)]
         public string LastSpaceXRedditPost { get; set; }
         public bool PlaceLocked { get; set; }
     }

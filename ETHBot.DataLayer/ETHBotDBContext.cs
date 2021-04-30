@@ -10,13 +10,15 @@ using ETHBot.DataLayer.Data.Fun;
 using System.Linq;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Json;
 
 namespace ETHBot.DataLayer
 {
     public class ETHBotDBContext : DbContext
     {
         private static bool _created = false;
-
+        private string ConnectionString = "";
         public static readonly ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
         {
             builder.AddConsole().AddFilter((provider, category, logLevel) => { if (logLevel >= LogLevel.Warning) return true; return false; });
@@ -24,7 +26,17 @@ namespace ETHBot.DataLayer
 
         public ETHBotDBContext()
         {
-            //dotnet ef migrations add AddRantTables --project ETHBot.DataLayer/  --startup-project ETHDINFKBot/ -v
+            //dotnet ef migrations add InitialCreate --project ETHBot.DataLayer/  --startup-project ETHDINFKBot/ -v
+
+            var configuration = new ConfigurationBuilder()
+                  .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                  .Build();
+
+#if DEBUG
+            ConnectionString = configuration.GetConnectionString("Development_Full").ToString();
+#else
+            ConnectionString = configuration.GetConnectionString("Production_Full").ToString();
+#endif
 
             if (!_created)
             {
@@ -36,14 +48,17 @@ namespace ETHBot.DataLayer
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionbuilder)
         {
-            // TODO Setting
-#if DEBUG
-            optionbuilder.UseLoggerFactory(loggerFactory).UseSqlite(@"Data Source=I:\ETHBot\ETHBot.db").EnableSensitiveDataLogging();
-            //optionbuilder.UseLoggerFactory(loggerFactory).UseSqlite(@"Data Source=I:\ETHBot\ETHBot_20210111_122855").EnableSensitiveDataLogging();    
-#else
-            optionbuilder.UseLoggerFactory(loggerFactory).UseSqlite(@"Data Source=/usr/local/bin/ETHBot/Database/ETHBot.db").EnableSensitiveDataLogging();
-#endif
+            optionbuilder.UseLoggerFactory(loggerFactory).UseMySql(ConnectionString).EnableSensitiveDataLogging();
 
+
+            // TODO Setting
+
+            //optionbuilder.UseLoggerFactory(loggerFactory).UseSqlite(@"Data Source=I:\ETHBot\ETHBot.db").EnableSensitiveDataLogging();
+
+            //optionbuilder.UseLoggerFactory(loggerFactory).UseMySql(@"Server=localhost;User Id=root;Password=karlo1;Database=ETHBot_Dev").EnableSensitiveDataLogging();
+            //optionbuilder.UseLoggerFactory(loggerFactory).UseSqlite(@"Data Source=I:\ETHBot\ETHBot_20210111_122855").EnableSensitiveDataLogging();    
+
+            //optionbuilder.UseLoggerFactory(loggerFactory).UseSqlite(@"Data Source=/usr/local/bin/ETHBot/Database/ETHBot.db").EnableSensitiveDataLogging();
         }
 
         public DbSet<BannedLink> BannedLinks { get; set; }
@@ -82,6 +97,7 @@ namespace ETHBot.DataLayer
         public DbSet<PlaceBoardPixel> PlaceBoardPixels { get; set; }
         public DbSet<PlaceBoardHistory> PlaceBoardHistory { get; set; }
         public DbSet<PlacePerformanceInfo> PlacePerformanceInfos { get; set; }
+        public DbSet<PlaceDiscordUser> PlaceDiscordUsers { get; set; }
 
 
 
@@ -117,6 +133,9 @@ namespace ETHBot.DataLayer
 
                 // apply the keys to the model builder
                 modelBuilder.Entity(entity.ClrType).HasKey(orderedKeys);
+
+                // Prevent PlaceUser table to have 2 discord users
+                modelBuilder.Entity<PlaceDiscordUser>().HasIndex(c => c.DiscordUserId).IsUnique();
             }
         }
     }

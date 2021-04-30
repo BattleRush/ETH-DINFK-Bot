@@ -29,13 +29,13 @@ namespace ETHBot.DataLayer.Data.Fun
         public byte B { get; set; }
 
 
-        // 8 bytes
-        [ForeignKey("DiscordUser")]
-        public ulong DiscordUserId { get; set; }
-        public DiscordUser DiscordUser { get; set; }
+        // 2 bytes
+        [ForeignKey("PlaceDiscordUser")]
+        public short PlaceDiscordUserId { get; set; }
+        public PlaceDiscordUser PlaceDiscordUser { get; set; }
 
         // 8bytes
-        public ulong SnowflakeTimePlaced { get; set; }
+        public DateTime PlacedDateTime { get; set; }
 
         // 1 bit
         public bool Removed { get; set; }

@@ -11,7 +11,7 @@ namespace ETHBot.DataLayer.Data.Discord
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 
-        public int EmoteHistoryId { get; set; }
+        public int DiscordEmoteHistoryId { get; set; }
 
         public bool IsReaction { get; set; }
         public int Count { get; set; }

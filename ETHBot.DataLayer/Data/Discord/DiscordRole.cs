@@ -11,7 +11,8 @@ namespace ETHBot.DataLayer.Data.Discord
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public ulong DiscordRoleId { get; set; } // @everyone is id = 1 and server = null // at here = 2
-
+       
+        [StringLength(10)]
         public string ColorHex { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
 
@@ -21,6 +22,7 @@ namespace ETHBot.DataLayer.Data.Discord
         public bool IsManaged { get; set; }
         public bool IsMentionable { get; set; }
 
+        [StringLength(2000)]
         public string Name { get; set; }
         public int Position { get; set; }
 

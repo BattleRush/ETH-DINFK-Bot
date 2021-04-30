@@ -13,6 +13,8 @@ namespace ETHBot.DataLayer.Data.Discord
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int CommandTypeId { get; set; }
+
+        [StringLength(255)]
         public string Name { get; set; }
     }
 }

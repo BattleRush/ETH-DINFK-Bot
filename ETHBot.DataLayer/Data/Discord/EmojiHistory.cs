@@ -6,6 +6,7 @@ using System.Text;
 
 namespace ETHBot.DataLayer.Data.Discord
 {
+    /*
     public class EmojiHistory
     {
         [Key]
@@ -23,4 +24,5 @@ namespace ETHBot.DataLayer.Data.Discord
 
         public EmojiStatistic EmojiStatistic { get; set; }
     }
+    */
 }
