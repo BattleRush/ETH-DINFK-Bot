@@ -1,10 +1,13 @@
 name: .NET
 
+# Controls when the action will run. 
 on:
+  # Triggers the workflow on push or pull request events but only for the main branch
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   build:
@@ -17,19 +20,32 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 5.0.x
+        
     - name: Restore dependencies
       run: dotnet restore
-    - name: Build
-      run: dotnet build --no-restore
+      
+    #- name: Build
+    #  run: dotnet build --no-restore
+    
     - name: Test
       run: dotnet test --no-build --verbosity normal
+      
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        
     - name: Dotnet Publish
-      run: dotnet publish src -c Release -o deploy
+      run: dotnet publish -c Release -o deploy
+      
     - name: Copy via ssh
       uses: garygrossgarten/github-action-scp@v0.5.3
       with:
-        local: /home/runner/work/deferat/deferat/src/deploy/
+        recursive: true
+        atomicPut: true
+        concurrency: 4
+        local: /home/runner/work/ETH-DINFK-Bot/ETH-DINFK-Bot/deploy/
         remote: ${{ secrets.REMOTE_TARGET }}
         host: ${{ secrets.REMOTE_HOST }}
         username: ${{ secrets.REMOTE_USER }}
         privateKey: ${{ secrets.REMOTE_SSH_KEY }}
+        passphrase: ${{ secrets.REMOTE_SSH_PASSPHRASE }}
