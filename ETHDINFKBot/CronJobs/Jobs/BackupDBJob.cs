@@ -31,13 +31,15 @@ namespace ETHDINFKBot.CronJobs.Jobs
         {
             try
             {
+                // TODO job for maria db
+                /*
                 using (var location = new SqliteConnection(sourceConnectionString))
                 using (var destination = new SqliteConnection(targetConnectionString))
                 {
                     location.Open();
                     destination.Open();
                     location.BackupDatabase(destination);
-                }
+                }*/
             }
             catch(Exception ex)
             {

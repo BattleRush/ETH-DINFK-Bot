@@ -176,7 +176,7 @@ namespace ETHDINFKBot.Log
 
                     DatabaseManager.CreatePingHistory(new PingHistory()
                     {
-                        MessageId = dbMessage != null ? discordMessageId : null,
+                        DiscordMessageId = dbMessage != null ? discordMessageId : null,
                         DiscordRoleId = null,
                         DiscordUserId = pingInfo.Key,
                         FromDiscordUserId = fromUser.Id
@@ -198,7 +198,7 @@ namespace ETHDINFKBot.Log
                         var dbMessage = DatabaseManager.GetDiscordMessageById(discordMessageId);
                         DatabaseManager.CreatePingHistory(new PingHistory()
                         {
-                            MessageId = dbMessage != null ? discordMessageId : null,
+                            DiscordMessageId = dbMessage != null ? discordMessageId : null,
                             DiscordRoleId = role.Key,
                             DiscordUserId = null,
                             FromDiscordUserId = fromUser.Id

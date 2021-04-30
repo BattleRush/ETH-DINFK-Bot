@@ -52,6 +52,10 @@ namespace ETHDINFKBot
         public static string RedditAppSecret { get; set; }
         public static string BasePath { get; set; }
         public static string ConnectionString { get; set; }
+        public static string MariaDBConnectionstring { get; set; }
+        public static string MariaDBReadOnlyConnectionstring { get; set; }
+
+        // TODO Move settings to an object
         public static bool TempDisableIncomming { get; set; }
 
         public static Dictionary<ulong, Question> CurrentActiveQuestion = new Dictionary<ulong, Question>();
@@ -121,7 +125,7 @@ namespace ETHDINFKBot
                        services.AddCronJob<PreloadJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 3 * * *"; });// 3 am utc -> 4 am cet
 
                        // TODO adjust for summer time in CET/CEST
-                       services.AddCronJob<SpaceXSubredditJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = BotSetting.SpaceXSubredditCheckCronJob; }); //BotSetting.SpaceXSubredditCheckCronJob "*/ 10 * * * *"
+                       services.AddCronJob<SpaceXSubredditJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = BotSetting?.SpaceXSubredditCheckCronJob ?? "*/10 * * * *"; }); //BotSetting.SpaceXSubredditCheckCronJob "*/ 10 * * * *"
 
                        // TODO adjust for summer time in CET/CEST
                        //services.AddCronJob<StartAllSubredditsJobs>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 * * *"; });// 4 am utc -> 5 am cet
@@ -140,6 +144,9 @@ namespace ETHDINFKBot
                 Owner = Convert.ToUInt64(Configuration["Owner"]);
                 BasePath = Configuration["BasePath"];
                 ConnectionString = Configuration["ConnectionString"];
+                // TODO Update for new connection strings and dev/prod
+                MariaDBConnectionstring = Configuration["MariaDBConnectionstring"];
+                MariaDBReadOnlyConnectionstring = Configuration["MariaDBReadOnlyConnectionstring"];
 
                 RedditAppId = Configuration["Reddit:AppId"];
                 RedditRefreshToken = Configuration["Reddit:RefreshToken"];
@@ -191,6 +198,9 @@ namespace ETHDINFKBot
 
         public async Task MainAsync(string token)
         {
+
+
+
             PlaceWebsocket = new WebSocketServer(9000);
             PlaceWebsocket.AddWebSocketService<PlaceWebsocket>("/place");
             PlaceWebsocket.Start();
@@ -213,6 +223,7 @@ namespace ETHDINFKBot
             Client.MessageDeleted += Client_MessageDeleted;
             Client.MessageUpdated += Client_MessageUpdated;
             Client.RoleCreated += Client_RoleCreated;
+            Client.Ready += Client_Ready;
 
             await Client.LoginAsync(TokenType.Bot, token);
             await Client.StartAsync();
@@ -234,9 +245,127 @@ namespace ETHDINFKBot
             await commands.AddModulesAsync(Assembly.GetEntryAssembly(), services);
 
 
+            if (DatabaseManager.GetDiscordServerById(747752542741725244) == null)
+            {
+                // in ready event we should start the migration
+                TempDisableIncomming = true;
+            }
+
 
             // Block this task until the program is closed.
             await Task.Delay(-1);
+        }
+
+        private Task Client_Ready()
+        {
+            if (!TempDisableIncomming)
+                return Task.CompletedTask;
+            //OnlyHereToTestMyBadCodingSkills
+
+            // todo config
+            ulong guildId = 747752542741725244;
+            ulong spamChannel = 768600365602963496;
+            var guild = Program.Client.GetGuild(guildId);
+
+            var textChannel = guild.GetTextChannel(spamChannel);
+
+            try
+            {
+                textChannel.SendMessageAsync("Starting DB Migration");
+
+
+                MigrateSQLiteToMariaDB migration = new MigrateSQLiteToMariaDB();
+
+                int count = migration.MigrateDiscordServers();
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordServers");
+
+                count = migration.MigrateDiscordChannels();
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordChannels");
+
+                count = migration.MigrateDiscordUsers();
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordUsers");
+
+
+                count = migration.MigrateDiscordMessages(textChannel);
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordMessagess");
+
+
+                count = migration.MigrateDiscordEmotes(textChannel);
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordEmotes");
+
+
+                count = migration.MigrateDiscordEmoteStatistics(textChannel);
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordEmoteStatistics");
+
+                count = migration.MigrateDiscordEmoteHistory(textChannel);
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordEmoteHistory");
+
+                count = migration.MigrateBannedLinks();
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} BannedLinks");
+
+                count = migration.MigrateCommandTypes();
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} CommandTypes");
+
+                count = migration.MigrateCommandStatistics();
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} CommandStatistics");
+
+                count = migration.MigrateDiscordRoles();
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordRoles");
+
+                count = migration.MigratePingHistory(textChannel);
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PingHistory");
+
+                count = migration.MigratePingStatistics();
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PingStatistics");
+
+                count = migration.MigrateRantTypes();
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RantTypes");
+
+                count = migration.MigrateRantMessages();
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RantMessages");
+
+                count = migration.MigrateSavedMessages();
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} SavedMessages");
+
+                count = migration.MigratePlaceBoardPerformanceInfos();
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardPerformanceInfos");
+
+                count = migration.MigratePlaceBoardPixels(textChannel);
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardPixels");
+
+                count = migration.MigratePlaceBoardDiscordUsers();
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardDiscordUsers");
+
+                count = migration.MigratePlaceBoardPixelHistory(textChannel);
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardPixelHistory"); // (SKIPED) // TODO Convert snowflake id to datetime
+
+                count = migration.MigrateSubredditInfos();
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} SubredditInfos");
+
+                count = migration.MigrateRedditPosts(textChannel);
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RedditPosts");
+
+                count = migration.MigrateRedditImages(textChannel);
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RedditImages");
+
+                count = migration.MigrateBotChannelSettings();
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} BotChannelSettings");
+
+
+                /*count = migration.MigrateDiscordMessages(textChannel);
+                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordMessagess");
+                */
+
+                textChannel.SendMessageAsync($"Migration done. Releasing DB.");
+            }
+            catch (Exception ex)
+            {
+                textChannel.SendMessageAsync(ex.ToString());
+            }
+
+            TempDisableIncomming = false;
+
+            return Task.CompletedTask;
         }
 
         private Task Client_RoleCreated(SocketRole arg)

@@ -89,8 +89,11 @@ namespace ETHDINFKBot
             builder.WithTitle("Sourcecode for BattleRush's Helper (thats me)");
             //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
             builder.WithDescription(@"TODO Create some meaningfull text here to go with such an awesome bot.
-**Source code: **
-**https://github.com/BattleRush/ETH-DINFK-Bot**");
+**Bot Source code: **
+**https://github.com/BattleRush/ETH-DINFK-Bot**
+
+**Unity Project Source code: **
+**https://github.com/BattleRush/ETHPlaceUnity**");
             builder.WithColor(0, 255, 0);
 
             //builder.WithThumbnailUrl("https://avatars0.githubusercontent.com/u/11750584");
@@ -119,33 +122,49 @@ namespace ETHDINFKBot
             LogManager.ProcessMessage(author, BotMessageType.Other);
 
             EmbedBuilder builder = new EmbedBuilder();
-
-            builder.WithTitle("BattleRush's Helper Help");
+            
+            builder.WithTitle($"{Program.Client.CurrentUser.Username} Help");
             //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
-            builder.WithDescription(@"Prefix for all comands is "".""
-Help is in EBNF form, so I hope for you all reading this actually paid attention to Thomas how to use it");
-            builder.WithColor(0, 0, 255);
 
-            builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+            string prefix = ".";
+
+#if DEBUG
+            prefix = "dev.";
+#endif
+
+            builder.WithDescription($@"Prefix for all comands is ""{prefix}""
+Help is in EBNF form, so I hope for you all reading this actually paid attention to Thomas how to use it");
+
+
+
+            int g = 0;
+#if DEBUG
+            g = 192;
+#endif
+
+            builder.WithColor(0, g, 255);
+
+            builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
+            
             //builder.WithFooter($"If you can read this then ping Mert | TroNiiXx | [13]");
             builder.WithCurrentTimestamp();
             //builder.WithAuthor(author);
-            builder.AddField("Misc", "```.help .source .stats .lb```");
-            builder.AddField("Search", "```.google|duck <search term>```");
-            builder.AddField("Images", "```.neko[avatar] .fox .waifu .baka .smug .holo .avatar .wallpaper```");
-            builder.AddField("Reddit", "```.r[p] <subreddit>|all```");
-            builder.AddField("Rant", "```.rant [ types | (<type> <message>) ]```");
-            builder.AddField("SQL", "```.sql (table info) | (query[d] <query>)```");
-            builder.AddField("Emote (can send Nitro emotes for you)", "```.emote <search_string> [<page>] | .<emote_name>```");
-            builder.AddField("React (can only use emotes from this server)", "```.react <message_id> <emote_name>```");
-            builder.AddField("Space (see what it does)", "```.space [<amount>]```");
-            builder.AddField("WIP Command", "```.messagegraph [all|lernphase|bp]```");
-            builder.AddField("ETH DINFK Place", "```Type '.place help' for more information```");
+            builder.AddField("Misc", $"```{prefix}help {prefix}source {prefix}stats {prefix}lb```", true);
+            builder.AddField("Search", $"```{prefix}google|duck <search term>```", true);
+            builder.AddField("Images", $"```{prefix}neko[avatar] {prefix}fox {prefix}waifu {prefix}baka {prefix}smug {prefix}holo {prefix}avatar {prefix}wallpaper```");
+            builder.AddField("Reddit", $"```{prefix}r[p] <subreddit>|all```", true);
+            builder.AddField("Rant", $"```{prefix}rant [ types | (<type> <message>) ]```", true);
+            builder.AddField("SQL", $"```{prefix}sql (table info) | (query[d] <query>)```", true);
+            builder.AddField("Emote", $"```{prefix}emote <search_string> [<page>] | {prefix}<emote_name>```");
+            builder.AddField("React (only this server emotes)", $"```{prefix}react <message_id> <emote_name>```", true);
+            builder.AddField("Space Min: 1 Max: 5", $"```{prefix}space [<amount>]```", true);
+            builder.AddField("WIP Command", $"```{prefix}messagegraph [all|lernphase|bp]```", true);
+            builder.AddField("ETH DINFK Place", $"```Type '{prefix}place help' for more information```");
 
             /*builder.AddField("Write .study to force yourself away from discord", "```May contain spoilers to old exams! Once you receive the study role you will be only to chat for max of 15 mins at a time." + Environment.NewLine +
                $"If you are in cooldown, the bot will delete all your messages. Every question is designed to be able to solve within 5-10 mins. To recall your message write '.study'" + Environment.NewLine +
                $"To be able to chat you will need to solve a question each time. (All subject channels are exempt from this rule.)```");*/
-            builder.AddField($"Random Exam Question (for now only LinAlg) Total tracking: {new StudyHelper().GetQuestionCount()} question(s)", $"```.question [Exam] (Exams: {new StudyHelper().GetExams()})```");
+            builder.AddField($"Random Exam Question (for now only LinAlg) Total tracking: {new StudyHelper().GetQuestionCount()} question(s)", $"```{prefix}question [Exam] (Exams: {new StudyHelper().GetExams()})```");
             //builder.AddField(".next", "```Regenerate a new question.```");
 
             Context.Channel.SendMessageAsync("", false, builder.Build());
@@ -246,7 +265,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             var report = GetReportInfoByImage(req.ImageUrl);
             if (report != null)
             {
-                var user = DatabaseManager.GetDiscordUserById(report.ByUserId);
+                var user = DatabaseManager.GetDiscordUserById(report.AddedByDiscordUserId);
                 Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
                 return;
             }
@@ -266,7 +285,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             var report = GetReportInfoByImage(req.ImageUrl);
             if (report != null)
             {
-                var user = DatabaseManager.GetDiscordUserById(report.ByUserId);
+                var user = DatabaseManager.GetDiscordUserById(report.AddedByDiscordUserId);
                 Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
                 return;
             }
@@ -287,7 +306,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             var report = GetReportInfoByImage(req.ImageUrl);
             if (report != null)
             {
-                var user = DatabaseManager.GetDiscordUserById(report.ByUserId);
+                var user = DatabaseManager.GetDiscordUserById(report.AddedByDiscordUserId);
                 Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
                 return;
             }
@@ -346,7 +365,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 var report = GetReportInfoByImage(req.ImageUrl);
                 if (report != null)
                 {
-                    var user = DatabaseManager.GetDiscordUserById(report.ByUserId);
+                    var user = DatabaseManager.GetDiscordUserById(report.AddedByDiscordUserId);
                     Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
                     return;
                 }
@@ -530,13 +549,16 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 string messageText = "";
                 foreach (var item in pingHistory)
                 {
-                    var dbMessage = DatabaseManager.GetDiscordMessageById(item.MessageId);
+                    if (item.DiscordMessageId == null)
+                        continue;
 
-                    var date = SnowflakeUtils.FromSnowflake(item.MessageId ?? 0);
+                    var dbMessage = DatabaseManager.GetDiscordMessageById(item.DiscordMessageId);
+
+                    var date = SnowflakeUtils.FromSnowflake(item.DiscordMessageId ?? 0);
                     if (item.DiscordRoleId.HasValue)
-                        messageText += $"<@{item.FromDiscordUserId}> pinged <@&{item.DiscordRoleId}> at {date.ToString("MM.dd HH:mm")} in <#{dbMessage.DiscordChannelId}> {Environment.NewLine}"; // todo check for everyone or here
+                        messageText += $"<@{item.FromDiscordUserId}> pinged <@&{item.DiscordRoleId}> at {date.ToString("MM.dd HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}"; // todo check for everyone or here
                     else
-                        messageText += $"<@{item.FromDiscordUserId}> at {date.ToString("MM.dd HH:mm")} in <#{dbMessage.DiscordChannelId}> {Environment.NewLine}";
+                        messageText += $"<@{item.FromDiscordUserId}> at {date.ToString("MM.dd HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}";
                 }
 
                 messageText += Environment.NewLine;
@@ -869,7 +891,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     if (report != null)
                     {
 
-                        var user = DatabaseManager.GetDiscordUserById(report.ByUserId);
+                        var user = DatabaseManager.GetDiscordUserById(report.AddedByDiscordUserId);
                         regenString += $"An image has been blocked by {user.Nickname}. Regenerating a new image just for you :)" + Environment.NewLine;
                         req = NekosFun.GetLink("wallpaper");
 
@@ -914,7 +936,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             var report = GetReportInfoByImage(req);
             if (report != null)
             {
-                var user = DatabaseManager.GetDiscordUserById(report.ByUserId);
+                var user = DatabaseManager.GetDiscordUserById(report.AddedByDiscordUserId);
                 Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
                 return;
             }
@@ -937,7 +959,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             var report = GetReportInfoByImage(req);
             if (report != null)
             {
-                var user = DatabaseManager.GetDiscordUserById(report.ByUserId);
+                var user = DatabaseManager.GetDiscordUserById(report.AddedByDiscordUserId);
                 Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
                 return;
             }
@@ -991,7 +1013,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             if (blockInfo != null)
             {
                 Context.Message.DeleteAsync();
-                var user = DatabaseManager.GetDiscordUserById(blockInfo.ByUserId);
+                var user = DatabaseManager.GetDiscordUserById(blockInfo.AddedByDiscordUserId);
                 Context.Channel.SendMessageAsync($"Image is already in the blacklist (blocked by {user.Nickname}) You were too slow {guildUser.Nickname} <:exmatrikulator:769624058005553152>", false);
                 return;
             }
@@ -1860,13 +1882,13 @@ ORDER BY RANDOM() LIMIT 1
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
                     if (param == null)
-                        messageTimes = context.DiscordMessages.AsQueryable().Where(i => i.DiscordUserId == Context.Message.Author.Id).Select(i => SnowflakeUtils.FromSnowflake(i.MessageId)).ToList();
+                        messageTimes = context.DiscordMessages.AsQueryable().Where(i => i.DiscordUserId == Context.Message.Author.Id).Select(i => SnowflakeUtils.FromSnowflake(i.DiscordMessageId)).ToList();
                     else if (param == "all")
-                        messageTimes = context.DiscordMessages.AsQueryable().Select(i => SnowflakeUtils.FromSnowflake(i.MessageId)).ToList();
+                        messageTimes = context.DiscordMessages.AsQueryable().Select(i => SnowflakeUtils.FromSnowflake(i.DiscordMessageId)).ToList();
                     else if (param == "lernphase")
-                        messageTimes = context.DiscordMessages.AsQueryable().Select(i => SnowflakeUtils.FromSnowflake(i.MessageId)).ToList().Where(i => new DateTime(2020, 12, 18) < i && new DateTime(2021, 1, 25) > i).ToList();
+                        messageTimes = context.DiscordMessages.AsQueryable().Select(i => SnowflakeUtils.FromSnowflake(i.DiscordMessageId)).ToList().Where(i => new DateTime(2020, 12, 18) < i && new DateTime(2021, 1, 25) > i).ToList();
                     else if (param == "bp")
-                        messageTimes = context.DiscordMessages.AsQueryable().Select(i => SnowflakeUtils.FromSnowflake(i.MessageId)).ToList().Where(i => new DateTime(2021, 1, 25) < i && new DateTime(2021, 2, 9) > i).ToList();
+                        messageTimes = context.DiscordMessages.AsQueryable().Select(i => SnowflakeUtils.FromSnowflake(i.DiscordMessageId)).ToList().Where(i => new DateTime(2021, 1, 25) < i && new DateTime(2021, 2, 9) > i).ToList();
                 }
 
                 int bound = 10;
@@ -2060,7 +2082,7 @@ ORDER BY RANDOM() LIMIT 1
 
                 var author = Context.Message.Author;
                 LogManager.ProcessMessage(author, BotMessageType.Other);
-
+                /*
                 var statText = DatabaseManager.GetTopEmojiStatisticByText(10);
                 var statTextBot = DatabaseManager.GetTopEmojiStatisticByBot(10);
                 var statTextOnce = DatabaseManager.GetTopEmojiStatisticByTextOnce(10);
@@ -2085,7 +2107,7 @@ ORDER BY RANDOM() LIMIT 1
                 builder.AddField("Top Reactions", GetRankingString(statTextReaction.Select(i => $"<{(i.Animated ? "a:" : ":") + i.EmojiName}:{i.EmojiId}> " + i.UsedAsReaction)), true);
                 builder.AddField("Top Pinged Users", "TODO");
 
-                Context.Channel.SendMessageAsync("", false, builder.Build());
+                Context.Channel.SendMessageAsync("", false, builder.Build());*/
             }
             catch (Exception ex)
             {

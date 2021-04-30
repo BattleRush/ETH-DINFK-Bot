@@ -8,6 +8,7 @@ using ETHBot.DataLayer.Data.Reddit;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using MySqlConnector;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -416,7 +417,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    if (checkIfExists && context.DiscordMessages.Any(i => i.MessageId == message.MessageId))
+                    if (checkIfExists && context.DiscordMessages.Any(i => i.DiscordMessageId == message.DiscordMessageId))
                         return false; // this message exists
 
                     context.DiscordMessages.Add(message);
@@ -519,7 +520,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.DiscordMessages.AsQueryable().Where(i => i.DiscordChannelId == channelId).FirstOrDefault()?.MessageId;
+                    return context.DiscordMessages.AsQueryable().Where(i => i.DiscordChannelId == channelId).FirstOrDefault()?.DiscordMessageId;
                 }
             }
             catch (Exception ex)
@@ -684,7 +685,7 @@ namespace ETHDINFKBot
 
 
         // TODO change to new tables
-        public IEnumerable<EmojiStatistic> GetTopEmojiStatisticByBot(int count)
+        /*public IEnumerable<EmojiStatistic> GetTopEmojiStatisticByBot(int count)
         {
             if (count < 1)
                 count = 1;
@@ -700,11 +701,11 @@ namespace ETHDINFKBot
                 _logger.LogError(ex, ex.Message);
                 return null;
             }
-        }
+        }*/
 
 
         // TODO change to new tables
-        public IEnumerable<EmojiStatistic> GetTopEmojiStatisticByText(int count)
+        /*public IEnumerable<EmojiStatistic> GetTopEmojiStatisticByText(int count)
         {
             if (count < 1)
                 count = 1;
@@ -720,9 +721,9 @@ namespace ETHDINFKBot
                 _logger.LogError(ex, ex.Message);
                 return null;
             }
-        }
+        }*/
         // TODO change to new tables
-        public IEnumerable<EmojiStatistic> GetTopEmojiStatisticByTextOnce(int count)
+        /*public IEnumerable<EmojiStatistic> GetTopEmojiStatisticByTextOnce(int count)
         {
             if (count < 1)
                 count = 1;
@@ -738,10 +739,10 @@ namespace ETHDINFKBot
                 _logger.LogError(ex, ex.Message);
                 return null;
             }
-        }
+        }*/
 
         // TODO change to new tables
-        public IEnumerable<EmojiStatistic> GetTopEmojiStatisticByReaction(int count)
+        /*public IEnumerable<EmojiStatistic> GetTopEmojiStatisticByReaction(int count)
         {
             if (count < 1)
                 count = 1;
@@ -757,7 +758,7 @@ namespace ETHDINFKBot
                 _logger.LogError(ex, ex.Message);
                 return null;
             }
-        }
+        }*/
 
 
         // TODO change to new tables
@@ -833,7 +834,7 @@ namespace ETHDINFKBot
                     context.BannedLinks.Add(new BannedLink()
                     {
                         Link = link,
-                        ByUserId = user.DiscordUserId,
+                        AddedByDiscordUserId = user.DiscordUserId,
                         ReportTime = DateTimeOffset.Now
                     });
                     context.SaveChanges();
@@ -875,9 +876,9 @@ namespace ETHDINFKBot
 
                 var sqlSelect = $@"SELECT COUNT(*) FROM DiscordEmotes";
 
-                using (var connection = new SqliteConnection(Program.ConnectionString))
+                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionstring))
                 {
-                    using (var command = new SqliteCommand(sqlSelect, connection))
+                    using (var command = new MySqlCommand(sqlSelect, connection))
                     {
                         command.CommandTimeout = 5;
                         connection.Open();
@@ -983,7 +984,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.DiscordMessages.SingleOrDefault(i => i.MessageId == id);
+                    return context.DiscordMessages.SingleOrDefault(i => i.DiscordMessageId == id);
                 }
             }
             catch (Exception ex)
@@ -1139,7 +1140,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    var messageTimes = context.DiscordMessages.AsQueryable().Select(i => SnowflakeUtils.FromSnowflake(i.MessageId)).ToList().Where(i => from < i && i < to).ToList();
+                    var messageTimes = context.DiscordMessages.AsQueryable().Select(i => SnowflakeUtils.FromSnowflake(i.DiscordMessageId)).ToList().Where(i => from < i && i < to).ToList();
 
 
                     var groups = messageTimes.GroupBy(x =>
@@ -1418,7 +1419,7 @@ namespace ETHDINFKBot
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
-                return context.SavedMessages.Any(i => i.MessageId == messageId && i.SavedByDiscordUserId == savedByDiscordUserId); // TODO check it works
+                return context.SavedMessages.Any(i => i.DiscordMessageId == messageId && i.SavedByDiscordUserId == savedByDiscordUserId); // TODO check it works
             }
         }
 
@@ -1438,7 +1439,7 @@ namespace ETHDINFKBot
                         ByDiscordUserId = byDiscordUserId,
                         //ByDiscordUser = user,
                         Content = content, // todo attachment
-                        MessageId = messageId,
+                        DiscordMessageId = messageId,
                         SavedByDiscordUserId = savedByDiscordUserId
                         //SavedByDiscordUser = saveBy
                     };
