@@ -84,7 +84,7 @@
     
   <Target Name="MyTarget" AfterTargets="MinVer">
     <PropertyGroup>
-        <AssemblyInformationalVersion Condition="'$(GitSha)' != ''">$(MinVerVersion)+$(GitSha)</AssemblyInformationalVersion>
+        <AssemblyInformationalVersion Condition="'$(GitCommit)' != ''">$(MinVerVersion)+$(GitCommit)</AssemblyInformationalVersion>
     </PropertyGroup>
   </Target>
 </Project>
