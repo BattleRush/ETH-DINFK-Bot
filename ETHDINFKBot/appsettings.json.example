@@ -1,0 +1,27 @@
+﻿{
+    "DiscordToken": "",
+    "Owner": -1,
+    "BaseGuild": -1,
+    "Connectionstring": "Data Source=<PATH>", // TODO -> To be removed
+    "ConnectionStrings": {
+        "Development_Full": "Server=<SERVER_DEV_FULL>;User Id=<USER>;Password=<PASSWORD>;Database=<DATABASE_NAME>",
+        "Development_ReadOnly": "Server=<SERVER_DEV_READONLY>;User Id=<USER>;Password=<PASSWORD>;Database=<DATABASE_NAME>",
+        "Production_Full": "Server=<SERVER_PROD_FULL>;User Id=<USER>;Password=<PASSWORD>;Database=<DATABASE_NAME>",
+        "Production_ReadOnly": "Server=<SERVER_PROD_READONLY>;User Id=<USER>;Password=<PASSWORD>;Database=<DATABASE_NAME>"
+    },
+
+    "BasePath": "",
+    "Reddit": {
+        "AppId": "",
+        "RefreshToken": "",
+        "AppSecret": ""
+    },
+
+    "Logging": {
+        "LogLevel": {
+            "Default": "Warning",
+            "Microsoft": "Warning",
+            "Microsoft.Hosting.Lifetime": "Warning"
+        }
+    }
+}

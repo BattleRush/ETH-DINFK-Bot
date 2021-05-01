@@ -547,7 +547,7 @@ WHERE
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
 
-                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionstring))
+                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionString))
                 {
                     using (var command = new MySqlCommand(commandSql, connection))
                     {

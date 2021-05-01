@@ -52,8 +52,10 @@ namespace ETHDINFKBot
         public static string RedditAppSecret { get; set; }
         public static string BasePath { get; set; }
         public static string ConnectionString { get; set; }
-        public static string MariaDBConnectionstring { get; set; }
-        public static string MariaDBReadOnlyConnectionstring { get; set; }
+        public static string MariaDBReadOnlyConnectionString { get; set; }
+
+        // TODO maybe compiler warning -> but longterm settings need to be moved from here
+        public static string FULL_MariaDBReadOnlyConnectionString { get; set; }
 
         // TODO Move settings to an object
         public static bool TempDisableIncomming { get; set; }
@@ -122,7 +124,8 @@ namespace ETHDINFKBot
                        services.AddCronJob<DailyStatsJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 23 * * *"; });
 
                        // TODO adjust for summer time in CET/CEST
-                       services.AddCronJob<PreloadJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 3 * * *"; });// 3 am utc -> 4 am cet
+                       // TODO Enable for Maria DB
+                       //services.AddCronJob<PreloadJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 3 * * *"; });// 3 am utc -> 4 am cet
 
                        // TODO adjust for summer time in CET/CEST
                        services.AddCronJob<SpaceXSubredditJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = BotSetting?.SpaceXSubredditCheckCronJob ?? "*/10 * * * *"; }); //BotSetting.SpaceXSubredditCheckCronJob "*/ 10 * * * *"
@@ -145,8 +148,14 @@ namespace ETHDINFKBot
                 BasePath = Configuration["BasePath"];
                 ConnectionString = Configuration["ConnectionString"];
                 // TODO Update for new connection strings and dev/prod
-                MariaDBConnectionstring = Configuration["MariaDBConnectionstring"];
-                MariaDBReadOnlyConnectionstring = Configuration["MariaDBReadOnlyConnectionstring"];
+
+#if DEBUG
+                MariaDBReadOnlyConnectionString = Configuration.GetConnectionString("Development_ReadOnly").ToString();
+                FULL_MariaDBReadOnlyConnectionString = Configuration.GetConnectionString("Development_Full").ToString();
+#else
+                MariaDBReadOnlyConnectionString = Configuration.GetConnectionString("Production_ReadOnly").ToString();
+                FULL_MariaDBReadOnlyConnectionString = Configuration.GetConnectionString("Production_Full").ToString();
+#endif
 
                 RedditAppId = Configuration["Reddit:AppId"];
                 RedditRefreshToken = Configuration["Reddit:RefreshToken"];

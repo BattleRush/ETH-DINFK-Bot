@@ -876,7 +876,7 @@ namespace ETHDINFKBot
 
                 var sqlSelect = $@"SELECT COUNT(*) FROM DiscordEmotes";
 
-                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionstring))
+                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionString))
                 {
                     using (var command = new MySqlCommand(sqlSelect, connection))
                     {

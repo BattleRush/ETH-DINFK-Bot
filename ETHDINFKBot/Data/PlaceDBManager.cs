@@ -132,7 +132,7 @@ namespace ETHDINFKBot.Data
 FROM   information_schema.TABLES
 WHERE  TABLE_NAME = 'PlaceBoardHistory'"; // since no rows are deleted we can use this query to quickly find the row count
 
-                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionstring))
+                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionString))
                 {
                     using (var command = new MySqlCommand(sqlSelect, connection))
                     {
@@ -285,7 +285,7 @@ FROM PlaceBoardHistory
 WHERE PlaceBoardHistoryId > {from}
 LIMIT {amount};";
 
-                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionstring))
+                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionString))
                 {
                     using (var command = new MySqlCommand(sqlQuery, connection))
                     {
@@ -402,7 +402,7 @@ WHERE DiscordUserId = {discordUserId} AND SnowflakeTimePlaced > {fromSnowflake} 
 ";
 
 
-                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionstring))
+                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionString))
                 {
                     using (var command = new MySqlCommand(sqlSelect, connection))
                     {
@@ -428,7 +428,7 @@ SET R = 255, G = 255, B = 255
 WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
 
 
-                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionstring))
+                using (var connection = new MySqlConnection(Program.FULL_MariaDBReadOnlyConnectionString))
                 {
                     using (var command = new MySqlCommand(sqlSelect, connection))
                     {
@@ -628,7 +628,7 @@ INSERT INTO PlaceBoardHistory (PlaceDiscordUserId, XPos, YPos, R, G, B, Snowflak
 VALUES ({placeUser.PlaceDiscordUserId},{x},{y},{color.R},{color.G},{color.B},{SnowflakeUtils.ToSnowflake(DateTimeOffset.UtcNow)})";
 
 
-            using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionstring))
+            using (var connection = new MySqlConnection(Program.FULL_MariaDBReadOnlyConnectionString))
             {
                 using (var command = new MySqlCommand(sqlQuery, connection))
                 {

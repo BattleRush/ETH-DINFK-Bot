@@ -32,6 +32,7 @@ using System.Globalization;
 using System.Diagnostics;
 using Microsoft.Data.Sqlite;
 using ETHDINFKBot.Drawing;
+using System.Reflection;
 
 namespace ETHDINFKBot
 {
@@ -106,9 +107,112 @@ namespace ETHDINFKBot
             Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
+        // https://stackoverflow.com/a/4423615/3144729
+        // TODO Move into a helper
+        private string ToReadableString(TimeSpan span)
+        {
+            string formatted = string.Format("{0}{1}{2}{3}",
+                span.Duration().Days > 0 ? string.Format("{0:0} day{1}, ", span.Days, span.Days == 1 ? string.Empty : "s") : string.Empty,
+                span.Duration().Hours > 0 ? string.Format("{0:0} hour{1}, ", span.Hours, span.Hours == 1 ? string.Empty : "s") : string.Empty,
+                span.Duration().Minutes > 0 ? string.Format("{0:0} min{1}, ", span.Minutes, span.Minutes == 1 ? string.Empty : "s") : string.Empty,
+                span.Duration().Seconds > 0 ? string.Format("{0:0} sec{1}", span.Seconds, span.Seconds == 1 ? string.Empty : "s") : string.Empty);
+
+            if (formatted.EndsWith(", ")) formatted = formatted.Substring(0, formatted.Length - 2);
+
+            if (string.IsNullOrEmpty(formatted)) formatted = "0 seconds";
+
+            return formatted;
+        }
+
+        // GET CPU USAGE
+        // https://medium.com/@jackwild/getting-cpu-usage-in-net-core-7ef825831b8b
+        private async Task<double> GetCpuUsageForProcess()
+        {
+            var startTime = DateTime.UtcNow;
+            var startCpuUsage = Process.GetCurrentProcess().TotalProcessorTime;
+            await Task.Delay(500);
+
+            var endTime = DateTime.UtcNow;
+            var endCpuUsage = Process.GetCurrentProcess().TotalProcessorTime;
+            var cpuUsedMs = (endCpuUsage - startCpuUsage).TotalMilliseconds;
+            var totalMsPassed = (endTime - startTime).TotalMilliseconds;
+            var cpuUsageTotal = cpuUsedMs / (Environment.ProcessorCount * totalMsPassed);
+            return cpuUsageTotal * 100;
+        }
+
+        [Command("version")]
+        [Alias("about")]
+        public async Task VersionOutput()
+        {
+            var currentProcessCpuUsage = GetCpuUsageForProcess();
+            var proc = Process.GetCurrentProcess();
+
+            var currentAssembly = Assembly.GetExecutingAssembly();
+            var assembly = Assembly.GetExecutingAssembly();
+            var version = assembly.GetName().Version;
+            FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
+            string productVersion = fileVersionInfo.ProductVersion;
+            string fileVersion = fileVersionInfo.FileVersion;
+            bool isDebug = fileVersionInfo.IsDebug;
+
+
+
+            var netCoreVer = Environment.Version;
+            var runtimeVer = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
+            var osVersion = Environment.OSVersion;
+            var applicationOnlineTime = (DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime());
+
+
+            var processorCount = Environment.ProcessorCount;
+            var ram = proc.WorkingSet64;
+            var freeBytes = new DriveInfo(assembly.Location).AvailableFreeSpace;
+            var totalBytes = new DriveInfo(assembly.Location).TotalSize;
+
+            EmbedBuilder builder = new EmbedBuilder();
+
+            builder.WithTitle($"{Program.Client.CurrentUser.Username} Help");
+            //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
+
+            string prefix = ".";
+
+#if DEBUG
+            prefix = "dev.";
+#endif
+
+            builder.WithDescription($@"For more information about the bot type ""{prefix}help"" or ""{prefix}source""");
+
+            int g = 0;
+#if DEBUG
+            g = 192;
+#endif
+
+            builder.WithColor(0, g, 255);
+
+            builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
+
+            //builder.WithFooter($"If you can read this then ping Mert | TroNiiXx | [13]");
+            builder.WithCurrentTimestamp();
+            //builder.WithAuthor(author);
+            builder.AddField("Version", $"{version.ToString()}", true);
+            builder.AddField("Product Version", $"{productVersion}", true);
+            builder.AddField("File Version", $"{fileVersion}", true);
+            builder.AddField("Build Mode", $"{(isDebug ? "Debug" : "Release")}", true);
+            builder.AddField(".NET Version", $"{netCoreVer.ToString()}", true);
+            builder.AddField("Runtime Version", $"{runtimeVer.ToString()}", true);
+            builder.AddField("OS Version", $"{osVersion.ToString()}", true);
+            builder.AddField("Online for", $"{ToReadableString(applicationOnlineTime)}", true);
+            builder.AddField("Processor Count", $"{processorCount.ToString("N0")}", true);
+
+            double cpuUsage = await currentProcessCpuUsage;
+
+            builder.AddField("CPU", $"{Math.Round(cpuUsage, 2)}%", true);
+            builder.AddField("RAM", $"{Math.Round(ram / 1024d / 1024d / 1024d, 2)} GB", true);
+            builder.AddField("DISK", $"{Math.Round((totalBytes-freeBytes) / 1024d / 1024d / 1024d, 2)} GB out of {Math.Round(totalBytes / 1024d / 1024d / 1024d, 2)} GB ({Math.Round(100 * ((totalBytes - freeBytes) / (decimal)totalBytes), 2)}%)", true);
+
+            Context.Channel.SendMessageAsync("", false, builder.Build());
+        }
 
         [Command("help")]
-        [Alias("about")]
         public async Task HelpOutput()
         {
             // _logger.LogError("GET HelpOutput called.");
@@ -122,7 +226,7 @@ namespace ETHDINFKBot
             LogManager.ProcessMessage(author, BotMessageType.Other);
 
             EmbedBuilder builder = new EmbedBuilder();
-            
+
             builder.WithTitle($"{Program.Client.CurrentUser.Username} Help");
             //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
 
@@ -145,11 +249,11 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.WithColor(0, g, 255);
 
             builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
-            
+
             //builder.WithFooter($"If you can read this then ping Mert | TroNiiXx | [13]");
             builder.WithCurrentTimestamp();
             //builder.WithAuthor(author);
-            builder.AddField("Misc", $"```{prefix}help {prefix}source {prefix}stats {prefix}lb```", true);
+            builder.AddField("Misc", $"```{prefix}help {prefix}version {prefix}source {prefix}stats {prefix}lb```", true);
             builder.AddField("Search", $"```{prefix}google|duck <search term>```", true);
             builder.AddField("Images", $"```{prefix}neko[avatar] {prefix}fox {prefix}waifu {prefix}baka {prefix}smug {prefix}holo {prefix}avatar {prefix}wallpaper```");
             builder.AddField("Reddit", $"```{prefix}r[p] <subreddit>|all```", true);
@@ -2134,7 +2238,7 @@ ORDER BY RANDOM() LIMIT 1
             {
                 var messagesToProcess = DatabaseManager.GetDiscordMessagesPaged(count);
 
-                if(messagesToProcess.Count == 0)
+                if (messagesToProcess.Count == 0)
                 {
                     Context.Channel.SendMessageAsync("Done", false);
 
