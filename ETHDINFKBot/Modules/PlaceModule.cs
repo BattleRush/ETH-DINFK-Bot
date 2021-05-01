@@ -997,7 +997,7 @@ If you violate the server rules your pixels will be removed.
                 // TODO Dispose stuff
                 var stream = CommonHelper.GetStream(CurrentPlaceBitmap);
                 //await Context.Channel.SendFileAsync(stream, "place.png", $"DB Time: {msDbTime}ms Draw Time: {watch.ElapsedMilliseconds}ms");
-                await Context.Channel.SendFileAsync(stream, "place.png", $"DB Time: {msDbTime}ms Web Viewer: http://ethplace.spclr.ch:81/ (dev)");
+                await Context.Channel.SendFileAsync(stream, "place.png", $"DB Time: {msDbTime}ms Web Viewer: https://place.battlerush.dev/");
             }
             catch (Exception ex)
             {

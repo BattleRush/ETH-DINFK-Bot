@@ -623,7 +623,7 @@ WHERE XPos = {x} AND YPos = {y};
 
 -- insert a new entry into history
 INSERT INTO PlaceBoardHistory (PlaceDiscordUserId, XPos, YPos, R, G, B, PlacedDateTime)
-VALUES ({placeUser.PlaceDiscordUserId},{x},{y},{color.R},{color.G},{color.B},{DateTime.UtcNow})";
+VALUES ({placeUser.PlaceDiscordUserId},{x},{y},{color.R},{color.G},{color.B},@placedDateTime)";
 
 
             using (var connection = new MySqlConnection(Program.FULL_MariaDBReadOnlyConnectionString))
@@ -634,6 +634,9 @@ VALUES ({placeUser.PlaceDiscordUserId},{x},{y},{color.R},{color.G},{color.B},{Da
                     {
                         command.CommandTimeout = 5;
                         connection.Open();
+
+                        MySqlParameter parameter = command.Parameters.Add("@placedDateTime", System.Data.DbType.DateTime);
+                        parameter.Value = DateTime.UtcNow;
 
                         int count = command.ExecuteNonQuery();
 
