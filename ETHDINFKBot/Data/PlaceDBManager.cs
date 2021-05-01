@@ -622,8 +622,8 @@ SET R = {color.R}, G = {color.G}, B = {color.B}
 WHERE XPos = {x} AND YPos = {y};
 
 -- insert a new entry into history
-INSERT INTO PlaceBoardHistory (PlaceDiscordUserId, XPos, YPos, R, G, B, PlacedDateTime)
-VALUES ({placeUser.PlaceDiscordUserId},{x},{y},{color.R},{color.G},{color.B},@placedDateTime)";
+INSERT INTO PlaceBoardHistory (PlaceDiscordUserId, XPos, YPos, R, G, B, PlacedDateTime, Removed)
+VALUES ({placeUser.PlaceDiscordUserId},{x},{y},{color.R},{color.G},{color.B},@placedDateTime, 0)";
 
 
             using (var connection = new MySqlConnection(Program.FULL_MariaDBReadOnlyConnectionString))

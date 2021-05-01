@@ -37,7 +37,7 @@ namespace ETHBot.DataLayer.Data.Fun
         // 8bytes
         public DateTime PlacedDateTime { get; set; }
 
-        // 1 bit
+        // 1 bit -> TODO Default on insert set to 0
         public bool Removed { get; set; }
     }
 }
