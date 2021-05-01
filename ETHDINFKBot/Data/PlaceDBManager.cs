@@ -305,7 +305,7 @@ LIMIT {amount};";
                             byte b = reader.GetByte(5);
 
                             short placeDiscordUserId = reader.GetInt16(6);
-                            ulong snowflakeTimePlaced = reader.GetUInt64(7);
+                            DateTime dateTimePlaced = reader.GetDateTime(7);
                             bool removed = reader.GetBoolean(8);
 
                             returnVal.Add(new PlaceBoardHistory()
@@ -317,7 +317,7 @@ LIMIT {amount};";
                                 G = g,
                                 B = b,
                                 PlaceDiscordUserId = placeDiscordUserId,
-                                PlacedDateTime = SnowflakeUtils.FromSnowflake(snowflakeTimePlaced).UtcDateTime,
+                                PlacedDateTime = dateTimePlaced,
                                 Removed = removed
                             });
                         }
@@ -391,13 +391,11 @@ ORDER BY PlaceBoardHistoryId ASC";
                 if (minutes > 0)
                     minutes *= -1;// set it negative
 
-                var fromTime = DateTimeOffset.UtcNow.AddMinutes(minutes);
-                var fromSnowflake = SnowflakeUtils.ToSnowflake(fromTime);
 
                 var sqlSelect = $@"
 SELECT PlaceBoardHistoryId
 FROM PlaceBoardHistory
-WHERE DiscordUserId = {discordUserId} AND SnowflakeTimePlaced > {fromSnowflake} AND XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd};
+WHERE DiscordUserId = {discordUserId} AND PlacedDateTime > {DateTime.UtcNow.AddMinutes(minutes)} AND XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd};
 
 ";
 
@@ -624,8 +622,8 @@ SET R = {color.R}, G = {color.G}, B = {color.B}
 WHERE XPos = {x} AND YPos = {y};
 
 -- insert a new entry into history
-INSERT INTO PlaceBoardHistory (PlaceDiscordUserId, XPos, YPos, R, G, B, SnowflakeTimePlaced)
-VALUES ({placeUser.PlaceDiscordUserId},{x},{y},{color.R},{color.G},{color.B},{SnowflakeUtils.ToSnowflake(DateTimeOffset.UtcNow)})";
+INSERT INTO PlaceBoardHistory (PlaceDiscordUserId, XPos, YPos, R, G, B, PlacedDateTime)
+VALUES ({placeUser.PlaceDiscordUserId},{x},{y},{color.R},{color.G},{color.B},{DateTime.UtcNow})";
 
 
             using (var connection = new MySqlConnection(Program.FULL_MariaDBReadOnlyConnectionString))
