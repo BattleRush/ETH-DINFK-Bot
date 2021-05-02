@@ -32,28 +32,29 @@ namespace ETHDINFKBot.Modules
         public async Task TableInfo()
         {
             string prefix = Program.CurrentPrefix;
-
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-            var queryResult = await SQLHelper.GetQueryResults(Context, @"
+            try
+            {
+                Stopwatch watch = new Stopwatch();
+                watch.Start();
+                var queryResult = await SQLHelper.GetQueryResults(Context, @"
 SELECT table_name FROM information_schema.tables
 WHERE table_schema = 'ethbot_dev' 
 ORDER BY table_name DESC;", true, 50);
 
-            EmbedBuilder builder = new EmbedBuilder();
+                EmbedBuilder builder = new EmbedBuilder();
 
-            builder.WithTitle($"{Program.Client.CurrentUser.Username} DB INFO");
-            builder.WithDescription($@"SQL Tables 
+                builder.WithTitle($"{Program.Client.CurrentUser.Username} DB INFO");
+                builder.WithDescription($@"SQL Tables 
 DB Diagram: '{prefix}sql table info' 
 DB Stats Help: '{prefix}sql stats help'");
-            builder.WithColor(65, 17, 187);
+                builder.WithColor(65, 17, 187);
 
-            builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
-            builder.WithCurrentTimestamp();
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
+                builder.WithCurrentTimestamp();
 
-            long totalRows = 0;
+                long totalRows = 0;
 
-            List<string> largeTables = new List<string>()
+                List<string> largeTables = new List<string>()
             {
                 "RedditPosts",
                 "RedditImages",
@@ -62,59 +63,64 @@ DB Stats Help: '{prefix}sql stats help'");
                 "DiscordEmoteHistory"
             };
 
-            // TODO check if db name is needed
+                // TODO check if db name is needed
 
-            long dbSizeInBytes = 0;
+                long dbSizeInBytes = 0;
 
-            string rowCountString = "";
-            foreach (var row in queryResult.Data)
-            {
-                string tableName = row.ElementAt(0);
+                string rowCountString = "";
+                foreach (var row in queryResult.Data)
+                {
+                    string tableName = row.ElementAt(0);
 
-                string query = $"SELECT COUNT(*) FROM {tableName}";
+                    string query = $"SELECT COUNT(*) FROM {tableName}";
 
-                if (largeTables.Contains(tableName))
-                    query = $@"SELECT AUTO_INCREMENT
+                    if (largeTables.Contains(tableName))
+                        query = $@"SELECT AUTO_INCREMENT
 FROM   information_schema.TABLES
 WHERE  TABLE_SCHEMA = 'ethbot_dev' and TABLE_NAME = '{tableName}'";
 
-                var rowCountInfo = await SQLHelper.GetQueryResults(Context, query, true, 1);
+                    var rowCountInfo = await SQLHelper.GetQueryResults(Context, query, true, 1);
 
-                string rowCountStr = rowCountInfo.Data.FirstOrDefault().FirstOrDefault(); // todo rework this first first thing
+                    string rowCountStr = rowCountInfo.Data.FirstOrDefault().FirstOrDefault(); // todo rework this first first thing
 
-                // TODO could be done with one query
-                string tableSizeQuery = $@"SELECT
+                    // TODO could be done with one query
+                    string tableSizeQuery = $@"SELECT
     ROUND((DATA_LENGTH + INDEX_LENGTH)) AS `Size`
 FROM
   information_schema.TABLES
 WHERE
   TABLE_SCHEMA = 'ethbot_dev' and TABLE_NAME = '{tableName}'";
 
-                var tableSize = await SQLHelper.GetQueryResults(Context, tableSizeQuery, true, 1);
-                var sizeInBytesStr = tableSize.Data.FirstOrDefault()?.FirstOrDefault();
+                    var tableSize = await SQLHelper.GetQueryResults(Context, tableSizeQuery, true, 1);
+                    var sizeInBytesStr = tableSize.Data.FirstOrDefault()?.FirstOrDefault();
 
-                if (long.TryParse(rowCountStr, out long rowCount) && long.TryParse(sizeInBytesStr, out long sizeInBytes))
-                {
-                    totalRows += rowCount;
-                    rowCountString += $"{tableName} ({rowCount:N0}) {Math.Round(sizeInBytes / 1024d / 1024d, 2)} MB" + Environment.NewLine;
-                    dbSizeInBytes += sizeInBytes;
+                    if (long.TryParse(rowCountStr, out long rowCount) && long.TryParse(sizeInBytesStr, out long sizeInBytes))
+                    {
+                        totalRows += rowCount;
+                        rowCountString += $"{tableName} ({rowCount:N0}) {Math.Round(sizeInBytes / 1024d / 1024d, 2)} MB" + Environment.NewLine;
+                        dbSizeInBytes += sizeInBytes;
+                    }
                 }
+
+                builder.AddField("Row count", rowCountString);
+
+                //var dbSizeInfo = await GetQueryResults($"SELECT page_count *page_size / 1024 / 1024 as size FROM pragma_page_count(), pragma_page_size()", true, 1);
+                //string dbSizeStr = dbSizeInfo.Data.FirstOrDefault().FirstOrDefault(); // todo rework this first first thing
+
+
+                watch.Stop();
+                builder.AddField("Total", $"Rows: {totalRows.ToString("N0")} {Environment.NewLine}" +
+                    $"DB Size: {Math.Round(dbSizeInBytes / 1024d / 1024d / 1024d, 2)} GB {Environment.NewLine}" +
+                    $"Query time: {watch.ElapsedMilliseconds.ToString("N0")}ms");
+
+                Context.Channel.SendMessageAsync("", false, builder.Build());
             }
-
-            builder.AddField("Row count", rowCountString);
-
-            //var dbSizeInfo = await GetQueryResults($"SELECT page_count *page_size / 1024 / 1024 as size FROM pragma_page_count(), pragma_page_size()", true, 1);
-            //string dbSizeStr = dbSizeInfo.Data.FirstOrDefault().FirstOrDefault(); // todo rework this first first thing
-
-
-            watch.Stop();
-            builder.AddField("Total", $"Rows: {totalRows.ToString("N0")} {Environment.NewLine}" +
-                $"DB Size: {Math.Round(dbSizeInBytes / 1024d / 1024d / 1024d, 2)} GB {Environment.NewLine}" +
-                $"Query time: {watch.ElapsedMilliseconds.ToString("N0")}ms");
-
-            Context.Channel.SendMessageAsync("", false, builder.Build());
+            catch (Exception ex)
+            {
+                // TODO user Logger
+                Console.WriteLine(ex.ToString());
+            }
         }
-
 
         [Group("stats")]
         public class SqlStats : ModuleBase<SocketCommandContext>
@@ -518,7 +524,7 @@ WHERE
             throw new TimeoutException("Time is over");
         }
 
-        
+
 
 
 
