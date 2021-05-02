@@ -28,7 +28,7 @@ namespace ETHBot.DataLayer.Data.Fun
         public byte G { get; set; }
         public byte B { get; set; }
 
-
+        // TODO Maybe change to unsigned ints
         // 2 bytes
         [ForeignKey("PlaceDiscordUser")]
         public short PlaceDiscordUserId { get; set; }

@@ -191,7 +191,20 @@ WHERE  TABLE_NAME = 'PlaceBoardHistory'"; // since no rows are deleted we can us
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    context.PlaceDiscordUsers.Add(new PlaceDiscordUser() { DiscordUserId = discordUserId });
+                    var placeUser = context.PlaceDiscordUsers.SingleOrDefault(i => i.DiscordUserId == discordUserId);
+                    if (placeUser != null)
+                        return true; // this user exists in the db
+
+                    // get the max id and do + 1 as InnoDB increases the id in case of an failed insert
+                    // this should work fine as there is rarely a new user
+                    int maxId = context.PlaceDiscordUsers.Max(i => i.PlaceDiscordUserId);
+
+                    context.PlaceDiscordUsers.Add(new PlaceDiscordUser()
+                    {
+                        PlaceDiscordUserId = Convert.ToInt16(maxId + 1),
+                        DiscordUserId = discordUserId,
+                        TotalPixelsPlaced = 0
+                    });
                     context.SaveChanges();
 
                     return true;
@@ -504,7 +517,7 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
                 return false; // reject these entries
 
             // TODO REPLOAD THE BEFORE
-            if(PlaceModule.PlaceDiscordUsers.Count == 0)
+            if (PlaceModule.PlaceDiscordUsers.Count == 0)
                 PlaceModule.PlaceDiscordUsers = GetPlaceDiscordUsers();
 
             var placeUser = PlaceModule.PlaceDiscordUsers.SingleOrDefault(i => i.DiscordUserId == discordUserId);
@@ -518,7 +531,7 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
                     placeUser = PlaceModule.PlaceDiscordUsers.SingleOrDefault(i => i.DiscordUserId == discordUserId);
                 }
             }
-           
+
             if (placeUser == null)
             {
                 return false;
