@@ -1199,6 +1199,7 @@ If you violate the server rules your pixels will be removed.
                 // TODO optimize some lines + move to draw helper
                 var dataPointsAvg = list.ToDictionary(i => i.DateTime, i => i.AvgTimeInMs);
                 var dataPointsCount = list.ToDictionary(i => i.DateTime, i => i.SuccessCount);
+                var dataPointsFailed = list.ToDictionary(i => i.DateTime, i => i.FailedCount);
 
                 var drawInfo = DrawingHelper.GetEmptyGraphics();
                 var padding = DrawingHelper.DefaultPadding;
@@ -1207,12 +1208,14 @@ If you violate the server rules your pixels will be removed.
                 var gridSize = new GridSize(drawInfo.Bitmap, padding);
                 var dataPointListAvg = DrawingHelper.GetPoints(dataPointsAvg, gridSize, true, startTime, endTime);
                 var dataPointListCount = DrawingHelper.GetPoints(dataPointsCount, gridSize, true, startTime, endTime);
+                var dataPointListFailed = DrawingHelper.GetPoints(dataPointsFailed, gridSize, true, startTime, endTime);
 
                 DrawingHelper.DrawGrid(drawInfo.Graphics, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, $"Place Perf {list.Count} mins", labelsCount.YAxisLabels);
                 // todo add 2. y Axis on the right
 
                 DrawingHelper.DrawLine(drawInfo.Graphics, drawInfo.Bitmap, dataPointListAvg, 6, new Pen(System.Drawing.Color.LightGreen), "Avg in ms / min", 0, true);
                 DrawingHelper.DrawLine(drawInfo.Graphics, drawInfo.Bitmap, dataPointListCount, 6, new Pen(System.Drawing.Color.Yellow), "Count / min", 1, true);
+                DrawingHelper.DrawLine(drawInfo.Graphics, drawInfo.Bitmap, dataPointListFailed, 6, new Pen(System.Drawing.Color.DarkOrange), "Failed Count / min", 2, true);
 
                 // TODO add methods to the drawing lib
                 if (listStartUpTimes.Count > 0)
