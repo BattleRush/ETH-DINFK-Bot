@@ -60,7 +60,6 @@ DB Stats Help: '{prefix}sql stats help'");
                 {
                     "RedditPosts",
                     "RedditImages",
-                    "PlaceBoardPixels",
                     "PlaceBoardHistory",
                     "DiscordEmoteHistory"
                 };

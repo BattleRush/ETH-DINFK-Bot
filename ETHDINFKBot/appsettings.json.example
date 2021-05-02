@@ -7,7 +7,7 @@
     // TODO Create Connection string from these variables
     "MariaDB_FullUserName": "",
     "MariaDB_ReadOnlyUserName": "",
-    "MariaDBName": ""
+    "MariaDBName": "",
 
     "ConnectionStrings": {
         "ConnectionString_Full": "Server=<SERVER_PROD_FULL>;User Id=<USER>;Password=<PASSWORD>;Database=<DATABASE_NAME>",
