@@ -191,13 +191,20 @@ WHERE  TABLE_NAME = 'PlaceBoardHistory'"; // since no rows are deleted we can us
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    var placeUser = context.PlaceDiscordUsers.SingleOrDefault(i => i.DiscordUserId == discordUserId);
+                    var placeUser = context.PlaceDiscordUsers.FirstOrDefault(i => i.DiscordUserId == discordUserId);
                     if (placeUser != null)
                         return true; // this user exists in the db
 
                     // get the max id and do + 1 as InnoDB increases the id in case of an failed insert
                     // this should work fine as there is rarely a new user
-                    int maxId = context.PlaceDiscordUsers.Max(i => i.PlaceDiscordUserId);
+                    int maxId = 0;
+
+                    // TODO DefaultIfEmpty()
+                    try
+                    {
+                        maxId = context.PlaceDiscordUsers.Max(i => i.PlaceDiscordUserId);
+                    }
+                    catch { }
 
                     context.PlaceDiscordUsers.Add(new PlaceDiscordUser()
                     {
