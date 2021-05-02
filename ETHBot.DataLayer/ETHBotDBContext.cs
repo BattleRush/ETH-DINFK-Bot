@@ -32,11 +32,7 @@ namespace ETHBot.DataLayer
                   .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                   .Build();
 
-#if DEBUG
-            ConnectionString = configuration.GetConnectionString("Development_Full").ToString();
-#else
-            ConnectionString = configuration.GetConnectionString("Production_Full").ToString();
-#endif
+            ConnectionString = configuration.GetConnectionString("ConnectionString_Full").ToString();
 
             if (!_created)
             {
@@ -49,16 +45,6 @@ namespace ETHBot.DataLayer
         protected override void OnConfiguring(DbContextOptionsBuilder optionbuilder)
         {
             optionbuilder.UseLoggerFactory(loggerFactory).UseMySql(ConnectionString).EnableSensitiveDataLogging();
-
-
-            // TODO Setting
-
-            //optionbuilder.UseLoggerFactory(loggerFactory).UseSqlite(@"Data Source=I:\ETHBot\ETHBot.db").EnableSensitiveDataLogging();
-
-            //optionbuilder.UseLoggerFactory(loggerFactory).UseMySql(@"Server=localhost;User Id=root;Password=karlo1;Database=ETHBot_Dev").EnableSensitiveDataLogging();
-            //optionbuilder.UseLoggerFactory(loggerFactory).UseSqlite(@"Data Source=I:\ETHBot\ETHBot_20210111_122855").EnableSensitiveDataLogging();    
-
-            //optionbuilder.UseLoggerFactory(loggerFactory).UseSqlite(@"Data Source=/usr/local/bin/ETHBot/Database/ETHBot.db").EnableSensitiveDataLogging();
         }
 
         public DbSet<BannedLink> BannedLinks { get; set; }

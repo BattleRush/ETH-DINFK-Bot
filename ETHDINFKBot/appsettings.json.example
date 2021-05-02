@@ -4,14 +4,14 @@
     "BaseGuild": -1,
     "Connectionstring": "Data Source=<PATH>", // TODO -> To be removed
 
+    // TODO Create Connection string from these variables
     "MariaDB_FullUserName": "",
     "MariaDB_ReadOnlyUserName": "",
+    "MariaDBName": ""
 
     "ConnectionStrings": {
-        "Development_Full": "Server=<SERVER_DEV_FULL>;User Id=<USER>;Password=<PASSWORD>;Database=<DATABASE_NAME>",
-        "Development_ReadOnly": "Server=<SERVER_DEV_READONLY>;User Id=<USER>;Password=<PASSWORD>;Database=<DATABASE_NAME>",
-        "Production_Full": "Server=<SERVER_PROD_FULL>;User Id=<USER>;Password=<PASSWORD>;Database=<DATABASE_NAME>",
-        "Production_ReadOnly": "Server=<SERVER_PROD_READONLY>;User Id=<USER>;Password=<PASSWORD>;Database=<DATABASE_NAME>"
+        "ConnectionString_Full": "Server=<SERVER_PROD_FULL>;User Id=<USER>;Password=<PASSWORD>;Database=<DATABASE_NAME>",
+        "ConnectionString_ReadOnly": "Server=<SERVER_PROD_READONLY>;User Id=<USER>;Password=<PASSWORD>;Database=<DATABASE_NAME>"
     },
 
     "BasePath": "",

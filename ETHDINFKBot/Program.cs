@@ -55,6 +55,8 @@ namespace ETHDINFKBot
         public static string MariaDBFullUserName { get; set; }
         public static string MariaDBReadOnlyUserName { get; set; }
         public static string MariaDBReadOnlyConnectionString { get; set; }
+        public static string MariaDBDBName { get; set; }
+
         public static string CurrentPrefix { get; set; }
 
         // TODO maybe compiler warning -> but longterm settings need to be moved from here
@@ -156,16 +158,12 @@ namespace ETHDINFKBot
                 ConnectionString = Configuration["ConnectionString"];
                 // TODO Update for new connection strings and dev/prod
 
-#if DEBUG
-                MariaDBReadOnlyConnectionString = Configuration.GetConnectionString("Development_ReadOnly").ToString();
-                FULL_MariaDBReadOnlyConnectionString = Configuration.GetConnectionString("Development_Full").ToString();
-#else
-                MariaDBReadOnlyConnectionString = Configuration.GetConnectionString("Production_ReadOnly").ToString();
-                FULL_MariaDBReadOnlyConnectionString = Configuration.GetConnectionString("Production_Full").ToString();
-#endif
+                MariaDBReadOnlyConnectionString = Configuration.GetConnectionString("ConnectionString_ReadOnly").ToString();
+                FULL_MariaDBReadOnlyConnectionString = Configuration.GetConnectionString("ConnectionString_Full").ToString();
 
                 MariaDBFullUserName = Configuration["MariaDB_FullUserName"];
                 MariaDBReadOnlyUserName = Configuration["MariaDB_ReadOnlyUserName"];
+                MariaDBDBName = Configuration["MariaDB_DBName"];
 
                 RedditAppId = Configuration["Reddit:AppId"];
                 RedditRefreshToken = Configuration["Reddit:RefreshToken"];

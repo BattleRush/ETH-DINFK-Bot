@@ -32,13 +32,15 @@ namespace ETHDINFKBot.Modules
         public async Task TableInfo()
         {
             string prefix = Program.CurrentPrefix;
+
             try
             {
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
-                var queryResult = await SQLHelper.GetQueryResults(Context, @"
+
+                var queryResult = await SQLHelper.GetQueryResults(Context, $@"
 SELECT table_name FROM information_schema.tables
-WHERE table_schema = 'ethbot_dev' 
+WHERE table_schema = '{Program.MariaDBDBName}' 
 ORDER BY table_name DESC;", true, 50);
 
                 EmbedBuilder builder = new EmbedBuilder();
@@ -55,13 +57,13 @@ DB Stats Help: '{prefix}sql stats help'");
                 long totalRows = 0;
 
                 List<string> largeTables = new List<string>()
-            {
-                "RedditPosts",
-                "RedditImages",
-                "PlaceBoardPixels",
-                "PlaceBoardHistory",
-                "DiscordEmoteHistory"
-            };
+                {
+                    "RedditPosts",
+                    "RedditImages",
+                    "PlaceBoardPixels",
+                    "PlaceBoardHistory",
+                    "DiscordEmoteHistory"
+                };
 
                 // TODO check if db name is needed
 
@@ -77,7 +79,7 @@ DB Stats Help: '{prefix}sql stats help'");
                     if (largeTables.Contains(tableName))
                         query = $@"SELECT AUTO_INCREMENT
 FROM   information_schema.TABLES
-WHERE  TABLE_SCHEMA = 'ethbot_dev' and TABLE_NAME = '{tableName}'";
+WHERE  TABLE_SCHEMA = '{Program.MariaDBDBName}' and TABLE_NAME = '{tableName}'";
 
                     var rowCountInfo = await SQLHelper.GetQueryResults(Context, query, true, 1);
 
@@ -89,7 +91,7 @@ WHERE  TABLE_SCHEMA = 'ethbot_dev' and TABLE_NAME = '{tableName}'";
 FROM
   information_schema.TABLES
 WHERE
-  TABLE_SCHEMA = 'ethbot_dev' and TABLE_NAME = '{tableName}'";
+  TABLE_SCHEMA = '{Program.MariaDBDBName}' and TABLE_NAME = '{tableName}'";
 
                     var tableSize = await SQLHelper.GetQueryResults(Context, tableSizeQuery, true, 1);
                     var sizeInBytesStr = tableSize.Data.FirstOrDefault()?.FirstOrDefault();
