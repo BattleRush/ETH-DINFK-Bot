@@ -171,6 +171,9 @@ namespace ETHDINFKBot.Drawing
 
             foreach (var item in data)
             {
+                if (maxVal == 0)
+                    break;
+
                 long currentTotalSec = (long)(item.Key - firstDateTime).TotalSeconds; // sec granularity
 
                 decimal xPercentage = currentTotalSec / (decimal)totalSec;
