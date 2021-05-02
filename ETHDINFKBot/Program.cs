@@ -218,6 +218,7 @@ namespace ETHDINFKBot
         {
             // TODO If debug -> dont use secure
             PlaceWebsocket = new WebSocketServer(9000, true);
+            PlaceWebsocket.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
             var cert = X509Certificate2.CreateFromPemFile(Path.Combine(Configuration["CertFilePath"], "cert.pem"), Path.Combine(Configuration["CertFilePath"], "privkey.pem"));
             PlaceWebsocket.SslConfiguration.ServerCertificate = cert;
             PlaceWebsocket.AddWebSocketService<PlaceWebsocket>("/place");
