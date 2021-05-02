@@ -207,9 +207,6 @@ namespace ETHDINFKBot
 
         public async Task MainAsync(string token)
         {
-
-
-
             PlaceWebsocket = new WebSocketServer(9000);
             PlaceWebsocket.AddWebSocketService<PlaceWebsocket>("/place");
             PlaceWebsocket.Start();
