@@ -32,6 +32,7 @@ using ETHDINFKBot.CronJobs.Jobs;
 using ETHDINFKBot.Handlers;
 using TimeZoneConverter;
 using WebSocketSharp.Server;
+using System.Security.Cryptography.X509Certificates;
 
 namespace ETHDINFKBot
 {
@@ -215,7 +216,10 @@ namespace ETHDINFKBot
 
         public async Task MainAsync(string token)
         {
-            PlaceWebsocket = new WebSocketServer(9000);
+            // TODO If debug -> dont use secure
+            PlaceWebsocket = new WebSocketServer(9000, true);
+            var cert = X509Certificate2.CreateFromPemFile(Configuration["CertFilePath"]);
+            PlaceWebsocket.SslConfiguration.ServerCertificate = cert;
             PlaceWebsocket.AddWebSocketService<PlaceWebsocket>("/place");
             PlaceWebsocket.Start();
 
