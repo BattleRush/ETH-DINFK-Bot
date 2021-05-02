@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedditScrapper", "RedditScr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ETHBot.DataLayer", "ETHBot.DataLayer\ETHBot.DataLayer.csproj", "{2E91D0B5-47DB-43BA-A6A6-48EDAF90911C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebsocketTestServer", "WebsocketTestServer\WebsocketTestServer.csproj", "{2A2B5AFD-8A32-4A70-B1FB-0AA9C19B1C7D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketTestServer", "WebsocketTestServer\WebsocketTestServer.csproj", "{2A2B5AFD-8A32-4A70-B1FB-0AA9C19B1C7D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

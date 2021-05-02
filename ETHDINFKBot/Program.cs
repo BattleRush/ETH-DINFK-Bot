@@ -222,6 +222,8 @@ namespace ETHDINFKBot
             var cert = X509Certificate2.CreateFromPemFile(Path.Combine(Configuration["CertFilePath"], "cert.pem"), Path.Combine(Configuration["CertFilePath"], "privkey.pem"));
             PlaceWebsocket.SslConfiguration.ServerCertificate = cert;
             PlaceWebsocket.AddWebSocketService<PlaceWebsocket>("/place");
+            PlaceWebsocket.Log.Level = WebSocketSharp.LogLevel.Debug;
+            PlaceWebsocket.Log.File = Path.Combine(BasePath, "Log", "WebsocketLog.txt");
             PlaceWebsocket.Start();
 
             DatabaseManager.Instance().SetAllSubredditsStatus();
