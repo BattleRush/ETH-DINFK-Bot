@@ -649,16 +649,16 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 string messageText = "";
                 foreach (var item in pingHistory)
                 {
-                    if (item.DiscordMessageId == null)
-                        continue;
+                    //if (item.DiscordMessageId == null)
+                    //    continue;
 
                     var dbMessage = DatabaseManager.GetDiscordMessageById(item.DiscordMessageId);
 
-                    var date = SnowflakeUtils.FromSnowflake(item.DiscordMessageId ?? 0);
+                    var date = SnowflakeUtils.FromSnowflake(item.DiscordMessageId ?? 0); // TODO maybe track time in the ping history
                     if (item.DiscordRoleId.HasValue)
-                        messageText += $"<@{item.FromDiscordUserId}> pinged <@&{item.DiscordRoleId}> at {date.ToString("MM.dd HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}"; // todo check for everyone or here
+                        messageText += $"<@{item.FromDiscordUserId}> pinged <@&{item.DiscordRoleId}> at {date.ToString("dd.MM HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}"; // todo check for everyone or here
                     else
-                        messageText += $"<@{item.FromDiscordUserId}> at {date.ToString("MM.dd HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}";
+                        messageText += $"<@{item.FromDiscordUserId}> at {date.ToString("dd.MM HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}";
                 }
 
                 messageText += Environment.NewLine;
