@@ -213,6 +213,9 @@ namespace ETHDINFKBot.Drawing
             if (pen == null)
                 pen = Pen_Blue_Transparent;
 
+            if (points.Count == 0)
+                return;
+
             Point prevPoint = points.First();
             foreach (var point in points)
             {
