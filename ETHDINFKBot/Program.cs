@@ -52,7 +52,10 @@ namespace ETHDINFKBot
         public static string RedditAppSecret { get; set; }
         public static string BasePath { get; set; }
         public static string ConnectionString { get; set; }
+        public static string MariaDBFullUserName { get; set; }
+        public static string MariaDBReadOnlyUserName { get; set; }
         public static string MariaDBReadOnlyConnectionString { get; set; }
+        public static string CurrentPrefix { get; set; }
 
         // TODO maybe compiler warning -> but longterm settings need to be moved from here
         public static string FULL_MariaDBReadOnlyConnectionString { get; set; }
@@ -70,11 +73,7 @@ namespace ETHDINFKBot
 
         private static List<BotChannelSetting> BotChannelSettings;
 
-        private static List<string> AllowedBotCommands = new List<string>()
-        {
-            ".place setpixel ",
-            ".place pixelverify "
-        };
+        private static List<string> AllowedBotCommands;
 
         public static WebSocketServer PlaceWebsocket;
 
@@ -101,6 +100,14 @@ namespace ETHDINFKBot
 
         static void Main(string[] args)
         {
+            CurrentPrefix = ".";
+
+#if DEBUG
+            CurrentPrefix = "dev.";
+#endif
+
+            AllowedBotCommands = new List<string>() { CurrentPrefix + "place setpixel ", CurrentPrefix + "place pixelverify " };
+
             try
             {
                 // TODO may cause problems if the bot is hosted in a timezone that doesnt switch to daylight at the same time as the hosting region
@@ -156,6 +163,9 @@ namespace ETHDINFKBot
                 MariaDBReadOnlyConnectionString = Configuration.GetConnectionString("Production_ReadOnly").ToString();
                 FULL_MariaDBReadOnlyConnectionString = Configuration.GetConnectionString("Production_Full").ToString();
 #endif
+
+                MariaDBFullUserName = Configuration["MariaDB_FullUserName"];
+                MariaDBReadOnlyUserName = Configuration["MariaDB_ReadOnlyUserName"];
 
                 RedditAppId = Configuration["Reddit:AppId"];
                 RedditRefreshToken = Configuration["Reddit:RefreshToken"];
@@ -709,13 +719,9 @@ namespace ETHDINFKBot
             int argPos = 0;
 
             // accept .dev only in dev mode
-#if !DEBUG
-            if (!msg.HasStringPrefix(".", ref argPos))
+
+            if (!msg.HasStringPrefix(CurrentPrefix, ref argPos))
                 return;
-#else
-            if (!msg.HasStringPrefix("dev.", ref argPos))
-                return;
-#endif
 
             if (!m.Author.IsBot && m.Author.Id != Owner)
             {

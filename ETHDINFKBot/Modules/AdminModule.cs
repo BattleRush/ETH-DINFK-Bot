@@ -103,7 +103,8 @@ namespace ETHDINFKBot.Modules
 
             builder.WithColor(0, 0, 255);
 
-            builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+            builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
+
             builder.WithCurrentTimestamp();
             builder.AddField("admin help", "This message :)");
             builder.AddField("admin channel help", "Help for channel command");
@@ -170,8 +171,8 @@ namespace ETHDINFKBot.Modules
                 builder.WithTitle("Admin Help (Admin only)");
 
                 builder.WithColor(0, 0, 255);
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
 
-                builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
                 builder.WithCurrentTimestamp();
                 builder.AddField("admin rant help", "This message :)");
                 builder.AddField("admin rant all", "List all types");
@@ -194,8 +195,8 @@ namespace ETHDINFKBot.Modules
                 builder.WithTitle("All Rant types");
 
                 builder.WithColor(0, 0, 255);
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
 
-                builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
                 builder.WithCurrentTimestamp();
                 builder.AddField("Types [Id, Name]", allTypes);
 
@@ -265,8 +266,8 @@ namespace ETHDINFKBot.Modules
                 builder.WithTitle("Reddit Admin Help (Admin only)");
 
                 builder.WithColor(0, 0, 255);
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
 
-                builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
                 builder.WithCurrentTimestamp();
                 builder.AddField("admin channel help", "This message :)");
                 builder.AddField("admin channel info", "Returns info about the current channel settings");
@@ -410,8 +411,9 @@ namespace ETHDINFKBot.Modules
 
                         EmbedBuilder builder = new EmbedBuilder();
                         builder.WithTitle($"Channel Info for {guildChannel.Name}");
-                        builder.WithColor(255, 0, 0);
-                        builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+                        builder.WithColor(255, 0, 0); 
+                        builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
+
                         builder.WithCurrentTimestamp();
 
                         builder.AddField("Permission flag", channelInfo.ChannelPermissionFlags);
@@ -553,7 +555,7 @@ namespace ETHDINFKBot.Modules
 
                 builder.WithColor(255, 0, 0);
 
-                builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
                 builder.WithCurrentTimestamp();
                 string inlineString = "```";
                 foreach (BotPermissionType flag in Enum.GetValues(typeof(BotPermissionType)))
@@ -587,7 +589,8 @@ namespace ETHDINFKBot.Modules
 
                 builder.WithColor(0, 0, 255);
 
-                builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
                 builder.WithCurrentTimestamp();
                 builder.AddField("admin place help", "This message :)");
                 builder.AddField("admin place verify <user> <true|false>", "Used to verify user for multipixel feature");
@@ -630,7 +633,7 @@ namespace ETHDINFKBot.Modules
 
                 builder.WithColor(0, 0, 255);
 
-                builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
                 builder.WithCurrentTimestamp();
                 builder.AddField("admin reddit help", "This message :)");
                 builder.AddField("admin reddit status", "Returns if there are currently active scrapers");

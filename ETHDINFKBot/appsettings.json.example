@@ -3,6 +3,10 @@
     "Owner": -1,
     "BaseGuild": -1,
     "Connectionstring": "Data Source=<PATH>", // TODO -> To be removed
+
+    "MariaDB_FullUserName": "",
+    "MariaDB_ReadOnlyUserName": "",
+
     "ConnectionStrings": {
         "Development_Full": "Server=<SERVER_DEV_FULL>;User Id=<USER>;Password=<PASSWORD>;Database=<DATABASE_NAME>",
         "Development_ReadOnly": "Server=<SERVER_DEV_READONLY>;User Id=<USER>;Password=<PASSWORD>;Database=<DATABASE_NAME>",

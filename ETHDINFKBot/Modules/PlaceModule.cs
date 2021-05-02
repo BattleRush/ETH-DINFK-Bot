@@ -1183,6 +1183,12 @@ If you violate the server rules your pixels will be removed.
         }
 
         [Command("perf")]
+        public async Task PlacePerf(int lastSize = 1440)
+        {
+            PlacePerf(true, lastSize);
+        }
+
+        [Command("perf")]
         public async Task PlacePerf(bool graphMode = true, int lastSize = 1440)
         {
             PlaceDBManager dbManager = PlaceDBManager.Instance();
@@ -1196,45 +1202,53 @@ If you violate the server rules your pixels will be removed.
 
             if (graphMode)
             {
-                // TODO optimize some lines + move to draw helper
-                var dataPointsAvg = list.ToDictionary(i => i.DateTime, i => i.AvgTimeInMs);
-                var dataPointsCount = list.ToDictionary(i => i.DateTime, i => i.SuccessCount);
-                var dataPointsFailed = list.ToDictionary(i => i.DateTime, i => i.FailedCount);
-
-                var drawInfo = DrawingHelper.GetEmptyGraphics();
-                var padding = DrawingHelper.DefaultPadding;
-                var labels = DrawingHelper.GetLabels(dataPointsAvg, 6, 10, true, startTime, endTime, " ms");
-                var labelsCount = DrawingHelper.GetLabels(dataPointsCount, 6, 10, true, startTime, endTime);
-                var gridSize = new GridSize(drawInfo.Bitmap, padding);
-                var dataPointListAvg = DrawingHelper.GetPoints(dataPointsAvg, gridSize, true, startTime, endTime);
-                var dataPointListCount = DrawingHelper.GetPoints(dataPointsCount, gridSize, true, startTime, endTime);
-                var dataPointListFailed = DrawingHelper.GetPoints(dataPointsFailed, gridSize, true, startTime, endTime);
-
-                DrawingHelper.DrawGrid(drawInfo.Graphics, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, $"Place Perf {list.Count} mins", labelsCount.YAxisLabels);
-                // todo add 2. y Axis on the right
-
-                DrawingHelper.DrawLine(drawInfo.Graphics, drawInfo.Bitmap, dataPointListAvg, 6, new Pen(System.Drawing.Color.LightGreen), "Avg in ms / min", 0, true);
-                DrawingHelper.DrawLine(drawInfo.Graphics, drawInfo.Bitmap, dataPointListCount, 6, new Pen(System.Drawing.Color.Yellow), "Count / min", 1, true);
-                DrawingHelper.DrawLine(drawInfo.Graphics, drawInfo.Bitmap, dataPointListFailed, 6, new Pen(System.Drawing.Color.DarkOrange), "Failed Count / min", 2, true);
-
-                // TODO add methods to the drawing lib
-                if (listStartUpTimes.Count > 0)
+                try
                 {
-                    int totalMins = (int)(endTime - startTime).TotalMinutes;
-                    foreach (var startUpTimes in listStartUpTimes)
+                    // TODO optimize some lines + move to draw helper
+                    var dataPointsAvg = list.ToDictionary(i => i.DateTime, i => i.AvgTimeInMs);
+                    var dataPointsCount = list.ToDictionary(i => i.DateTime, i => i.SuccessCount);
+                    var dataPointsFailed = list.ToDictionary(i => i.DateTime, i => i.FailedCount);
+
+                    var drawInfo = DrawingHelper.GetEmptyGraphics();
+                    var padding = DrawingHelper.DefaultPadding;
+                    var labels = DrawingHelper.GetLabels(dataPointsAvg, 6, 10, true, startTime, endTime, " ms");
+                    var labelsCount = DrawingHelper.GetLabels(dataPointsCount, 6, 10, true, startTime, endTime);
+                    var gridSize = new GridSize(drawInfo.Bitmap, padding);
+                    var dataPointListAvg = DrawingHelper.GetPoints(dataPointsAvg, gridSize, true, startTime, endTime);
+                    var dataPointListCount = DrawingHelper.GetPoints(dataPointsCount, gridSize, true, startTime, endTime);
+                    var dataPointListFailed = DrawingHelper.GetPoints(dataPointsFailed, gridSize, true, startTime, endTime);
+
+                    DrawingHelper.DrawGrid(drawInfo.Graphics, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, $"Place Perf {list.Count} mins", labelsCount.YAxisLabels);
+                    // todo add 2. y Axis on the right
+
+                    DrawingHelper.DrawLine(drawInfo.Graphics, drawInfo.Bitmap, dataPointListAvg, 6, new Pen(System.Drawing.Color.LightGreen), "Avg in ms / min", 0, true);
+                    DrawingHelper.DrawLine(drawInfo.Graphics, drawInfo.Bitmap, dataPointListCount, 6, new Pen(System.Drawing.Color.Yellow), "Count / min", 1, true);
+                    DrawingHelper.DrawLine(drawInfo.Graphics, drawInfo.Bitmap, dataPointListFailed, 6, new Pen(System.Drawing.Color.DarkOrange), "Failed Count / min", 2, true);
+
+                    // TODO add methods to the drawing lib
+                    if (listStartUpTimes.Count > 0)
                     {
-                        double percent = (startUpTimes.StartUpTime - startTime).TotalMinutes / totalMins;
-                        drawInfo.Graphics.DrawLine(new Pen(System.Drawing.Color.Red),
-                            new System.Drawing.Point((int)(gridSize.XMin + gridSize.XSize * percent), gridSize.YMin), new System.Drawing.Point((int)(gridSize.XMin + gridSize.XSize * percent), gridSize.YMax));
+                        int totalMins = (int)(endTime - startTime).TotalMinutes;
+                        foreach (var startUpTimes in listStartUpTimes)
+                        {
+                            double percent = (startUpTimes.StartUpTime - startTime).TotalMinutes / totalMins;
+                            drawInfo.Graphics.DrawLine(new Pen(System.Drawing.Color.Red),
+                                new System.Drawing.Point((int)(gridSize.XMin + gridSize.XSize * percent), gridSize.YMin), new System.Drawing.Point((int)(gridSize.XMin + gridSize.XSize * percent), gridSize.YMax));
+                        }
                     }
+
+                    var stream = CommonHelper.GetStream(drawInfo.Bitmap);
+
+                    drawInfo.Bitmap.Dispose();
+                    drawInfo.Graphics.Dispose();
+
+                    await Context.Channel.SendFileAsync(stream, "place_perf.png", $"");
                 }
-
-                var stream = CommonHelper.GetStream(drawInfo.Bitmap);
-
-                drawInfo.Bitmap.Dispose();
-                drawInfo.Graphics.Dispose();
-
-                await Context.Channel.SendFileAsync(stream, "place_perf.png", $"");
+                catch(Exception ex)
+                {
+                    // TODO add Logger
+                    Console.WriteLine(ex.ToString());
+                }
             }
             else
             {
@@ -1243,7 +1257,7 @@ If you violate the server rules your pixels will be removed.
                 string output = "```";
                 foreach (var item in list)
                 {
-                    output += $"{item.DateTime.ToString("dd.MM HH:mm")} Count: {item.SuccessCount.ToString("N0")} Avg: {item.AvgTimeInMs}{Environment.NewLine}";
+                    output += $"{item.DateTime.ToString("dd.MM HH:mm")} Success: {item.SuccessCount.ToString("N0")} Failed: {item.FailedCount.ToString("N0")} Avg: {item.AvgTimeInMs}{Environment.NewLine}";
 
                     if (output.Length > 1950)
                     {

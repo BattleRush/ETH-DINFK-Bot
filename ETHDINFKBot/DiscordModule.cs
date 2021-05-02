@@ -173,11 +173,7 @@ namespace ETHDINFKBot
             builder.WithTitle($"{Program.Client.CurrentUser.Username} Help");
             //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
 
-            string prefix = ".";
-
-#if DEBUG
-            prefix = "dev.";
-#endif
+            string prefix = Program.CurrentPrefix;
 
             builder.WithDescription($@"For more information about the bot type ""{prefix}help"" or ""{prefix}source""");
 
@@ -1189,7 +1185,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                 builder.WithColor(0, 0, 255);
 
-                builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
                 builder.WithCurrentTimestamp();
                 builder.AddField("Types [Name]", allTypes);
 
@@ -1249,7 +1245,6 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.Description = rant.Content;
             builder.WithColor(255, 0, 255);
             builder.WithAuthor(byUser);
-            //builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
             builder.WithCurrentTimestamp();
             builder.WithFooter($"RantId: {rant.RantMessageId} TypeId: {rant.RantTypeId}");
 

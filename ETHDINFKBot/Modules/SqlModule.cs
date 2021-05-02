@@ -31,9 +31,11 @@ namespace ETHDINFKBot.Modules
         [Command("info")]
         public async Task TableInfo()
         {
+            string prefix = Program.CurrentPrefix;
+
             Stopwatch watch = new Stopwatch();
             watch.Start();
-            var queryResult = await GetQueryResults(@"
+            var queryResult = await SQLHelper.GetQueryResults(Context, @"
 SELECT table_name FROM information_schema.tables
 WHERE table_schema = 'ethbot_dev' 
 ORDER BY table_name DESC;", true, 50);
@@ -41,8 +43,9 @@ ORDER BY table_name DESC;", true, 50);
             EmbedBuilder builder = new EmbedBuilder();
 
             builder.WithTitle($"{Program.Client.CurrentUser.Username} DB INFO");
-            builder.WithDescription(@"SQL Tables 
-To get the diagram type: '.sql table info'");
+            builder.WithDescription($@"SQL Tables 
+DB Diagram: '{prefix}sql table info' 
+DB Stats Help: '{prefix}sql stats help'");
             builder.WithColor(65, 17, 187);
 
             builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
@@ -75,7 +78,7 @@ To get the diagram type: '.sql table info'");
 FROM   information_schema.TABLES
 WHERE  TABLE_SCHEMA = 'ethbot_dev' and TABLE_NAME = '{tableName}'";
 
-                var rowCountInfo = await GetQueryResults(query, true, 1);
+                var rowCountInfo = await SQLHelper.GetQueryResults(Context, query, true, 1);
 
                 string rowCountStr = rowCountInfo.Data.FirstOrDefault().FirstOrDefault(); // todo rework this first first thing
 
@@ -87,7 +90,7 @@ FROM
 WHERE
   TABLE_SCHEMA = 'ethbot_dev' and TABLE_NAME = '{tableName}'";
 
-                var tableSize = await GetQueryResults(tableSizeQuery, true, 1);
+                var tableSize = await SQLHelper.GetQueryResults(Context, tableSizeQuery, true, 1);
                 var sizeInBytesStr = tableSize.Data.FirstOrDefault()?.FirstOrDefault();
 
                 if (long.TryParse(rowCountStr, out long rowCount) && long.TryParse(sizeInBytesStr, out long sizeInBytes))
@@ -112,6 +115,105 @@ WHERE
             Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
+
+        [Group("stats")]
+        public class SqlStats : ModuleBase<SocketCommandContext>
+        {
+            [Command("help")]
+            public async Task SqlStatsHelp()
+            {
+                string prefix = ".";
+
+#if DEBUG
+                prefix = "dev.";
+#endif
+
+                EmbedBuilder builder = new EmbedBuilder();
+
+                builder.WithTitle($"{Program.Client.CurrentUser.Username} SQL Stats Help");
+
+                builder.WithColor(0, 0, 255);
+
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
+                builder.WithCurrentTimestamp();
+                builder.AddField($"{prefix}sql stats help", "This message :)");
+                builder.AddField($"{prefix}sql stats user", "User Stats");
+                builder.AddField($"{prefix}sql stats index", "Index Stats");
+                builder.AddField($"{prefix}sql stats table", "Table Stats");
+
+                Context.Channel.SendMessageAsync("", false, builder.Build());
+            }
+
+            [Command("user")]
+            public async Task SqlUserStats()
+            {
+                var queryResult = await SQLHelper.GetQueryResults(Context, @"SHOW USER_STATISTICS WHERE USER <> 'root'", true, 50);
+
+
+                EmbedBuilder builder = new EmbedBuilder();
+
+                builder.WithTitle($"{Program.Client.CurrentUser.Username} SQL Table Stats");
+                builder.WithDescription(@"SQL Table Stats");
+                builder.WithColor(65, 17, 187);
+
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
+                builder.WithCurrentTimestamp();
+
+                foreach (var row in queryResult.Data)
+                {
+                    if (row[0] == Program.MariaDBFullUserName)
+                        row[0] = "FULL USER";
+                    if (row[0] == Program.MariaDBReadOnlyUserName)
+                        row[0] = "READ-ONLY USER";
+                }
+
+                var resultString = SQLHelper.GetRowStringFromResult(queryResult.Header, queryResult.Data, new List<int>() { 0, 1, 6, 7, 9, 10, 11, 12, 13, 17, 18, 21, 24 }, true);
+
+                Context.Channel.SendMessageAsync(resultString + Environment.NewLine + $"{queryResult.TotalResults.ToString("N0")} Row(s) affected Time: {queryResult.Time.ToString("N0")}ms");
+            }
+
+            [Command("index")]
+            public async Task SqlIndexStats()
+            {
+                var queryResult = await SQLHelper.GetQueryResults(Context, @"SHOW INDEX_STATISTICS", true, 50);
+
+
+                EmbedBuilder builder = new EmbedBuilder();
+
+                builder.WithTitle($"{Program.Client.CurrentUser.Username} SQL Table Stats");
+                builder.WithDescription(@"SQL Table Stats");
+                builder.WithColor(65, 17, 187);
+
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
+                builder.WithCurrentTimestamp();
+
+
+                var resultString = SQLHelper.GetRowStringFromResult(queryResult.Header, queryResult.Data, new List<int>() { 1, 2, 3 }, true);
+
+                Context.Channel.SendMessageAsync(resultString + Environment.NewLine + $"{queryResult.TotalResults.ToString("N0")} Row(s) affected Time: {queryResult.Time.ToString("N0")}ms");
+            }
+
+            [Command("table")]
+            public async Task SqlTableStats()
+            {
+                var queryResult = await SQLHelper.GetQueryResults(Context, @"SHOW TABLE_STATISTICS", true, 50);
+
+
+                EmbedBuilder builder = new EmbedBuilder();
+
+                builder.WithTitle($"{Program.Client.CurrentUser.Username} SQL Table Stats");
+                builder.WithDescription(@"SQL Table Stats");
+                builder.WithColor(65, 17, 187);
+
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
+                builder.WithCurrentTimestamp();
+
+
+                var resultString = SQLHelper.GetRowStringFromResult(queryResult.Header, queryResult.Data, new List<int>() { 1, 2, 3, 4 }, true);
+
+                Context.Channel.SendMessageAsync(resultString + Environment.NewLine + $"{queryResult.TotalResults.ToString("N0")} Row(s) affected Time: {queryResult.Time.ToString("N0")}ms");
+            }
+        }
 
         [Group("table")]
         public class SqlTableModule : ModuleBase<SocketCommandContext>
@@ -416,37 +518,7 @@ WHERE
             throw new TimeoutException("Time is over");
         }
 
-        private string GetRowStringFromResult(List<string> header, List<List<string>> data)
-        {
-            string result = "";
-
-            result += $"**{string.Join("\t", header)}**" + Environment.NewLine;
-
-            if (data.Count > 0)
-            {
-                result += "```";
-                foreach (var row in data)
-                {
-                    string rowString = string.Join("\t", row);
-
-                    // escape string
-                    rowString = rowString.Replace("`", "");
-
-                    result += rowString + Environment.NewLine;
-
-                    if (result.Length > 2000)
-                        break;
-                }
-                result = result.Substring(0, Math.Min(result.Length, 1900));
-                result += "```";
-            }
-            else
-            {
-                result += "No row(s) returned";
-            }
-
-            return result;
-        }
+        
 
 
 
@@ -487,7 +559,7 @@ WHERE
                 thread.int();
 
                 */
-                var commandResponse = await SqlCommand(commandSql);
+                var commandResponse = await SQLHelper.SqlCommand(Context, commandSql);
                 await Context.Channel.SendMessageAsync(commandResponse, false);
 
             }
@@ -508,7 +580,7 @@ WHERE
 
             try
             {
-                var queryResult = await GetQueryResults(commandSql, true, 50);
+                var queryResult = await SQLHelper.GetQueryResults(Context, commandSql, true, 50);
                 string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
 
                 var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString);
@@ -524,162 +596,6 @@ WHERE
             {
                 Context.Channel.SendMessageAsync("Is this all you got <:kekw:768912035928735775> " + ex.ToString(), false);
             }
-        }
-
-        private async Task<(List<string> Header, List<List<string>> Data, int TotalResults, long Time)> GetQueryResults(string commandSql, bool limitRows = false, int limitLength = 2000)
-        {
-            var author = Context.Message.Author;
-
-            List<string> Header = new List<string>();
-            List<List<string>> Data = new List<List<string>>();
-            int TotalResults = 0;
-
-            long Time = -1;
-
-            int currentContentLength = 0;
-            int currentRowCount = 0;
-
-
-            //ancellationTokenSource cts = new CancellationTokenSource();
-
-            try
-            {
-                Stopwatch watch = new Stopwatch();
-                watch.Start();
-
-                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionString))
-                {
-                    using (var command = new MySqlCommand(commandSql, connection))
-                    {
-                        command.CommandTimeout = 30;
-
-                        connection.Open();
-
-                        //WorkaroundForTimeoutNotWorking(cts, commandSql, author.Id == ETHDINFKBot.Program.Owner);
-
-                        var reader = command.ExecuteReader();
-
-
-
-                        while (reader.Read())
-                        {
-                            // cap at 10k records to return in count (as temp fix if the query returns millions of rows)
-                            if (TotalResults == 10_000)
-                            {
-                                command.Cancel();
-                                break;
-                            }
-
-                            if (TotalResults > 250)
-                            {
-                                TotalResults++;
-                                continue;
-                            }
-
-
-
-                            if (Header.Count == 0)
-                            {
-                                for (int i = 0; i < reader.FieldCount; i++)
-                                {
-                                    string fieldName = reader.GetName(i)?.ToString();
-                                    if (currentContentLength + fieldName.Length > 1980)
-                                        break;
-
-                                    Header.Add(fieldName);
-                                    currentContentLength += fieldName.Length;
-                                }
-                            }
-
-                            if (limitRows && currentRowCount <= limitLength || !limitRows && currentContentLength <= limitLength)
-                            {
-                                List<string> row = new List<string>();
-
-                                for (int i = 0; i < reader.FieldCount; i++)
-                                {
-                                    try
-                                    {
-                                        var type = reader.GetFieldType(i)?.FullName;
-                                        var fieldString = "null";
-
-                                        if (DBNull.Value.Equals(reader.GetValue(i)))
-                                        {
-                                            currentContentLength += fieldString.Length;
-                                            row.Add(fieldString);
-                                            continue;
-                                        }
-
-                                        switch (type)
-                                        {
-                                            case "System.Int64":
-                                                fieldString = reader.GetInt64(i).ToString();
-                                                break;
-
-                                            case "System.String":
-                                                fieldString = reader.GetValue(i).ToString()?.Replace("`", "");
-                                                break;
-
-                                            default:
-                                                //fieldString = $"{type} is unknown";
-                                                fieldString = reader.GetValue(i).ToString()?.Replace("`", "");
-
-                                                break;
-                                        }
-
-                                        currentContentLength += fieldString.Length;
-                                        row.Add(fieldString);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        //currentContentLength = fieldName.Length;
-                                        //row.Add(ex.ToString());
-                                        throw ex;
-                                    }
-
-                                }
-
-                                currentRowCount++;
-                                Data.Add(row);
-                            }
-                            else
-                            {
-                                //break;// we dont need to look further _> we still need to count
-                            }
-
-                            TotalResults++;
-                        }
-                        /*
-                        int totalRow = 0;
-                        reader.NextResult(); // 
-                        if (reader.Read())
-                        {
-                            TotalResults = (int)reader[0];
-                        }*/
-                    }
-
-                    connection.Close();
-                }
-                watch.Stop();
-                Time = watch.ElapsedMilliseconds;
-                //cts.Cancel();
-            }
-            catch (Exception ex)
-            {
-                //cts.Cancel();
-                await Context.Channel.SendMessageAsync("Error: " + ex.Message, false);
-            }
-
-            return (Header, Data, TotalResults, Time);
-        }
-
-        private async Task<string> SqlCommand(string commandSql)
-        {
-            var author = Context.Message.Author;
-
-            var queryResult = await GetQueryResults(commandSql.ToString(), false, 2000);
-            var resultString = GetRowStringFromResult(queryResult.Header, queryResult.Data);
-
-            return resultString + Environment.NewLine + $"{queryResult.TotalResults.ToString("N0")} Row(s) affected Time: {queryResult.Time.ToString("N0")}ms";
         }
     }
 }
