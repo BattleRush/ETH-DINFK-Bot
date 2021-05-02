@@ -261,9 +261,9 @@ WHERE
                             ForeignKeyInfo info = new ForeignKeyInfo()
                             {
                                 FromTable = tableName, //reader.GetString(2),
-                                FromTableFieldName = reader.GetString(3),
+                                FromTableFieldName = reader.GetString(1),
                                 ToTable = reader.GetString(2),
-                                ToTableFieldName = reader.GetString(4),
+                                ToTableFieldName = reader.GetString(3),
 
 
                             };
@@ -299,12 +299,12 @@ WHERE
                         {
                             DBFieldInfo field = new DBFieldInfo()
                             {
-                                Id = reader.GetInt32(0),
-                                Name = reader.GetString(1),
-                                Type = reader.GetString(2),
-                                Nullable = !reader.GetBoolean(3),
+                                //Id = reader.GetInt32(0),
+                                Name = reader.GetString(0),
+                                Type = reader.GetString(1),
+                                Nullable = reader.GetString(2) == "YES",
                                 // df value needed?
-                                IsPrimaryKey = reader.GetBoolean(5)
+                                IsPrimaryKey = reader.GetString(3) == "PRI"
 
                             };
 
@@ -331,7 +331,7 @@ WHERE
             {
                 try
                 {
-                    var dbInfos = GetAllDBTableInfos();
+                    var dbInfos = await GetAllDBTableInfos();
 
                     // TODO dispose with using
                     DrawDbSchema drawDbSchema = new DrawDbSchema(dbInfos);
@@ -357,7 +357,7 @@ WHERE
 
 
             // todo maybe move to a seperate class
-            private List<DBTableInfo> GetAllDBTableInfos()
+            private async Task<List<DBTableInfo>> GetAllDBTableInfos()
             {
                 List<string> tableList = new List<string>()
                 {
@@ -395,6 +395,33 @@ WHERE
                 };
 
 
+
+                var queryResult = await SQLHelper.GetQueryResults(Context, $@"
+SELECT table_name FROM information_schema.tables
+WHERE table_schema = '{Program.MariaDBDBName}' 
+ORDER BY table_name DESC;", true, 50);
+
+                // Add tables incase they arent in the list above for their correct order
+                foreach (var item in queryResult.Data)
+                {
+                    string tableName = item.ElementAt(0);
+
+                    bool found = false;
+                    foreach (var table in tableList)
+                    {
+                        if (table.ToLower() == tableName.ToLower())
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (found)
+                        continue;
+
+                    tableList.Add(tableName);
+                }
+
                 //;$"PRAGMA table_info('{item}')";
                 //PRAGMA foreign_key_list('DiscordChannels');
 
@@ -410,7 +437,7 @@ WHERE
                     {
                         using (var command = context.Database.GetDbConnection().CreateCommand())
                         {
-                            command.CommandText = $"PRAGMA table_info('{item}')";
+                            command.CommandText = $"SHOW COLUMNS FROM {item} FROM {Program.MariaDBDBName}";
                             context.Database.OpenConnection();
                             if (item == "EmojiStatistics")
                             {
@@ -420,9 +447,18 @@ WHERE
                             DbTableInfos.Add(GetTableInfo(command, item));
                         }
 
+                        
                         using (var command = context.Database.GetDbConnection().CreateCommand())
                         {
-                            command.CommandText = $"PRAGMA foreign_key_list('{item}')";
+                            command.CommandText = $@"select
+    c.table_name,
+    c.column_name,
+    c.referenced_table_name,
+    c.referenced_column_name
+  from information_schema.table_constraints fk
+  join information_schema.key_column_usage c
+    on c.constraint_name = fk.constraint_name
+  where fk.constraint_type = 'FOREIGN KEY' AND c.TABLE_SCHEMA = '{Program.MariaDBDBName}' AND c.table_name = '{item}'; ";
                             context.Database.OpenConnection();
 
                             ForeignKeyInfos.Add(GetForeignKeyInfo(command, item));
