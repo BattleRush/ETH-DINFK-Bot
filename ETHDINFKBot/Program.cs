@@ -33,6 +33,7 @@ using ETHDINFKBot.Handlers;
 using TimeZoneConverter;
 using WebSocketSharp.Server;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Authentication;
 
 namespace ETHDINFKBot
 {
@@ -217,13 +218,16 @@ namespace ETHDINFKBot
         public async Task MainAsync(string token)
         {
             // TODO If debug -> dont use secure
-/*#if DEBUG
-            PlaceWebsocket = new WebSocketServer(9000);
-            PlaceWebsocket.AddWebSocketService<PlaceWebsocket>("/place");
-            PlaceWebsocket.Start();
-#else*/
+            /*#if DEBUG
+                        PlaceWebsocket = new WebSocketServer(9000);
+                        PlaceWebsocket.AddWebSocketService<PlaceWebsocket>("/place");
+                        PlaceWebsocket.Start();
+            #else*/
+
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+
             PlaceWebsocket = new WebSocketServer(9000, true);
-            PlaceWebsocket.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls13;
+            PlaceWebsocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
             /*PlaceWebsocket.SslConfiguration.ClientCertificateValidationCallback =
               (sender, certificate, chain, sslPolicyErrors) => {
                   // Do something to validate the server certificate.
