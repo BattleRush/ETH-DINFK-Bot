@@ -578,10 +578,10 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
             catch (Exception ex)
             {
                 // ignore
-                Console.WriteLine($"Failed to draw on Bitmap: {x}/{y}");
+                //Console.WriteLine($"Failed to draw on Bitmap: {x}/{y}");
 
 
-                _logger.LogError(ex, ex.Message);
+                //_logger.LogError(ex, ex.Message);
             }
 
             // old query doing over entity framework
