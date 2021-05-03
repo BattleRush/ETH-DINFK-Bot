@@ -236,7 +236,7 @@ namespace ETHDINFKBot
                 return true; // If the server certificate is valid.
               };*/
             //var cert = X509Certificate2.CreateFromPemFile(Path.Combine(Configuration["CertFilePath"], "cert.pem"), Path.Combine(Configuration["CertFilePath"], "privkey.pem"));
-            P//slaceWebsocket.SslConfiguration.ServerCertificate = cert;
+            //PlaceWebsocket.SslConfiguration.ServerCertificate = cert;
             PlaceWebsocket.AddWebSocketService<PlaceWebsocket>("/ws_place");
 
             PlaceWebsocket.Log.Level = WebSocketSharp.LogLevel.Debug;
