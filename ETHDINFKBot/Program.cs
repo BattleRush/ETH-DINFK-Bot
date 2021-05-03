@@ -242,8 +242,8 @@ namespace ETHDINFKBot
             PlaceWebsocket.Log.Level = WebSocketSharp.LogLevel.Debug;
             PlaceWebsocket.Log.File = Path.Combine(BasePath, "Log", "WebsocketLog.txt");
 
-            //PlaceWebsocket.SslConfiguration.ClientCertificateRequired = false;
-            //PlaceWebsocket.SslConfiguration.CheckCertificateRevocation = false;
+            PlaceWebsocket.SslConfiguration.ClientCertificateRequired = false;
+            PlaceWebsocket.SslConfiguration.CheckCertificateRevocation = false;
             PlaceWebsocket.Start();
 //#endif
 
