@@ -217,11 +217,11 @@ namespace ETHDINFKBot
         public async Task MainAsync(string token)
         {
             // TODO If debug -> dont use secure
-#if DEBUG
+/*#if DEBUG
             PlaceWebsocket = new WebSocketServer(9000);
             PlaceWebsocket.AddWebSocketService<PlaceWebsocket>("/place");
             PlaceWebsocket.Start();
-#else
+#else*/
             PlaceWebsocket = new WebSocketServer(9000, true);
             PlaceWebsocket.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls13;
             var cert = X509Certificate2.CreateFromPemFile(Path.Combine(Configuration["CertFilePath"], "cert.pem"), Path.Combine(Configuration["CertFilePath"], "privkey.pem"));
@@ -229,8 +229,10 @@ namespace ETHDINFKBot
             PlaceWebsocket.AddWebSocketService<PlaceWebsocket>("/place");
             PlaceWebsocket.Log.Level = WebSocketSharp.LogLevel.Debug;
             PlaceWebsocket.Log.File = Path.Combine(BasePath, "Log", "WebsocketLog.txt");
+            PlaceWebsocket.SslConfiguration.ClientCertificateRequired = false;
+            PlaceWebsocket.SslConfiguration.CheckCertificateRevocation = false;
             PlaceWebsocket.Start();
-#endif
+//#endif
 
             DatabaseManager.Instance().SetAllSubredditsStatus();
             LoadChannelSettings();
