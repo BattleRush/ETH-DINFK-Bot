@@ -228,15 +228,15 @@ namespace ETHDINFKBot
 
             PlaceWebsocket = new WebSocketServer(9000, true);
             PlaceWebsocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
-            /*PlaceWebsocket.SslConfiguration.ClientCertificateValidationCallback =
+            PlaceWebsocket.SslConfiguration.ClientCertificateValidationCallback =
               (sender, certificate, chain, sslPolicyErrors) => {
                   // Do something to validate the server certificate.
      
 
                 return true; // If the server certificate is valid.
-              };*/
-            var cert = X509Certificate2.CreateFromPemFile(Path.Combine(Configuration["CertFilePath"], "cert.pem"), Path.Combine(Configuration["CertFilePath"], "privkey.pem"));
-            PlaceWebsocket.SslConfiguration.ServerCertificate = cert;
+              };
+            //var cert = X509Certificate2.CreateFromPemFile(Path.Combine(Configuration["CertFilePath"], "cert.pem"), Path.Combine(Configuration["CertFilePath"], "privkey.pem"));
+            //PlaceWebsocket.SslConfiguration.ServerCertificate = cert;
             PlaceWebsocket.AddWebSocketService<PlaceWebsocket>("/ws_place");
 
             PlaceWebsocket.Log.Level = WebSocketSharp.LogLevel.Debug;
