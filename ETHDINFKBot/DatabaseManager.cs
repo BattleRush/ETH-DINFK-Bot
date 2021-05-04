@@ -1374,7 +1374,7 @@ namespace ETHDINFKBot
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
-                return context.CommandTypes.Single(i => i.CommandTypeId == id);
+                return context.CommandTypes.SingleOrDefault(i => i.CommandTypeId == id);
             }
         }
         public void AddCommandStatistic(BotMessageType type, ulong userId)
@@ -1387,6 +1387,8 @@ namespace ETHDINFKBot
                 {
                     var dbUser = GetDiscordUserById(userId);// maybe not even needed
                     var commandType = GetCommandTypeById((int)type);
+                    if (commandType == null)
+                        return;
 
                     context.CommandStatistics.Add(new CommandStatistic()
                     {
