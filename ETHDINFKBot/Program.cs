@@ -226,7 +226,7 @@ namespace ETHDINFKBot
 
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls13 | SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 
-            PlaceWebsocket = new WebSocketServer(9000);
+            PlaceWebsocket = new WebSocketServer(9000, true);
             /*PlaceWebsocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
             PlaceWebsocket.SslConfiguration.ClientCertificateValidationCallback =
               (sender, certificate, chain, sslPolicyErrors) => {
@@ -235,10 +235,10 @@ namespace ETHDINFKBot
 
                 return true; // If the server certificate is valid.
               };*/
-            //var cert = X509Certificate2.CreateFromPemFile(Path.Combine(Configuration["CertFilePath"], "fullchain.pem"), Path.Combine(Configuration["CertFilePath"], "privkey.pem"));
+            var cert = X509Certificate2.CreateFromPemFile(Path.Combine(Configuration["CertFilePath"], "fullchain.pem"), Path.Combine(Configuration["CertFilePath"], "privkey.pem"));
 
-            //PlaceWebsocket.SslConfiguration.ServerCertificate = cert;
-            PlaceWebsocket.AddWebSocketService<PlaceWebsocket>("/ws_place");
+            PlaceWebsocket.SslConfiguration.ServerCertificate = cert;
+            PlaceWebsocket.AddWebSocketService<PlaceWebsocket>("/place");
 
             PlaceWebsocket.Log.Level = WebSocketSharp.LogLevel.Debug;
             PlaceWebsocket.Log.File = Path.Combine(BasePath, "Log", "WebsocketLog.txt");
