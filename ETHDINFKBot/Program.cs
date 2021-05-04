@@ -227,14 +227,14 @@ namespace ETHDINFKBot
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls13 | SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 
             PlaceWebsocket = new WebSocketServer(9000, true);
-            /*PlaceWebsocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
+            PlaceWebsocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
             PlaceWebsocket.SslConfiguration.ClientCertificateValidationCallback =
               (sender, certificate, chain, sslPolicyErrors) => {
                   // Do something to validate the server certificate.
      
 
                 return true; // If the server certificate is valid.
-              };*/
+              };
             var cert = X509Certificate2.CreateFromPemFile(Path.Combine(Configuration["CertFilePath"], "fullchain.pem"), Path.Combine(Configuration["CertFilePath"], "privkey.pem"));
 
             PlaceWebsocket.SslConfiguration.ServerCertificate = cert;
