@@ -312,7 +312,7 @@ namespace ETHDINFKBot
             */
 
             // WebSocket server content path
-            string www = "../../../../../www/wss";
+            string www = "/var/www/wss";
             // Create and prepare a new SSL server context
             var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
 
