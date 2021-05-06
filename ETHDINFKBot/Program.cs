@@ -226,7 +226,7 @@ namespace ETHDINFKBot
 
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls13 | SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 
-            PlaceWebsocket = new WebSocketServer(9000);
+            PlaceWebsocket = new WebSocketServer(9001);
             PlaceWebsocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
             /*PlaceWebsocket.SslConfiguration.ClientCertificateValidationCallback =
               (sender, certificate, chain, sslPolicyErrors) => {
