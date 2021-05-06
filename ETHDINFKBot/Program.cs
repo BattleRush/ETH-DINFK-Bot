@@ -31,12 +31,69 @@ using ETHDINFKBot.CronJobs;
 using ETHDINFKBot.CronJobs.Jobs;
 using ETHDINFKBot.Handlers;
 using TimeZoneConverter;
-using WebSocketSharp.Server;
+//using WebSocketSharp.Server;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Authentication;
+using NetCoreServer;
+using System.Text;
+using System.Net.Sockets;
 
 namespace ETHDINFKBot
 {
+
+    class ChatSession : WssSession
+    {
+        public ChatSession(WssServer server) : base(server) { }
+
+        public override void OnWsConnected(HttpRequest request)
+        {
+            Console.WriteLine($"Chat WebSocket session with Id {Id} connected!");
+
+            // Send invite message
+            string message = "Hello from WebSocket chat! Please send a message or '!' to disconnect the client!";
+            SendTextAsync(message);
+        }
+
+        public override void OnWsDisconnected()
+        {
+            Console.WriteLine($"Chat WebSocket session with Id {Id} disconnected!");
+        }
+
+        public override void OnWsReceived(byte[] buffer, long offset, long size)
+        {
+            string message = Encoding.UTF8.GetString(buffer, (int)offset, (int)size);
+            Console.WriteLine("Incoming: " + message);
+
+            // Multicast message to all connected sessions
+            ((WssServer)Server).MulticastText(message);
+
+
+            /*((WssServer)Server).MulticastBinary(message);*/
+
+            // If the buffer starts with '!' the disconnect the current session
+            if (message == "!")
+                Close(1000);
+        }
+
+        protected override void OnError(SocketError error)
+        {
+            Console.WriteLine($"Chat WebSocket session caught an error with code {error}");
+        }
+    }
+
+    class PlaceServer : WssServer
+    {
+        public PlaceServer(SslContext context, IPAddress address, int port) : base(context, address, port) { }
+
+        protected override SslSession CreateSession() { return new PlaceSession(this); }
+
+        protected override void OnError(SocketError error)
+        {
+            Console.WriteLine($"Chat WebSocket server caught an error with code {error}");
+        }
+    }
+
+
     class Program
     {
         public static DiscordSocketClient Client;
@@ -79,7 +136,8 @@ namespace ETHDINFKBot
 
         private static List<string> AllowedBotCommands;
 
-        public static WebSocketServer PlaceWebsocket;
+        //public static WebSocketServer PlaceWebsocket;
+        public static PlaceServer PlaceServer;
 
 
 
@@ -217,6 +275,8 @@ namespace ETHDINFKBot
 
         public async Task MainAsync(string token)
         {
+
+            /*
             // TODO If debug -> dont use secure
             #if DEBUG
                         PlaceWebsocket = new WebSocketServer(9000);
@@ -226,7 +286,7 @@ namespace ETHDINFKBot
 
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls13 | SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 
-            PlaceWebsocket = new WebSocketServer("wss://websocket.battlerush.dev:9001");
+            PlaceWebsocket = new WebSocketServer(9001, true);
             PlaceWebsocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
             /*PlaceWebsocket.SslConfiguration.ClientCertificateValidationCallback =
               (sender, certificate, chain, sslPolicyErrors) => {
@@ -236,6 +296,7 @@ namespace ETHDINFKBot
                 return true; // If the server certificate is valid.
               };
             */
+            /*
             var cert = new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx"));
             PlaceWebsocket.SslConfiguration.ServerCertificate = cert;
 
@@ -248,6 +309,23 @@ namespace ETHDINFKBot
             //PlaceWebsocket.SslConfiguration.CheckCertificateRevocation = false;
             PlaceWebsocket.Start();
 #endif
+            */
+
+            // WebSocket server content path
+            string www = "../../../../../www/wss";
+            // Create and prepare a new SSL server context
+            var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
+
+            // Create a new WebSocket server
+            PlaceServer = new PlaceServer(context, IPAddress.Any, 9001);
+            PlaceServer.AddStaticContent(www, "/place");
+
+            // Start the server
+            Console.Write("Server starting...");
+            PlaceServer.Start();
+            Console.WriteLine("Done!");
+
+
 
             DatabaseManager.Instance().SetAllSubredditsStatus();
             LoadChannelSettings();

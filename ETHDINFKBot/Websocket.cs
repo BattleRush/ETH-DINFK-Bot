@@ -2,6 +2,7 @@
 using ETHDINFKBot.Data;
 using ETHDINFKBot.Enums;
 using ETHDINFKBot.Modules;
+using NetCoreServer;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -10,21 +11,19 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using WebSocketSharp;
-using WebSocketSharp.Server;
+//using WebSocketSharp;
+//using WebSocketSharp.Server;
 
 namespace ETHDINFKBot
 {
-    public class PlaceWebsocket : WebSocketBehavior
+    public class PlaceSession : WssSession
     {
-        public PlaceWebsocket()
-        {
-            //SendRandomBlocks();
-        }
+        public PlaceSession(WssServer server) : base(server) { }
+
         public void SendPixel(short x, short y, Color color)
         {
-            if (Sessions != null)
-            {
+            //if (Sessions != null)
+            //{
                 byte[] data = new byte[8];
 
                 byte[] xBytes = BitConverter.GetBytes(x);
@@ -43,16 +42,16 @@ namespace ETHDINFKBot
 
                 Console.WriteLine($"Send: {x}/{y} paint R:{color.R}|G:{color.G}|B:{color.B}");
 
-                Sessions.Broadcast(data);
-            }
+                //Sessions.Broadcast(data);
+            //}
         }
         private async Task SendRandomBlocks()
         {
             Random r = new Random();
             while (true)
             {
-                if (Sessions != null)
-                {
+                //if (Sessions != null)
+                //{
                     byte[] data = new byte[7];
 
                     short randomX = (short)r.Next(0, 1000);
@@ -80,8 +79,8 @@ namespace ETHDINFKBot
 
                     Console.WriteLine($"Send: {randomX}/{randomY} paint R:{randomR}|G:{randomG}|B:{randomB}");
 
-                    Sessions.Broadcast(data);
-                }
+                    //Sessions.Broadcast(data);
+                //}
 
 
                 await Task.Delay(250);
@@ -270,9 +269,9 @@ namespace ETHDINFKBot
             return new byte[1];
         }
 
-        protected override void OnMessage(MessageEventArgs e)
+        public override void OnWsReceived(byte[] buffer, long offset, long size)
         {
-            var data = e.RawData;
+            var data = buffer;
 
             byte packetId = data[0];
 

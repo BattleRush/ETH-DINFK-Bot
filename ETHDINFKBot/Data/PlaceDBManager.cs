@@ -548,9 +548,9 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
             {
                 PlaceModule.CurrentPlaceBitmap?.SetPixel(x, y, color);
 
-                var sessions = Program.PlaceWebsocket.WebSocketServices["/place"].Sessions;
+                var server = Program.PlaceServer;
 
-                if (sessions != null)
+                if (server != null)
                 {
                     byte[] data = new byte[9];
 
@@ -572,7 +572,7 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
 
                     //Console.WriteLine($"Send: {x}/{y} paint R:{color.R}|G:{color.G}|B:{color.B}");
 
-                    sessions.Broadcast(data);
+                    server.MulticastBinary(data, 0, 9);
                 }
             }
             catch (Exception ex)
