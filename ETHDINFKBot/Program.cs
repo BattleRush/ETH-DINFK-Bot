@@ -224,11 +224,11 @@ namespace ETHDINFKBot
                         PlaceWebsocket.Start();
 #else
 
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls13 | SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+            //ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls13 | SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 
-            PlaceWebsocket = new WebSocketServer("wss://websocket.battlerush.dev:9001");
-            PlaceWebsocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
-            PlaceWebsocket.SslConfiguration.ClientCertificateValidationCallback =
+            PlaceWebsocket = new WebSocketServer(9001);
+            //PlaceWebsocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
+            /*PlaceWebsocket.SslConfiguration.ClientCertificateValidationCallback =
               (sender, certificate, chain, sslPolicyErrors) => {
                   // Do something to validate the server certificate.
      
@@ -238,7 +238,7 @@ namespace ETHDINFKBot
 
             var cert = X509Certificate2.CreateFromPemFile(Path.Combine(Configuration["CertFilePath"], "fullchain.pem"), Path.Combine(Configuration["CertFilePath"], "privkey.pem"));
             PlaceWebsocket.SslConfiguration.ServerCertificate = cert;
-
+            */
             PlaceWebsocket.AddWebSocketService<PlaceWebsocket>("/place");
 
             PlaceWebsocket.Log.Level = WebSocketSharp.LogLevel.Debug;
