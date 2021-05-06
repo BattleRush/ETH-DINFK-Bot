@@ -281,19 +281,19 @@ namespace ETHDINFKBot
                 {
                     case MessageEnum.FullImage_Request:
                         var fullImageBytes = GetFullImageResponse();
-                        Send(fullImageBytes);
+                        SendAsync(fullImageBytes);
                         break;
 
                     case MessageEnum.TotalPixelCount_Request:
                         var totalPixelCountResponse = GetTotalPixelCount();
 
-                        Send(totalPixelCountResponse);
+                        SendAsync(totalPixelCountResponse);
                         break;
 
                     case MessageEnum.TotalChunksAvailable_Request:
                         var totalChunkResponse = GetTotalChunks();
 
-                        Send(totalChunkResponse);
+                        SendAsync(totalChunkResponse);
                         break;
 
                     case MessageEnum.GetChunk_Request:
@@ -303,7 +303,7 @@ namespace ETHDINFKBot
 
                         var chunkBytes = GetChunk(chunkId);
 
-                        Send(chunkBytes);
+                        SendAsync(chunkBytes);
 
                         //Console.WriteLine("SEND GetChunk_Request");
                         break;
@@ -311,7 +311,7 @@ namespace ETHDINFKBot
                     case MessageEnum.GetUsers_Request:
                         var userBytes = GetFullUserInfos();
 
-                        Send(userBytes);
+                        SendAsync(userBytes);
                         break;
 
                     case MessageEnum.GetUserProfileImage_Request:
@@ -320,7 +320,7 @@ namespace ETHDINFKBot
                         short userId = BitConverter.ToInt16(userIdBytes, 0);
                         var userImageBytes = GetUserImageBytes(userId);
 
-                        Send(userImageBytes);
+                        SendAsync(userImageBytes);
                         break;
 
                     case MessageEnum.FullImage_Response:
