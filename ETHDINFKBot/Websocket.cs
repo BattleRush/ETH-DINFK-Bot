@@ -269,9 +269,24 @@ namespace ETHDINFKBot
             return new byte[1];
         }
 
+
+        
+            
+        public override void OnWsClose(byte[] buffer, long offset, long size)
+        {
+
+        }
+        public override void OnWsError(string error)
+        {
+
+        }
+        public override void OnWsConnected(HttpRequest request)
+        {
+
+        }
         public override void OnWsReceived(byte[] buffer, long offset, long size)
         {
-            var data = buffer;
+            var data = buffer.Skip(6).ToArray();
 
             byte packetId = data[0];
 
@@ -281,19 +296,19 @@ namespace ETHDINFKBot
                 {
                     case MessageEnum.FullImage_Request:
                         var fullImageBytes = GetFullImageResponse();
-                        SendAsync(fullImageBytes);
+                        Server.Multicast(fullImageBytes);
                         break;
 
                     case MessageEnum.TotalPixelCount_Request:
                         var totalPixelCountResponse = GetTotalPixelCount();
 
-                        SendAsync(totalPixelCountResponse);
+                        Server.Multicast(totalPixelCountResponse);
                         break;
 
                     case MessageEnum.TotalChunksAvailable_Request:
                         var totalChunkResponse = GetTotalChunks();
 
-                        SendAsync(totalChunkResponse);
+                        Server.Multicast(totalChunkResponse);
                         break;
 
                     case MessageEnum.GetChunk_Request:
@@ -303,7 +318,7 @@ namespace ETHDINFKBot
 
                         var chunkBytes = GetChunk(chunkId);
 
-                        SendAsync(chunkBytes);
+                        Server.Multicast(chunkBytes);
 
                         //Console.WriteLine("SEND GetChunk_Request");
                         break;
@@ -311,7 +326,7 @@ namespace ETHDINFKBot
                     case MessageEnum.GetUsers_Request:
                         var userBytes = GetFullUserInfos();
 
-                        SendAsync(userBytes);
+                        Server.Multicast(userBytes);
                         break;
 
                     case MessageEnum.GetUserProfileImage_Request:
@@ -320,7 +335,7 @@ namespace ETHDINFKBot
                         short userId = BitConverter.ToInt16(userIdBytes, 0);
                         var userImageBytes = GetUserImageBytes(userId);
 
-                        SendAsync(userImageBytes);
+                        Server.Multicast(userImageBytes);
                         break;
 
                     case MessageEnum.FullImage_Response:
