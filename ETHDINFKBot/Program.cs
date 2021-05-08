@@ -641,7 +641,7 @@ namespace ETHDINFKBot
             var anwChannel = Client.GetGuild(747752542741725244).GetTextChannel(772551551818268702);
 
             // todo do more dynamic
-
+            /*
             string name = "Count the Divisors";
             string due = "Thursday, March 11, 2021 10:00:59 AM GMT+01:00";
             int exp = 100;
@@ -654,7 +654,7 @@ namespace ETHDINFKBot
 
             builder.WithCurrentTimestamp();
 
-            await anwChannel.SendMessageAsync("May the fastest speedrunner win :)", false, builder.Build());
+            await anwChannel.SendMessageAsync("May the fastest speedrunner win :)", false, builder.Build());*/
         }
 
         public async Task HandleCommandAsync(SocketMessage m)

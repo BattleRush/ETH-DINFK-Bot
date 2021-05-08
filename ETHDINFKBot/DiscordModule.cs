@@ -203,7 +203,7 @@ namespace ETHDINFKBot
 
             builder.AddField("CPU", $"{Math.Round(cpuUsage, 2)}%", true);
             builder.AddField("RAM", $"{Math.Round(ram / 1024d / 1024d / 1024d, 2)} GB", true);
-            builder.AddField("DISK", $"{Math.Round((totalBytes-freeBytes) / 1024d / 1024d / 1024d, 2)} GB out of {Math.Round(totalBytes / 1024d / 1024d / 1024d, 2)} GB ({Math.Round(100 * ((totalBytes - freeBytes) / (decimal)totalBytes), 2)}%)", true);
+            builder.AddField("DISK", $"{Math.Round((totalBytes - freeBytes) / 1024d / 1024d / 1024d, 2)} GB out of {Math.Round(totalBytes / 1024d / 1024d / 1024d, 2)} GB ({Math.Round(100 * ((totalBytes - freeBytes) / (decimal)totalBytes), 2)}%)", true);
 
             Context.Channel.SendMessageAsync("", false, builder.Build());
         }
@@ -676,6 +676,34 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             }
         }
+
+
+        [Command("websocket")]
+        public async Task WebsocketInfo()
+        {
+            string prefix = Program.CurrentPrefix;
+
+            var ws = Program.PlaceServer;
+
+            EmbedBuilder builder = new EmbedBuilder();
+
+            builder.WithTitle($"{Program.Client.CurrentUser.Username} Websocket Stats");
+
+            builder.WithColor(0, 0, 255);
+
+            builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
+            builder.WithCurrentTimestamp();
+            builder.AddField("Is Accepting", $"{ws.IsAccepting}", true);
+            builder.AddField("Is Started", $"{ws.IsStarted}", true);
+            builder.AddField("IP Endpoint", $"{ws.Endpoint}", true);
+            builder.AddField("Connected Sessions", $"{ws.ConnectedSessions}", true);
+            builder.AddField("Bytes Pending", $"{ws.BytesPending.ToString("N0")}", true);
+            builder.AddField("Bytes Received", $"{ws.BytesReceived.ToString("N0")}", true);
+            builder.AddField("Bytes Sent", $"{ws.BytesSent.ToString("N0")}", true);
+
+            Context.Channel.SendMessageAsync("", false, builder.Build());
+        }
+
 
         // TODO duplicate finder -> fingerprint
         // TODO better selection
