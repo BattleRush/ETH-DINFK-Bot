@@ -1599,10 +1599,22 @@ If you violate the server rules your pixels will be removed.
 
                     System.Drawing.Color color = ColorTranslator.FromHtml(commands[2]);
 
-                    placeDBManager.PlacePixel(x, y, color, Context.Message.Author.Id);
+                    var success = placeDBManager.PlacePixel(x, y, color, Context.Message.Author.Id);
+                    
+                    if (success)
+                    {
+                        PixelPlacementTimeLastMinute.Add(watch.ElapsedMilliseconds);
+                    }
+                    else
+                    {
+                        lock (PlaceAggregateObj)
+                        {
+                            FailedPixelPlacements++;
+                        }
+                    }
 
                     watch.Stop();
-                    PixelPlacementTimeLastMinute.Add(watch.ElapsedMilliseconds);
+                    //PixelPlacementTimeLastMinute.Add(watch.ElapsedMilliseconds);
 
                     await delay; // ensure 1 placement / sec
                 }
