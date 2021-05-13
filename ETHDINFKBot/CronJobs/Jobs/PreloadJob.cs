@@ -154,6 +154,9 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                 response.ElapsedMilliseconds = watch.ElapsedMilliseconds;
 
+                if (response.SuccessCount == 0)
+                    response.ReachedEndOfChannel = true; // to update the old date if no new message is found
+
                 // todo return object
                 return response;
 
@@ -233,6 +236,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                                 else
                                 {
                                     // error which "hopefully got logged and we just ignore this case xD
+                                    
                                 }
 
                                 //var messagesFromMsg = await channel.GetMessagesAsync(fromSnowflake, Direction.Before, amount).FlattenAsync();

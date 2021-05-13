@@ -1661,7 +1661,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 left join RedditPosts pp on si.SubredditId = pp.SubredditInfoId
 left join RedditImages ri on pp.RedditPostId = ri.RedditPostId
 where si.SubredditName like '%{subreddit}%' and ri.Link is not null and pp.IsNSFW = 0
-ORDER BY RANDOM() LIMIT 1";// todo nsfw test
+ORDER BY RAND() LIMIT 1";// todo nsfw test
                             context.Database.OpenConnection();
                             using (var result = command.ExecuteReader())
                             {
@@ -1851,7 +1851,7 @@ ORDER BY RANDOM() LIMIT 1
                             command.CommandText = @$"select pp.RedditPostId from SubredditInfos si
 left join RedditPosts pp on si.SubredditId = pp.SubredditInfoId
 where si.SubredditName like '%{subreddit}%' and pp.IsNSFW = 0
-ORDER BY RANDOM() LIMIT 1";// todo nsfw test
+ORDER BY RAND() LIMIT 1";// todo nsfw test
                             context.Database.OpenConnection();
                             using (var result = command.ExecuteReader())
                             {
