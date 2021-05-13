@@ -29,7 +29,7 @@ namespace ETHBot.DataLayer
             //dotnet ef migrations add InitialCreate --project ETHBot.DataLayer/  --startup-project ETHDINFKBot/ -v
 
             var configuration = new ConfigurationBuilder()
-                  .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                  .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                   .Build();
 
             ConnectionString = configuration.GetConnectionString("ConnectionString_Full").ToString();

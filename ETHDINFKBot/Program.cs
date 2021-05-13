@@ -169,7 +169,7 @@ namespace ETHDINFKBot
 
 
                 Configuration = new ConfigurationBuilder()
-                  .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                  .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                   .Build();
 
                 DiscordToken = Configuration["DiscordToken"];
