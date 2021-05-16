@@ -192,105 +192,114 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                 foreach (var botChannelSetting in botChannelSettings)
                 {
-                    var channel = item.GetTextChannel(botChannelSetting.DiscordChannelId);
-
-
-                    if (botChannelSetting != null && ((BotPermissionType)botChannelSetting?.ChannelPermissionFlags).HasFlag(BotPermissionType.Read))
+                    // TODO fix channel where oldest post is year 2154
+                    try
                     {
-                        if (channel != null)
+                        var channel = item.GetTextChannel(botChannelSetting.DiscordChannelId);
+
+
+                        if (botChannelSetting != null && ((BotPermissionType)botChannelSetting?.ChannelPermissionFlags).HasFlag(BotPermissionType.Read))
                         {
-                            // TODO alot of dupe code clean up and generalize
-
-
-                            if (!botChannelSetting.ReachedOldestPreload)
+                            if (channel != null)
                             {
-                                // should be 50 calls -> around 1 min per channel
-                                int amount = 20_000; // we do only 50k a day to not overload the requests + db
-
-                                // we still need to go back
-                                DateTimeOffset fromDate = DateTimeOffset.Now;
-
-                                if(botChannelSetting.OldestPostTimePreloaded.HasValue)
-                                    fromDate = botChannelSetting.OldestPostTimePreloaded.Value;
-
-                                ulong fromSnowflake = SnowflakeUtils.ToSnowflake(fromDate);
-
-                                var processResponse = await ProcessLoadedMessages(channel, fromSnowflake, Direction.Before, amount);
+                                // TODO alot of dupe code clean up and generalize
 
 
-                                if(processResponse?.SuccessCount > 0 && !processResponse.ReachedEndOfChannel)
+                                if (!botChannelSetting.ReachedOldestPreload)
                                 {
-                                    // we synced some successfully
-                                    result += $"{channel.Name} synced. Msg: {processResponse.SuccessCount}/{processResponse.DuplicateCount} Users: {processResponse.NewUsers} Emotes: {processResponse.EmotesAdded} " +
-                                        $"Time: {processResponse.ElapsedMilliseconds/1000}s Time: {SnowflakeUtils.FromSnowflake(processResponse.OldestMessageId)}/{SnowflakeUtils.FromSnowflake(processResponse.NewestMessageId)}" + Environment.NewLine;
+                                    // should be 50 calls -> around 1 min per channel
+                                    int amount = 20_000; // we do only 50k a day to not overload the requests + db
 
-                                    DatabaseManager.Instance().UpdateChannelSetting(botChannelSetting.DiscordChannelId, -1, processResponse.OldestMessageId, processResponse.NewestMessageId);
-                                }
-                                else if (processResponse.ReachedEndOfChannel)
-                                {
-                                    result += $"{channel.Name} no new messages. Reached the end..." + Environment.NewLine;
+                                    // we still need to go back
+                                    DateTimeOffset fromDate = DateTimeOffset.Now;
 
-                                    // reached the end
-                                    DatabaseManager.Instance().UpdateChannelSetting(botChannelSetting.DiscordChannelId, -1, processResponse.OldestMessageId, processResponse.NewestMessageId, true);
+                                    if (botChannelSetting.OldestPostTimePreloaded.HasValue)
+                                        fromDate = botChannelSetting.OldestPostTimePreloaded.Value;
+
+                                    ulong fromSnowflake = SnowflakeUtils.ToSnowflake(fromDate);
+
+                                    var processResponse = await ProcessLoadedMessages(channel, fromSnowflake, Direction.Before, amount);
+
+
+                                    if (processResponse?.SuccessCount > 0 && !processResponse.ReachedEndOfChannel)
+                                    {
+                                        // we synced some successfully
+                                        result += $"{channel.Name} synced. Msg: {processResponse.SuccessCount}/{processResponse.DuplicateCount} Users: {processResponse.NewUsers} Emotes: {processResponse.EmotesAdded} " +
+                                            $"Time: {processResponse.ElapsedMilliseconds / 1000}s Time: {SnowflakeUtils.FromSnowflake(processResponse.OldestMessageId)}/{SnowflakeUtils.FromSnowflake(processResponse.NewestMessageId)}" + Environment.NewLine;
+
+                                        DatabaseManager.Instance().UpdateChannelSetting(botChannelSetting.DiscordChannelId, -1, processResponse.OldestMessageId, processResponse.NewestMessageId);
+                                    }
+                                    else if (processResponse.ReachedEndOfChannel)
+                                    {
+                                        result += $"{channel.Name} no new messages. Reached the end..." + Environment.NewLine;
+
+                                        // reached the end
+                                        DatabaseManager.Instance().UpdateChannelSetting(botChannelSetting.DiscordChannelId, -1, processResponse.OldestMessageId, processResponse.NewestMessageId, true);
+                                    }
+                                    else
+                                    {
+                                        // error which "hopefully got logged and we just ignore this case xD
+
+                                    }
+
+                                    //var messagesFromMsg = await channel.GetMessagesAsync(fromSnowflake, Direction.Before, amount).FlattenAsync();
+
                                 }
                                 else
                                 {
-                                    // error which "hopefully got logged and we just ignore this case xD
-                                    
+                                    // should be 50 calls -> around 1 min per channel
+                                    int amount = 20_000; // we do only 50k a day to not overload the requests + db
+
+                                    // we still need to go back
+                                    DateTimeOffset fromDate = DateTimeOffset.Now;
+
+                                    if (botChannelSetting.NewestPostTimePreloaded.HasValue)
+                                        fromDate = botChannelSetting.NewestPostTimePreloaded.Value;
+
+                                    ulong fromSnowflake = SnowflakeUtils.ToSnowflake(fromDate);
+
+                                    var processResponse = await ProcessLoadedMessages(channel, fromSnowflake, Direction.After, amount);
+
+                                    if (processResponse?.SuccessCount > 0 || processResponse?.DuplicateCount > 0)
+                                    {
+                                        if (processResponse.SuccessCount > 0)
+                                        {
+                                            // we synced some successfully
+                                            result += $"{channel.Name} synced (new). Msg: {processResponse.SuccessCount}/{processResponse.DuplicateCount} Users: {processResponse.NewUsers} Emotes: {processResponse.EmotesAdded} " +
+                                                $"Time: {processResponse.ElapsedMilliseconds / 1000}s Time: {SnowflakeUtils.FromSnowflake(processResponse.OldestMessageId)}/{SnowflakeUtils.FromSnowflake(processResponse.NewestMessageId)}" + Environment.NewLine;
+                                        }
+                                        DatabaseManager.Instance().UpdateChannelSetting(botChannelSetting.DiscordChannelId, -1, processResponse.OldestMessageId, processResponse.NewestMessageId);
+                                    }
+                                    else
+                                    {
+                                        // error which "hopefully got logged and we just ignore this case xD
+                                    }
                                 }
 
-                                //var messagesFromMsg = await channel.GetMessagesAsync(fromSnowflake, Direction.Before, amount).FlattenAsync();
+
+
+                                // read all channels that we can read from the current guild
+                                // see preload status
+                                // do preload
+
+                                // <- 25k msg at a time
+                                // -> from newest to now compare delta
 
                             }
                             else
                             {
-                                // should be 50 calls -> around 1 min per channel
-                                int amount = 20_000; // we do only 50k a day to not overload the requests + db
-
-                                // we still need to go back
-                                DateTimeOffset fromDate = DateTimeOffset.Now;
-
-                                if (botChannelSetting.NewestPostTimePreloaded.HasValue)
-                                    fromDate = botChannelSetting.NewestPostTimePreloaded.Value;
-
-                                ulong fromSnowflake = SnowflakeUtils.ToSnowflake(fromDate);
-
-                                var processResponse = await ProcessLoadedMessages(channel, fromSnowflake, Direction.After, amount);
-
-                                if (processResponse?.SuccessCount > 0 || processResponse?.DuplicateCount > 0)
-                                {
-                                    if (processResponse.SuccessCount > 0)
-                                    {
-                                        // we synced some successfully
-                                        result += $"{channel.Name} synced (new). Msg: {processResponse.SuccessCount}/{processResponse.DuplicateCount} Users: {processResponse.NewUsers} Emotes: {processResponse.EmotesAdded} " +
-                                            $"Time: {processResponse.ElapsedMilliseconds / 1000}s Time: {SnowflakeUtils.FromSnowflake(processResponse.OldestMessageId)}/{SnowflakeUtils.FromSnowflake(processResponse.NewestMessageId)}" + Environment.NewLine;
-                                    }
-                                    DatabaseManager.Instance().UpdateChannelSetting(botChannelSetting.DiscordChannelId, -1, processResponse.OldestMessageId, processResponse.NewestMessageId);
-                                }
-                                else
-                                {
-                                    // error which "hopefully got logged and we just ignore this case xD
-                                }
+                                //result += $"Ignored {channel?.Name ?? "Channel deleted but has active settings"}" + Environment.NewLine;
                             }
-
-
-
-                            // read all channels that we can read from the current guild
-                            // see preload status
-                            // do preload
-
-                            // <- 25k msg at a time
-                            // -> from newest to now compare delta
-
                         }
                         else
                         {
-                            //result += $"Ignored {channel?.Name ?? "Channel deleted but has active settings"}" + Environment.NewLine;
+                            //result += $"Ignored {channel?.Name ?? "Channel not found"}" + Environment.NewLine;
                         }
+
                     }
-                    else
+                    catch(Exception ex)
                     {
-                        //result += $"Ignored {channel?.Name ?? "Channel not found"}" + Environment.NewLine;
+                        // contain exception for one channel only
                     }
 
                     if (result.Length > 1500)

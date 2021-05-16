@@ -13,6 +13,9 @@ namespace ETHDINFKBot.Helpers
     {
         public static string GetRowStringFromResult(List<string> header, List<List<string>> data, List<int> selectColumns, bool formatNumbers = false)
         {
+            if (data.Count == 0)
+                return ""; // no response
+
             string result = "";
 
             result += "**";
@@ -24,6 +27,8 @@ namespace ETHDINFKBot.Helpers
             }
 
             result += "**" + Environment.NewLine;
+
+            
 
             if (data.Count > 0)
             {
@@ -101,12 +106,12 @@ namespace ETHDINFKBot.Helpers
                 {
                     using (var command = new MySqlCommand(commandSql, connection))
                     {
-                        command.CommandTimeout = 30;
+                        command.CommandTimeout = fullUser ? 240 : 15;
 
                         connection.Open();
 
                         var reader = command.ExecuteReader();
-
+                        
                         while (reader.Read())
                         {
                             // cap at 10k records to return in count (as temp fix if the query returns millions of rows)
@@ -201,12 +206,18 @@ namespace ETHDINFKBot.Helpers
                         {
                             TotalResults = (int)reader[0];
                         }*/
+
+                        // if 0 records maybe some got changed or inserted
+                        if (TotalResults == 0)
+                            TotalResults = reader.RecordsAffected;
                     }
+
 
                     connection.Close();
                 }
                 watch.Stop();
                 Time = watch.ElapsedMilliseconds;
+
                 //cts.Cancel();
             }
             catch (Exception ex)

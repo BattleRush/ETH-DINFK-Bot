@@ -173,6 +173,13 @@ namespace ETHDINFKBot.Log
                 {
                     DatabaseManager.AddPingStatistic(pingInfo.Key, pingInfo.Value, fromUser);
                     var dbMessage = DatabaseManager.GetDiscordMessageById(discordMessageId);
+                    var user = DatabaseManager.GetDiscordUserById(pingInfo.Key);
+
+                    // The pinged user doesnt exist in our db -> dont create ping
+                    // TODO create an entry for this user
+                    // TODO log these cases
+                    if (user == null)
+                        continue;
 
                     DatabaseManager.CreatePingHistory(new PingHistory()
                     {

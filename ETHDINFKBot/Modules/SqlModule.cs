@@ -577,14 +577,24 @@ ORDER BY table_name DESC;", true, 50);
             return false;
         }
 
-        [Command("query")]
+
+        private static Dictionary<ulong, DateTime> ActiveSQLCommands = new Dictionary<ulong, DateTime>();
+
+        [Command("query", RunMode = RunMode.Async)]
         public async Task Sql([Remainder] string commandSql)
         {
+            var userId = Context.Message.Author.Id;
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
 
-            if (ForbiddenQuery(commandSql, Context.Message.Author.Id))
+            if (ForbiddenQuery(commandSql, userId))
                 return;
+
+            if (ActiveSQLCommands.ContainsKey(userId) && ActiveSQLCommands[userId].AddSeconds(15) > DateTime.Now)
+            {
+                Context.Channel.SendMessageAsync("Are you in such a hurry, that you cant wait out the last query you send out?", false);
+                return;
+            }
 
             try
             {
@@ -602,8 +612,16 @@ ORDER BY table_name DESC;", true, 50);
                 thread.int();
 
                 */
+                if (ActiveSQLCommands.ContainsKey(userId))
+                    ActiveSQLCommands[userId] = DateTime.Now;
+                else
+                    ActiveSQLCommands.Add(userId, DateTime.Now);
+
                 var commandResponse = await SQLHelper.SqlCommand(Context, commandSql);
                 await Context.Channel.SendMessageAsync(commandResponse, false);
+
+                // release the user again as the query finished
+                ActiveSQLCommands[userId] = DateTime.MinValue;
 
             }
             catch (Exception ex)
@@ -612,17 +630,30 @@ ORDER BY table_name DESC;", true, 50);
             }
         }
 
-        [Command("queryd")] // better name xD
+        [Command("queryd", RunMode = RunMode.Async)] // better name xD
         public async Task SqlD([Remainder] string commandSql)
         {
+            var userId = Context.Message.Author.Id;
+
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
 
             if (ForbiddenQuery(commandSql, Context.Message.Author.Id))
                 return;
 
+            if (ActiveSQLCommands.ContainsKey(userId) && ActiveSQLCommands[userId].AddSeconds(15) > DateTime.Now)
+            {
+                Context.Channel.SendMessageAsync("Are you in such a hurry, that you cant wait out the last query you send out?", false);
+                return;
+            }
+
             try
             {
+                if (ActiveSQLCommands.ContainsKey(userId))
+                    ActiveSQLCommands[userId] = DateTime.Now;
+                else
+                    ActiveSQLCommands.Add(userId, DateTime.Now);
+
                 var queryResult = await SQLHelper.GetQueryResults(Context, commandSql, true, 50);
                 string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
 
@@ -634,6 +665,9 @@ ORDER BY table_name DESC;", true, 50);
 
                 await Context.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null, new Discord.MessageReference(Context.Message.Id));
                 stream.Dispose();
+
+                // release the user again as the query finished
+                ActiveSQLCommands[userId] = DateTime.MinValue;
             }
             catch (Exception ex)
             {

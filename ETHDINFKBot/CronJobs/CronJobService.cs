@@ -31,33 +31,41 @@ namespace ETHDINFKBot.CronJobs
 
         protected virtual async Task ScheduleJob(CancellationToken cancellationToken)
         {
-            var next = _expression.GetNextOccurrence(DateTimeOffset.Now, _timeZoneInfo);
-            if (next.HasValue)
+            try
             {
-                var delay = next.Value - DateTimeOffset.Now;
-                if (delay.TotalMilliseconds <= 0)   // prevent non-positive values from being passed into Timer
+                var next = _expression.GetNextOccurrence(DateTimeOffset.Now, _timeZoneInfo);
+                if (next.HasValue)
                 {
-                    await ScheduleJob(cancellationToken);
-                }
-                _timer = new System.Timers.Timer(delay.TotalMilliseconds);
-                _timer.Elapsed += async (sender, args) =>
-                {
-                    if(_timer != null)
-                        _timer.Dispose();  // reset and dispose timer
+                    var delay = next.Value - DateTimeOffset.Now;
+                    if (delay.TotalMilliseconds <= 0)   // prevent non-positive values from being passed into Timer
+                    {
+                        await ScheduleJob(cancellationToken);
+                    }
+                    _timer = new System.Timers.Timer(delay.TotalMilliseconds);
+                    _timer.Elapsed += async (sender, args) =>
+                    {
+                        if (_timer != null)
+                            _timer.Dispose();  // reset and dispose timer
 
                     _timer = null;
 
-                    if (!cancellationToken.IsCancellationRequested)
-                    {
-                        await DoWork(cancellationToken);
-                    }
+                        if (!cancellationToken.IsCancellationRequested)
+                        {
+                            await DoWork(cancellationToken);
+                        }
 
-                    if (!cancellationToken.IsCancellationRequested)
-                    {
-                        await ScheduleJob(cancellationToken);    // reschedule next
+                        if (!cancellationToken.IsCancellationRequested)
+                        {
+                            await ScheduleJob(cancellationToken);    // reschedule next
                     }
-                };
-                _timer.Start();
+                    };
+                    _timer.Start();
+                }
+            }
+            catch(Exception ex)
+            {
+                // TODO log exception properly
+                Console.WriteLine(ex.ToString());
             }
             await Task.CompletedTask;
         }

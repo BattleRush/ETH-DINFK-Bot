@@ -309,6 +309,8 @@ namespace ETHDINFKBot
             Client.RoleCreated += Client_RoleCreated;
             Client.Ready += Client_Ready;
 
+            Client.Log += Client_Log;
+
             await Client.LoginAsync(TokenType.Bot, token);
             await Client.StartAsync();
 
@@ -339,6 +341,23 @@ namespace ETHDINFKBot
             // Block this task until the program is closed.
             await Task.Delay(-1);
         }
+
+        private Task Client_Log(LogMessage arg)
+        {
+            if (arg.Severity == LogSeverity.Error || arg.Severity == LogSeverity.Critical)
+                Console.Write(arg.Message);
+
+            return Task.CompletedTask;
+            //throw new NotImplementedException();
+        }
+
+
+        //https://www.gngrninja.com/code/2019/4/1/c-discord-bot-command-handling
+        //public async Task InitializeAsync()
+        //{
+        //    // register modules that are public and inherit ModuleBase<T>.
+        //    await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
+        //}
 
         private Task Client_Ready()
         {
