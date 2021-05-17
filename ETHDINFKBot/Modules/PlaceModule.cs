@@ -1070,12 +1070,11 @@ If you violate the server rules your pixels will be removed.
                 var color = System.Drawing.Color.FromArgb(pixel.R, pixel.G, pixel.B);
                 var stringHex = ColorTranslator.ToHtml(color);
 
-                // TODO Convert PlaceDiscordUserId to DiscordUserId
-
+                ulong discordUserId = PlaceDiscordUsers.FirstOrDefault(i => i.PlaceDiscordUserId == pixel.PlaceDiscordUserId)?.DiscordUserId ?? 0;
                 if (all?.ToLower() == "all")
-                    messageText += $"<@{pixel.PlaceDiscordUserId}> placed ({stringHex}) at {pixel.XPos}/{pixel.YPos} {pixel.PlacedDateTime.ToString("MM.dd HH:mm:ss")} {Environment.NewLine}"; // todo check for everyone or here
+                    messageText += $"<@{discordUserId}> placed ({stringHex}) at {pixel.XPos}/{pixel.YPos} {pixel.PlacedDateTime.ToString("MM.dd HH:mm:ss")} {Environment.NewLine}"; // todo check for everyone or here
                 else
-                    messageText += $"<@{pixel.PlaceDiscordUserId}> placed ({stringHex}) at {pixel.PlacedDateTime.ToString("MM.dd HH:mm")} {Environment.NewLine}"; // todo check for everyone or here
+                    messageText += $"<@{discordUserId}> placed ({stringHex}) at {pixel.PlacedDateTime.ToString("MM.dd HH:mm")} {Environment.NewLine}"; // todo check for everyone or here
 
             }
 
