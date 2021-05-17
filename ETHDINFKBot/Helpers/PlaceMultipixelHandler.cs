@@ -83,7 +83,6 @@ namespace ETHDINFKBot.Helpers
             return true;
         }
 
-
         private async Task<bool> PlaceMultipixelPacket(string instructions, short placeDiscordUserId)
         {
             PlaceDBManager placeDBManager = PlaceDBManager.Instance();
@@ -121,6 +120,5 @@ namespace ETHDINFKBot.Helpers
 
             return true;
         }
-
     }
 }
