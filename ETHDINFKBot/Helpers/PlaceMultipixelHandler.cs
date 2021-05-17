@@ -103,6 +103,9 @@ namespace ETHDINFKBot.Helpers
                 var success = placeDBManager.PlacePixel(x, y, color, placeDiscordUserId);
 
                 watch.Stop();
+
+                // TODO ensure the perf info is updated if only multipixels are placed, for now this should be fine
+                
                 if (success)
                 {
                     PlaceModule.PixelPlacementTimeLastMinute.Add(watch.ElapsedMilliseconds);
