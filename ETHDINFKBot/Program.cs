@@ -37,6 +37,7 @@ using System.Security.Authentication;
 using NetCoreServer;
 using System.Text;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 
 namespace ETHDINFKBot
 {
@@ -272,20 +273,39 @@ namespace ETHDINFKBot
             */
 
             // WebSocket server content path
-            string www = "/var/www/wss";
 
-            //string www = @"C:\Temp\wss";
-            // Create and prepare a new SSL server context
-            var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
-            //var context = new SslContext(SslProtocols.Tls12);
-            // Create a new WebSocket server
-            PlaceServer = new PlaceServer(context, IPAddress.Any, 9000);
-            PlaceServer.AddStaticContent(www, "/place");
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                string www = "/var/www/wss";
 
-            // Start the server
-            Console.Write("Server starting...");
-            PlaceServer.Start();
-            Console.WriteLine("Done!");
+                //string www = @"C:\Temp\wss";
+                // Create and prepare a new SSL server context
+                var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
+                //var context = new SslContext(SslProtocols.Tls12);
+                // Create a new WebSocket server
+                PlaceServer = new PlaceServer(context, IPAddress.Any, 9000);
+                PlaceServer.AddStaticContent(www, "/place");
+
+                // Start the server
+                Console.Write("Server starting...");
+                PlaceServer.Start();
+                Console.WriteLine("Done!");
+            }
+            else
+            {
+                string www = @"C:\Temp\wss";
+                // Create and prepare a new SSL server context
+                //var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
+                var context = new SslContext(SslProtocols.Tls12);
+                // Create a new WebSocket server
+                PlaceServer = new PlaceServer(context, IPAddress.Any, 9000);
+                PlaceServer.AddStaticContent(www, "/place");
+
+                // Start the server
+                Console.Write("Server starting...");
+                PlaceServer.Start();
+                Console.WriteLine("Done!");
+            }
 
 
 
@@ -337,6 +357,8 @@ namespace ETHDINFKBot
                 TempDisableIncomming = true;
             }
 
+            PlaceMultipixelHandler multipixelHandler = new PlaceMultipixelHandler();
+            multipixelHandler.MultiPixelProcess();
 
             // Block this task until the program is closed.
             await Task.Delay(-1);

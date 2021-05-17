@@ -328,34 +328,44 @@ namespace ETHDINFKBot.Modules
         {
             EmbedBuilder builder = new EmbedBuilder();
 
+            string prefix = Program.CurrentPrefix;
+
+
+            int g = 0;
+#if DEBUG
+            g = 192;
+#endif
+
             builder.WithTitle("ETH DINFK Place");
             //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
             builder.WithDescription(@"Rules: There are none. However everything that is forbidden by the serverrules, is also forbidden to 'draw' on the board.
 
 If you violate the server rules your pixels will be removed.
 **LIVE Website: http://ethplace.spclr.ch:81/**");
-            builder.WithColor(0, 255, 0);
+            builder.WithColor(g, 255, 0);
 
             //builder.WithThumbnailUrl("https://avatars0.githubusercontent.com/u/11750584");
 
             var ownerUser = Program.Client.GetUser(Program.Owner);
 
             // TODO move admin commands to the admin module
-            builder.AddField("Admin ONLY", "```.place lock <true|false>" + Environment.NewLine +
-                ".place remove <userId> <x> <y> <xSize> <ySize> [<minutes>|1440]```");
+            builder.AddField("Admin ONLY", $"```{prefix}place lock <true|false>" + Environment.NewLine +
+                $"{prefix}place remove <userId> <x> <y> <xSize> <ySize> [<minutes>|1440]```");
 
-            builder.AddField("Pixel verify (sends a 100x100 image for pixel verification) (45 sec cooldown)", "```.place pixelverify <x> <y>```");
-            builder.AddField("Timelapse (Web View only)", "http://ethplace.spclr.ch:81/");
-            builder.AddField("View full board (May contain outdated cache status)", "```.place view [(admin only) <force_load>]```");
-            builder.AddField("Pixel history of a pixel/all", "```.place history <x> <y>" + Environment.NewLine +
-                ".place history all```");
-            builder.AddField("Zoom on a section (always up to date)", "```.place zoom <x> <y> <size>```");
-            builder.AddField("Grid (help for navigation", "```.place grid" + Environment.NewLine +
-                ".place grid <x> <y> <size>```");
+            builder.AddField("Pixel verify (sends a 100x100 image for pixel verification) (45 sec cooldown)", $"```{prefix}place pixelverify <x> <y>```");
+            builder.AddField("Timelapse (Web View only)", "https://place.battlerush.dev/");
+            builder.AddField("View full board (May contain outdated cache status)", $"```{prefix}place view [(admin only) <force_load>]```");
+            builder.AddField("Pixel history of a pixel/all", $"```{prefix}place history <x> <y>" + Environment.NewLine +
+                $"{prefix}place history all```");
+            builder.AddField("Zoom on a section (always up to date)", $"```{prefix}place zoom <x> <y> <size>```");
+            builder.AddField("Grid (help for navigation", $"```{prefix}place grid" + Environment.NewLine +
+                $"{prefix}place grid <x> <y> <size>```");
 
-            builder.AddField("Set single pixel", "```.place setpixel <x> <y> #<hex_color>```");
-            builder.AddField("Set multiple pixel (user only) Min: 10 Max: 86'400", "```.place setmultiplepixels {<x> <y> #<hex_color>[|]}```");
-            builder.AddField("View place performance", "```.place perf [<graph_mode>] [<last_records_amount>]```");
+            builder.AddField("Set single pixel", $"```{prefix}place setpixel <x> <y> #<hex_color>```");
+            builder.AddField("Multipixel (user only) Min: 10 Max: 86'400", $"```{prefix}place multipixel {{<x> <y> #<hex_color>[|]}} " + Environment.NewLine +
+                $"{prefix}place viewmultipixel```");
+
+            builder.AddField("View place performance", $"```{prefix}place perf [<graph_mode>] [<last_records_amount>]```");
 
             builder.WithThumbnailUrl(ownerUser.GetAvatarUrl());
             builder.WithAuthor(ownerUser);
@@ -693,7 +703,7 @@ If you violate the server rules your pixels will be removed.
 
                 // TODO
                 //foreach (var item in socketUsers)
-                    //userIds.Add(item.Id);
+                //userIds.Add(item.Id);
 
                 if (size < 0)
                 {
@@ -1060,12 +1070,11 @@ If you violate the server rules your pixels will be removed.
                 var color = System.Drawing.Color.FromArgb(pixel.R, pixel.G, pixel.B);
                 var stringHex = ColorTranslator.ToHtml(color);
 
-                // TODO Convert PlaceDiscordUserId to DiscordUserId
-
+                ulong discordUserId = PlaceDiscordUsers.FirstOrDefault(i => i.PlaceDiscordUserId == pixel.PlaceDiscordUserId)?.DiscordUserId ?? 0;
                 if (all?.ToLower() == "all")
-                    messageText += $"<@{pixel.PlaceDiscordUserId}> placed ({stringHex}) at {pixel.XPos}/{pixel.YPos} {pixel.PlacedDateTime.ToString("MM.dd HH:mm:ss")} {Environment.NewLine}"; // todo check for everyone or here
+                    messageText += $"<@{discordUserId}> placed ({stringHex}) at {pixel.XPos}/{pixel.YPos} {pixel.PlacedDateTime.ToString("MM.dd HH:mm:ss")} {Environment.NewLine}"; // todo check for everyone or here
                 else
-                    messageText += $"<@{pixel.PlaceDiscordUserId}> placed ({stringHex}) at {pixel.PlacedDateTime.ToString("MM.dd HH:mm")} {Environment.NewLine}"; // todo check for everyone or here
+                    messageText += $"<@{discordUserId}> placed ({stringHex}) at {pixel.PlacedDateTime.ToString("MM.dd HH:mm")} {Environment.NewLine}"; // todo check for everyone or here
 
             }
 
@@ -1244,7 +1253,7 @@ If you violate the server rules your pixels will be removed.
 
                     await Context.Channel.SendFileAsync(stream, "place_perf.png", $"");
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     // TODO add Logger
                     Console.WriteLine(ex.ToString());
@@ -1275,10 +1284,10 @@ If you violate the server rules your pixels will be removed.
             }
         }
 
-        static List<long> PixelPlacementTimeLastMinute = new List<long>();
-        static int FailedPixelPlacements = 0;
+        public static List<long> PixelPlacementTimeLastMinute = new List<long>();
+        public static int FailedPixelPlacements = 0;
 
-        private static readonly object PlaceAggregateObj = new object();
+        public static readonly object PlaceAggregateObj = new object();
         static long OldPixelCountMod = -1;
         private void AggregatePlace(PlaceDBManager dbManager)
         {
@@ -1499,7 +1508,7 @@ If you violate the server rules your pixels will be removed.
         public static Dictionary<ulong, DateTimeOffset> MultiPlacement = new Dictionary<ulong, DateTimeOffset>();
         public static DateTime LastStatusRefresh = DateTime.Now; // set to now to prevent recordw in perf with count = 1
 
-        [Command("setmultiplepixels")]
+        [Command("multipixel")]
         public async Task PlaceMultipleColor([Remainder] string input = "")
         {
             if (IsPlaceLocked() || Context.Message.Author.IsBot)
@@ -1516,11 +1525,25 @@ If you violate the server rules your pixels will be removed.
             PlaceDBManager placeDBManager = PlaceDBManager.Instance();
             DatabaseManager databaseManager = DatabaseManager.Instance();
 
-
             try
             {
                 ulong userId = Context.Message.Author.Id;
                 var discordUser = databaseManager.GetDiscordUserById(userId);
+                var placeDiscordUser = placeDBManager.GetPlaceDiscordUserByDiscordUserId(userId);
+
+                // if the user never placer a pixel before create a record for them
+                if (placeDiscordUser == null)
+                {
+                    if (placeDBManager.AddPlaceDiscordUser(userId))
+                    {
+                        placeDiscordUser = placeDBManager.GetPlaceDiscordUserByDiscordUserId(userId);
+                    }
+                    else
+                    {
+                        Context.Channel.SendMessageAsync($"REJECTED UNABLE_TO_CREATE_USER <@{userId}>");
+                        return;
+                    }
+                }
 
                 if (!discordUser.AllowedPlaceMultipixel)
                 {
@@ -1528,11 +1551,13 @@ If you violate the server rules your pixels will be removed.
                     return;
                 }
 
+                var activeJobs = placeDBManager.GetMultipixelJobs(placeDiscordUser.PlaceDiscordUserId);
+
                 // Verify if the current user is locked
-                if (MultiPlacement.ContainsKey(userId) && MultiPlacement[userId] > DateTime.UtcNow)
+                if (activeJobs.Count > 0)
                 {
                     // User is still in lock mode -> cancel
-                    //Context.Channel.SendMessageAsync($"Rejected");
+                    Context.Channel.SendMessageAsync($"REJECTED ACTIVE_JOB_AVAILABLE <@{userId}>");
                     return;
                 }
 
@@ -1577,18 +1602,11 @@ If you violate the server rules your pixels will be removed.
                     return;
                 }
 
-                var blockUntil = DateTime.UtcNow.AddSeconds(instructions.Count); // 1 per second
 
-                if (MultiPlacement.ContainsKey(userId))
-                    MultiPlacement[userId] = blockUntil;
-                else
-                    MultiPlacement.Add(userId, blockUntil);
+                List<string> validInstructions = new List<string>();
 
-                Context.Channel.SendMessageAsync($"ACCEPTED {instructions.Count} <@{userId}>");
                 foreach (var item in instructions)
                 {
-                    var delay = Task.Delay(1000);
-
                     Stopwatch watch = new Stopwatch();
                     watch.Start();
 
@@ -1597,40 +1615,126 @@ If you violate the server rules your pixels will be removed.
                     short x = short.Parse(commands[0]);
                     short y = short.Parse(commands[1]);
 
-                    System.Drawing.Color color = ColorTranslator.FromHtml(commands[2]);
+                    if (x < 0 || y < 0 || x >= 1000 || y >= 1000)
+                        continue; // invalid cords
 
-                    var success = placeDBManager.PlacePixel(x, y, color, Context.Message.Author.Id);
-                    
-                    if (success)
-                    {
-                        PixelPlacementTimeLastMinute.Add(watch.ElapsedMilliseconds);
-                    }
-                    else
-                    {
-                        lock (PlaceAggregateObj)
-                        {
-                            FailedPixelPlacements++;
-                        }
-                    }
+                    if (commands[2].Length > 7)
+                        continue; // illegal hex string (TODO check if the string is rly a hex color)
 
-                    watch.Stop();
-                    //PixelPlacementTimeLastMinute.Add(watch.ElapsedMilliseconds);
 
-                    await delay; // ensure 1 placement / sec
+                    string singleInstruction = commands[0] + "|" + commands[1] + "|" + commands[2];
+
+                    validInstructions.Add(singleInstruction);
                 }
 
-                //if (!Context.Message.Author.IsBot)
-                //{
-                Context.Channel.SendMessageAsync($"DONE <@{userId}>");
-                //}
+                Context.Channel.SendMessageAsync($"VERIFIED_{validInstructions.Count}/{instructions.Count}_INSTRUCTIONS <@{userId}>");
+
+                if (validInstructions.Count == 0)
+                {
+                    Context.Channel.SendMessageAsync($"CANCELED_NO_VALID_INSTRUCTIONS {instructions.Count} <@{userId}>");
+                    return;
+                }
+
+                var newJob = placeDBManager.CreatePlaceMultipixelJob(placeDiscordUser.PlaceDiscordUserId, validInstructions.Count);
+                Context.Channel.SendMessageAsync($"CREATED_JOB_{newJob.PlaceMultipixelJobId} <@{userId}>");
+
+                placeDBManager.UpdatePlaceMultipixelJobStatus(newJob.PlaceMultipixelJobId, MultipixelJobStatus.Importing);
+
+                int packetSize = 100;
+                int packetCount = 0;
+                for (int i = 0; i < validInstructions.Count; i += packetSize)
+                {
+                    var currentInstructions = validInstructions.Skip(i).Take(packetSize);
+
+                    string packetInstruction = string.Join(";", currentInstructions);
+
+                    placeDBManager.CreateMultipixelJobPacket(newJob.PlaceMultipixelJobId, packetInstruction, currentInstructions.Count());
+                    packetCount++;
+                }
+
+                placeDBManager.UpdatePlaceMultipixelJobStatus(newJob.PlaceMultipixelJobId, MultipixelJobStatus.Ready);
+
+                Context.Channel.SendMessageAsync($"JOB_{newJob.PlaceMultipixelJobId}_SETREADY_{packetCount}_PACKETS <@{userId}>");
+                Context.Channel.SendMessageAsync($"It may take up to 100 seconds for your job to go to ACTIVE status. Check with {Program.CurrentPrefix}place viewmultipixel your job status.");
             }
             catch (Exception ex)
             {
                 await Context.Channel.SendMessageAsync(ex.Message);
             }
         }
-    }
 
+        [Command("viewmultipixel")]
+        public async Task ViewMultiPixel()
+        {
+            PlaceDBManager placeDBManager = PlaceDBManager.Instance();
+            var placeDiscordUser = placeDBManager.GetPlaceDiscordUserByDiscordUserId(Context.Message.Author.Id);
+            if (placeDiscordUser == null)
+            {
+                Context.Channel.SendMessageAsync($"User has no jobs created.");
+                return;
+            }
+
+            var jobs = placeDBManager.GetMultipixelJobs(placeDiscordUser.PlaceDiscordUserId, false);
+
+            EmbedBuilder builder = new EmbedBuilder();
+
+            string prefix = Program.CurrentPrefix;
+
+
+            int g = 0;
+#if DEBUG
+            g = 192;
+#endif
+
+            builder.WithTitle("ETH DINFK Place Multipixel Jobs");
+            builder.WithDescription($@"View jour last 10 Multipixel Jobs and their status
+{prefix}place multipixel <file> (To start a new job)
+{prefix}place cancelmultipixel <id> (To cancel an active job)");
+
+            builder.WithColor(g, 255, 0);
+
+            // only last 10
+            foreach (var job in jobs.Skip(Math.Max(0, jobs.Count() - 10)))
+            {
+                int pixelPainted = 0;
+                if (job.Status == (int)MultipixelJobStatus.Done)
+                    pixelPainted = job.TotalPixels;
+                else
+                    pixelPainted = 100 * placeDBManager.GetFinishedMultipixelJobPacketCount(job.PlaceMultipixelJobId);
+
+                builder.AddField($"JOB {job.PlaceMultipixelJobId}", $"```Created {job.CreatedAt} Total: {job.TotalPixels} Done: {pixelPainted} Status: {(MultipixelJobStatus)job.Status}```");
+            }
+
+            builder.WithThumbnailUrl(Context.Message.Author.GetAvatarUrl());
+            builder.WithAuthor(Context.Message.Author);
+            builder.WithCurrentTimestamp();
+
+            Context.Channel.SendMessageAsync("", false, builder.Build());
+        }
+
+
+        [Command("cancelmultipixel")]
+        public async Task ViewMultiPixel(int multiPixelJobId)
+        {
+            PlaceDBManager placeDBManager = PlaceDBManager.Instance();
+
+            var placeDiscordUser = placeDBManager.GetPlaceDiscordUserByDiscordUserId(Context.Message.Author.Id);
+
+            var job = placeDBManager.GetPlaceMultipixelJob(multiPixelJobId);
+
+            if(job.PlaceDiscordUserId != placeDiscordUser.PlaceDiscordUserId || job.Status > (int)MultipixelJobStatus.Active)
+            {
+                Context.Channel.SendMessageAsync($"You can only cancel your own jobs and if they are in the active state.");
+                return;
+            }
+
+            var success = placeDBManager.UpdatePlaceMultipixelJobStatus(job.PlaceMultipixelJobId, MultipixelJobStatus.Canceled);
+            if (success)
+                Context.Channel.SendMessageAsync($"Canceled the job. It may still continue the current job for up to 100 seconds.");
+            else
+                Context.Channel.SendMessageAsync($"Error while canceling job.");
+        }
+    }
     public class PlacePixelPerfEntry
     {
         public DateTimeOffset DateTime { get; set; }

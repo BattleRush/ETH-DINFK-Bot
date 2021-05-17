@@ -84,6 +84,8 @@ namespace ETHBot.DataLayer
         public DbSet<PlaceBoardHistory> PlaceBoardHistory { get; set; }
         public DbSet<PlacePerformanceInfo> PlacePerformanceInfos { get; set; }
         public DbSet<PlaceDiscordUser> PlaceDiscordUsers { get; set; }
+        public DbSet<PlaceMultipixelJob> PlaceMultipixelJobs { get; set; }
+        public DbSet<PlaceMultipixelPacket> PlaceMultipixelPackets { get; set; }
 
 
 

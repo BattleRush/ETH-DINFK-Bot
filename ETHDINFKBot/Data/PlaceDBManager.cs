@@ -3,8 +3,10 @@ using ETHBot.DataLayer;
 using ETHBot.DataLayer.Data;
 using ETHBot.DataLayer.Data.Fun;
 using ETHDINFKBot.Enums;
+using ETHDINFKBot.Helpers;
 using ETHDINFKBot.Modules;
 using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MySqlConnector;
 using System;
@@ -18,6 +20,7 @@ namespace ETHDINFKBot.Data
     public class PlaceDBManager
     {
         private static PlaceDBManager _instance;
+
         private static object syncLock = new object();
         private readonly ILogger _logger = new Logger<PlaceDBManager>(Program.Logger);
 
@@ -169,13 +172,32 @@ WHERE  TABLE_NAME = 'PlaceBoardHistory'"; // since no rows are deleted we can us
             }
         }
 
-        public List<PlaceDiscordUser> GetPlaceDiscordUsers()
+        public List<PlaceDiscordUser> GetPlaceDiscordUsers(bool onlyVerified = false)
         {
             try
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
+                    if (onlyVerified)
+                        return context.PlaceDiscordUsers.Include(i => i.DiscordUser).AsQueryable().Where(i => i.DiscordUser.AllowedPlaceMultipixel).ToList();
+
                     return context.PlaceDiscordUsers.ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public PlaceDiscordUser GetPlaceDiscordUserByDiscordUserId(ulong discordUserId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.PlaceDiscordUsers.SingleOrDefault(i => i.DiscordUserId == discordUserId);
                 }
             }
             catch (Exception ex)
@@ -517,12 +539,25 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
                 return null;
             }
         }
+        public bool PlacePixel(short x, short y, System.Drawing.Color color, short placeDiscordUserId)
+        {
+            // TODO REPLOAD THE BEFORE
+            if (PlaceModule.PlaceDiscordUsers.Count == 0)
+                PlaceModule.PlaceDiscordUsers = GetPlaceDiscordUsers();
+
+            var placeUser = PlaceModule.PlaceDiscordUsers.SingleOrDefault(i => i.PlaceDiscordUserId == placeDiscordUserId);
+
+            if (placeUser == null)
+            {
+                // If the user has been added and we cant fînd the id
+                return false;
+            }
+
+            return PlacePixel(x, y, color, placeUser);
+        }
 
         public bool PlacePixel(short x, short y, System.Drawing.Color color, ulong discordUserId)
         {
-            if (x < 0 || x >= 1000 || y < 0 || y >= 1000)
-                return false; // reject these entries
-
             // TODO REPLOAD THE BEFORE
             if (PlaceModule.PlaceDiscordUsers.Count == 0)
                 PlaceModule.PlaceDiscordUsers = GetPlaceDiscordUsers();
@@ -539,10 +574,16 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
                 }
             }
 
+            return PlacePixel(x, y, color, placeUser);
+        }
+
+        public bool PlacePixel(short x, short y, System.Drawing.Color color, PlaceDiscordUser placeUser)
+        {
+            if (x < 0 || x >= 1000 || y < 0 || y >= 1000)
+                return false; // reject these entries
+
             if (placeUser == null)
-            {
                 return false;
-            }
 
             try
             {
@@ -674,6 +715,182 @@ VALUES ({placeUser.PlaceDiscordUserId},{x},{y},{color.R},{color.G},{color.B},@pl
                     }
                 }
             }
+        }
+
+
+
+
+        public List<PlaceMultipixelJob> GetMultipixelJobs(short placeDiscordUserId, bool onlyActive = true)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.PlaceMultipixelJobs
+                        .AsQueryable()
+                        .Where(i => i.PlaceDiscordUserId == placeDiscordUserId && 
+                        (!onlyActive || (onlyActive && (i.Status == (int)MultipixelJobStatus.Importing || i.Status == (int)MultipixelJobStatus.Ready || i.Status == (int)MultipixelJobStatus.Active))))
+                        .ToList(); // fine to do as not many jobs will be in the db
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public PlaceMultipixelJob GetPlaceMultipixelJob(int placeMultipixelJobId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.PlaceMultipixelJobs.SingleOrDefault(i => i.PlaceMultipixelJobId == placeMultipixelJobId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public PlaceMultipixelJob CreatePlaceMultipixelJob(short placeDiscordUserId, int totalPixels)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var newJob = new PlaceMultipixelJob()
+                    {
+                        PlaceDiscordUserId = placeDiscordUserId,
+                        TotalPixels = totalPixels,
+                        Status = (int)MultipixelJobStatus.None,
+                        CreatedAt = DateTime.Now
+                    };
+
+                    context.PlaceMultipixelJobs.Add(newJob);
+                    context.SaveChanges();
+
+                    return newJob;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+
+        // TODO maybe return the object?
+        public bool UpdatePlaceMultipixelJobStatus(int placeMultipixelJobId, MultipixelJobStatus status)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var job = context.PlaceMultipixelJobs.SingleOrDefault(i => i.PlaceMultipixelJobId == placeMultipixelJobId);
+                    if (job != null)
+                    {
+                        job.Status = (int)status;
+
+                        if (status == MultipixelJobStatus.Done)
+                            job.FinishedAt = DateTime.Now;
+
+                        if (status == MultipixelJobStatus.Canceled)
+                            job.CanceledAt = DateTime.Now;
+
+                        context.SaveChanges();
+
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+
+            return false;
+        }
+
+        public PlaceMultipixelPacket CreateMultipixelJobPacket(int placeMultipixelJobId, string instructions, int instructionCount)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var newPacket = new PlaceMultipixelPacket()
+                    {
+                        PlaceMultipixelJobId = placeMultipixelJobId,
+                        InstructionCount = instructionCount,
+                        Instructions = instructions
+                    };
+
+                    context.PlaceMultipixelPackets.Add(newPacket);
+                    context.SaveChanges();
+
+                    return newPacket;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public PlaceMultipixelPacket GetNextFreeMultipixelJobPacket(int placeMultipixelJobId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.PlaceMultipixelPackets.FirstOrDefault(i => i.PlaceMultipixelJobId == placeMultipixelJobId && i.Done == false);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public int GetFinishedMultipixelJobPacketCount(int placeMultipixelJobId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.PlaceMultipixelPackets.AsQueryable().Where(i => i.PlaceMultipixelJobId == placeMultipixelJobId && i.Done).Count();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return -1;
+            }
+        }
+
+        public bool MarkMultipixelJobPacketAsDone(int placeMultipixelJobPacketId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    context.PlaceMultipixelPackets.Single(i => i.PlaceMultipixelPacketId == placeMultipixelJobPacketId).Done = true;
+                    context.SaveChanges();
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+
+            return false;
         }
     }
 }
