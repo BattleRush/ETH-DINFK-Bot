@@ -658,7 +658,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     if (item.DiscordRoleId.HasValue)
                         messageText += $"<@{item.FromDiscordUserId}> pinged <@&{item.DiscordRoleId}> at {date.ToString("dd.MM HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}"; // todo check for everyone or here
                     else
-                        messageText += $"<@{item.FromDiscordUserId}> at {date.ToString("dd.MM HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}";
+                        messageText += $"<@{item.FromDiscordUserId}> at {date.ToLocalTime().ToString("dd.MM HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}";
                 }
 
                 messageText += Environment.NewLine;
