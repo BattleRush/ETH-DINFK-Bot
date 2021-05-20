@@ -213,7 +213,28 @@ namespace ETHDINFKBot.Handlers
             try
             {
                 //LogManager.AddReaction(reactionEmote, SocketMessage.Id, SocketGuildReactionUser);
+                /*
+                // one time code
+                if(Message.Content == "Process Initialization Check" && Message.Author.Id == Program.Client.CurrentUser.Id)
+                {
+                    var upvoteCount = Message.Reactions.Where(i => i.Key is Emote emote && emote.Id == DiscordEmotes["this"]).FirstOrDefault();
 
+                    if(upvoteCount.Value.ReactionCount >= 15)
+                    {
+                        // Unlock channel
+                        var user = SocketGuild.GetUser(123841216662994944);;
+                        var testChannel = SocketGuild.GetTextChannel(843623001164742696);
+
+                        testChannel.AddPermissionOverwriteAsync(user, OverwritePermissions.InheritAll.Modify(viewChannel: PermValue.Allow, readMessageHistory: PermValue.Allow));
+
+                        Message.Channel.SendMessageAsync("Verification Success! <@123841216662994944> Proceed to the next stage. You are on your own now. Good luck!");
+                        Message.DeleteAsync();
+
+                        Message.Channel.SendMessageAsync("Elthision and Marc right now");
+                        Message.Channel.SendMessageAsync("https://cdn140.picsart.com/329258174052201.gif?to=min&r=640");
+                    }
+                }
+                */
                 if (!SocketGuildReactionUser.IsBot && SocketGuildChannel.Id == DiscordChannels["serversuggestions"]
                     && (reactionEmote.Id == DiscordEmotes["this"] || reactionEmote.Id == DiscordEmotes["that"]))
                 {
