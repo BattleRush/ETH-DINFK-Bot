@@ -1607,6 +1607,10 @@ If you violate the server rules your pixels will be removed.
 
                 foreach (var item in instructions)
                 {
+                    // Ignore empty records
+                    if (item.Length == 0)
+                        continue;
+
                     Stopwatch watch = new Stopwatch();
                     watch.Start();
 
@@ -1659,7 +1663,7 @@ If you violate the server rules your pixels will be removed.
             }
             catch (Exception ex)
             {
-                await Context.Channel.SendMessageAsync(ex.Message);
+                await Context.Channel.SendMessageAsync(ex.Message + $" <@{Context.Message.Author.Id}>");
             }
         }
 

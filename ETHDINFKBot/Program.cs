@@ -774,7 +774,7 @@ namespace ETHDINFKBot
 
                     builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST POSTER TODAY");
                     builder.WithColor(0, 0, 255);
-                    builder.WithDescription($"This is the {firstPoster.FirstDailyPostCount + 1}. time you are the first poster of the day");
+                    builder.WithDescription($"This is the {firstPoster.FirstDailyPostCount + 1}. time you are the first poster of the day. With {(timeNow - timeNow.Date).TotalMilliseconds.ToString("N0")}ms from midnight.");
 
                     builder.WithAuthor(msg.Author);
                     builder.WithCurrentTimestamp();
@@ -795,6 +795,12 @@ namespace ETHDINFKBot
                     string randomGif = randomGifs[new Random().Next(randomGifs.Count)];
                     await m.Channel.SendMessageAsync(randomGif);
                     await m.Channel.SendMessageAsync("", false, builder.Build());
+
+                    // ONE TIME CODE TO BE DELETED
+                    //if (firstPoster.DiscordUserId == 321022340412735509)
+                    //{
+                    //    NextStepProgress2(m, msg.Author, firstPoster);
+                    //}
 
                     // run it only once a day // todo find better scheduler
                     DiscordHelper.ReloadRoles(user.Guild);
@@ -963,6 +969,362 @@ namespace ETHDINFKBot
                 await Task.Delay(10000);
                 await replyMsg.DeleteAsync();
             }
+        }
+
+        private async Task<bool> NextStepProgress(SocketMessage m, SocketUser user, DiscordUser firstPoster)
+        {
+            await m.Channel.SendMessageAsync("https://cdn.discordapp.com/attachments/774286694794919989/843988949612756992/unknown.gif");
+            Thread.Sleep(3000);
+            await m.Channel.SendMessageAsync("System breached.. Entering Admin Control Panel");
+            Thread.Sleep(3000);
+            await m.Channel.SendMessageAsync("ACP opened");
+            Thread.Sleep(3000);
+
+            var breachMessage = await m.Channel.SendMessageAsync("Granting permission");
+            Thread.Sleep(3000);
+            await breachMessage.ModifyAsync(msg => msg.Content = @"GRANT_ADMIN_PERMISSION");
+            Thread.Sleep(2000);
+            await breachMessage.ModifyAsync(msg => msg.Content = @"GRANT_ADMIN_PERMISSION User: 3");
+            Thread.Sleep(1000);
+            await breachMessage.ModifyAsync(msg => msg.Content = @"GRANT_ADMIN_PERMISSION User: 32");
+            Thread.Sleep(1000);
+            await breachMessage.ModifyAsync(msg => msg.Content = @"GRANT_ADMIN_PERMISSION User: 321");
+            Thread.Sleep(1000);
+            await breachMessage.ModifyAsync(msg => msg.Content = @"GRANT_ADMIN_PERMISSION User: 3210");
+            Thread.Sleep(1000);
+            await breachMessage.ModifyAsync(msg => msg.Content = @"GRANT_ADMIN_PERMISSION User: 32102");
+            Thread.Sleep(1000);
+            await breachMessage.ModifyAsync(msg => msg.Content = @"GRANT_ADMIN_PERMISSION User: 321022");
+            Thread.Sleep(1000);
+
+            // unlock next stage
+            var messageMalfunction = await m.Channel.SendMessageAsync("System malfunction");
+            Thread.Sleep(2000);
+            await messageMalfunction.ModifyAsync(msg => msg.Content = @"System malfunction..");
+            Thread.Sleep(1000);
+            await messageMalfunction.ModifyAsync(msg => msg.Content = @"System malfunction....");
+            Thread.Sleep(3000);
+
+            // creash report
+            var messageCreash = await m.Channel.SendMessageAsync("Printing Crash report");
+
+            Thread.Sleep(2000);
+            await messageCreash.ModifyAsync(msg => msg.Content = @"Printing Crash report...");
+            Thread.Sleep(2000);
+            await messageCreash.ModifyAsync(msg => msg.Content = @"
+A problem has been detected and Discord has been shut down to prevent damage
+to your computer.
+
+**UNKNOWN_PERMISSION_REQUEST_ACCESS**
+
+If this is the first time you've seen this error screen,
+restart your computer. If this screen appears again, follow
+these steps:
+
+Check to make sure any new hardware or software is properly installed.
+If this is a new installation, ask your hardware or software manufacturer
+for any Discord updates you might need.
+
+If problems continue, disable or remove any newly installed hardware
+or software. Disable BIOS memory options such as caching or shadowing.
+If you need to use Safe mode to remove or disable components, restart
+your computer, press F8 to select Advanced Startup Options, and then
+select Safe mode.
+
+Technical Information:
+
+*** STOP: 0xOOOOOOED (0x80F128D0, 0xc000009c, 0x00000000, 0x00000000)");
+            Thread.Sleep(3000);
+
+            await messageCreash.ModifyAsync(msg => msg.Content = @"System malfunction....
+
+A problem has been detected and Discord has been shut down to prevent damage
+to your computer.
+
+**UNKNOWN_PERMISSION_REQUEST_ACCESS**
+
+If this is the first time you've seen this error screen,
+restart your computer. If this screen appears again, follow
+these steps:
+
+Check to make sure any new hardware or software is properly installed.
+If this is a new installation, ask your hardware or software manufacturer
+for any Discord updates you might need.
+
+If problems continue, disable or remove any newly installed hardware
+or software. Disable BIOS memory options such as caching or shadowing.
+If you need to use Safe mode to remove or disable components, restart
+your computer, press F8 to select Advanced Startup Options, and then
+select Safe mode.
+
+Technical Information:
+
+*** STOP: 0xOOOOOOED (0x80F128D0, 0xc000009c, 0x00000000, 0x00000000)
+
+Rebooting");
+            Thread.Sleep(3000);
+
+            await messageCreash.ModifyAsync(msg => msg.Content = @"System malfunction....
+
+A problem has been detected and Discord has been shut down to prevent damage
+to your computer.
+
+**UNKNOWN_PERMISSION_REQUEST_ACCESS**
+
+If this is the first time you've seen this error screen,
+restart your computer. If this screen appears again, follow
+these steps:
+
+Check to make sure any new hardware or software is properly installed.
+If this is a new installation, ask your hardware or software manufacturer
+for any Discord updates you might need.
+
+If problems continue, disable or remove any newly installed hardware
+or software. Disable BIOS memory options such as caching or shadowing.
+If you need to use Safe mode to remove or disable components, restart
+your computer, press F8 to select Advanced Startup Options, and then
+select Safe mode.
+
+Technical Information:
+
+*** STOP: 0xOOOOOOED (0x80F128D0, 0xc000009c, 0x00000000, 0x00000000)
+
+Rebooting...");
+            Thread.Sleep(2000);
+            await messageCreash.ModifyAsync(msg => msg.Content = @"System malfunction....
+
+A problem has been detected and Discord has been shut down to prevent damage
+to your computer.
+
+**UNKNOWN_PERMISSION_REQUEST_ACCESS**
+
+If this is the first time you've seen this error screen,
+restart your computer. If this screen appears again, follow
+these steps:
+
+Check to make sure any new hardware or software is properly installed.
+If this is a new installation, ask your hardware or software manufacturer
+for any Discord updates you might need.
+
+If problems continue, disable or remove any newly installed hardware
+or software. Disable BIOS memory options such as caching or shadowing.
+If you need to use Safe mode to remove or disable components, restart
+your computer, press F8 to select Advanced Startup Options, and then
+select Safe mode.
+
+Technical Information:
+
+*** STOP: 0xOOOOOOED (0x80F128D0, 0xc000009c, 0x00000000, 0x00000000)
+
+Rebooting......");
+            Thread.Sleep(3000);
+            await messageCreash.ModifyAsync(msg => msg.Content = @"System malfunction....
+
+A problem has been detected and Discord has been shut down to prevent damage
+to your computer.
+
+**UNKNOWN_PERMISSION_REQUEST_ACCESS**
+
+If this is the first time you've seen this error screen,
+restart your computer. If this screen appears again, follow
+these steps:
+
+Check to make sure any new hardware or software is properly installed.
+If this is a new installation, ask your hardware or software manufacturer
+for any Discord updates you might need.
+
+If problems continue, disable or remove any newly installed hardware
+or software. Disable BIOS memory options such as caching or shadowing.
+If you need to use Safe mode to remove or disable components, restart
+your computer, press F8 to select Advanced Startup Options, and then
+select Safe mode.
+
+Technical Information:
+
+*** STOP: 0xOOOOOOED (0x80F128D0, 0xc000009c, 0x00000000, 0x00000000)
+
+Rebooting.........");
+            Thread.Sleep(7000);
+
+            await PrintProgressBar(m);
+
+            var initMsg = await m.Channel.SendMessageAsync("Starup done.");
+            await initMsg.ModifyAsync(msg => msg.Content = @"Initializing..");
+            Thread.Sleep(2000);
+
+            await initMsg.ModifyAsync(msg => msg.Content = @"Initializing....");
+            Thread.Sleep(3000);
+
+            await initMsg.ModifyAsync(msg => msg.Content = @"Initializing......");
+            Thread.Sleep(4000);
+
+            //await initMsg.DeleteAsync();
+
+            EmbedBuilder nextStage = new EmbedBuilder();
+
+            nextStage.WithTitle($"To finish the process initialization. Confirm to continue.");
+            nextStage.WithColor(0, 0, 255);
+            nextStage.WithAuthor(user);
+            nextStage.WithCurrentTimestamp();
+
+            var reactMessage = await m.Channel.SendMessageAsync("Process Initialization Check", false, nextStage.Build());
+            reactMessage.AddReactionAsync(Emote.Parse($"<:this:{DiscordHelper.DiscordEmotes["this"]}>"));
+
+
+            return true;
+        }
+
+        private async Task<bool> NextStepProgress2(SocketMessage m, SocketUser user, DiscordUser firstPoster)
+        {
+            await m.Channel.SendMessageAsync("Welcome back <@321022340412735509>");
+            Thread.Sleep(3000);
+            await m.Channel.SendMessageAsync("Type .ACP to open the Admin Control Panel");
+
+            return true;
+        }
+
+        private async Task<bool> PrintProgressBar(SocketMessage m)
+        {
+            List<string> left = new List<string>() {
+                "<:left0:829444101308547136>",
+                "<:left1:829444101551423508>",
+                "<:left2:829444101614600252>",
+                "<:left3:829444101619318814>",
+                "<:left4:829444101627707452>",
+                "<:left5:829444101639372910>",
+                "<:left6:829444304799399946>",
+                "<:left7:829444328626847745>",
+                "<:left8:829444338840633387>",
+                "<:left9:829444353637875772>",
+                "<:left10:829444368329998387>"
+            };
+
+            List<string> middle = new List<string>() {
+
+                "<:middle0:832534031177613352>",
+                "<:middle1:832534056138571796>",
+                "<:middle2:832534067156746270>",
+                "<:middle3:832534079844778014>",
+                "<:middle4:832534090593992705>",
+                "<:middle5:832534101969207306>",
+                "<:middle6:832534113285963776>",
+                "<:middle7:832534125260701726>",
+                "<:middle8:832534134927654922>",
+                "<:middle9:832534146475229276>",
+                "<:middle10:832534158186250260>"
+            };
+            // Progressbar right
+
+            List<string> right = new List<string>()
+            {
+
+                "<:right0:829444702105239613>",
+                "<:right1:829444715803443261>",
+                "<:right2:829444741062066246>",
+                "<:right3:829444752251551744>",
+                "<:right4:829444776746549260>",
+                "<:right5:829444791137206332>",
+                "<:right6:829444802928050206>",
+                "<:right7:829444814180319242>",
+                "<:right8:829444826843578378>",
+                "<:right9:829444840520810586>",
+                "<:right10:829444852583759913>"
+            };
+
+            var progressText = await m.Channel.SendMessageAsync("Startup");
+            var progressBar = await m.Channel.SendMessageAsync("<empty>");
+
+            //10
+            for (int i = 0; i < 11; i++)
+            {
+                string line = left[i] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + right[0];
+                await progressBar.ModifyAsync(msg => msg.Content = line);
+                Thread.Sleep(1100);
+            }
+            await progressText.ModifyAsync(msg => msg.Content = "Step 1/69");
+
+            // 20
+            for (int i = 1; i < 11; i++)
+            {
+                string line = left[10] + middle[i] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + right[0]; 
+                await progressBar.ModifyAsync(msg => msg.Content = line);
+                Thread.Sleep(1100);
+            }
+
+            await progressText.ModifyAsync(msg => msg.Content = "Step 2/69");
+
+            // 30
+            for (int i = 1; i < 11; i++)
+            {
+                string line = left[10] + middle[10] + middle[i] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + right[0];
+                await progressBar.ModifyAsync(msg => msg.Content = line);
+                Thread.Sleep(1100);
+            }
+            await progressText.ModifyAsync(msg => msg.Content = "could this be the day..?");
+            // 40
+            for (int i = 1; i < 11; i++)
+            {
+                string line = left[10] + middle[10] + middle[10] + middle[i] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + right[0];
+                await progressBar.ModifyAsync(msg => msg.Content = line);
+                Thread.Sleep(1100);
+            }
+
+            await progressText.ModifyAsync(msg => msg.Content = "that marc gets admin?");
+            // 50
+            for (int i = 1; i < 11; i++)
+            {
+                string line = left[10] + middle[10] + middle[10] + middle[10] + middle[i] + middle[0] + middle[0] + middle[0] + middle[0] + right[0];
+                await progressBar.ModifyAsync(msg => msg.Content = line);
+                Thread.Sleep(1100);
+
+            }
+
+            await progressText.ModifyAsync(msg => msg.Content = "nah you right not today");
+            // 60
+            for (int i = 1; i < 11; i++)
+            {
+                string line = left[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[i] + middle[0] + middle[0] + middle[0] + right[0];
+                await progressBar.ModifyAsync(msg => msg.Content = line);
+                Thread.Sleep(1100);
+            }
+
+            await progressText.ModifyAsync(msg => msg.Content = "btw supra stole nicely from you yesterday xD");
+            // 70
+            for (int i = 1; i < 11; i++)
+            {
+                string line = left[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[i] + middle[0] + middle[0] + right[0];
+                await progressBar.ModifyAsync(msg => msg.Content = line);
+                Thread.Sleep(1100);
+            }
+
+            await progressText.ModifyAsync(msg => msg.Content = "yo this loading bar");
+            // 80
+            for (int i = 1; i < 11; i++)
+            {
+                string line = left[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[i] + middle[0] + right[0];
+                await progressBar.ModifyAsync(msg => msg.Content = line);
+                Thread.Sleep(1100);
+            }
+
+            await progressText.ModifyAsync(msg => msg.Content = "soon done idk what to say");
+            // 90
+            for (int i = 1; i < 11; i++)
+            {
+                string line = left[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[i] + right[0];
+                await progressBar.ModifyAsync(msg => msg.Content = line);
+                Thread.Sleep(1100);
+            }
+
+            await progressText.ModifyAsync(msg => msg.Content = "also step 35/69 (you need a few first daily posts Marc xD");
+            // 100
+            for (int i = 1; i < 11; i++)
+            {
+                string line = left[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + right[i];
+                await progressBar.ModifyAsync(msg => msg.Content = line);
+                Thread.Sleep(1100);
+            }
+
+            return true;
         }
     }
 }

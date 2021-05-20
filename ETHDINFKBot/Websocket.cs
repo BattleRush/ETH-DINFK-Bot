@@ -220,7 +220,7 @@ namespace ETHDINFKBot
 
                 /// 0 | ID
                 /// 1-2 | Amount of users loaded
-                /// USER REPEAT (rel) Total 200
+                /// USER REPEAT (rel) Total 199
                 /// 0-1 | user id (int 16)
                 /// 2-97 Username (utf8 3 bytes per char)
                 /// 98-197 | Url of the Profile (10 chars around spare) ASCII 1 byte per char
