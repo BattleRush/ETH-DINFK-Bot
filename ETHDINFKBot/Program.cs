@@ -92,6 +92,7 @@ namespace ETHDINFKBot
         public static ILoggerFactory Logger { get; set; }
 
         private static DateTime LastNewDailyMessagePost = DateTime.Now;
+        private static DateTime LastAfternoonMessagePost = DateTime.Now;
 
         private static List<BotChannelSetting> BotChannelSettings;
 
@@ -135,6 +136,8 @@ namespace ETHDINFKBot
             {
                 // TODO may cause problems if the bot is hosted in a timezone that doesnt switch to daylight at the same time as the hosting region
                 LastNewDailyMessagePost = DateTime.UtcNow.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1);
+
+                LastAfternoonMessagePost = DateTime.UtcNow.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1).AddHours(-12); // shift left by 12h
 
                 Logger = LoggerFactory.Create(builder => { builder.AddConsole(); });
 
@@ -775,6 +778,65 @@ namespace ETHDINFKBot
                     builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST POSTER TODAY");
                     builder.WithColor(0, 0, 255);
                     builder.WithDescription($"This is the {firstPoster.FirstDailyPostCount + 1}. time you are the first poster of the day. With {(timeNow - timeNow.Date).TotalMilliseconds.ToString("N0")}ms from midnight.");
+
+                    builder.WithAuthor(msg.Author);
+                    builder.WithCurrentTimestamp();
+
+                    List<string> randomGifs = new List<string>()
+                    {
+                        "https://tenor.com/view/confetti-hooray-yay-celebration-party-gif-11214428",
+                        "https://tenor.com/view/qoobee-agapi-confetti-surprise-celebrate-gif-11679728",
+                        "https://tenor.com/view/confetti-celebrate-colorful-celebration-gif-15816997",
+                        "https://tenor.com/view/celebrate-awesome-yay-confetti-party-gif-8571772",
+                        "https://tenor.com/view/mao-mao-cat-hurrah-confetti-gif-9948046",
+                        "https://tenor.com/view/stop-it-oh-spongebob-confetti-gif-13772176",
+                        "https://tenor.com/view/win-confetti-gif-5026830",
+                        "https://tenor.com/view/kawaii-confetti-happiness-confetti-gif-11981055",
+                        "https://tenor.com/view/wow-fireworks-3d-gifs-artist-woohoo-gif-18062148"
+                    };
+
+                    string randomGif = randomGifs[new Random().Next(randomGifs.Count)];
+                    await m.Channel.SendMessageAsync(randomGif);
+                    await m.Channel.SendMessageAsync("", false, builder.Build());
+
+                    // ONE TIME CODE TO BE DELETED
+                    //if (firstPoster.DiscordUserId == 321022340412735509)
+                    //{
+                    //    NextStepProgress2(m, msg.Author, firstPoster);
+                    //}
+
+                    // run it only once a day // todo find better scheduler
+                    DiscordHelper.ReloadRoles(user.Guild);
+                }
+
+                // duplicate code of the code above
+                if (LastAfternoonMessagePost.Day != timeNow.AddHours(-12).Day && !user.IsBot)
+                {
+                    // Reset time 
+                    LastAfternoonMessagePost = DateTime.UtcNow.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1).AddHours(-12);
+
+                    // This person is the first one to post a new message
+
+                    var firstPoster = dbManager.GetDiscordUserById(msg.Author.Id);
+                    dbManager.UpdateDiscordUser(new ETHBot.DataLayer.Data.Discord.DiscordUser()
+                    {
+                        DiscordUserId = user.Id,
+                        DiscriminatorValue = user.DiscriminatorValue,
+                        AvatarUrl = user.GetAvatarUrl(),
+                        IsBot = user.IsBot,
+                        IsWebhook = user.IsWebhook,
+                        Nickname = user.Nickname,
+                        Username = user.Username,
+                        JoinedAt = user.JoinedAt,
+                        FirstAfternoonPostCount = firstPoster.FirstAfternoonPostCount + 1
+                    });
+
+
+                    EmbedBuilder builder = new EmbedBuilder();
+
+                    builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST AFTERNOON POSTER");
+                    builder.WithColor(0, 0, 255);
+                    builder.WithDescription($"This is the {firstPoster.FirstAfternoonPostCount + 1}. time you are the first afternoon poster of the day. With {(timeNow - timeNow.Date).TotalMilliseconds.ToString("N0")}ms from noon.");
 
                     builder.WithAuthor(msg.Author);
                     builder.WithCurrentTimestamp();

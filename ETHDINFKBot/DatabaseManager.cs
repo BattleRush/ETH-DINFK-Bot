@@ -134,6 +134,12 @@ namespace ETHDINFKBot
                         changes = true;
                     }
 
+                    if (dbUser.FirstAfternoonPostCount < user.FirstAfternoonPostCount)
+                    {
+                        dbUser.FirstAfternoonPostCount = user.FirstAfternoonPostCount;
+                        changes = true;
+                    }
+
                     if (changes)
                         context.SaveChanges();
                 }
