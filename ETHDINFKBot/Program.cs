@@ -836,7 +836,7 @@ namespace ETHDINFKBot
 
                     builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST AFTERNOON POSTER");
                     builder.WithColor(0, 0, 255);
-                    builder.WithDescription($"This is the {firstPoster.FirstAfternoonPostCount + 1}. time you are the first afternoon poster of the day. With {(timeNow - timeNow.Date).TotalMilliseconds.ToString("N0")}ms from noon.");
+                    builder.WithDescription($"This is the {firstPoster.FirstAfternoonPostCount + 1}. time you are the first afternoon poster of the day. With {(timeNow.AddHours(-12) - timeNow.AddHours(-12).Date).TotalMilliseconds.ToString("N0")}ms from noon.");
 
                     builder.WithAuthor(msg.Author);
                     builder.WithCurrentTimestamp();
