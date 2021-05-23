@@ -854,8 +854,8 @@ namespace ETHDINFKBot
                         "https://tenor.com/view/wow-fireworks-3d-gifs-artist-woohoo-gif-18062148"
                     };
 
-                    string randomGif = randomGifs[new Random().Next(randomGifs.Count)];
-                    await m.Channel.SendMessageAsync(randomGif);
+                    //string randomGif = randomGifs[new Random().Next(randomGifs.Count)];
+                    //await m.Channel.SendMessageAsync(randomGif);
                     await m.Channel.SendMessageAsync("", false, builder.Build());
 
                     // ONE TIME CODE TO BE DELETED
