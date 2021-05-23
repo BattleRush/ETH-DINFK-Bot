@@ -64,8 +64,11 @@ namespace ETHDINFKBot.Handlers
                 await CreateOrUpdateDBUser();
                 ProcessEmote(ReactionEmote);
 
-                SaveReaction(ReactionEmote);
-                UpvoteReactionToPullRequests(ReactionEmote);
+                if (AddedReaction)
+                {
+                    SaveReaction(ReactionEmote);
+                    UpvoteReactionToPullRequests(ReactionEmote);
+                }
             }
         }
 
@@ -116,8 +119,8 @@ namespace ETHDINFKBot.Handlers
                     LastUpdatedAt = DateTime.Now, // todo chech changes
                     LocalPath = null
                 };
-                
-                DatabaseManager.ProcessDiscordEmote(discordEmote, Message.Id, AddedReaction ? 1: -1, true, SocketGuildReactionUser, false);
+
+                DatabaseManager.ProcessDiscordEmote(discordEmote, Message.Id, AddedReaction ? 1 : -1, true, SocketGuildReactionUser, false);
                 //Program.GlobalStats.EmojiInfoUsage.Single(i => i.EmojiId == emote.Id).UsedAsReaction++;
             }
             catch (Exception ex)
@@ -137,8 +140,6 @@ namespace ETHDINFKBot.Handlers
 
         private async void SaveReaction(Emote reactionEmote)
         {
-
-
             if (reactionEmote.Id == DiscordEmotes["savethis"] && !SocketGuildReactionUser.IsBot)
             {
                 // Save the post link
@@ -161,19 +162,34 @@ namespace ETHDINFKBot.Handlers
                 {
                     DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, Message.Content);
 
-                    // Send a DM to the user
-                    await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
-                        $"{Message.Content} {Environment.NewLine}" +
-                        $"Direct link: [{SocketGuild.Name}/{SocketGuildChannel.Name}/by {authorUsername}] <{link}>");
+                    if (Message.Content.Length > 1750)
+                    {
+                        // the message is too big to send with other content
+                        // Send a DM to the user
+                        await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
+                            $"Direct link: [{SocketGuild.Name}/{SocketGuildChannel.Name}/by {authorUsername}] <{link}>");
+
+                        // Send a DM to the user
+                        await SocketGuildReactionUser.SendMessageAsync(Message.Content);
+                    }
+                    else
+                    {
+                        // Send a DM to the user
+                        await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
+                            $"{Message.Content} {Environment.NewLine}" +
+                            $"Direct link: [{SocketGuild.Name}/{SocketGuildChannel.Name}/by {authorUsername}] <{link}>");
+                    }
                 }
 
-                foreach (var item in Message.Embeds)
+                // Save embeds only from bots (as users cant send them directly)
+                if (Message.Author.IsBot)
                 {
-                    DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, "Embed: " + item.ToString());
-                    await SocketGuildReactionUser.SendMessageAsync("", false, (Embed)item);
+                    foreach (var item in Message.Embeds)
+                    {
+                        DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, "Embed: " + item.ToString());
+                        await SocketGuildReactionUser.SendMessageAsync("", false, (Embed)item);
+                    }
                 }
-
-
 
                 foreach (var item in Message.Attachments)
                 {
