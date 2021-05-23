@@ -1435,6 +1435,9 @@ namespace ETHDINFKBot
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
+                if (GetDiscordMessageById(messageId) == null)
+                    return false; // this message isnt tracked
+
                 try
                 {
                     //var user = GetDiscordUserById(byDiscordUserId); // Verify the user is created but should actually be available by this poitn
