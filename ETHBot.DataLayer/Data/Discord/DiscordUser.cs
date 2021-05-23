@@ -29,6 +29,7 @@ namespace ETHBot.DataLayer.Data.Discord
         public string Nickname { get; set; }
         public int FirstDailyPostCount { get; set; }
         public bool AllowedPlaceMultipixel { get; set; }
+        public int FirstAfternoonPostCount { get; set; }
         //public IReadOnlyCollection<ulong> RoleIds { get; } // TODO for db
 
         //public ICollection<BannedLink> BannedLinks { get; set; }
