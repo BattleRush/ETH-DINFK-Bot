@@ -82,18 +82,17 @@ namespace ETHDINFKBot.Helpers
             }
         }
 
-
-
         public static async void DeleteMessage(IMessage message, TimeSpan timespan, string auditLogReason = null)
         {
-            await Task.Delay(timespan);
-            await message.DeleteAsync(new RequestOptions() { AuditLogReason = auditLogReason });
+            try
+            {
+                await Task.Delay(timespan);
+                await message.DeleteAsync(new RequestOptions() { AuditLogReason = auditLogReason });
+            }
+            catch(Exception ex)
+            {
+                // do nothing -> usually a 404 error as the message is already removed
+            }
         }
-
-
-
-
-
-
     }
 }
