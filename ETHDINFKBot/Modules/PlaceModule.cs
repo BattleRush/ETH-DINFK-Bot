@@ -1691,7 +1691,7 @@ If you violate the server rules your pixels will be removed.
 #endif
 
             builder.WithTitle("ETH DINFK Place Multipixel Jobs");
-            builder.WithDescription($@"View jour last 10 Multipixel Jobs and their status
+            builder.WithDescription($@"View your last 10 Multipixel Jobs and their status
 {prefix}place multipixel <file> (To start a new job)
 {prefix}place cancelmultipixel <id> (To cancel an active job)");
 
