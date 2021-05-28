@@ -280,7 +280,7 @@ namespace ETHDINFKBot.Handlers
 
                             builder.WithCurrentTimestamp();
                             builder.AddField("Suggestion", Message.Content);
-
+                            builder.AddField("Up/Downvotes", "<:this:"+ DiscordEmotes["this"]+ "> " + upvoteCount.Value.ReactionCount + " / <:that:"+ DiscordEmotes["that"]+ "> " + downvoteCount.Value.ReactionCount);
                             var link = $"https://discord.com/channels/{SocketGuild.Id}/{SocketGuildChannel.Id}/{Message.Id}";
 
                             builder.AddField("Link", $"[Message]({link})");
