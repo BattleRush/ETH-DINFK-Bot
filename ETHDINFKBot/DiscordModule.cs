@@ -88,9 +88,9 @@ namespace ETHDINFKBot
 
             EmbedBuilder builder = new EmbedBuilder();
 
-            builder.WithTitle("Source code for BattleRush's Helper (thats me)");
+            builder.WithTitle("Source code for BattleRush's Helper (that's me)");
             //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
-            builder.WithDescription(@"TODO Create some meaningfull text here to go with such an awesome bot.
+            builder.WithDescription(@"TODO Create some meaningful text here to go with such an awesome bot.
 **Bot Source code: **
 **https://github.com/BattleRush/ETH-DINFK-Bot**
 
@@ -233,7 +233,7 @@ namespace ETHDINFKBot
             prefix = "dev.";
 #endif
 
-            builder.WithDescription($@"Prefix for all comands is ""{prefix}""
+            builder.WithDescription($@"Prefix for all commands is ""{prefix}""
 Help is in EBNF form, so I hope for you all reading this actually paid attention to Thomas how to use it");
 
 
