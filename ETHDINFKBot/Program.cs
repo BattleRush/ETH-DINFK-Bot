@@ -38,6 +38,7 @@ using NetCoreServer;
 using System.Text;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace ETHDINFKBot
 {
@@ -197,6 +198,13 @@ namespace ETHDINFKBot
                 //BackupDBOnStartup();
 
                 new Program().MainAsync(DiscordToken).GetAwaiter().GetResult();
+            }
+            catch(BadImageFormatException bife)
+            {
+                // In this case the update is running and the process loaded a half uploaded dll
+                // -> RESTART
+
+                Process.GetCurrentProcess().Kill();
             }
             catch (Exception ex)
             {
