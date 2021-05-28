@@ -377,8 +377,18 @@ namespace ETHDINFKBot
 
         private Task Client_Log(LogMessage arg)
         {
+            if(arg.Severity == LogSeverity.Error)
+            {
+                if(arg.Exception is BadImageFormatException)
+                {
+                    // In this case the update is running and the process loaded a half uploaded dll
+                    // -> RESTART
+                    Thread.Sleep(1000);
+                    Process.GetCurrentProcess().Kill();
+                }
+            }
             if (arg.Severity == LogSeverity.Error || arg.Severity == LogSeverity.Critical)
-                Console.Write(arg.Message);
+                Console.Write("Discord log: " + arg.Message);
 
             return Task.CompletedTask;
             //throw new NotImplementedException();
