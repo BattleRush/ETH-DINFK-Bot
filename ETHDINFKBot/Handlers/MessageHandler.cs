@@ -211,14 +211,14 @@ namespace ETHDINFKBot.Handlers
                 }
 
                 // this that reaction
-                List<ulong> okayChannels = new List<ulong>()
+                List<ulong> pikaChannels = new List<ulong>()
                 {
                     DiscordChannels["pullrequest"]
                 };
 
-                if (okayChannels.Contains(SocketGuildChannel.Id))
+                if (pikaChannels.Contains(SocketGuildChannel.Id))
                 {
-                    await SocketMessage.AddReactionAsync(Emote.Parse($"<:okay:{DiscordEmotes["okay"]}>"));
+                    await SocketMessage.AddReactionAsync(Emote.Parse($"<:pikashrugA:{DiscordEmotes["pikashrugA"]}>"));
                 }
 
                 // awww reaction
