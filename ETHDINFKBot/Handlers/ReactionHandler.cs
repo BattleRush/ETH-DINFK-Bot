@@ -262,7 +262,7 @@ namespace ETHDINFKBot.Handlers
                     var downvoteCount = Message.Reactions.Where(i => i.Key is Emote emote && emote.Id == DiscordEmotes["that"]).FirstOrDefault();
 
 
-                    if (upvoteCount.Value.ReactionCount > 10)
+                    if (upvoteCount.Value.ReactionCount > 10 && upvoteCount.Value.ReactionCount > downvoteCount.Value.ReactionCount)
                     {
                         // TODO not fixed ids
                         var adminSuggestionChannel = SocketGuild.GetTextChannel(DiscordChannels["pullrequest"]);
