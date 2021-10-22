@@ -380,13 +380,15 @@ namespace ETHDINFKBot
 #if DEBUG
             adminBotChannel = 774286694794919989;
 #endif
+            // Clear positions
+            ChannelPositions = new Dictionary<ulong, int>();
 
             // Reload orders
             foreach (var item in guild.Channels)
                 ChannelPositions.Add(item.Id, item.Position);
 
             var textChannel = guild.GetTextChannel(adminBotChannel);
-            textChannel.SendMessageAsync($"Global Channel Position lock has been updated. Reason: Channel {channelName} got {(delete ? "deleted" : "added")}. || <@153929916977643521> ||");
+            textChannel.SendMessageAsync($"Global Channel Position lock has been updated. Reason: Channel {channelName} got {(delete ? "deleted" : "added")}.");
         }
         private Task Client_ChannelDestroyed(SocketChannel channel)
         {
