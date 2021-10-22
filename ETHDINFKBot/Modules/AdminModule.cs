@@ -273,6 +273,7 @@ namespace ETHDINFKBot.Modules
                 builder.AddField("admin channel help", "This message :)");
                 builder.AddField("admin channel info", "Returns info about the current channel settings and global channel order info");
                 builder.AddField("admin channel lock <true|false>", "Locks the ordering of all channels and reverts any order changes when active");
+                builder.AddField("admin channel lockinfo", "Returns positions for all channels (if the Position lock is active)");
                 builder.AddField("admin channel preload <channelId> <amount>", "Loads old messages into the DB");
                 builder.AddField("admin channel set <permission>", "Set permissions for the current channel");
                 builder.AddField("admin channel all <permission>", "Set the MINIMUM permissions for ALL channels");
