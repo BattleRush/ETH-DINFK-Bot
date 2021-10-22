@@ -16,6 +16,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace ETHDINFKBot.Modules
@@ -330,7 +331,7 @@ namespace ETHDINFKBot.Modules
                     var currentRecord = new List<string>();
 
                     currentRecord.Add(item.Value.ToString());
-                    currentRecord.Add(channel.Name);
+                    currentRecord.Add(Regex.Replace(channel.Name, @"[^\u0000-\u007F]+", string.Empty));
                     currentRecord.Add(item.Key.ToString());
 
 
