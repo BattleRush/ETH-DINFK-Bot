@@ -407,6 +407,8 @@ namespace ETHDINFKBot
                     StopChannelPositionLock(Client.GetGuild(guildId), true, guildChannel.Name);
                 }
             }
+
+            return Task.CompletedTask;
         }
 
         private Task Client_ChannelCreated(SocketChannel channel)
@@ -426,6 +428,8 @@ namespace ETHDINFKBot
                     StopChannelPositionLock(Client.GetGuild(guildId), false, guildChannel.Name);
                 }
             }
+
+            return Task.CompletedTask;
         }
 
         private Task Client_ChannelUpdated(SocketChannel originalChannel, SocketChannel newChannel)
