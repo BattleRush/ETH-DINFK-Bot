@@ -373,7 +373,7 @@ namespace ETHDINFKBot
             await Task.Delay(-1);
         }
 
-        private void StopChannelPositionLock(SocketGuild guild, bool delete, string channelName)
+        private void ReloadChannelPositionLock(SocketGuild guild, bool delete, string channelName)
         {
             ulong adminBotChannel = 747768907992924192;
 
@@ -381,13 +381,12 @@ namespace ETHDINFKBot
             adminBotChannel = 774286694794919989;
 #endif
 
-            // Disable lock
-            var botSettings = DatabaseManager.Instance().GetBotSettings();
-            botSettings.ChannelOrderLocked = false;
-            botSettings = DatabaseManager.Instance().SetBotSettings(botSettings);
+            // Reload orders
+            foreach (var item in guild.Channels)
+                ChannelPositions.Add(item.Id, item.Position);
 
             var textChannel = guild.GetTextChannel(adminBotChannel);
-            textChannel.SendMessageAsync($"Global Channel Position lock has been disabled. Reason: Channel {channelName} got {(delete ? "deleted" : "added")}. || <@153929916977643521> ||");
+            textChannel.SendMessageAsync($"Global Channel Position lock has been updated. Reason: Channel {channelName} got {(delete ? "deleted" : "added")}. || <@153929916977643521> ||");
         }
         private Task Client_ChannelDestroyed(SocketChannel channel)
         {
@@ -403,7 +402,7 @@ namespace ETHDINFKBot
 
                 if (guildChannel.Guild.Id == guildId && botSettings.ChannelOrderLocked)
                 {
-                    StopChannelPositionLock(Client.GetGuild(guildId), true, guildChannel.Name);
+                    ReloadChannelPositionLock(Client.GetGuild(guildId), true, guildChannel.Name);
                 }
             }
 
@@ -424,7 +423,7 @@ namespace ETHDINFKBot
 
                 if (guildChannel.Guild.Id == guildId && botSettings.ChannelOrderLocked)
                 {
-                    StopChannelPositionLock(Client.GetGuild(guildId), false, guildChannel.Name);
+                    ReloadChannelPositionLock(Client.GetGuild(guildId), false, guildChannel.Name);
                 }
             }
 

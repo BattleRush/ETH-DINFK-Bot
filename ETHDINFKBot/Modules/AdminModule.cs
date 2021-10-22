@@ -294,6 +294,62 @@ namespace ETHDINFKBot.Modules
              }*/
 
 
+            [Command("lockinfo")]
+            [RequireUserPermission(GuildPermission.ManageChannels)]
+            public async Task GetLockInfo()
+            {
+                ulong guildId = 747752542741725244;
+
+#if DEBUG
+                guildId = 774286694794919986;
+#endif
+
+                var guild = Program.Client.GetGuild(guildId);
+
+
+                var channels = guild.Channels;
+
+                var sortedDict = from entry in Program.ChannelPositions orderby entry.Value ascending select entry;
+
+                List<string> header = new List<string>()
+                        {
+                            "Order",
+                            "Channel Name",
+                            "Id"
+                        };
+
+
+                List<List<string>> data = new List<List<string>>();
+
+                foreach (var item in sortedDict)
+                {
+                    var channel = channels.SingleOrDefault(i => i.Id == item.Key);
+                    if (channel == null)
+                        continue;
+
+                    var currentRecord = new List<string>();
+
+                    currentRecord.Add(item.Value.ToString());
+                    currentRecord.Add(channel.Name);
+                    currentRecord.Add(item.Key.ToString());
+
+
+                    data.Add(currentRecord);
+
+                }
+
+
+
+                var drawTable = new DrawTable(header, data, "");
+
+                var stream = await drawTable.GetImage();
+                if (stream == null)
+                    return;// todo some message
+
+                await Context.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null, new Discord.MessageReference(Context.Message.Id));
+                stream.Dispose();
+            }
+
             [Command("lock")]
             [RequireUserPermission(GuildPermission.ManageChannels)]
             public async Task LockChannelOrdering(bool lockChannels)
