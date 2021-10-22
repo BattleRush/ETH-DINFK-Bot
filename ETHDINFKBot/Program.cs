@@ -373,7 +373,7 @@ namespace ETHDINFKBot
             await Task.Delay(-1);
         }
 
-        private void StopChannelPositionLock(SocketGuild guild, bool delete)
+        private void StopChannelPositionLock(SocketGuild guild, bool delete, string channelName)
         {
             ulong adminBotChannel = 747768907992924192;
 
@@ -388,7 +388,7 @@ namespace ETHDINFKBot
 
             var textChannel = guild.GetTextChannel(adminBotChannel);
 
-            textChannel.SendMessageAsync($"Global Channel Position lock has been disabled. Reason: Channel {(delete ? "deleted": "added")}. || <@153929916977643521> ||")
+            textChannel.SendMessageAsync($"Global Channel Position lock has been disabled. Reason: Channel {channelName} got {(delete ? "deleted": "added")}. || <@153929916977643521> ||")
         }
         private Task Client_ChannelDestroyed(SocketChannel channel)
         {
@@ -400,9 +400,11 @@ namespace ETHDINFKBot
                 guildId = 774286694794919986;
 #endif
 
-                if(guildChannel.Guild.Id == guildId)
+                var botSettings = DatabaseManager.Instance().GetBotSettings();
+
+                if (guildChannel.Guild.Id == guildId && botSettings.ChannelOrderLocked)
                 {
-                    StopChannelPositionLock(Client.GetGuild(guildId), true);
+                    StopChannelPositionLock(Client.GetGuild(guildId), true, guildChannel.Name);
                 }
             }
         }
@@ -417,9 +419,11 @@ namespace ETHDINFKBot
                 guildId = 774286694794919986;
 #endif
 
-                if (guildChannel.Guild.Id == guildId)
+                var botSettings = DatabaseManager.Instance().GetBotSettings();
+
+                if (guildChannel.Guild.Id == guildId && botSettings.ChannelOrderLocked)
                 {
-                    StopChannelPositionLock(Client.GetGuild(guildId), false);
+                    StopChannelPositionLock(Client.GetGuild(guildId), false, guildChannel.Name);
                 }
             }
         }
