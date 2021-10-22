@@ -450,7 +450,8 @@ namespace ETHDINFKBot.Modules
 
                         EmbedBuilder builder = new EmbedBuilder();
                         builder.WithTitle($"Channel Info for {guildChannel.Name}");
-                        builder.WithDescription($"Global Channel position lock active: {botSettings.ChannelOrderLocked}");
+                        builder.WithDescription($"Global Channel position lock active: {botSettings.ChannelOrderLocked} for " +
+                            $"{botSettings.ChannelOrderLocked ? Program.ChannelPositions.Count : -1} channels");
                         builder.WithColor(255, 0, 0);
                         builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
 

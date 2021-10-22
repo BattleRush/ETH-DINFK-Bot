@@ -444,7 +444,7 @@ namespace ETHDINFKBot
         // TODO Cleanup -> Remove (migration only
         private Task Client_Ready()
         {
-            ulong guildId = 774286694794919986; // TODO Update
+            ulong guildId = 747752542741725244; // TODO Update
             //ulong spamChannel = 768600365602963496;
             var guild = Program.Client.GetGuild(guildId);
 
