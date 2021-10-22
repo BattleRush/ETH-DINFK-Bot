@@ -280,6 +280,33 @@ namespace ETHDINFKBot
             }
         }
 
+        public BotSetting SetBotSettings(BotSetting botSetting)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    // todo improve and better search
+                    var settings = context.BotSetting.FirstOrDefault();
+
+                    // temp workaround
+                    if (settings != null)
+                    {
+                        settings.ChannelOrderLocked = botSetting.ChannelOrderLocked;
+                    }
+
+                    context.SaveChanges();
+
+                    return settings;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
         // todo maybe a helpter method in case the local image is missing
         /*public EmojiStatistic SaveEmoteImage(ulong id, byte[] data)
         {

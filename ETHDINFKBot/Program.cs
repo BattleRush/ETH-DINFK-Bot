@@ -103,20 +103,11 @@ namespace ETHDINFKBot
         public static PlaceServer PlaceServer;
 
 
-
-        //private static BotStats BotStats = new BotStats()
-        //{
-        //    DiscordUsers = new List<Stats.DiscordUser>()
-        //};
+        // Used for restoring channel ordering (TODO Maybe move that info into the DB?)
+        public static Dictionary<ulong, int> ChannelPositions = new Dictionary<ulong, int>();
 
 
-        //private static GlobalStats GlobalStats = new GlobalStats()
-        //{
-        //    EmojiInfoUsage = new List<EmojiInfo>(),
-        //    PingInformation = new List<PingInformation>()
-        //};
 
-        //private static List<ReportInfo> BlackList = new List<ReportInfo>();
 
         private DatabaseManager DatabaseManager = DatabaseManager.Instance();
         private LogManager LogManager = new LogManager(DatabaseManager.Instance());
@@ -199,7 +190,7 @@ namespace ETHDINFKBot
 
                 new Program().MainAsync(DiscordToken).GetAwaiter().GetResult();
             }
-            catch(BadImageFormatException bife)
+            catch (BadImageFormatException bife)
             {
                 // In this case the update is running and the process loaded a half uploaded dll
                 // -> RESTART
@@ -247,6 +238,7 @@ namespace ETHDINFKBot
 
         public async Task MainAsync(string token)
         {
+            // TODO MOVE WEBSOCKET STUFF
 
             /*
             // TODO If debug -> dont use secure
@@ -304,6 +296,7 @@ namespace ETHDINFKBot
             }
             else
             {
+#if false
                 string www = @"C:\Temp\wss";
                 // Create and prepare a new SSL server context
                 //var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
@@ -316,6 +309,7 @@ namespace ETHDINFKBot
                 Console.Write("Server starting...");
                 PlaceServer.Start();
                 Console.WriteLine("Done!");
+#endif
             }
 
 
@@ -340,6 +334,8 @@ namespace ETHDINFKBot
             Client.RoleCreated += Client_RoleCreated;
             Client.Ready += Client_Ready;
 
+            Client.ChannelUpdated += Client_ChannelUpdated;
+
             Client.Log += Client_Log;
 
             await Client.LoginAsync(TokenType.Bot, token);
@@ -362,11 +358,11 @@ namespace ETHDINFKBot
             await commands.AddModulesAsync(Assembly.GetEntryAssembly(), services);
 
 
-            if (DatabaseManager.GetDiscordServerById(747752542741725244) == null)
+            /*if (DatabaseManager.GetDiscordServerById(747752542741725244) == null)
             {
                 // in ready event we should start the migration
                 TempDisableIncomming = true;
-            }
+            }*/
 
             PlaceMultipixelHandler multipixelHandler = new PlaceMultipixelHandler();
             multipixelHandler.MultiPixelProcess();
@@ -375,11 +371,54 @@ namespace ETHDINFKBot
             await Task.Delay(-1);
         }
 
+        private Task Client_ChannelUpdated(SocketChannel originalChannel, SocketChannel newChannel)
+        {
+            if (originalChannel is SocketGuildChannel originalGuildChannel
+                && newChannel is SocketGuildChannel newGuildChannel)
+            {
+                ulong guildId = 747752542741725244;
+
+                // only for 1 specific server
+                if (originalGuildChannel.Guild.Id != guildId)
+                    return Task.CompletedTask;
+
+                if (originalGuildChannel.Position != newGuildChannel.Position)
+                {
+                    // ORDER CHANGED
+
+                    // Detect if the order is correct
+                    if (ChannelPositions.ContainsKey(newGuildChannel.Id)
+                        && ChannelPositions[newGuildChannel.Id] != newGuildChannel.Position)
+                    {
+                        // Used when some channel has been reordered to restore the order back
+                        var currentBotSettings = DatabaseManager.GetBotSettings();
+
+                        // TODO Setting
+                        ulong adminBotChannel = 747768907992924192;
+                        var guild = Program.Client.GetGuild(guildId);
+
+                        var textChannel = guild.GetTextChannel(adminBotChannel);
+                        //textChannel.SendMessageAsync();
+
+                        if (currentBotSettings.ChannelOrderLocked)
+                        {
+                            // only reorder if setting active
+                            newGuildChannel.ModifyAsync(c => c.Position = ChannelPositions[newGuildChannel.Id]);
+
+                            textChannel.SendMessageAsync($"Reordered {newGuildChannel.Name} from Position {originalGuildChannel.Position} to {newGuildChannel.Position}");
+                        }
+                    }
+                }
+            }
+
+            return Task.CompletedTask;
+        }
+
         private Task Client_Log(LogMessage arg)
         {
-            if(arg.Severity == LogSeverity.Error)
+            if (arg.Severity == LogSeverity.Error)
             {
-                if(arg.Exception is BadImageFormatException)
+                if (arg.Exception is BadImageFormatException)
                 {
                     // In this case the update is running and the process loaded a half uploaded dll
                     // -> RESTART
@@ -402,16 +441,26 @@ namespace ETHDINFKBot
         //    await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
         //}
 
+        // TODO Cleanup -> Remove (migration only
         private Task Client_Ready()
         {
+            ulong guildId = 774286694794919986; // TODO Update
+            //ulong spamChannel = 768600365602963496;
+            var guild = Program.Client.GetGuild(guildId);
+
+            // list should always be empty
+
+            foreach (var item in guild.Channels)
+                ChannelPositions.Add(item.Id, item.Position);
+
+            return Task.CompletedTask;
+
             if (!TempDisableIncomming)
                 return Task.CompletedTask;
             //OnlyHereToTestMyBadCodingSkills
 
             // todo config
-            ulong guildId = 747752542741725244;
-            ulong spamChannel = 768600365602963496;
-            var guild = Program.Client.GetGuild(guildId);
+/*
 
             var textChannel = guild.GetTextChannel(spamChannel);
 
@@ -501,7 +550,7 @@ namespace ETHDINFKBot
                 /*count = migration.MigrateDiscordMessages(textChannel);
                 textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordMessagess");
                 */
-
+/*
                 textChannel.SendMessageAsync($"Migration done. Releasing DB.");
             }
             catch (Exception ex)
@@ -509,7 +558,7 @@ namespace ETHDINFKBot
                 textChannel.SendMessageAsync(ex.ToString());
             }
 
-            TempDisableIncomming = false;
+            TempDisableIncomming = false;*/
 
             return Task.CompletedTask;
         }
@@ -1326,7 +1375,7 @@ Rebooting.........");
             // 20
             for (int i = 1; i < 11; i++)
             {
-                string line = left[10] + middle[i] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + right[0]; 
+                string line = left[10] + middle[i] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + right[0];
                 await progressBar.ModifyAsync(msg => msg.Content = line);
                 Thread.Sleep(1100);
             }

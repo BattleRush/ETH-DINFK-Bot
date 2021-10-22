@@ -18,5 +18,6 @@ namespace ETHBot.DataLayer.Data
         [StringLength(255)]
         public string LastSpaceXRedditPost { get; set; }
         public bool PlaceLocked { get; set; }
+        public bool ChannelOrderLocked { get; set; }
     }
 }

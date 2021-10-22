@@ -270,7 +270,8 @@ namespace ETHDINFKBot.Modules
 
                 builder.WithCurrentTimestamp();
                 builder.AddField("admin channel help", "This message :)");
-                builder.AddField("admin channel info", "Returns info about the current channel settings");
+                builder.AddField("admin channel info", "Returns info about the current channel settings and global channel order info");
+                builder.AddField("admin channel lock <true|false>", "Locks the ordering of all channels and reverts any order changes when active");
                 builder.AddField("admin channel preload <channelId> <amount>", "Loads old messages into the DB");
                 builder.AddField("admin channel set <permission>", "Set permissions for the current channel");
                 builder.AddField("admin channel all <permission>", "Set the MINIMUM permissions for ALL channels");
@@ -292,6 +293,41 @@ namespace ETHDINFKBot.Modules
                          yield return value;
              }*/
 
+
+            [Command("lock")]
+            [RequireUserPermission(GuildPermission.ManageChannels)]
+            public async Task LockChannelOrdering(bool lockChannels)
+            {
+                // allow for people that can manage channels to lock the ordering
+
+                var botSettings = DatabaseManager.Instance().GetBotSettings();
+                botSettings.ChannelOrderLocked = lockChannels;
+                botSettings = DatabaseManager.Instance().SetBotSettings(botSettings);
+
+                Context.Message.Channel.SendMessageAsync($"Set Global Postion Lock to: {botSettings.ChannelOrderLocked}");
+
+                if (botSettings.ChannelOrderLocked)
+                {
+                    // TODO Setting
+                    ulong guildId = 747752542741725244;
+                    
+                    var guild = Program.Client.GetGuild(guildId);
+
+                    Program.ChannelPositions = new Dictionary<ulong, int>();
+
+                    // refresh the current order
+                    foreach (var item in guild.Channels)
+                        Program.ChannelPositions.Add(item.Id, item.Position);
+
+
+                    Context.Message.Channel.SendMessageAsync($"Saved ordering for: {Program.ChannelPositions.Count}");
+                }
+                else
+                {
+                    // do nothing
+                }
+            }
+
             [Command("preload")]
             public async Task PreloadOldMessages(ulong channelId, int count = 1000)
             {
@@ -311,7 +347,7 @@ namespace ETHDINFKBot.Modules
                 if (oldestMessage == null)
                     return;
 
-                //var messages = channel.GetMessagesAsync(100000).FlattenAsync(); //defualt is 100
+                //var messages = channel.GetMessagesAsync(100000).FlattenAsync(); //default is 100
 
                 var messagesFromMsg = await channel.GetMessagesAsync(oldestMessage.Value, Direction.Before, count).FlattenAsync();
 
@@ -388,10 +424,12 @@ namespace ETHDINFKBot.Modules
             }
 
             [Command("info")]
+
             public async Task GetChannelInfoAsync(bool all = false)
             {
+                var guildUser = Context.Message.Author as SocketGuildUser;
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (!(author.Id == ETHDINFKBot.Program.Owner || guildUser.GuildPermissions.ManageChannels))
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -402,6 +440,7 @@ namespace ETHDINFKBot.Modules
                     if (!all)
                     {
                         var channelInfo = DatabaseManager.Instance().GetChannelSetting(guildChannel.Id);
+                        var botSettings = DatabaseManager.Instance().GetBotSettings();
 
                         if (channelInfo == null)
                         {
@@ -411,7 +450,8 @@ namespace ETHDINFKBot.Modules
 
                         EmbedBuilder builder = new EmbedBuilder();
                         builder.WithTitle($"Channel Info for {guildChannel.Name}");
-                        builder.WithColor(255, 0, 0); 
+                        builder.WithDescription($"Global Channel position lock active: {botSettings.ChannelOrderLocked}");
+                        builder.WithColor(255, 0, 0);
                         builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
 
                         builder.WithCurrentTimestamp();
