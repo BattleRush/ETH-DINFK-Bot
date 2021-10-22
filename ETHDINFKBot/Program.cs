@@ -387,7 +387,6 @@ namespace ETHDINFKBot
             botSettings = DatabaseManager.Instance().SetBotSettings(botSettings);
 
             var textChannel = guild.GetTextChannel(adminBotChannel);
-
             textChannel.SendMessageAsync($"Global Channel Position lock has been disabled. Reason: Channel {channelName} got {(delete ? "deleted" : "added")}. || <@153929916977643521> ||");
         }
         private Task Client_ChannelDestroyed(SocketChannel channel)
