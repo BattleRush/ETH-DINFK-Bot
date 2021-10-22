@@ -335,6 +335,8 @@ namespace ETHDINFKBot
             Client.Ready += Client_Ready;
 
             Client.ChannelUpdated += Client_ChannelUpdated;
+            Client.ChannelCreated += Client_ChannelCreated;
+            Client.ChannelDestroyed += Client_ChannelDestroyed;
 
             Client.Log += Client_Log;
 
@@ -371,12 +373,69 @@ namespace ETHDINFKBot
             await Task.Delay(-1);
         }
 
+        private void StopChannelPositionLock(SocketGuild guild, bool delete)
+        {
+            ulong adminBotChannel = 747768907992924192;
+
+#if DEBUG
+            adminBotChannel = 774286694794919989;
+#endif
+
+            // Disable lock
+            var botSettings = DatabaseManager.Instance().GetBotSettings();
+            botSettings.ChannelOrderLocked = false;
+            botSettings = DatabaseManager.Instance().SetBotSettings(botSettings);
+
+            var textChannel = guild.GetTextChannel(adminBotChannel);
+
+            textChannel.SendMessageAsync($"Global Channel Position lock has been disabled. Reason: Channel {(delete ? "deleted": "added")}. || <@153929916977643521> ||")
+        }
+        private Task Client_ChannelDestroyed(SocketChannel channel)
+        {
+            if (channel is SocketGuildChannel guildChannel)
+            {
+                ulong guildId = 747752542741725244;
+
+#if DEBUG
+                guildId = 774286694794919986;
+#endif
+
+                if(guildChannel.Guild.Id == guildId)
+                {
+                    StopChannelPositionLock(Client.GetGuild(guildId), true);
+                }
+            }
+        }
+
+        private Task Client_ChannelCreated(SocketChannel channel)
+        {
+            if (channel is SocketGuildChannel guildChannel)
+            {
+                ulong guildId = 747752542741725244;
+
+#if DEBUG
+                guildId = 774286694794919986;
+#endif
+
+                if (guildChannel.Guild.Id == guildId)
+                {
+                    StopChannelPositionLock(Client.GetGuild(guildId), false);
+                }
+            }
+        }
+
         private Task Client_ChannelUpdated(SocketChannel originalChannel, SocketChannel newChannel)
         {
             if (originalChannel is SocketGuildChannel originalGuildChannel
                 && newChannel is SocketGuildChannel newGuildChannel)
             {
                 ulong guildId = 747752542741725244;
+                ulong adminBotChannel = 747768907992924192;
+
+#if DEBUG
+                guildId = 774286694794919986;
+                adminBotChannel = 774286694794919989;
+#endif
 
                 // only for 1 specific server
                 if (originalGuildChannel.Guild.Id != guildId)
@@ -394,7 +453,6 @@ namespace ETHDINFKBot
                         var currentBotSettings = DatabaseManager.GetBotSettings();
 
                         // TODO Setting
-                        ulong adminBotChannel = 747768907992924192;
                         var guild = Program.Client.GetGuild(guildId);
 
                         var textChannel = guild.GetTextChannel(adminBotChannel);
@@ -445,6 +503,9 @@ namespace ETHDINFKBot
         private Task Client_Ready()
         {
             ulong guildId = 747752542741725244; // TODO Update
+#if DEBUG
+            guildId = 774286694794919986;
+#endif
             //ulong spamChannel = 768600365602963496;
             var guild = Program.Client.GetGuild(guildId);
 

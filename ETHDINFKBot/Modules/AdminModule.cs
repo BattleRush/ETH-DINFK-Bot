@@ -310,7 +310,11 @@ namespace ETHDINFKBot.Modules
                 {
                     // TODO Setting
                     ulong guildId = 747752542741725244;
-                    
+
+#if DEBUG
+                    guildId = 774286694794919986;
+#endif
+
                     var guild = Program.Client.GetGuild(guildId);
 
                     Program.ChannelPositions = new Dictionary<ulong, int>();
