@@ -387,8 +387,8 @@ namespace ETHDINFKBot
             foreach (var item in guild.Channels)
                 ChannelPositions.Add(item.Id, item.Position);
 
-            var textChannel = guild.GetTextChannel(adminBotChannel);
-            textChannel.SendMessageAsync($"Global Channel Position lock has been updated. Reason: Channel {channelName} got {(delete ? "deleted" : "added")}.");
+            //var textChannel = guild.GetTextChannel(adminBotChannel);
+            //textChannel.SendMessageAsync($"Global Channel Position lock has been updated. Reason: Channel {channelName} got {(delete ? "deleted" : "added")}.");
         }
         private Task Client_ChannelDestroyed(SocketChannel channel)
         {
