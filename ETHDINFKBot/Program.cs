@@ -851,7 +851,6 @@ namespace ETHDINFKBot
 
             CollectFirstDailyPostMessages = false;
 
-
             var firstMessage = FirstDailyPostsCandidates.OrderBy(i => i.CreatedAt).First();
 
             var timeNow = SnowflakeUtils.FromSnowflake(firstMessage.Id).AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1); // CEST CONVERSION
@@ -879,7 +878,7 @@ namespace ETHDINFKBot
 
             builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST POSTER TODAY");
             builder.WithColor(0, 0, 255);
-            builder.WithDescription($"This is the {firstPoster.FirstDailyPostCount + 1}. time you are the first poster of the day. With {(timeNow - timeNow.Date).TotalMilliseconds.ToString("N0")}ms from midnight.");
+            builder.WithDescription($"This is the {DisplayWithSuffix(firstPoster.FirstDailyPostCount + 1)}. time you are the first poster of the day. With {(timeNow - timeNow.Date).TotalMilliseconds.ToString("N0")}ms from midnight.");
 
             builder.WithAuthor(firstMessage.Author);
             builder.WithCurrentTimestamp();
@@ -901,13 +900,15 @@ namespace ETHDINFKBot
             await firstMessage.Channel.SendMessageAsync(randomGif);
             await firstMessage.Channel.SendMessageAsync("", false, builder.Build());
 
+            FirstDailyPostsCandidates = new List<SocketMessage>(); // Reset
 
             DiscordUserBirthday(); // on first daily post trigger birthday messages -> TODO maybe move to a cron job
         }
 
-
         private static async void DiscordUserBirthday()
         {
+            // TODO reschedule maybe for another time or add manual trigger
+
             // select all users from the DB
             // determine who has birthday today and send a message for each user
             var allUsers = DatabaseManager.Instance().GetDiscordUsers();
@@ -922,8 +923,14 @@ namespace ETHDINFKBot
                 if (userCreatedAt.Month == now.Month && userCreatedAt.Day == now.Day)
                 {
                     // birthday kid
-                    // TODO Consider the poor souls that decided to create their account on the 29. Feb
+                    birthdayUsers.Add(user);
+                }
 
+                // Feb 29 kids (only in non leap years)
+                if(now.Day == 28 && now.Month == 2 
+                    && userCreatedAt.Day == 29 && userCreatedAt.Month == 2
+                    && !DateTime.IsLeapYear(now.Year))
+                {
                     birthdayUsers.Add(user);
                 }
             }
@@ -935,13 +942,18 @@ namespace ETHDINFKBot
                 var userCreatedAt = SnowflakeUtils.FromSnowflake(birthdayUser.DiscordUserId);
                 var now = DateTime.UtcNow;
 
-                int age = new DateTime((now - userCreatedAt).Ticks).Year;
+                // - 1 because it starts the "next" year already
+                int age = new DateTime((now.Date - userCreatedAt.Date).Ticks).Year - 1;
+
+                // Include Feb 29 kids on non leap years
+                bool isFeb29Kid = userCreatedAt.Date.Day == 29 && userCreatedAt.Date.Month == 2
+                    && !DateTime.IsLeapYear(now.Year);
 
                 EmbedBuilder builder = new EmbedBuilder();
 
                 builder.WithTitle($"{birthdayUser.Nickname ?? birthdayUser.Username} is celebrating their {DisplayWithSuffix(age)} Discord birthday today.");
-                builder.WithColor(128, 64, 255);
-                builder.WithDescription($"Happy Discord Birthday <:happe:816101506708799528>");
+                builder.WithColor(128, 64, 255); // TODO color for Feb 29?
+                builder.WithDescription($"Happy Discord Birthday <:happe:816101506708799528> {(isFeb29Kid?" (also for you Feb 29 xD)": "")}");
                 
                 var byUser = Program.Client.GetUser(birthdayUser.DiscordUserId);
 
@@ -990,8 +1002,6 @@ namespace ETHDINFKBot
             // check if the emote is a command -> block
             List<CommandInfo> commandList = commands.Commands.ToList();
 
-
-
             // ignore this channel -> high msg volume
             if (msg.Channel.Id != 819966095070330950)
             {
@@ -1030,8 +1040,8 @@ namespace ETHDINFKBot
                     LastNewDailyMessagePost = DateTime.UtcNow.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1);
 
                     // This person is the first (or one of the first) one to post a new message
-                    FirstDailyPost();
                     CollectFirstDailyPostMessages = true;
+                    FirstDailyPost();
 
                     // run it only once a day // todo find better scheduler
                     DiscordHelper.ReloadRoles(user.Guild);
@@ -1067,7 +1077,7 @@ namespace ETHDINFKBot
 
                     builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST AFTERNOON POSTER");
                     builder.WithColor(0, 0, 255);
-                    builder.WithDescription($"This is the {firstPoster.FirstAfternoonPostCount + 1}. time you are the first afternoon poster of the day. With {(timeNow.AddHours(-12) - timeNow.AddHours(-12).Date).TotalMilliseconds.ToString("N0")}ms from noon.");
+                    builder.WithDescription($"This is the {DisplayWithSuffix(firstPoster.FirstAfternoonPostCount + 1)}. time you are the first afternoon poster of the day. With {(timeNow.AddHours(-12) - timeNow.AddHours(-12).Date).TotalMilliseconds.ToString("N0")}ms from noon.");
 
                     builder.WithAuthor(msg.Author);
                     builder.WithCurrentTimestamp();
