@@ -124,7 +124,7 @@ namespace ETHDINFKBot.Data
         {
             try
             {
-                var sqlSelect = $@"SELECT COUNT(*) FROM PlaceBoardHitory WHERE PlaceBoardHistoryId > {lastPixelIdChunked}"; 
+                var sqlSelect = $@"SELECT COUNT(*) FROM PlaceBoardHistory WHERE PlaceBoardHistoryId > {lastPixelIdChunked}"; 
 
                 using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionString))
                 {
