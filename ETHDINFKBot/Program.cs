@@ -935,7 +935,7 @@ namespace ETHDINFKBot
                 }
             }
 
-            var general = Client.GetGuild(747752542741725244).GetTextChannel(747752542741725247); // #ETH-General
+            var general = Client.GetGuild(747752542741725244).GetTextChannel(768600365602963496); // #spam
 
             foreach (var birthdayUser in birthdayUsers)
             {
