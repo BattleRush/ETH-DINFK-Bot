@@ -22,6 +22,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -214,6 +215,8 @@ namespace ETHDINFKBot.Modules
         [Command("genchunk")]
         public async Task GenerateChunks()
         {
+            return;
+            /*
             Stopwatch watch = new Stopwatch();
             watch.Start();
 
@@ -321,6 +324,8 @@ namespace ETHDINFKBot.Modules
             watch.Stop();
 
             await Context.Channel.SendMessageAsync($"Done. Timelapse has been updated automatically in {watch.ElapsedMilliseconds}ms", false);
+
+            */
         }
 
         [Command("help")]
@@ -1288,7 +1293,31 @@ If you violate the server rules your pixels will be removed.
         public static int FailedPixelPlacements = 0;
 
         public static readonly object PlaceAggregateObj = new object();
-        static long OldPixelCountMod = -1;
+        //static long OldPixelCountMod = -1;
+
+        // TODO Move chunk logic into a seperate file
+        private bool IsNewChunkAvailable(PlaceDBManager dbManager)
+        {
+            var lastPixelIdChunked = GetLastPixelIdChunked(); // Get info about the last pixel id that was saved in a chunk
+            long unchunkedPixelCount = dbManager.GetUnchunkedPixels(lastPixelIdChunked);
+
+            return unchunkedPixelCount >= 100_000;
+        }
+
+        private long GetLastPixelIdChunked()
+        {
+            return DatabaseManager.Instance().GetBotSettings()?.PlacePixelIdLastChunked ?? -1;
+        }
+
+        private long GetTotalChunkedPixels()
+        {
+            int size = 100_000; // hardcoded chunk size
+            int totalChunkedPixels = (DatabaseManager.Instance().GetBotSettings()?.PlaceLastChunkId ?? 0) * size;
+
+            return totalChunkedPixels;
+        }
+
+        [MethodImpl(MethodImplOptions.Synchronized)] // TODO check if even needed
         private void AggregatePlace(PlaceDBManager dbManager)
         {
             double avgPixelTime = PixelPlacementTimeLastMinute.Average();
@@ -1305,15 +1334,19 @@ If you violate the server rules your pixels will be removed.
             PixelPlacementTimeLastMinute = new List<long>();
 
             LastStatusRefresh = DateTime.Now;
-            var totalPixelsPlaced = dbManager.GetBoardHistoryCount();
 
-            if (OldPixelCountMod > totalPixelsPlaced % 100_000)
+            var lastPixelIdChunked = GetLastPixelIdChunked();
+            var totalPixelsChunked = GetTotalChunkedPixels();
+
+            var totalPixelsPlaced = dbManager.GetBoardHistoryCount(lastPixelIdChunked, totalPixelsChunked);
+
+            if (IsNewChunkAvailable(dbManager))
             {
                 // we can generate a new chunk
                 AutomaticGenChunk();
             }
 
-            OldPixelCountMod = totalPixelsPlaced % 100_000;
+            //OldPixelCountMod = totalPixelsPlaced % 100_000;
 
             Program.Client.SetGameAsync($"{totalPixelsPlaced:N0} pixels", null, ActivityType.Watching);
             RefreshBoard(10);
@@ -1330,9 +1363,11 @@ If you violate the server rules your pixels will be removed.
         {
             Stopwatch watch = new Stopwatch();
             watch.Start();
+
             // todo config
             ulong guildId = 747752542741725244;
             ulong spamChannel = 768600365602963496;
+
             var guild = Program.Client.GetGuild(guildId);
             var textChannel = guild.GetTextChannel(spamChannel);
 
@@ -1346,92 +1381,104 @@ If you violate the server rules your pixels will be removed.
             PlaceDiscordUsers = dbManager.GetPlaceDiscordUsers();
 
             int size = 100_000;
+            var lastPixelIdChunked = GetLastPixelIdChunked();
+            var totalPixelsChunked = GetTotalChunkedPixels();
 
-            var totalPixelsPlaced = dbManager.GetBoardHistoryCount();
+            var totalPixelsPlaced = dbManager.GetBoardHistoryCount(lastPixelIdChunked, totalPixelsChunked);
             await textChannel.SendMessageAsync($"Total pixels to load {totalPixelsPlaced.ToString("N0")}", false);
 
-            short chunkId = 0;
+            //short chunkId = 0;
 
-            for (int i = 0; i < totalPixelsPlaced; i += size)
+            var botSettings = DatabaseManager.Instance().GetBotSettings();
+
+            short nextChunkId = (short)(botSettings.PlaceLastChunkId + 1);
+
+            string file = $"Chunk_{nextChunkId}.dat";
+            string filePath = Path.Combine(chunkFolder, file);
+
+
+            byte[] data = new byte[3 + size * 12];
+            data[0] = (byte)MessageEnum.GetChunk_Response; // id of response
+
+            // Chunk identifier
+            byte[] chunkIdBytes = BitConverter.GetBytes(nextChunkId);
+            data[1] = chunkIdBytes[0];
+            data[2] = chunkIdBytes[1];
+
+
+
+            // 1 entry 12 bytes -> chunk size = 1.2MB
+
+            // Repeating rel pos
+            // 0-3 | ID (int32)
+            // 4-5 | XPos (int16)
+            // 6-7 | XPos (int16)
+            // 8 | R color (byte)
+            // 9 | G color (byte)
+            // 10 | B color (byte)
+            // 11 | UserId (byte) 
+
+            // TODO Optimizations
+            // Store x/y in 10 bits each (-1.5 bytes)
+            // do aux table for users and store them in 1 byte instead of 8 bytes (-7 bytes)
+            // add custom timestamp (in seconds to save even more space) (+3/4 bytes)
+
+            int counter = 3;
+
+            var pixelHistory = dbManager.GetBoardHistory(botSettings.PlacePixelIdLastChunked, size);
+
+            if(pixelHistory.Count != size)
             {
-                chunkId++;
-
-                // check if this chunk is fully done yet
-                if (i + size > totalPixelsPlaced)
-                    break;
-
-                string file = $"Chunk_{chunkId}.dat";
-                string filePath = Path.Combine(chunkFolder, file);
-
-                if (File.Exists(filePath))
-                    continue; // this chunk has been generated to disk already
-
-                byte[] data = new byte[3 + size * 12];
-                data[0] = (byte)MessageEnum.GetChunk_Response; // id of response
-
-                // Chunk identifier
-                byte[] chunkIdBytes = BitConverter.GetBytes(chunkId);
-                data[1] = chunkIdBytes[0];
-                data[2] = chunkIdBytes[1];
-
-
-
-                // 1 entry 12 bytes -> chunk size = 1.2MB
-
-                // Repeating rel pos
-                // 0-3 | ID (int32)
-                // 4-5 | XPos (int16)
-                // 6-7 | XPos (int16)
-                // 8 | R color (byte)
-                // 9 | G color (byte)
-                // 10 | B color (byte)
-                // 11 | UserId (byte) 
-
-                // TODO Optimizations
-                // Store x/y in 10 bits each (-1.5 bytes)
-                // do aux table for users and store them in 1 byte instead of 8 bytes (-7 bytes)
-                // add custom timestamp (in seconds to save even more space) (+3/4 bytes)
-
-                int counter = 3;
-
-                var pixelHistory = dbManager.GetBoardHistory(i, size);
-
-                foreach (var item in pixelHistory)
-                {
-                    byte[] idBytes = BitConverter.GetBytes(item.PlaceBoardHistoryId);
-
-                    byte[] xBytes = BitConverter.GetBytes(item.XPos);
-                    byte[] yBytes = BitConverter.GetBytes(item.YPos);
-
-                    data[counter] = idBytes[0];
-                    data[counter + 1] = idBytes[1];
-                    data[counter + 2] = idBytes[2];
-                    data[counter + 3] = idBytes[3];
-                    counter += 4;
-
-                    data[counter] = xBytes[0];
-                    data[counter + 1] = xBytes[1];
-                    data[counter + 2] = yBytes[0];
-                    data[counter + 3] = yBytes[1];
-                    counter += 4;
-
-                    data[counter] = item.R;
-                    data[counter + 1] = item.G;
-                    data[counter + 2] = item.B;
-                    counter += 3;
-
-                    // get user id (limited currently to 255)
-                    data[counter] = Convert.ToByte(item.PlaceDiscordUserId);
-
-                    counter += 1;
-                }
-
-
-                await textChannel.SendMessageAsync($"Saved {file}", false);
-                File.WriteAllBytes(filePath, data);
+                // history is not complete
+                // TODO log the error
+                return;
             }
 
+            foreach (var item in pixelHistory)
+            {
+                byte[] idBytes = BitConverter.GetBytes(item.PlaceBoardHistoryId);
+
+                byte[] xBytes = BitConverter.GetBytes(item.XPos);
+                byte[] yBytes = BitConverter.GetBytes(item.YPos);
+
+                data[counter] = idBytes[0];
+                data[counter + 1] = idBytes[1];
+                data[counter + 2] = idBytes[2];
+                data[counter + 3] = idBytes[3];
+                counter += 4;
+
+                data[counter] = xBytes[0];
+                data[counter + 1] = xBytes[1];
+                data[counter + 2] = yBytes[0];
+                data[counter + 3] = yBytes[1];
+                counter += 4;
+
+                data[counter] = item.R;
+                data[counter + 1] = item.G;
+                data[counter + 2] = item.B;
+                counter += 3;
+
+                // get user id (limited currently to 255)
+                data[counter] = Convert.ToByte(item.PlaceDiscordUserId);
+
+                counter += 1;
+            }
+
+
+            await textChannel.SendMessageAsync($"Saved {file}", false);
+            File.WriteAllBytes(filePath, data);
+
+
             watch.Stop();
+
+
+            // save the last saved chunk
+
+            botSettings.PlaceLastChunkId = nextChunkId;
+            botSettings.PlacePixelIdLastChunked = pixelHistory.OrderBy(i => i.PlaceBoardHistoryId).Last().PlaceBoardHistoryId;
+
+            DatabaseManager.Instance().SetBotSettings(botSettings);
+
 
             await textChannel.SendMessageAsync($"Done. Timelapse has been updated automatically in {watch.ElapsedMilliseconds}ms", false);
         }
@@ -1726,7 +1773,7 @@ If you violate the server rules your pixels will be removed.
 
             var job = placeDBManager.GetPlaceMultipixelJob(multiPixelJobId);
 
-            if(job.PlaceDiscordUserId != placeDiscordUser.PlaceDiscordUserId || job.Status > (int)MultipixelJobStatus.Active)
+            if (job.PlaceDiscordUserId != placeDiscordUser.PlaceDiscordUserId || job.Status > (int)MultipixelJobStatus.Active)
             {
                 Context.Channel.SendMessageAsync($"You can only cancel your own jobs and if they are in the active state.");
                 return;

@@ -293,6 +293,8 @@ namespace ETHDINFKBot
                     if (settings != null)
                     {
                         settings.ChannelOrderLocked = botSetting.ChannelOrderLocked;
+                        settings.PlacePixelIdLastChunked = botSetting.PlacePixelIdLastChunked;
+                        settings.PlaceLastChunkId = botSetting.PlaceLastChunkId;
                     }
 
                     context.SaveChanges();
