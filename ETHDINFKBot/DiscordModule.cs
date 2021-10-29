@@ -199,6 +199,10 @@ namespace ETHDINFKBot
             builder.AddField("OS Version", $"{osVersion.ToString()}", true);
             builder.AddField("Online for", $"{ToReadableString(applicationOnlineTime)}", true);
             builder.AddField("Processor Count", $"{processorCount.ToString("N0")}", true);
+            builder.AddField("Git Branch", $"{ThisAssembly.Git.Branch}", true);
+            builder.AddField("Git Commit", $"{ThisAssembly.Git.Commit}", true);
+            builder.AddField("Last Commit", $"{ThisAssembly.Git.CommitDate}", true);
+            builder.AddField("Git Tag", $"{ThisAssembly.Git.Tag}", true);
 
             double cpuUsage = await currentProcessCpuUsage;
 
