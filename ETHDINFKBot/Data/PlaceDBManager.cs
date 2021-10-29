@@ -130,7 +130,7 @@ namespace ETHDINFKBot.Data
                 {
                     using (var command = new MySqlCommand(sqlSelect, connection))
                     {
-                        command.CommandTimeout = 30;
+                        command.CommandTimeout = 20;
                         connection.Open();
 
                         return Convert.ToInt64(command.ExecuteScalar()) - 1;
