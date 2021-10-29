@@ -120,20 +120,11 @@ namespace ETHDINFKBot.Data
             }
         }
 
-        public long GetBoardHistoryCount()
+        public long GetUnchunkedPixels(long lastPixelIdChunked)
         {
             try
             {
-                /*using (ETHBotDBContext context = new ETHBotDBContext())
-                {
-                    return context.PlaceBoardHistory.Count();
-                }*/
-
-
-                //var sqlSelect = $@"SELECT MAX(_ROWID_) FROM ""PlaceBoardHistory"" LIMIT 1;"; // since no rows are deleted we can use this query to quickly find the row count
-                var sqlSelect = $@"SELECT AUTO_INCREMENT
-FROM   information_schema.TABLES
-WHERE  TABLE_NAME = 'PlaceBoardHistory'"; // since no rows are deleted we can use this query to quickly find the row count
+                var sqlSelect = $@"SELECT COUNT(*) FROM PlaceBoardHitory WHERE PlaceBoardHistoryId > {lastPixelIdChunked}"; 
 
                 using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionString))
                 {
@@ -145,6 +136,21 @@ WHERE  TABLE_NAME = 'PlaceBoardHistory'"; // since no rows are deleted we can us
                         return Convert.ToInt64(command.ExecuteScalar()) - 1;
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return -1;
+            }
+
+        }
+
+        public long GetBoardHistoryCount(long lastPixelIdChunked, long chunkedPixels)
+        {
+            try
+            {
+                long unchunkedPixelIds = GetUnchunkedPixels(lastPixelIdChunked);
+                return chunkedPixels + unchunkedPixelIds;
             }
             catch (Exception ex)
             {
@@ -299,7 +305,7 @@ WHERE  TABLE_NAME = 'PlaceBoardHistory'"; // since no rows are deleted we can us
             }
         }
 
-        public List<PlaceBoardHistory> GetBoardHistory(int from, int amount = 100_000)
+        public List<PlaceBoardHistory> GetBoardHistory(long fromPixelId, int amount = 100_000)
         {
             /*try
             {
@@ -324,7 +330,7 @@ WHERE  TABLE_NAME = 'PlaceBoardHistory'"; // since no rows are deleted we can us
                 var sqlQuery = $@"
 SELECT *
 FROM PlaceBoardHistory
-WHERE PlaceBoardHistoryId > {from}
+WHERE PlaceBoardHistoryId > {fromPixelId}
 LIMIT {amount};";
 
                 using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionString))
@@ -728,7 +734,7 @@ VALUES ({placeUser.PlaceDiscordUserId},{x},{y},{color.R},{color.G},{color.B},@pl
                 {
                     return context.PlaceMultipixelJobs
                         .AsQueryable()
-                        .Where(i => i.PlaceDiscordUserId == placeDiscordUserId && 
+                        .Where(i => i.PlaceDiscordUserId == placeDiscordUserId &&
                         (!onlyActive || (onlyActive && (i.Status == (int)MultipixelJobStatus.Importing || i.Status == (int)MultipixelJobStatus.Ready || i.Status == (int)MultipixelJobStatus.Active))))
                         .ToList(); // fine to do as not many jobs will be in the db
                 }

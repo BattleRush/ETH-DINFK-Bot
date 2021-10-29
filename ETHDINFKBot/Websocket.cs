@@ -121,6 +121,21 @@ namespace ETHDINFKBot
             return response;
         }
 
+        // TODO duplicate from chunk gen
+        private long GetLastPixelIdChunked()
+        {
+            return DatabaseManager.Instance().GetBotSettings()?.PlacePixelIdLastChunked ?? -1;
+        }
+
+        private long GetTotalChunkedPixels()
+        {
+            int size = 100_000; // hardcoded chunk size
+            int totalChunkedPixels = (DatabaseManager.Instance().GetBotSettings()?.PlaceLastChunkId ?? 0) * size;
+
+            return totalChunkedPixels;
+        }
+        // end duplicate
+
         private byte[] GetTotalPixelCount()
         {
             byte[] returnData = new byte[5];
@@ -128,8 +143,11 @@ namespace ETHDINFKBot
 
             PlaceDBManager dbManager = PlaceDBManager.Instance();
 
+            var lastPixelIdChunked = GetLastPixelIdChunked();
+            var totalPixelsChunked = GetTotalChunkedPixels();
+
             // current limit 2.147 B pixels
-            var totalPixelsPlaced = Convert.ToInt32(dbManager.GetBoardHistoryCount());
+            var totalPixelsPlaced = Convert.ToInt32(dbManager.GetBoardHistoryCount(lastPixelIdChunked, totalPixelsChunked));
 
             byte[] pixelAmountBytes = BitConverter.GetBytes(totalPixelsPlaced);
             returnData[1] = pixelAmountBytes[0];
