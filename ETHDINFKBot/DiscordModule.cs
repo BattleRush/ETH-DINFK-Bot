@@ -187,7 +187,6 @@ namespace ETHDINFKBot
 
             builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
 
-            //builder.WithFooter($"If you can read this then ping Mert | TroNiiXx | [13]");
             builder.WithCurrentTimestamp();
             //builder.WithAuthor(author);
             builder.AddField("Version", $"{version.ToString()}", true);
@@ -251,10 +250,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
 
-            //builder.WithFooter($"If you can read this then ping Mert | TroNiiXx | [13]");
             builder.WithCurrentTimestamp();
             //builder.WithAuthor(author);
-            builder.AddField("Misc", $"```{prefix}help {prefix}version {prefix}source {prefix}stats {prefix}lb```", true);
+            builder.AddField("Misc", $"```{prefix}help {prefix}version {prefix}source {prefix}stats {prefix}ping {prefix}first```", true);
             builder.AddField("Search", $"```{prefix}google|duck <search term>```", true);
             //builder.AddField("Images", $"```{prefix}neko[avatar] {prefix}fox {prefix}waifu {prefix}baka {prefix}smug {prefix}holo {prefix}avatar {prefix}wallpaper```");
             builder.AddField("Reddit", $"```{prefix}r[p] <subreddit>|all```", true);
@@ -653,10 +651,13 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 foreach (var userRole in user.Roles)
                 {
                     ulong roleId = DiscordHelper.GetRoleIdFromMention(userRole);
-                    pingHistory.AddRange(DatabaseManager.GetLastPingHistory(5, null, roleId));
+                    pingHistory.AddRange(DatabaseManager.GetLastPingHistory(20, null, roleId));
                 }
 
-                pingHistory = pingHistory.OrderByDescending(i => i.PingHistoryId).ToList();
+                // Add reply message pings
+                pingHistory.AddRange(DatabaseManager.GetLastReplyHistory(20, user.Id));
+
+                pingHistory = pingHistory.OrderByDescending(i => i.DiscordMessageId).ToList();
 
                 EmbedBuilder builder = new EmbedBuilder();
                 builder.WithTitle($"Your last pings");
@@ -675,8 +676,11 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                     var dateTimeCET = dateTime.Add(Program.TimeZoneInfo.GetUtcOffset(DateTime.Now)); // CEST CONVERSION
 
-                    if (item.DiscordRoleId.HasValue)
+                    // RoleIds smaller than 100 cant exist due to the Id size, so they are reserved for internal code
+                    if (item.DiscordRoleId.HasValue && item.DiscordRoleId.Value >= 100)
                         messageText += $"<@{item.FromDiscordUserId}> pinged <@&{item.DiscordRoleId}> at {dateTimeCET.ToString("dd.MM HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}"; // todo check for everyone or here
+                    else if (item.DiscordRoleId.HasValue && item.DiscordRoleId.Value < 100)
+                        messageText += $"<@{item.FromDiscordUserId}> replied <@&{item.DiscordRoleId}> at {dateTimeCET.ToString("dd.MM HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}"; // todo check for everyone or here
                     else
                         messageText += $"<@{item.FromDiscordUserId}> at {dateTimeCET.ToString("dd.MM HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}";
                 }
@@ -696,7 +700,6 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             }
         }
-
 
         [Command("websocket")]
         public async Task WebsocketInfo()
@@ -2237,17 +2240,78 @@ ORDER BY RANDOM() LIMIT 1
 
         }
 
-        [Command("lb")]
-        public async Task Leaderboard()
+        private EmbedBuilder GenerateEmbedForFirstPoster(List<DiscordUser> users, bool daily)
+        {
+            // Requires atlest 3 entries
+            if (users.Count < 3)
+                return null;
+
+            EmbedBuilder builder = new EmbedBuilder();
+            builder.WithColor(25, 100, 255);
+
+            builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
+
+            builder.WithCurrentTimestamp();
+
+            builder.AddField($"Top 1 with {(daily ? users[0].FirstDailyPostCount : users[0].FirstAfternoonPostCount)} posts", users[0].Nickname ?? users[0].Username, true);
+            builder.AddField($"Top 2 with {(daily ? users[1].FirstDailyPostCount : users[1].FirstAfternoonPostCount)} posts", users[1].Nickname ?? users[1].Username, true);
+            builder.AddField($"Top 3 with {(daily ? users[2].FirstDailyPostCount : users[2].FirstAfternoonPostCount)} posts", users[2].Nickname ?? users[2].Username, true);
+
+            int top = 3;
+            foreach (var item in users.Skip(3))
+            {
+                top++;
+                builder.AddField($"Top {top} with {(daily ? item.FirstDailyPostCount : item.FirstAfternoonPostCount)} posts", item.Nickname ?? item.Username);
+            }
+
+            return builder;
+        }
+
+        private EmbedBuilder GetEmbedForFirstDailyPosts(List<DiscordUser> users)
+        {
+            var embedBuilder = GenerateEmbedForFirstPoster(users, true);
+            embedBuilder.WithTitle("First Daily posters leaderboard");
+
+            return embedBuilder;
+        }
+
+        private EmbedBuilder GetEmbedForFirstAfternoonPosts(List<DiscordUser> users)
+        {
+            var embedBuilder = GenerateEmbedForFirstPoster(users, false);
+            embedBuilder.WithTitle("First Afternoon posters leaderboard");
+
+            return embedBuilder;
+        }
+
+        [Command("first")]
+        public async Task FirstPosterLeaderboard()
         {
 
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
             try
             {
+                // TODO dynamic place number when 2 have the same score
 
                 var author = Context.Message.Author;
                 LogManager.ProcessMessage(author, BotMessageType.Other);
+
+                var topFirstDailyPosters = DatabaseManager.GetTopFirstDailyPosterDiscordUsers();
+                var topFirstAfternoonPosters = DatabaseManager.GetTopFirstAfternoonPosterDiscordUsers();
+
+
+                var firstDailyEmbed = GetEmbedForFirstDailyPosts(topFirstDailyPosters);
+                var firstAfternoonEmbed = GetEmbedForFirstAfternoonPosts(topFirstAfternoonPosters);
+
+
+                await Context.Channel.SendMessageAsync("", false, firstDailyEmbed.Build());
+                await Context.Channel.SendMessageAsync("", false, firstAfternoonEmbed.Build());
+
+
+
+
+
+
                 /*
                 var statText = DatabaseManager.GetTopEmojiStatisticByText(10);
                 var statTextBot = DatabaseManager.GetTopEmojiStatisticByBot(10);

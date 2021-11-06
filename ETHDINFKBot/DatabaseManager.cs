@@ -76,6 +76,38 @@ namespace ETHDINFKBot
             }
         }
 
+        public List<DiscordUser> GetTopFirstDailyPosterDiscordUsers(int amount = 10)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordUsers.AsQueryable().OrderByDescending(i => i.FirstDailyPostCount).Take(amount).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public List<DiscordUser> GetTopFirstAfternoonPosterDiscordUsers(int amount = 10)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordUsers.AsQueryable().OrderByDescending(i => i.FirstAfternoonPostCount).Take(amount).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
 
         public DiscordUser CreateDiscordUser(DiscordUser user)
         {
@@ -1163,6 +1195,52 @@ namespace ETHDINFKBot
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
                     return context.PingHistory.AsQueryable().Where(i => i.DiscordRoleId == roleId && i.DiscordUserId == userId).OrderByDescending(i => i.PingHistoryId).Take(amount).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Queries the last queryMessageLength messages to see if someone replied to it.
+        /// </summary>
+        /// <param name="amount"></param>
+        /// <param name="userId"></param>
+        /// <param name="queryMessageLength"></param>
+        /// <returns></returns>
+        public List<PingHistory> GetLastReplyHistory(int amount, ulong userId, int queryMessageLength = 250)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var messageIds = context.DiscordMessages.AsQueryable().Where(i => i.DiscordUserId == userId).TakeLast(queryMessageLength).Select(i => i.DiscordMessageId).ToList();
+
+                    // We query only in the last 10k messages for performance reasons
+                    var replyMessages = context.DiscordMessages.AsQueryable().TakeLast(10_000).Where(i => messageIds.Contains(i.ReplyMessageId ?? 0));
+
+                    List<PingHistory> returnValue = new List<PingHistory>();
+
+                    // Priorotize newer replies
+                    foreach (var replyMessage in replyMessages.OrderByDescending(i => i.DiscordMessageId))
+                    {
+                        returnValue.Add(new PingHistory()
+                        {
+                            DiscordMessageId = replyMessage.DiscordMessageId,
+                            DiscordRoleId = 1, // TODO Add flag to implement it better -> for now DiscordRoleId = 1 -> ReplyPing
+                            FromDiscordUserId = replyMessage.DiscordUserId,
+                            DiscordUserId = userId,
+                            PingHistoryId = -1
+                        });
+
+                        if (returnValue.Count == amount)
+                            break;
+                    }
+
+                    return returnValue;
                 }
             }
             catch (Exception ex)

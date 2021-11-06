@@ -878,7 +878,7 @@ namespace ETHDINFKBot
 
             builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST POSTER TODAY");
             builder.WithColor(0, 0, 255);
-            builder.WithDescription($"This is the {DisplayWithSuffix(firstPoster.FirstDailyPostCount + 1)}. time you are the first poster of the day. With {(timeNow - timeNow.Date).TotalMilliseconds.ToString("N0")}ms from midnight.");
+            builder.WithDescription($"This is the {DisplayWithSuffix(firstPoster.FirstDailyPostCount + 1)} time you are the first poster of the day. With {(timeNow - timeNow.Date).TotalMilliseconds.ToString("N0")}ms from midnight.");
 
             builder.WithAuthor(firstMessage.Author);
             builder.WithCurrentTimestamp();
@@ -1077,7 +1077,7 @@ namespace ETHDINFKBot
 
                     builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST AFTERNOON POSTER");
                     builder.WithColor(0, 0, 255);
-                    builder.WithDescription($"This is the {DisplayWithSuffix(firstPoster.FirstAfternoonPostCount + 1)}. time you are the first afternoon poster of the day. With {(timeNow.AddHours(-12) - timeNow.AddHours(-12).Date).TotalMilliseconds.ToString("N0")}ms from noon.");
+                    builder.WithDescription($"This is the {DisplayWithSuffix(firstPoster.FirstAfternoonPostCount + 1)} time you are the first afternoon poster of the day. With {(timeNow.AddHours(-12) - timeNow.AddHours(-12).Date).TotalMilliseconds.ToString("N0")}ms from noon.");
 
                     builder.WithAuthor(msg.Author);
                     builder.WithCurrentTimestamp();
