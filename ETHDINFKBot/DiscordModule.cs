@@ -2253,15 +2253,15 @@ ORDER BY RANDOM() LIMIT 1
 
             builder.WithCurrentTimestamp();
 
-            builder.AddField($"Top 1 with {(daily ? users[0].FirstDailyPostCount : users[0].FirstAfternoonPostCount)} posts", users[0].Nickname ?? users[0].Username, true);
-            builder.AddField($"Top 2 with {(daily ? users[1].FirstDailyPostCount : users[1].FirstAfternoonPostCount)} posts", users[1].Nickname ?? users[1].Username, true);
-            builder.AddField($"Top 3 with {(daily ? users[2].FirstDailyPostCount : users[2].FirstAfternoonPostCount)} posts", users[2].Nickname ?? users[2].Username, true);
+            builder.AddField($"Top 1 with {(daily ? users[0].FirstDailyPostCount : users[0].FirstAfternoonPostCount)} posts", users[0].Nickname ?? users[0].Username);
+            builder.AddField($"Top 2 with {(daily ? users[1].FirstDailyPostCount : users[1].FirstAfternoonPostCount)} posts", users[1].Nickname ?? users[1].Username);
+            builder.AddField($"Top 3 with {(daily ? users[2].FirstDailyPostCount : users[2].FirstAfternoonPostCount)} posts", users[2].Nickname ?? users[2].Username);
 
             int top = 3;
             foreach (var item in users.Skip(3))
             {
                 top++;
-                builder.AddField($"Top {top} with {(daily ? item.FirstDailyPostCount : item.FirstAfternoonPostCount)} posts", item.Nickname ?? item.Username);
+                builder.AddField($"Top {top} with {(daily ? item.FirstDailyPostCount : item.FirstAfternoonPostCount)} posts", item.Nickname ?? item.Username, true);
             }
 
             return builder;

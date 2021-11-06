@@ -1220,7 +1220,7 @@ namespace ETHDINFKBot
                     var messageIds = context.DiscordMessages.AsQueryable().Where(i => i.DiscordUserId == userId).TakeLast(queryMessageLength).Select(i => i.DiscordMessageId).ToList();
 
                     // We query only in the last 10k messages for performance reasons
-                    var replyMessages = context.DiscordMessages.AsQueryable().TakeLast(10_000).Where(i => messageIds.Contains(i.ReplyMessageId ?? 0));
+                    var replyMessages = context.DiscordMessages.AsQueryable().TakeLast(10_000).ToList()/*Retreive the last 10k messages into memory*/.Where(i => messageIds.Contains(i.ReplyMessageId ?? 0));
 
                     List<PingHistory> returnValue = new List<PingHistory>();
 
