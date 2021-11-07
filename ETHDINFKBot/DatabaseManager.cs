@@ -1223,7 +1223,7 @@ namespace ETHDINFKBot
                     var messageIds = context.DiscordMessages.AsQueryable().Where(i => i.DiscordUserId == userId).TakeLast(queryMessageLength).Select(i => i.DiscordMessageId).ToList();
 
                     // We query only in the last 10k messages for performance reasons
-                    var messages = context.DiscordMessages.AsQueryable().TakeLast(10_000).ToList();/*Retreive the last 10k messages into memory*///.Where(i => messageIds.Contains(i.ReplyMessageId ?? 0));
+                    var messages = context.DiscordMessages.AsQueryable().OrderByDescending(i => i.DiscordMessageId).Take(10_000);/*Retreive the last 10k messages into memory*///.Where(i => messageIds.Contains(i.ReplyMessageId ?? 0));
 
                     List<DiscordMessage> replyMessages = new List<DiscordMessage>();
 
