@@ -1220,7 +1220,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    var messageIds = context.DiscordMessages.AsQueryable().Where(i => i.DiscordUserId == userId).TakeLast(queryMessageLength).Select(i => i.DiscordMessageId).ToList();
+                    var messageIds = context.DiscordMessages.AsQueryable().Where(i => i.DiscordUserId == userId).OrderByDescending(i => i.DiscordMessageId).TakeLast(queryMessageLength).Select(i => i.DiscordMessageId).ToList();
 
                     // We query only in the last 10k messages for performance reasons
                     var messages = context.DiscordMessages.AsQueryable().OrderByDescending(i => i.DiscordMessageId).Take(10_000);/*Retreive the last 10k messages into memory*///.Where(i => messageIds.Contains(i.ReplyMessageId ?? 0));
