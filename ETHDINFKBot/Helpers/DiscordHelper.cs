@@ -156,7 +156,7 @@ namespace ETHDINFKBot.Helpers
 
                 builder.WithImageUrl(birthdayUser.AvatarUrl);
                 builder.WithAuthor(byUser);
-                builder.WithTimestamp(userCreatedAt);
+                builder.WithTimestamp(SnowflakeUtils.FromSnowflake(birthdayUser.DiscordUserId)); // has to be in UTC
 
                 //builder.WithCurrentTimestamp();
 
