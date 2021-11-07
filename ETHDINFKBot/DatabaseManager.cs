@@ -936,11 +936,13 @@ namespace ETHDINFKBot
 
         public PingStatistic GetPingStatisticByUserId(ulong userId)
         {
+            // TODO Detect duplicate DiscordUserIds -> Create Unique on DiscordUserId
             try
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.PingStatistics.SingleOrDefault(i => i.DiscordUser.DiscordUserId == userId);
+                    // TODO Change back to SingleOrDefault as soon the duplicate DiscordUserId issue is resolved
+                    return context.PingStatistics.FirstOrDefault(i => i.DiscordUser.DiscordUserId == userId);
                 }
             }
             catch (Exception ex)
@@ -1002,6 +1004,7 @@ namespace ETHDINFKBot
 
         public void AddPingStatistic(ulong userId, int count, SocketGuildUser sgUser)
         {
+            // TODO Prevent duplicates -> DB Constraint
             try
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
@@ -1027,7 +1030,7 @@ namespace ETHDINFKBot
                     else
                     {
                         // todo cleanup for perf im just lazy :/
-                        var currStat = context.PingStatistics.SingleOrDefault(i => i.DiscordUser.DiscordUserId == userId);
+                        var currStat = context.PingStatistics.FirstOrDefault(i => i.DiscordUser.DiscordUserId == userId);
 
                         currStat.PingCountOnce += !sgUser.IsBot ? 1 : 0;
                         currStat.PingCount += !sgUser.IsBot ? count : 0;
@@ -1220,7 +1223,16 @@ namespace ETHDINFKBot
                     var messageIds = context.DiscordMessages.AsQueryable().Where(i => i.DiscordUserId == userId).TakeLast(queryMessageLength).Select(i => i.DiscordMessageId).ToList();
 
                     // We query only in the last 10k messages for performance reasons
-                    var replyMessages = context.DiscordMessages.AsQueryable().TakeLast(10_000).ToList()/*Retreive the last 10k messages into memory*/.Where(i => messageIds.Contains(i.ReplyMessageId ?? 0));
+                    var messages = context.DiscordMessages.AsQueryable().TakeLast(10_000).ToList();/*Retreive the last 10k messages into memory*///.Where(i => messageIds.Contains(i.ReplyMessageId ?? 0));
+
+                    List<DiscordMessage> replyMessages = new List<DiscordMessage>();
+
+                    // TODO Check performance -> create a direct SQL query for better perf
+                    foreach (var message in messages)
+                    {
+                        if (messageIds.Contains(message.ReplyMessageId ?? 0))
+                            replyMessages.Add(message);
+                    }
 
                     List<PingHistory> returnValue = new List<PingHistory>();
 
