@@ -105,13 +105,13 @@ namespace ETHDINFKBot.Helpers
             // select all users from the DB
             // determine who has birthday today and send a message for each user
             var allUsers = DatabaseManager.Instance().GetDiscordUsers();
+            var now = DateTime.UtcNow.AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(DateTime.UtcNow) ? 2 : 1);
 
             List<DiscordUser> birthdayUsers = new List<DiscordUser>();
 
             foreach (var user in allUsers)
             {
-                var userCreatedAt = SnowflakeUtils.FromSnowflake(user.DiscordUserId);
-                var now = DateTime.UtcNow;
+                var userCreatedAt = SnowflakeUtils.FromSnowflake(user.DiscordUserId).AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(DateTime.UtcNow) ? 2 : 1);
 
                 if (userCreatedAt.Month == now.Month && userCreatedAt.Day == now.Day)
                 {
@@ -132,8 +132,7 @@ namespace ETHDINFKBot.Helpers
 
             foreach (var birthdayUser in birthdayUsers)
             {
-                var userCreatedAt = SnowflakeUtils.FromSnowflake(birthdayUser.DiscordUserId);
-                var now = DateTime.UtcNow;
+                var userCreatedAt = SnowflakeUtils.FromSnowflake(birthdayUser.DiscordUserId).AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(DateTime.UtcNow) ? 2 : 1);
 
                 // - 1 because it starts the "next" year already
                 int age = new DateTime((now.Date - userCreatedAt.Date).Ticks).Year - 1;
