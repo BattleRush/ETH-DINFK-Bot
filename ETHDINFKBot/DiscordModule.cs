@@ -682,7 +682,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     else if (item.DiscordRoleId.HasValue && item.DiscordRoleId.Value < 100)
                         messageText += $"<@{item.FromDiscordUserId}> replied at {dateTimeCET.ToString("dd.MM HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}"; // todo check for everyone or here
                     else
-                        messageText += $"<@{item.FromDiscordUserId}> at {dateTimeCET.ToString("dd.MM HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}";
+                        messageText += $"<@{item.FromDiscordUserId}> pinged at {dateTimeCET.ToString("dd.MM HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}";
                 }
 
                 messageText += Environment.NewLine;
