@@ -680,7 +680,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     if (item.DiscordRoleId.HasValue && item.DiscordRoleId.Value >= 100)
                         messageText += $"<@{item.FromDiscordUserId}> pinged <@&{item.DiscordRoleId}> at {dateTimeCET.ToString("dd.MM HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}"; // todo check for everyone or here
                     else if (item.DiscordRoleId.HasValue && item.DiscordRoleId.Value < 100)
-                        messageText += $"<@{item.FromDiscordUserId}> replied <@&{item.DiscordRoleId}> at {dateTimeCET.ToString("dd.MM HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}"; // todo check for everyone or here
+                        messageText += $"<@{item.FromDiscordUserId}> replied at {dateTimeCET.ToString("dd.MM HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}"; // todo check for everyone or here
                     else
                         messageText += $"<@{item.FromDiscordUserId}> at {dateTimeCET.ToString("dd.MM HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}";
                 }
