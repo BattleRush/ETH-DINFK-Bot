@@ -252,7 +252,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             builder.WithCurrentTimestamp();
             //builder.WithAuthor(author);
-            builder.AddField("Misc", $"```{prefix}help {prefix}version {prefix}source {prefix}stats {prefix}ping {prefix}first```", true);
+            builder.AddField("Misc", $"```{prefix}help {prefix}version {prefix}source {prefix}stats {prefix}ping {prefix}first {prefix}today```", true);
             builder.AddField("Search", $"```{prefix}google|duck <search term>```", true);
             //builder.AddField("Images", $"```{prefix}neko[avatar] {prefix}fox {prefix}waifu {prefix}baka {prefix}smug {prefix}holo {prefix}avatar {prefix}wallpaper```");
             builder.AddField("Reddit", $"```{prefix}r[p] <subreddit>|all```", true);
@@ -632,6 +632,15 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 await message.AddReactionAsync(emote);
             }
             Context.Message.DeleteAsync();
+        }
+
+        [Command("today")]
+        public async Task TodaysBirthdays()
+        {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
+
+            DiscordHelper.DiscordUserBirthday(Program.Client, Context.Guild.Id, Context.Message.Channel.Id, false);
         }
 
         [Command("ping")]
@@ -2579,7 +2588,7 @@ ORDER BY RANDOM() LIMIT 1
                         {
                             byte r = x * size + y - 1 >= 0 ? bytes[x * size + y - 1] : (byte)0;
                             byte g = x * size + y - 0 >= 0 ? bytes[x * size + y - 0] : (byte)0;
-                            byte b = x * size + y + 1 < bytes.Length ? bytes[x * size + y+ 1] : (byte)0;
+                            byte b = x * size + y + 1 < bytes.Length ? bytes[x * size + y + 1] : (byte)0;
                             board.Bitmap.SetPixel(xBase + xx, yBase + yy, Color.FromArgb(r, g, b));
                         }
                     }

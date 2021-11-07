@@ -878,7 +878,7 @@ namespace ETHDINFKBot
 
             builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST POSTER TODAY");
             builder.WithColor(0, 0, 255);
-            builder.WithDescription($"This is the {DisplayWithSuffix(firstPoster.FirstDailyPostCount + 1)} time you are the first poster of the day. With {(timeNow - timeNow.Date).TotalMilliseconds.ToString("N0")}ms from midnight.");
+            builder.WithDescription($"This is the {CommonHelper.DisplayWithSuffix(firstPoster.FirstDailyPostCount + 1)} time you are the first poster of the day. With {(timeNow - timeNow.Date).TotalMilliseconds.ToString("N0")}ms from midnight.");
 
             builder.WithAuthor(firstMessage.Author);
             builder.WithCurrentTimestamp();
@@ -902,89 +902,9 @@ namespace ETHDINFKBot
 
             FirstDailyPostsCandidates = new List<SocketMessage>(); // Reset
 
-            DiscordUserBirthday(); // on first daily post trigger birthday messages -> TODO maybe move to a cron job
+            DiscordHelper.DiscordUserBirthday(Client, 747752542741725244, 768600365602963496, true); // on first daily post trigger birthday messages -> TODO maybe move to a cron job
         }
 
-        private static async void DiscordUserBirthday()
-        {
-            // TODO reschedule maybe for another time or add manual trigger
-
-            // select all users from the DB
-            // determine who has birthday today and send a message for each user
-            var allUsers = DatabaseManager.Instance().GetDiscordUsers();
-
-            List<DiscordUser> birthdayUsers = new List<DiscordUser>();
-
-            foreach (var user in allUsers)
-            {
-                var userCreatedAt = SnowflakeUtils.FromSnowflake(user.DiscordUserId);
-                var now = DateTime.UtcNow;
-
-                if (userCreatedAt.Month == now.Month && userCreatedAt.Day == now.Day)
-                {
-                    // birthday kid
-                    birthdayUsers.Add(user);
-                }
-
-                // Feb 29 kids (only in non leap years)
-                if(now.Day == 28 && now.Month == 2 
-                    && userCreatedAt.Day == 29 && userCreatedAt.Month == 2
-                    && !DateTime.IsLeapYear(now.Year))
-                {
-                    birthdayUsers.Add(user);
-                }
-            }
-
-            var general = Client.GetGuild(747752542741725244).GetTextChannel(768600365602963496); // #spam
-
-            foreach (var birthdayUser in birthdayUsers)
-            {
-                var userCreatedAt = SnowflakeUtils.FromSnowflake(birthdayUser.DiscordUserId);
-                var now = DateTime.UtcNow;
-
-                // - 1 because it starts the "next" year already
-                int age = new DateTime((now.Date - userCreatedAt.Date).Ticks).Year - 1;
-
-                // Include Feb 29 kids on non leap years
-                bool isFeb29Kid = userCreatedAt.Date.Day == 29 && userCreatedAt.Date.Month == 2
-                    && !DateTime.IsLeapYear(now.Year);
-
-                EmbedBuilder builder = new EmbedBuilder();
-
-                builder.WithTitle($"{birthdayUser.Nickname ?? birthdayUser.Username} is celebrating their {DisplayWithSuffix(age)} Discord birthday today.");
-                builder.WithColor(128, 64, 255); // TODO color for Feb 29?
-                builder.WithDescription($"Happy Discord Birthday <:happe:816101506708799528> {(isFeb29Kid?" (also for you Feb 29 xD)": "")}");
-                
-                var byUser = Program.Client.GetUser(birthdayUser.DiscordUserId);
-
-                if (byUser is null)
-                    continue;
-
-                builder.WithImageUrl(birthdayUser.AvatarUrl);
-                builder.WithAuthor(byUser);
-                builder.WithCurrentTimestamp();
-
-                var message = await general.SendMessageAsync("", false, builder.Build());
-
-                await message.AddReactionAsync(Emote.Parse($"<:yay:851469734545588234>"));
-                await message.AddReactionAsync(Emote.Parse($"<:yay:872093645212368967>"));
-                await message.AddReactionAsync(Emote.Parse($"<a:pepeD:818886775199629332>"));
-            }
-        }
-
-        // TODO MOVE TO COMMON
-        // https://stackoverflow.com/a/19553611
-        public static string DisplayWithSuffix(int num)
-        {
-            string number = num.ToString();
-            if (number.EndsWith("11")) return number + "th";
-            if (number.EndsWith("12")) return number + "th";
-            if (number.EndsWith("13")) return number + "th";
-            if (number.EndsWith("1")) return number + "st";
-            if (number.EndsWith("2")) return number + "nd";
-            if (number.EndsWith("3")) return number + "rd";
-            return number + "th";
-        }
 
         public async Task HandleCommandAsync(SocketMessage m)
         {
@@ -1077,7 +997,7 @@ namespace ETHDINFKBot
 
                     builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST AFTERNOON POSTER");
                     builder.WithColor(0, 0, 255);
-                    builder.WithDescription($"This is the {DisplayWithSuffix(firstPoster.FirstAfternoonPostCount + 1)} time you are the first afternoon poster of the day. With {(timeNow.AddHours(-12) - timeNow.AddHours(-12).Date).TotalMilliseconds.ToString("N0")}ms from noon.");
+                    builder.WithDescription($"This is the {CommonHelper.DisplayWithSuffix(firstPoster.FirstAfternoonPostCount + 1)} time you are the first afternoon poster of the day. With {(timeNow.AddHours(-12) - timeNow.AddHours(-12).Date).TotalMilliseconds.ToString("N0")}ms from noon.");
 
                     builder.WithAuthor(msg.Author);
                     builder.WithCurrentTimestamp();

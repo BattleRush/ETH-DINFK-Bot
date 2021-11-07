@@ -95,5 +95,82 @@ namespace ETHDINFKBot.Helpers
                 // do nothing -> usually a 404 error as the message is already removed
             }
         }
+
+
+
+        public static async void DiscordUserBirthday(DiscordSocketClient client, ulong guildId, ulong channelId, bool reactions)
+        {
+            // TODO reschedule maybe for another time or add manual trigger
+
+            // select all users from the DB
+            // determine who has birthday today and send a message for each user
+            var allUsers = DatabaseManager.Instance().GetDiscordUsers();
+
+            List<DiscordUser> birthdayUsers = new List<DiscordUser>();
+
+            foreach (var user in allUsers)
+            {
+                var userCreatedAt = SnowflakeUtils.FromSnowflake(user.DiscordUserId);
+                var now = DateTime.UtcNow;
+
+                if (userCreatedAt.Month == now.Month && userCreatedAt.Day == now.Day)
+                {
+                    // birthday kid
+                    birthdayUsers.Add(user);
+                }
+
+                // Feb 29 kids (only in non leap years)
+                if (now.Day == 28 && now.Month == 2
+                    && userCreatedAt.Day == 29 && userCreatedAt.Month == 2
+                    && !DateTime.IsLeapYear(now.Year))
+                {
+                    birthdayUsers.Add(user);
+                }
+            }
+
+            var general = client.GetGuild(guildId).GetTextChannel(channelId); // #spam
+
+            foreach (var birthdayUser in birthdayUsers)
+            {
+                var userCreatedAt = SnowflakeUtils.FromSnowflake(birthdayUser.DiscordUserId);
+                var now = DateTime.UtcNow;
+
+                // - 1 because it starts the "next" year already
+                int age = new DateTime((now.Date - userCreatedAt.Date).Ticks).Year - 1;
+
+                // Include Feb 29 kids on non leap years
+                bool isFeb29Kid = userCreatedAt.Date.Day == 29 && userCreatedAt.Date.Month == 2
+                    && !DateTime.IsLeapYear(now.Year);
+
+                EmbedBuilder builder = new EmbedBuilder();
+
+                builder.WithTitle($"{birthdayUser.Nickname ?? birthdayUser.Username} is celebrating their {CommonHelper.DisplayWithSuffix(age)} Discord birthday today.");
+                builder.WithColor(128, 64, 255); // TODO color for Feb 29?
+                builder.WithDescription($"Happy Discord Birthday <:happe:816101506708799528> {(isFeb29Kid ? " (also for you Feb 29 xD)" : "")}");
+
+                builder.AddField("Created at", userCreatedAt.ToString()); // TODO Check timezone stuff
+
+                var byUser = Program.Client.GetUser(birthdayUser.DiscordUserId);
+
+                if (byUser is null)
+                    continue;
+
+                builder.WithImageUrl(birthdayUser.AvatarUrl);
+                builder.WithAuthor(byUser);
+                builder.WithTimestamp(userCreatedAt);
+
+                //builder.WithCurrentTimestamp();
+
+                var message = await general.SendMessageAsync("", false, builder.Build());
+
+                if (reactions)
+                {
+                    // TODO Emote library
+                    await message.AddReactionAsync(Emote.Parse($"<:yay:851469734545588234>"));
+                    await message.AddReactionAsync(Emote.Parse($"<:yay:872093645212368967>"));
+                    await message.AddReactionAsync(Emote.Parse($"<a:pepeD:818886775199629332>"));
+                }
+            }
+        }
     }
 }
