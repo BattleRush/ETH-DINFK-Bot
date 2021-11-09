@@ -226,6 +226,11 @@ namespace ETHDINFKBot
                     if (emote != null)
                     {
                         emote.Blocked = blockStatus;
+
+                        if(blockStatus)
+                            emote.LocalPath = null;
+                        // TODO in case of unblock reload the file
+
                         context.SaveChanges();
                         return true;
                     }
@@ -239,14 +244,18 @@ namespace ETHDINFKBot
             }
         }
 
-        public List<DiscordEmote> GetEmotesByName(string name)
+        public List<DiscordEmote> GetEmotes(string name = null, bool blocked = false)
         {
             try
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
+                    // Select all
+                    if (name == null)
+                        return context.DiscordEmotes.AsQueryable().Where(i => i.Blocked == blocked).ToList();
+
                     // todo improve and better search
-                    return context.DiscordEmotes.AsQueryable().Where(i => i.EmoteName.ToLower().Contains(name) && !i.Blocked).ToList();
+                    return context.DiscordEmotes.AsQueryable().Where(i => i.EmoteName.ToLower().Contains(name) && i.Blocked == blocked).ToList();
                 }
             }
             catch (Exception ex)

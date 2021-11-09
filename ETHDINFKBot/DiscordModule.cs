@@ -763,7 +763,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 return;
             }
 
-            var emotes = DatabaseManager.GetEmotesByName(search); // TODO dont dowload the emote data before its further filtered
+            var emotes = DatabaseManager.GetEmotes(search); // TODO dont dowload the emote data before its further filtered
 
             int count = 0;
 
