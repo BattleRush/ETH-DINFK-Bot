@@ -194,7 +194,7 @@ namespace ETHDINFKBot.Modules
 
                 // If the directory exists clean it up
                 if (Directory.Exists(archivePath))
-                    Directory.Delete(archivePath);
+                    Directory.Delete(archivePath, true);
 
                 // Create dir
                 Directory.CreateDirectory(archivePath);
@@ -241,7 +241,7 @@ namespace ETHDINFKBot.Modules
 
                 // In the end clean up the archive folder again
                 if (Directory.Exists(archivePath))
-                    Directory.Delete(archivePath);
+                    Directory.Delete(archivePath, true);
             }
             catch(Exception ex)
             {
