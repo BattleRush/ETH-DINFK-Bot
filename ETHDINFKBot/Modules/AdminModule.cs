@@ -188,67 +188,71 @@ namespace ETHDINFKBot.Modules
 
             var emotesPath = Path.Combine(Program.BasePath, "Emotes");
             var archivePath = Path.Combine(emotesPath, "Archive");
-
-            // If the directory exists clean it up
-            if (Directory.Exists(archivePath))
-                Directory.Delete(archivePath);
-
-            // Create dir
-            Directory.CreateDirectory(archivePath);
-
-            List<EmoteInfo> emoteInfos = new List<EmoteInfo>();
-
-            foreach (var emote in allEmotes)
+            
+            try
             {
-                var folder = GetEmoteFolder(emote.LocalPath);
-                emoteInfos.Add(new EmoteInfo()
-                {
-                    Id = emote.DiscordEmoteId,
-                    Name = emote.EmoteName,
-                    Animated = emote.Animated,
-                    CreatedAt = emote.CreatedAt,
-                    Url = emote.Url,
-                    Folder = folder
-                });
-            }
 
-            var emoteFolders = Directory.GetDirectories(emotesPath);
+                // If the directory exists clean it up
+                if (Directory.Exists(archivePath))
+                    Directory.Delete(archivePath);
 
-            foreach (var emoteFolder in emoteFolders)
-            {
-                // Needs to contain - else its not an active folder
-                if (emoteFolder.Contains("-"))
+                // Create dir
+                Directory.CreateDirectory(archivePath);
+
+                List<EmoteInfo> emoteInfos = new List<EmoteInfo>();
+
+                foreach (var emote in allEmotes)
                 {
-                    string tarGZFile = $"{emoteFolder}.tar.gz";
-                    CreateTarGZ(Path.Combine(archivePath, tarGZFile), emoteFolder);
+                    var folder = GetEmoteFolder(emote.LocalPath);
+                    emoteInfos.Add(new EmoteInfo()
+                    {
+                        Id = emote.DiscordEmoteId,
+                        Name = emote.EmoteName,
+                        Animated = emote.Animated,
+                        CreatedAt = emote.CreatedAt,
+                        Url = emote.Url,
+                        Folder = folder
+                    });
                 }
+
+                var emoteFolders = Directory.GetDirectories(emotesPath);
+
+                foreach (var emoteFolder in emoteFolders)
+                {
+                    // Needs to contain - else its not an active folder
+                    if (emoteFolder.Contains("-"))
+                    {
+                        string tarGZFile = $"{new DirectoryInfo(emoteFolder).Name}.tar.gz";
+                        CreateTarGZ(Path.Combine(archivePath, tarGZFile), emoteFolder);
+                    }
+                }
+
+                var archiveFiles = Directory.GetFiles(archivePath);
+                Context.Channel.SendMessageAsync($"Created {archiveFiles.Length} archives", false);
+
+                // Send file infos
+
+                var json = JsonConvert.SerializeObject(emoteInfos, Formatting.Indented);
+                var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                await Context.Channel.SendFileAsync(stream, "EmoteInfo.json", "Emote Infos");
+
+                foreach (var archiveFile in archiveFiles)
+                    await Context.Channel.SendFileAsync(archiveFile, new DirectoryInfo(archiveFile).Name);
+
+                // In the end clean up the archive folder again
+                if (Directory.Exists(archivePath))
+                    Directory.Delete(archivePath);
             }
-
-            var archiveFiles = Directory.GetFiles(archivePath);
-            Context.Channel.SendMessageAsync($"Created {archiveFiles.Length} archives", false);
-
-            // Send file infos
-
-            var json = Newtonsoft.Json.JsonConvert.SerializeObject(emoteInfos);
-            var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
-            await Context.Channel.SendFileAsync(stream, "EmoteInfo.json", "Emote Infos");
-
-            foreach (var archiveFile in archiveFiles)
+            catch(Exception ex)
             {
-                await Context.Channel.SendFileAsync(archiveFile, archiveFile);
+                string error = $"Error: {ex.ToString()}";
+                Context.Channel.SendMessageAsync(error.Substring(0, Math.Min(2000, error.Length)), false);
             }
-
-            // In the end clean up the archive folder again
-            if (Directory.Exists(archivePath))
-                Directory.Delete(archivePath);
         }
 
         private string GetEmoteFolder(string path)
         {
-            path = path.Substring(0, path.LastIndexOf('/'));
-            path = path.Substring(path.LastIndexOf('/') + 1, path.Length - path.LastIndexOf('/') - 1);
-
-            return path;
+            return new DirectoryInfo(path).Parent.Name;
         }
 
         //  https://github.com/icsharpcode/SharpZipLib/wiki/GZip-and-Tar-Samples#user-content--create-a-tgz-targz
@@ -258,6 +262,7 @@ namespace ETHDINFKBot.Modules
             Stream gzoStream = new GZipOutputStream(outStream);
             TarArchive tarArchive = TarArchive.CreateOutputTarArchive(gzoStream);
 
+            tarArchive.RootPath = sourceDirectory.Replace('\\', '/');
             if (tarArchive.RootPath.EndsWith("/"))
                 tarArchive.RootPath = tarArchive.RootPath.Remove(tarArchive.RootPath.Length - 1);
 
