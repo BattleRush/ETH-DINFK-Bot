@@ -135,6 +135,8 @@ namespace ETHDINFKBot
 
                 BotSetting = DatabaseManager.Instance().GetBotSettings();
 
+                // https://crontab.guru/
+
                 var host = new HostBuilder()
                    .ConfigureServices((hostContext, services) =>
                    {
@@ -157,6 +159,9 @@ namespace ETHDINFKBot
 
                        // TODO adjust for summer time in CET/CEST
                        services.AddCronJob<StartAllSubredditsJobs>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 * * *"; });// 4 am utc -> 5 am cet
+
+                       // TODO adjust for summer time in CET/CEST
+                       services.AddCronJob<GitPullMessageJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 23 * * TUE"; });// 22 CET each Tuesday
 
                        // TODO adjust for summer time in CET/CEST
                        //services.AddCronJob<BackupDBJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 * * *"; });// 0 am utc
