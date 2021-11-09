@@ -217,7 +217,7 @@ namespace ETHDINFKBot.Modules
 
                 var emoteFolders = Directory.GetDirectories(emotesPath);
 
-                foreach (var emoteFolder in emoteFolders)
+                foreach (var emoteFolder in emoteFolders.ToList().OrderBy(i => i))
                 {
                     // Needs to contain - else its not an active folder
                     if (emoteFolder.Contains("-"))
@@ -236,14 +236,17 @@ namespace ETHDINFKBot.Modules
                 var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
                 await Context.Channel.SendFileAsync(stream, "EmoteInfo.json", "Emote Infos");
 
-                foreach (var archiveFile in archiveFiles)
+                foreach (var archiveFile in archiveFiles.ToList().OrderBy(i => i))
                     await Context.Channel.SendFileAsync(archiveFile, new DirectoryInfo(archiveFile).Name);
 
                 // In the end clean up the archive folder again
                 if (Directory.Exists(archivePath))
                     Directory.Delete(archivePath, true);
+
+                Context.Channel.SendMessageAsync($"Done", false);
+
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 string error = $"Error: {ex.ToString()}";
                 Context.Channel.SendMessageAsync(error.Substring(0, Math.Min(2000, error.Length)), false);
