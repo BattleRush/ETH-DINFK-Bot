@@ -19,5 +19,9 @@ namespace ETHBot.DataLayer.Data
         public string LastSpaceXRedditPost { get; set; }
         public bool PlaceLocked { get; set; }
         public bool ChannelOrderLocked { get; set; }
+
+        // ID of the last PixelId that has been saved in a chunk
+        public int PlacePixelIdLastChunked { get; set; }
+        public short PlaceLastChunkId { get; set; }
     }
 }

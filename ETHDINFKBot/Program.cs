@@ -135,6 +135,8 @@ namespace ETHDINFKBot
 
                 BotSetting = DatabaseManager.Instance().GetBotSettings();
 
+                // https://crontab.guru/
+
                 var host = new HostBuilder()
                    .ConfigureServices((hostContext, services) =>
                    {
@@ -157,6 +159,9 @@ namespace ETHDINFKBot
 
                        // TODO adjust for summer time in CET/CEST
                        services.AddCronJob<StartAllSubredditsJobs>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 * * *"; });// 4 am utc -> 5 am cet
+
+                       // TODO adjust for summer time in CET/CEST
+                       services.AddCronJob<GitPullMessageJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 21 * * TUE"; });// 22 CET each Tuesday
 
                        // TODO adjust for summer time in CET/CEST
                        //services.AddCronJob<BackupDBJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 * * *"; });// 0 am utc
@@ -387,8 +392,8 @@ namespace ETHDINFKBot
             foreach (var item in guild.Channels)
                 ChannelPositions.Add(item.Id, item.Position);
 
-            var textChannel = guild.GetTextChannel(adminBotChannel);
-            textChannel.SendMessageAsync($"Global Channel Position lock has been updated. Reason: Channel {channelName} got {(delete ? "deleted" : "added")}.");
+            //var textChannel = guild.GetTextChannel(adminBotChannel);
+            //textChannel.SendMessageAsync($"Global Channel Position lock has been updated. Reason: Channel {channelName} got {(delete ? "deleted" : "added")}.");
         }
         private Task Client_ChannelDestroyed(SocketChannel channel)
         {
@@ -529,105 +534,105 @@ namespace ETHDINFKBot
             //OnlyHereToTestMyBadCodingSkills
 
             // todo config
-/*
+            /*
 
-            var textChannel = guild.GetTextChannel(spamChannel);
+                        var textChannel = guild.GetTextChannel(spamChannel);
 
-            try
-            {
-                textChannel.SendMessageAsync("Starting DB Migration");
-
-
-                MigrateSQLiteToMariaDB migration = new MigrateSQLiteToMariaDB();
-
-                int count = migration.MigrateDiscordServers();
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordServers");
-
-                count = migration.MigrateDiscordChannels();
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordChannels");
-
-                count = migration.MigrateDiscordUsers();
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordUsers");
+                        try
+                        {
+                            textChannel.SendMessageAsync("Starting DB Migration");
 
 
-                count = migration.MigrateDiscordMessages(textChannel);
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordMessagess");
+                            MigrateSQLiteToMariaDB migration = new MigrateSQLiteToMariaDB();
+
+                            int count = migration.MigrateDiscordServers();
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordServers");
+
+                            count = migration.MigrateDiscordChannels();
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordChannels");
+
+                            count = migration.MigrateDiscordUsers();
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordUsers");
 
 
-                count = migration.MigrateDiscordEmotes(textChannel);
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordEmotes");
+                            count = migration.MigrateDiscordMessages(textChannel);
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordMessagess");
 
 
-                count = migration.MigrateDiscordEmoteStatistics(textChannel);
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordEmoteStatistics");
-
-                count = migration.MigrateDiscordEmoteHistory(textChannel);
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordEmoteHistory");
-
-                count = migration.MigrateBannedLinks();
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} BannedLinks");
-
-                count = migration.MigrateCommandTypes();
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} CommandTypes");
-
-                count = migration.MigrateCommandStatistics();
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} CommandStatistics");
-
-                count = migration.MigrateDiscordRoles();
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordRoles");
-
-                count = migration.MigratePingHistory(textChannel);
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PingHistory");
-
-                count = migration.MigratePingStatistics();
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PingStatistics");
-
-                count = migration.MigrateRantTypes();
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RantTypes");
-
-                count = migration.MigrateRantMessages();
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RantMessages");
-
-                count = migration.MigrateSavedMessages();
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} SavedMessages");
-
-                count = migration.MigratePlaceBoardPerformanceInfos();
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardPerformanceInfos");
-
-                count = migration.MigratePlaceBoardPixels(textChannel);
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardPixels");
-
-                count = migration.MigratePlaceBoardDiscordUsers();
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardDiscordUsers");
-
-                count = migration.MigratePlaceBoardPixelHistory(textChannel);
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardPixelHistory"); // (SKIPED) // TODO Convert snowflake id to datetime
-
-                count = migration.MigrateSubredditInfos();
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} SubredditInfos");
-
-                count = migration.MigrateRedditPosts(textChannel);
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RedditPosts");
-
-                count = migration.MigrateRedditImages(textChannel);
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RedditImages");
-
-                count = migration.MigrateBotChannelSettings();
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} BotChannelSettings");
+                            count = migration.MigrateDiscordEmotes(textChannel);
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordEmotes");
 
 
-                /*count = migration.MigrateDiscordMessages(textChannel);
-                textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordMessagess");
-                */
-/*
-                textChannel.SendMessageAsync($"Migration done. Releasing DB.");
-            }
-            catch (Exception ex)
-            {
-                textChannel.SendMessageAsync(ex.ToString());
-            }
+                            count = migration.MigrateDiscordEmoteStatistics(textChannel);
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordEmoteStatistics");
 
-            TempDisableIncomming = false;*/
+                            count = migration.MigrateDiscordEmoteHistory(textChannel);
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordEmoteHistory");
+
+                            count = migration.MigrateBannedLinks();
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} BannedLinks");
+
+                            count = migration.MigrateCommandTypes();
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} CommandTypes");
+
+                            count = migration.MigrateCommandStatistics();
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} CommandStatistics");
+
+                            count = migration.MigrateDiscordRoles();
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordRoles");
+
+                            count = migration.MigratePingHistory(textChannel);
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PingHistory");
+
+                            count = migration.MigratePingStatistics();
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PingStatistics");
+
+                            count = migration.MigrateRantTypes();
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RantTypes");
+
+                            count = migration.MigrateRantMessages();
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RantMessages");
+
+                            count = migration.MigrateSavedMessages();
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} SavedMessages");
+
+                            count = migration.MigratePlaceBoardPerformanceInfos();
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardPerformanceInfos");
+
+                            count = migration.MigratePlaceBoardPixels(textChannel);
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardPixels");
+
+                            count = migration.MigratePlaceBoardDiscordUsers();
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardDiscordUsers");
+
+                            count = migration.MigratePlaceBoardPixelHistory(textChannel);
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardPixelHistory"); // (SKIPED) // TODO Convert snowflake id to datetime
+
+                            count = migration.MigrateSubredditInfos();
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} SubredditInfos");
+
+                            count = migration.MigrateRedditPosts(textChannel);
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RedditPosts");
+
+                            count = migration.MigrateRedditImages(textChannel);
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RedditImages");
+
+                            count = migration.MigrateBotChannelSettings();
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} BotChannelSettings");
+
+
+                            /*count = migration.MigrateDiscordMessages(textChannel);
+                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordMessagess");
+                            */
+            /*
+                            textChannel.SendMessageAsync($"Migration done. Releasing DB.");
+                        }
+                        catch (Exception ex)
+                        {
+                            textChannel.SendMessageAsync(ex.ToString());
+                        }
+
+                        TempDisableIncomming = false;*/
 
             return Task.CompletedTask;
         }
@@ -837,6 +842,75 @@ namespace ETHDINFKBot
             await anwChannel.SendMessageAsync("May the fastest speedrunner win :)", false, builder.Build());*/
         }
 
+        // Because of the delay from discord there is a way that the "first daily" post arrives later than some other messages
+        private static List<SocketMessage> FirstDailyPostsCandidates = new List<SocketMessage>();
+        private static bool CollectFirstDailyPostMessages = false;
+        public async void FirstDailyPost()
+        {
+            // only collisions happened on first daily post as there is less competition for first afternoon post
+            CollectFirstDailyPostMessages = true;
+
+            // Wait for 5 sec
+
+            await Task.Delay(TimeSpan.FromSeconds(5));
+
+            CollectFirstDailyPostMessages = false;
+
+            var firstMessage = FirstDailyPostsCandidates.OrderBy(i => i.CreatedAt).First();
+
+            var timeNow = SnowflakeUtils.FromSnowflake(firstMessage.Id).AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1); // CEST CONVERSION
+
+            var user = (SocketGuildUser)firstMessage.Author;
+
+            var dbManager = DatabaseManager.Instance();
+
+            var firstPoster = dbManager.GetDiscordUserById(firstMessage.Author.Id);
+            dbManager.UpdateDiscordUser(new ETHBot.DataLayer.Data.Discord.DiscordUser()
+            {
+                DiscordUserId = user.Id,
+                DiscriminatorValue = user.DiscriminatorValue,
+                AvatarUrl = user.GetAvatarUrl(),
+                IsBot = user.IsBot,
+                IsWebhook = user.IsWebhook,
+                Nickname = user.Nickname,
+                Username = user.Username,
+                JoinedAt = user.JoinedAt,
+                FirstDailyPostCount = firstPoster.FirstDailyPostCount + 1
+            });
+
+
+            EmbedBuilder builder = new EmbedBuilder();
+
+            builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST POSTER TODAY");
+            builder.WithColor(0, 0, 255);
+            builder.WithDescription($"This is the {CommonHelper.DisplayWithSuffix(firstPoster.FirstDailyPostCount + 1)} time you are the first poster of the day. With {(timeNow - timeNow.Date).TotalMilliseconds.ToString("N0")}ms from midnight.");
+
+            builder.WithAuthor(firstMessage.Author);
+            builder.WithCurrentTimestamp();
+
+            List<string> randomGifs = new List<string>()
+                    {
+                        "https://tenor.com/view/confetti-hooray-yay-celebration-party-gif-11214428",
+                        "https://tenor.com/view/qoobee-agapi-confetti-surprise-celebrate-gif-11679728",
+                        "https://tenor.com/view/confetti-celebrate-colorful-celebration-gif-15816997",
+                        "https://tenor.com/view/celebrate-awesome-yay-confetti-party-gif-8571772",
+                        "https://tenor.com/view/mao-mao-cat-hurrah-confetti-gif-9948046",
+                        "https://tenor.com/view/stop-it-oh-spongebob-confetti-gif-13772176",
+                        "https://tenor.com/view/win-confetti-gif-5026830",
+                        "https://tenor.com/view/kawaii-confetti-happiness-confetti-gif-11981055",
+                        "https://tenor.com/view/wow-fireworks-3d-gifs-artist-woohoo-gif-18062148"
+                    };
+
+            string randomGif = randomGifs[new Random().Next(randomGifs.Count)];
+            await firstMessage.Channel.SendMessageAsync(randomGif);
+            await firstMessage.Channel.SendMessageAsync("", false, builder.Build());
+
+            FirstDailyPostsCandidates = new List<SocketMessage>(); // Reset
+
+            DiscordHelper.DiscordUserBirthday(Client, 747752542741725244, 768600365602963496, true); // on first daily post trigger birthday messages -> TODO maybe move to a cron job
+        }
+
+
         public async Task HandleCommandAsync(SocketMessage m)
         {
             if (TempDisableIncomming)
@@ -852,8 +926,6 @@ namespace ETHDINFKBot
 
             // check if the emote is a command -> block
             List<CommandInfo> commandList = commands.Commands.ToList();
-
-
 
             // ignore this channel -> high msg volume
             if (msg.Channel.Id != 819966095070330950)
@@ -892,58 +964,16 @@ namespace ETHDINFKBot
                     // Reset time 
                     LastNewDailyMessagePost = DateTime.UtcNow.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1);
 
-                    // This person is the first one to post a new message
-
-                    var firstPoster = dbManager.GetDiscordUserById(msg.Author.Id);
-                    dbManager.UpdateDiscordUser(new ETHBot.DataLayer.Data.Discord.DiscordUser()
-                    {
-                        DiscordUserId = user.Id,
-                        DiscriminatorValue = user.DiscriminatorValue,
-                        AvatarUrl = user.GetAvatarUrl(),
-                        IsBot = user.IsBot,
-                        IsWebhook = user.IsWebhook,
-                        Nickname = user.Nickname,
-                        Username = user.Username,
-                        JoinedAt = user.JoinedAt,
-                        FirstDailyPostCount = firstPoster.FirstDailyPostCount + 1
-                    });
-
-
-                    EmbedBuilder builder = new EmbedBuilder();
-
-                    builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST POSTER TODAY");
-                    builder.WithColor(0, 0, 255);
-                    builder.WithDescription($"This is the {firstPoster.FirstDailyPostCount + 1}. time you are the first poster of the day. With {(timeNow - timeNow.Date).TotalMilliseconds.ToString("N0")}ms from midnight.");
-
-                    builder.WithAuthor(msg.Author);
-                    builder.WithCurrentTimestamp();
-
-                    List<string> randomGifs = new List<string>()
-                    {
-                        "https://tenor.com/view/confetti-hooray-yay-celebration-party-gif-11214428",
-                        "https://tenor.com/view/qoobee-agapi-confetti-surprise-celebrate-gif-11679728",
-                        "https://tenor.com/view/confetti-celebrate-colorful-celebration-gif-15816997",
-                        "https://tenor.com/view/celebrate-awesome-yay-confetti-party-gif-8571772",
-                        "https://tenor.com/view/mao-mao-cat-hurrah-confetti-gif-9948046",
-                        "https://tenor.com/view/stop-it-oh-spongebob-confetti-gif-13772176",
-                        "https://tenor.com/view/win-confetti-gif-5026830",
-                        "https://tenor.com/view/kawaii-confetti-happiness-confetti-gif-11981055",
-                        "https://tenor.com/view/wow-fireworks-3d-gifs-artist-woohoo-gif-18062148"
-                    };
-
-                    string randomGif = randomGifs[new Random().Next(randomGifs.Count)];
-                    await m.Channel.SendMessageAsync(randomGif);
-                    await m.Channel.SendMessageAsync("", false, builder.Build());
-
-                    // ONE TIME CODE TO BE DELETED
-                    //if (firstPoster.DiscordUserId == 321022340412735509)
-                    //{
-                    //    NextStepProgress2(m, msg.Author, firstPoster);
-                    //}
+                    // This person is the first (or one of the first) one to post a new message
+                    CollectFirstDailyPostMessages = true;
+                    FirstDailyPost();
 
                     // run it only once a day // todo find better scheduler
                     DiscordHelper.ReloadRoles(user.Guild);
                 }
+
+                if (CollectFirstDailyPostMessages)
+                    FirstDailyPostsCandidates.Add(m);
 
                 // duplicate code of the code above
                 if (LastAfternoonMessagePost.Day != timeNow.AddHours(-12).Day && !user.IsBot)
@@ -972,7 +1002,7 @@ namespace ETHDINFKBot
 
                     builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST AFTERNOON POSTER");
                     builder.WithColor(0, 0, 255);
-                    builder.WithDescription($"This is the {firstPoster.FirstAfternoonPostCount + 1}. time you are the first afternoon poster of the day. With {(timeNow.AddHours(-12) - timeNow.AddHours(-12).Date).TotalMilliseconds.ToString("N0")}ms from noon.");
+                    builder.WithDescription($"This is the {CommonHelper.DisplayWithSuffix(firstPoster.FirstAfternoonPostCount + 1)} time you are the first afternoon poster of the day. With {(timeNow.AddHours(-12) - timeNow.AddHours(-12).Date).TotalMilliseconds.ToString("N0")}ms from noon.");
 
                     builder.WithAuthor(msg.Author);
                     builder.WithCurrentTimestamp();

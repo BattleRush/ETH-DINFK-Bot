@@ -6,6 +6,8 @@ using ETHBot.DataLayer.Data.Enums;
 using ETHDINFKBot.Drawing;
 using ETHDINFKBot.Helpers;
 using ETHDINFKBot.Log;
+using ICSharpCode.SharpZipLib.GZip;
+using ICSharpCode.SharpZipLib.Tar;
 using Newtonsoft.Json;
 using Reddit;
 using Reddit.Controllers;
@@ -31,6 +33,16 @@ namespace ETHDINFKBot.Modules
     }
 
 
+    public class EmoteInfo
+    {
+        public string Name { get; set; }
+        public ulong Id { get; set; }
+        public bool Animated { get; set; }
+        public DateTimeOffset CreatedAt { get; set; }
+        public string Url { get; set; }
+        public string Folder { get; set; }
+
+    }
 
     [Group("admin")]
     public class AdminModule : ModuleBase<SocketCommandContext>
@@ -141,15 +153,147 @@ namespace ETHDINFKBot.Modules
                 return;
             }
 
+            var emoteInfo = DatabaseManager.Instance().GetDiscordEmoteById(emoteId);
             bool success = DatabaseManager.Instance().SetEmoteBlockStatus(emoteId, blockStatus);
 
             if (success)
             {
+                // Also locally delete the file
+                if (File.Exists(emoteInfo.LocalPath))
+                {
+                    File.Delete(emoteInfo.LocalPath);
+                }
+
                 Context.Channel.SendMessageAsync($"Successfully set block status of emote {emoteId} to: {blockStatus}", false);
             }
             else
             {
                 Context.Channel.SendMessageAsync($"Failed to set block status of emote {emoteId}", false);
+            }
+        }
+
+        [Command("emotedump")]
+        public async Task EmoteDump()
+        {
+            var author = Context.Message.Author;
+            if (author.Id != ETHDINFKBot.Program.Owner)
+            {
+                Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
+            var allEmotes = DatabaseManager.Instance().GetEmotes().OrderBy(i => i.DiscordEmoteId).ToList(); // sort it to ensure they are chronologically in there
+
+            Context.Channel.SendMessageAsync($"Successfully retreived {allEmotes.Count} emotes", false);
+
+            var emotesPath = Path.Combine(Program.BasePath, "Emotes");
+            var archivePath = Path.Combine(emotesPath, "Archive");
+            
+            try
+            {
+
+                // If the directory exists clean it up
+                if (Directory.Exists(archivePath))
+                    Directory.Delete(archivePath, true);
+
+                // Create dir
+                Directory.CreateDirectory(archivePath);
+
+                List<EmoteInfo> emoteInfos = new List<EmoteInfo>();
+
+                foreach (var emote in allEmotes)
+                {
+                    var folder = GetEmoteFolder(emote.LocalPath);
+                    emoteInfos.Add(new EmoteInfo()
+                    {
+                        Id = emote.DiscordEmoteId,
+                        Name = emote.EmoteName,
+                        Animated = emote.Animated,
+                        CreatedAt = emote.CreatedAt,
+                        Url = emote.Url,
+                        Folder = folder
+                    });
+                }
+
+                var emoteFolders = Directory.GetDirectories(emotesPath);
+
+                foreach (var emoteFolder in emoteFolders.ToList().OrderBy(i => i))
+                {
+                    // Needs to contain - else its not an active folder
+                    if (emoteFolder.Contains("-"))
+                    {
+                        string tarGZFile = $"{new DirectoryInfo(emoteFolder).Name}.tar.gz";
+                        CreateTarGZ(Path.Combine(archivePath, tarGZFile), emoteFolder);
+                    }
+                }
+
+                var archiveFiles = Directory.GetFiles(archivePath);
+                Context.Channel.SendMessageAsync($"Created {archiveFiles.Length} archives", false);
+
+                // Send file infos
+
+                var json = JsonConvert.SerializeObject(emoteInfos, Formatting.Indented);
+                var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+                await Context.Channel.SendFileAsync(stream, "EmoteInfo.json", "Emote Infos");
+
+                foreach (var archiveFile in archiveFiles.ToList().OrderBy(i => i))
+                    await Context.Channel.SendFileAsync(archiveFile, new DirectoryInfo(archiveFile).Name);
+
+                // In the end clean up the archive folder again
+                if (Directory.Exists(archivePath))
+                    Directory.Delete(archivePath, true);
+
+                Context.Channel.SendMessageAsync($"Done", false);
+
+            }
+            catch (Exception ex)
+            {
+                string error = $"Error: {ex.ToString()}";
+                Context.Channel.SendMessageAsync(error.Substring(0, Math.Min(2000, error.Length)), false);
+            }
+        }
+
+        private string GetEmoteFolder(string path)
+        {
+            return new DirectoryInfo(path).Parent.Name;
+        }
+
+        //  https://github.com/icsharpcode/SharpZipLib/wiki/GZip-and-Tar-Samples#user-content--create-a-tgz-targz
+        private void CreateTarGZ(string tgzFilename, string sourceDirectory)
+        {
+            Stream outStream = File.Create(tgzFilename);
+            Stream gzoStream = new GZipOutputStream(outStream);
+            TarArchive tarArchive = TarArchive.CreateOutputTarArchive(gzoStream);
+
+            tarArchive.RootPath = sourceDirectory.Replace('\\', '/');
+            if (tarArchive.RootPath.EndsWith("/"))
+                tarArchive.RootPath = tarArchive.RootPath.Remove(tarArchive.RootPath.Length - 1);
+
+            AddDirectoryFilesToTar(tarArchive, sourceDirectory, true);
+
+            tarArchive.Close();
+        }
+
+        private void AddDirectoryFilesToTar(TarArchive tarArchive, string sourceDirectory, bool recurse)
+        {
+            // Optionally, write an entry for the directory itself.
+            // Specify false for recursion here if we will add the directory's files individually.
+            TarEntry tarEntry = TarEntry.CreateEntryFromFile(sourceDirectory);
+            tarArchive.WriteEntry(tarEntry, false);
+
+            // Write each file to the tar.
+            string[] filenames = Directory.GetFiles(sourceDirectory);
+            foreach (string filename in filenames)
+            {
+                tarEntry = TarEntry.CreateEntryFromFile(filename);
+                tarArchive.WriteEntry(tarEntry, true);
+            }
+
+            if (recurse)
+            {
+                string[] directories = Directory.GetDirectories(sourceDirectory);
+                foreach (string directory in directories)
+                    AddDirectoryFilesToTar(tarArchive, directory, recurse);
             }
         }
 
@@ -161,7 +305,8 @@ namespace ETHDINFKBot.Modules
             public async Task AdminHelp()
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                var guildUser = Context.Message.Author as SocketGuildUser;
+                if (author.Id != ETHDINFKBot.Program.Owner || guildUser.GuildPermissions.ManageChannels)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -256,7 +401,8 @@ namespace ETHDINFKBot.Modules
             public async Task ChannelAdminHelp()
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                var guildUser = Context.Message.Author as SocketGuildUser;
+                if (author.Id != ETHDINFKBot.Program.Owner || guildUser.GuildPermissions.ManageChannels)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;

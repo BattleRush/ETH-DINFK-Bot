@@ -59,6 +59,56 @@ namespace ETHDINFKBot
             }
         }
 
+        // TODO consider a filter by server?
+        public List<DiscordUser> GetDiscordUsers()
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordUsers.ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public List<DiscordUser> GetTopFirstDailyPosterDiscordUsers(int amount = 10)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordUsers.AsQueryable().OrderByDescending(i => i.FirstDailyPostCount).Take(amount).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public List<DiscordUser> GetTopFirstAfternoonPosterDiscordUsers(int amount = 10)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordUsers.AsQueryable().OrderByDescending(i => i.FirstAfternoonPostCount).Take(amount).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+
         public DiscordUser CreateDiscordUser(DiscordUser user)
         {
             try
@@ -176,6 +226,11 @@ namespace ETHDINFKBot
                     if (emote != null)
                     {
                         emote.Blocked = blockStatus;
+
+                        if(blockStatus)
+                            emote.LocalPath = null;
+                        // TODO in case of unblock reload the file
+
                         context.SaveChanges();
                         return true;
                     }
@@ -189,14 +244,18 @@ namespace ETHDINFKBot
             }
         }
 
-        public List<DiscordEmote> GetEmotesByName(string name)
+        public List<DiscordEmote> GetEmotes(string name = null, bool blocked = false)
         {
             try
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
+                    // Select all
+                    if (name == null)
+                        return context.DiscordEmotes.AsQueryable().Where(i => i.Blocked == blocked).ToList();
+
                     // todo improve and better search
-                    return context.DiscordEmotes.AsQueryable().Where(i => i.EmoteName.ToLower().Contains(name) && !i.Blocked).ToList();
+                    return context.DiscordEmotes.AsQueryable().Where(i => i.EmoteName.ToLower().Contains(name) && i.Blocked == blocked).ToList();
                 }
             }
             catch (Exception ex)
@@ -293,6 +352,8 @@ namespace ETHDINFKBot
                     if (settings != null)
                     {
                         settings.ChannelOrderLocked = botSetting.ChannelOrderLocked;
+                        settings.PlacePixelIdLastChunked = botSetting.PlacePixelIdLastChunked;
+                        settings.PlaceLastChunkId = botSetting.PlaceLastChunkId;
                     }
 
                     context.SaveChanges();
@@ -884,11 +945,13 @@ namespace ETHDINFKBot
 
         public PingStatistic GetPingStatisticByUserId(ulong userId)
         {
+            // TODO Detect duplicate DiscordUserIds -> Create Unique on DiscordUserId
             try
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.PingStatistics.SingleOrDefault(i => i.DiscordUser.DiscordUserId == userId);
+                    // TODO Change back to SingleOrDefault as soon the duplicate DiscordUserId issue is resolved
+                    return context.PingStatistics.FirstOrDefault(i => i.DiscordUser.DiscordUserId == userId);
                 }
             }
             catch (Exception ex)
@@ -950,6 +1013,7 @@ namespace ETHDINFKBot
 
         public void AddPingStatistic(ulong userId, int count, SocketGuildUser sgUser)
         {
+            // TODO Prevent duplicates -> DB Constraint
             try
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
@@ -975,7 +1039,7 @@ namespace ETHDINFKBot
                     else
                     {
                         // todo cleanup for perf im just lazy :/
-                        var currStat = context.PingStatistics.SingleOrDefault(i => i.DiscordUser.DiscordUserId == userId);
+                        var currStat = context.PingStatistics.FirstOrDefault(i => i.DiscordUser.DiscordUserId == userId);
 
                         currStat.PingCountOnce += !sgUser.IsBot ? 1 : 0;
                         currStat.PingCount += !sgUser.IsBot ? count : 0;
@@ -1143,6 +1207,61 @@ namespace ETHDINFKBot
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
                     return context.PingHistory.AsQueryable().Where(i => i.DiscordRoleId == roleId && i.DiscordUserId == userId).OrderByDescending(i => i.PingHistoryId).Take(amount).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Queries the last queryMessageLength messages to see if someone replied to it.
+        /// </summary>
+        /// <param name="amount"></param>
+        /// <param name="userId"></param>
+        /// <param name="queryMessageLength"></param>
+        /// <returns></returns>
+        public List<PingHistory> GetLastReplyHistory(int amount, ulong userId, int queryMessageLength = 250)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var messageIds = context.DiscordMessages.AsQueryable().Where(i => i.DiscordUserId == userId).OrderByDescending(i => i.DiscordMessageId).Take(queryMessageLength).Select(i => i.DiscordMessageId).ToList();
+
+                    // We query only in the last 10k messages for performance reasons
+                    var messages = context.DiscordMessages.AsQueryable().OrderByDescending(i => i.DiscordMessageId).Take(10_000);/*Retreive the last 10k messages into memory*///.Where(i => messageIds.Contains(i.ReplyMessageId ?? 0));
+
+                    List<DiscordMessage> replyMessages = new List<DiscordMessage>();
+
+                    // TODO Check performance -> create a direct SQL query for better perf
+                    foreach (var message in messages)
+                    {
+                        if (messageIds.Contains(message.ReplyMessageId ?? 0))
+                            replyMessages.Add(message);
+                    }
+
+                    List<PingHistory> returnValue = new List<PingHistory>();
+
+                    // Priorotize newer replies
+                    foreach (var replyMessage in replyMessages.OrderByDescending(i => i.DiscordMessageId))
+                    {
+                        returnValue.Add(new PingHistory()
+                        {
+                            DiscordMessageId = replyMessage.DiscordMessageId,
+                            DiscordRoleId = 1, // TODO Add flag to implement it better -> for now DiscordRoleId = 1 -> ReplyPing
+                            FromDiscordUserId = replyMessage.DiscordUserId,
+                            DiscordUserId = userId,
+                            PingHistoryId = -1
+                        });
+
+                        if (returnValue.Count == amount)
+                            break;
+                    }
+
+                    return returnValue;
                 }
             }
             catch (Exception ex)
