@@ -470,7 +470,7 @@ namespace ETHDINFKBot.Modules
                             if (newMessage && message.Tags.Count > 0)
                             {
                                 tags += message.Tags.Count;
-                                logManager.ProcessEmojisAndPings(message.Tags, message.Author.Id, message.Id, message.Author as SocketGuildUser);
+                                logManager.ProcessEmojisAndPings(message.Tags, message.Author.Id, message, message.Author as SocketGuildUser);
                             }
                         }
                     }

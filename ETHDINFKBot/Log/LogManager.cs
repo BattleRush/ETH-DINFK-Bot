@@ -68,7 +68,7 @@ namespace ETHDINFKBot.Log
             DatabaseManager.ProcessDiscordEmote(discordEmote, discordMessageId, -1, true, user, false);
         }
 
-        public async Task ProcessEmojisAndPings(IReadOnlyCollection<ITag> tags, ulong authorId, ulong discordMessageId, SocketGuildUser fromUser, bool isPreload = false)
+        public async Task ProcessEmojisAndPings(IReadOnlyCollection<ITag> tags, ulong authorId, SocketMessage message, SocketGuildUser fromUser, bool isPreload = false)
         {
             try
             {
@@ -88,6 +88,8 @@ namespace ETHDINFKBot.Log
                     }
                 }
 
+                var guildUser = (fromUser as IGuildUser);
+
                 foreach (var emote in listOfEmotes)
                 {
                     Tag<Emote> tag = (Tag<Emote>)tags.First(i => i.Type == TagType.Emoji && ((Tag<Emote>)i).Value.Id == emote.Key);
@@ -106,7 +108,7 @@ namespace ETHDINFKBot.Log
 
                     if (emote.Value == 10 && tag.Value?.Id == 747783377146347590)
                     {
-                        var guildUser = (fromUser as IGuildUser);
+                       
                         ulong caveBobGang = 824425544333656104;
 
                         if (!guildUser.RoleIds.Contains(caveBobGang))
@@ -118,7 +120,7 @@ namespace ETHDINFKBot.Log
                         }
                     }
 
-                    DatabaseManager.ProcessDiscordEmote(stat, discordMessageId, emote.Value, false, fromUser, isPreload);
+                    DatabaseManager.ProcessDiscordEmote(stat, message.Id, emote.Value, false, fromUser, isPreload);
                 }
 
                 // TODO dont hammer the db after each call (check if any new emotes have been added
@@ -172,7 +174,7 @@ namespace ETHDINFKBot.Log
                 foreach (var pingInfo in listOfUsers)
                 {
                     DatabaseManager.AddPingStatistic(pingInfo.Key, pingInfo.Value, fromUser);
-                    var dbMessage = DatabaseManager.GetDiscordMessageById(discordMessageId);
+                    var dbMessage = DatabaseManager.GetDiscordMessageById(message.Id);
                     var user = DatabaseManager.GetDiscordUserById(pingInfo.Key);
 
                     // The pinged user doesnt exist in our db -> dont create ping
@@ -183,7 +185,7 @@ namespace ETHDINFKBot.Log
 
                     DatabaseManager.CreatePingHistory(new PingHistory()
                     {
-                        DiscordMessageId = dbMessage != null ? discordMessageId : null,
+                        DiscordMessageId = dbMessage != null ? message.Id : null,
                         DiscordRoleId = null,
                         DiscordUserId = pingInfo.Key,
                         FromDiscordUserId = fromUser.Id
@@ -202,15 +204,32 @@ namespace ETHDINFKBot.Log
                             DiscordHelper.ReloadRoles(fromUser.Guild);
                         }
 
-                        var dbMessage = DatabaseManager.GetDiscordMessageById(discordMessageId);
+                        var dbMessage = DatabaseManager.GetDiscordMessageById(message.Id);
                         DatabaseManager.CreatePingHistory(new PingHistory()
                         {
-                            DiscordMessageId = dbMessage != null ? discordMessageId : null,
+                            DiscordMessageId = dbMessage != null ? message.Id : null,
                             DiscordRoleId = role.Key,
                             DiscordUserId = null,
                             FromDiscordUserId = fromUser.Id
                         });
 
+
+                        // Ping Hell
+                        if(role.Key == 895231323034222593)
+                        {
+                            // If the user doesnt have the Ping Hell role assign the role to it
+
+                            ulong pingHellRole = 895231323034222593;
+
+                            if (!guildUser.RoleIds.Contains(pingHellRole))
+                            {
+                                var rolePingHell = guildUser.Guild.Roles.FirstOrDefault(x => x.Id == pingHellRole);
+
+                                await guildUser.AddRoleAsync(rolePingHell);
+
+                                message.Channel.SendMessageAsync($"<@{authorId}> welcome to PingHell!");
+                            }
+                        }
                     }
                 }
 

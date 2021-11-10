@@ -1009,7 +1009,7 @@ namespace ETHDINFKBot
 
                 try
                 {
-                    await LogManager.ProcessEmojisAndPings(m.Tags, m.Author.Id, m.Id, (SocketGuildUser)m.Author);
+                    await LogManager.ProcessEmojisAndPings(m.Tags, m.Author.Id, m, (SocketGuildUser)m.Author);
                 }
                 catch (Exception ex)
                 {

@@ -146,7 +146,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                         if (newMessage && message.Tags.Count > 0)
                         {
                             response.EmotesAdded += message.Tags.Count;
-                            await logManager.ProcessEmojisAndPings(message.Tags, message.Author.Id, message.Id, message.Author as SocketGuildUser, true);
+                            await logManager.ProcessEmojisAndPings(message.Tags, message.Author.Id, message as SocketMessage, message.Author as SocketGuildUser, true);
                         }
                     }
                 }
