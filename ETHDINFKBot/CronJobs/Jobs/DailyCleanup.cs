@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using ETHDINFKBot.Helpers;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -9,14 +10,14 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace ETHDINFKBot.CronJobs.Jobs
-{ 
-    public class CleanUpServerSuggestions : CronJobService
+{
+    public class DailyCleanup : CronJobService
     {
         private readonly ulong ServerSuggestion = 816776685407043614; // todo config?
-        private readonly ILogger<CleanUpServerSuggestions> _logger;
-        private readonly string Name = "CleanUpServerSuggestions";
+        private readonly ILogger<DailyCleanup> _logger;
+        private readonly string Name = "CleanUp";
 
-        public CleanUpServerSuggestions(IScheduleConfig<CleanUpServerSuggestions> config, ILogger<CleanUpServerSuggestions> logger)
+        public DailyCleanup(IScheduleConfig<DailyCleanup> config, ILogger<DailyCleanup> logger)
             : base(config.CronExpression, config.TimeZoneInfo)
         {
             _logger = logger;
@@ -40,6 +41,55 @@ namespace ETHDINFKBot.CronJobs.Jobs
             //messageDelete.DeleteAsync();
         }
 
+        public async void RemovePingHell()
+        {
+
+            var guild = Program.Client.GetGuild(747752542741725244);
+            var textChannel = guild.GetTextChannel(768600365602963496);
+
+
+            // Get users that havent pinged the role in the last 72h
+            var sqlQuery = @"
+SELECT 
+    PH.FromDiscordUserID, 
+    MAX(PH.DiscordMessageId)
+FROM PingHistory PH 
+LEFT JOIN DiscordUsers DU ON PH.FromDiscordUserId = DU.DiscordUserId 
+WHERE PH.DiscordRoleId = 895231323034222593 
+GROUP BY PH.FromDiscordUserId
+ORDER BY MAX(PH.DiscordMessageId)";
+
+
+            var queryResult = await SQLHelper.GetQueryResults(null, sqlQuery, true, 50);
+
+            var utcNow = DateTime.UtcNow;
+
+            ulong pingHellRoleId = 895231323034222593;
+            var rolePingHell = guild.Roles.FirstOrDefault(i => i.Id == pingHellRoleId);
+
+            foreach (var row in queryResult.Data)
+            {
+                var dateTimeLastPing = SnowflakeUtils.FromSnowflake(Convert.ToUInt64(row[1]));
+
+                if ((utcNow - dateTimeLastPing).TotalHours >= 72)
+                {
+                    ulong userId = Convert.ToUInt64(row[0]);
+                    // last ping is over 72h
+
+                    var guildUser = guild.GetUser(userId);
+
+                    if (guildUser.Roles.Any(i => i.Id == pingHellRoleId))
+                    {
+                        // remove the role from user
+                        await guildUser.RemoveRoleAsync(rolePingHell);
+
+                        // send in spam that they are free
+                        await textChannel.SendMessageAsync($"<@{userId}> finally escaped PingHell May you never ping it ever again.");
+                    }
+                }
+            }
+        }
+
         public override Task DoWork(CancellationToken cancellationToken)
         {
             _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
@@ -52,10 +102,11 @@ namespace ETHDINFKBot.CronJobs.Jobs
                     if (channel != null)
                     {
                         CleanUpOldMessages(channel, TimeSpan.FromDays(-7));
+                        RemovePingHell();
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError("Error cleaning up suggestions", ex);
             }

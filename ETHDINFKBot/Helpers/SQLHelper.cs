@@ -78,7 +78,8 @@ namespace ETHDINFKBot.Helpers
 
         public static async Task<(List<string> Header, List<List<string>> Data, int TotalResults, long Time)> GetQueryResults(SocketCommandContext context, string commandSql, bool limitRows = false, int limitLength = 2000, bool fullUser = false)
         {
-            var author = context.Message.Author;
+            // TODO Admin perms for daily jobs with no context object
+            var author = context?.Message?.Author;
 
             List<string> Header = new List<string>();
             List<List<string>> Data = new List<List<string>>();
@@ -97,7 +98,7 @@ namespace ETHDINFKBot.Helpers
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
 
-                if (author.Id == Program.Owner)
+                if (author?.Id == Program.Owner)
                     fullUser = true;
 
                 string connectionString = fullUser ? Program.FULL_MariaDBReadOnlyConnectionString : Program.MariaDBReadOnlyConnectionString;
@@ -222,6 +223,9 @@ namespace ETHDINFKBot.Helpers
             }
             catch (Exception ex)
             {
+                if (context == null)
+                    throw ex; // if no context is provided dont handle it
+
                 //cts.Cancel();
                 await context.Channel.SendMessageAsync("Error: " + ex.Message, false);
             }
