@@ -9,10 +9,10 @@ using ETHDINFKBot.Helpers;
 using FFMediaToolkit;
 using FFMediaToolkit.Encoding;
 using FFMediaToolkit.Graphics;
-using ImageMagick;
+//using ImageMagick;
 using Newtonsoft.Json;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+/*using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;*/
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
