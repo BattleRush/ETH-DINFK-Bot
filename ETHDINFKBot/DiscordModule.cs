@@ -21,9 +21,6 @@ using Reddit.Controllers;
 using Microsoft.Extensions.Logging;
 using System.IO;
 using System.Threading;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using Color = System.Drawing.Color;
 using System.Net;
 using ETHDINFKBot.Helpers;
 using SkiaSharp;
@@ -31,7 +28,9 @@ using CSharpMath.SkiaSharp;
 using System.Globalization;
 using System.Diagnostics;
 using Microsoft.Data.Sqlite;
-using ETHDINFKBot.Drawing;
+
+// SYSTEM.DRAWING
+//using ETHDINFKBot.Drawing;
 using System.Reflection;
 using TimeZoneConverter;
 
@@ -546,6 +545,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             width = Math.Max(width + 25, 350); // because of the title
 
+            // SYSTEM.DRAWING
+            /*
             Bitmap Bitmap = new Bitmap(width, height); // TODO insert into constructor
             Graphics Graphics = Graphics.FromImage(Bitmap);
             Graphics.SmoothingMode = SmoothingMode.AntiAlias;
@@ -610,9 +611,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                 Graphics.DrawLine(p, new Point(0, i * blockSize + paddingY - 15), new Point(width, i * blockSize + paddingY - 15));
             }
-
+            */
             Stream mst = new MemoryStream();
-            Bitmap.Save(mst, System.Drawing.Imaging.ImageFormat.Png);
+            //Bitmap.Save(mst, System.Drawing.Imaging.ImageFormat.Png);
             mst.Position = 0;
 
             return mst;
@@ -2030,6 +2031,10 @@ ORDER BY RANDOM() LIMIT 1
         [Command("testpiechart")]
         public async Task testpiechart()
         {
+            return;
+
+            // SYSTEM.DRAWING
+            /*
             try
             {
                 List<string> labels = new List<string>()
@@ -2048,12 +2053,14 @@ ORDER BY RANDOM() LIMIT 1
             catch (Exception ex)
             {
                 await Context.Channel.SendMessageAsync(ex.ToString().Substring(0, Math.Min(ex.ToString().Length, 1990)));
-            }
+            }*/
         }
 
         [Command("messagegraph")]
         public async Task MessageGraph(string param = null)
         {
+            // STYTEM.DRAWING
+            /*
             try
             {
                 List<DateTimeOffset> messageTimes = new List<DateTimeOffset>();
@@ -2246,7 +2253,7 @@ ORDER BY RANDOM() LIMIT 1
             {
                 await Context.Channel.SendMessageAsync(ex.ToString().Substring(0, Math.Min(ex.ToString().Length, 1990)));
             }
-
+            */
         }
 
         private EmbedBuilder GenerateEmbedForFirstPoster(List<DiscordUser> users, bool daily)
@@ -2573,6 +2580,8 @@ ORDER BY RANDOM() LIMIT 1
 
             int pixelSize = 10;
 
+            // SYSTEM.DRAWING
+            /*
             var board = DrawingHelper.GetEmptyGraphics(size * pixelSize, size * pixelSize);
 
             for (int x = 0; x < size; x++)
@@ -2597,7 +2606,7 @@ ORDER BY RANDOM() LIMIT 1
 
             var stream = CommonHelper.GetStream(board.Bitmap);
             await Context.Channel.SendFileAsync(stream, "secret_message.png", $"Dump file output");
-
+            */
             //return true;
         }
 

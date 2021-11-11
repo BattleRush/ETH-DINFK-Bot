@@ -3,9 +3,9 @@ using ETHDINFKBot.Data;
 using ETHDINFKBot.Enums;
 using ETHDINFKBot.Modules;
 using NetCoreServer;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -20,7 +20,7 @@ namespace ETHDINFKBot
     {
         public PlaceSession(WssServer server) : base(server) { }
 
-        public void SendPixel(short x, short y, Color color)
+        public void SendPixel(short x, short y, SKColor color)
         {
             //if (Sessions != null)
             //{
@@ -36,11 +36,11 @@ namespace ETHDINFKBot
                 data[3] = yBytes[0];
                 data[4] = yBytes[1];
 
-                data[5] = color.R;
-                data[6] = color.G;
-                data[7] = color.B;
+                data[5] = color.Red;
+                data[6] = color.Green;
+                data[7] = color.Blue;
 
-                Console.WriteLine($"Send: {x}/{y} paint R:{color.R}|G:{color.G}|B:{color.B}");
+                Console.WriteLine($"Send: {x}/{y} paint R:{color.Red}|G:{color.Green}|B:{color.Blue}");
 
                 //Sessions.Broadcast(data);
             //}
@@ -88,11 +88,16 @@ namespace ETHDINFKBot
         }
         private byte[] GetFullImageResponse()
         {
+           
             int size = 1000;
 
             byte[] response = new byte[1 + size * size * 3];
             response[0] = (byte)MessageEnum.FullImage_Response; // response for image
 
+            return response;
+
+            // SYSTEM.DRAWING
+            /*
             int index = 1;
             if (PlaceModule.CurrentPlaceBitmap == null)
                 return response;
@@ -118,7 +123,7 @@ namespace ETHDINFKBot
                 return null; // TODO logs
             }
 
-            return response;
+            return response;*/
         }
 
         // TODO duplicate from chunk gen

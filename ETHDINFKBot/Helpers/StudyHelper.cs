@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -769,6 +767,8 @@ namespace ETHDINFKBot.Helpers
 
         public Question GetRandomLinalgQuestion(string filter = null)
         {
+            return null;/*
+
             Random r = new Random();
 
             var questions = LinAlgLatexQuestions;
@@ -848,7 +848,7 @@ namespace ETHDINFKBot.Helpers
             }
 
 
-            return question;
+            return question;*/
         }
 
     }

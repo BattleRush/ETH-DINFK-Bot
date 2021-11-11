@@ -1,15 +1,14 @@
 ﻿using Discord.WebSocket;
 using ETHBot.DataLayer;
 using ETHBot.DataLayer.Data.Discord;
-using ETHDINFKBot.Drawing;
+//SYSTEM.DRAWING
+//using ETHDINFKBot.Drawing;
 using Reddit;
 using Reddit.Controllers;
 using RedditScrapper;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
+
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -63,6 +62,8 @@ namespace ETHDINFKBot.Helpers
             return false;
         }
 
+
+        /*
         public static Stream GetStream(Bitmap bitmap)
         {
             Stream ms = new MemoryStream();
@@ -73,7 +74,7 @@ namespace ETHDINFKBot.Helpers
             return ms;
 
             //await Context.Channel.SendFileAsync(ms, "test.png");
-        }
+        }*/
 
         // source https://stackoverflow.com/questions/1922040/how-to-resize-an-image-c-sharp
 
@@ -84,7 +85,7 @@ namespace ETHDINFKBot.Helpers
         /// <param name="width">The width to resize to.</param>
         /// <param name="height">The height to resize to.</param>
         /// <returns>The resized image.</returns>
-        public static Bitmap ResizeImage(System.Drawing.Image image, int height)
+        /*public static Bitmap ResizeImage(System.Drawing.Image image, int height)
         {
 
             decimal ratio = image.Width / (decimal)image.Height;
@@ -111,7 +112,7 @@ namespace ETHDINFKBot.Helpers
 
             return destImage;
         }
-
+        */
 
 
         // https://stackoverflow.com/a/19553611

@@ -3,7 +3,9 @@ using Discord.Commands;
 using Discord.WebSocket;
 using ETHBot.DataLayer.Data.Fun;
 using ETHDINFKBot.Data;
-using ETHDINFKBot.Drawing;
+
+// SYSTEM.DRAWING
+//using ETHDINFKBot.Drawing;
 using ETHDINFKBot.Enums;
 using ETHDINFKBot.Helpers;
 using FFMediaToolkit;
@@ -11,14 +13,11 @@ using FFMediaToolkit.Encoding;
 using FFMediaToolkit.Graphics;
 //using ImageMagick;
 using Newtonsoft.Json;
-/*using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;*/
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
+
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -114,13 +113,17 @@ namespace ETHDINFKBot.Modules
 
         public static bool? LockedBoard = null;
 
-        public static Bitmap CurrentPlaceBitmap;
+        // SYSTEM.DRAWING
+        //public static Bitmap CurrentPlaceBitmap;
         public static int LastYRefreshed = 0;
 
         private bool IsPlaceLocked()
         {
+            // SYSTEM.DRAWING
+            /*
             if (CurrentPlaceBitmap == null)
             {
+
                 var board = DrawingHelper.GetEmptyGraphics(1000, 1000);
                 CurrentPlaceBitmap = board.Bitmap;
 
@@ -131,6 +134,7 @@ namespace ETHDINFKBot.Modules
                     Thread.Sleep(100);
                 }
             }
+            */
 
             if (LockedBoard == null)
             {
@@ -142,6 +146,9 @@ namespace ETHDINFKBot.Modules
         }
 
         // Bitmap -> ImageData (safe)
+
+        // SYSTEM.DRAWING
+        /*
         public static ImageData ToImageData(Bitmap bitmap)
         {
             var rect = new System.Drawing.Rectangle(System.Drawing.Point.Empty, bitmap.Size);
@@ -182,7 +189,7 @@ namespace ETHDINFKBot.Modules
 
             return cloneBitmap;
         }
-
+        */
 
         private static bool LoadedLib = false; // TODO Do better
 
@@ -457,6 +464,9 @@ If you violate the server rules your pixels will be removed.
             PlaceDBManager dbManager = PlaceDBManager.Instance();
 
             var boardPixels = dbManager.GetCurrentImage(x, x + size, y, y + size);
+
+            // SYSTEM.DRAWING
+            /*
             var board = DrawingHelper.GetEmptyGraphics(size, size);
 
             foreach (var pixel in boardPixels)
@@ -468,15 +478,20 @@ If you violate the server rules your pixels will be removed.
 
             // TODO Dispose stuff
             var stream = CommonHelper.GetStream(board.Bitmap);
-            await Context.Channel.SendFileAsync(stream, $"verify_{x}_{y}.png", $"PIXELVERIFY {x} {y} SUCCESS Time: {watch.ElapsedMilliseconds}ms");
+            await Context.Channel.SendFileAsync(stream, $"verify_{x}_{y}.png", $"PIXELVERIFY {x} {y} SUCCESS Time: {watch.ElapsedMilliseconds}ms");*/
         }
 
 
         [Command("grid")]
         public async Task ViewGrid(int x = 0, int y = 0, int size = 1000)
         {
+            return;
+
+            // SYSTEM.DRAWING
+            /*
             int padding = 50;
 
+            // SYSTEM.DRAWING
             if (size < 50 || size > 1000 || CurrentPlaceBitmap == null)
             {
                 await Context.Channel.SendMessageAsync("Size can only be between 50 and 1000 or CurrentPlaceBitmap is null");
@@ -498,19 +513,19 @@ If you violate the server rules your pixels will be removed.
 
             //List<PlaceBoardPixel> boardPixels;
 
-            /*if (LastRefresh.Add(TimeSpan.FromMinutes(10)) > DateTime.Now)
-            {
-                // cache is still new
-                boardPixels = PixelsCache;
-            }
-            else
-            {
-                Context.Channel.SendMessageAsync("Cache miss. It will take a few seconds to refresh and generate.");
+            //if (LastRefresh.Add(TimeSpan.FromMinutes(10)) > DateTime.Now)
+            //{
+            //    // cache is still new
+            //    boardPixels = PixelsCache;
+            //}
+            //else
+            //{
+            //    Context.Channel.SendMessageAsync("Cache miss. It will take a few seconds to refresh and generate.");
 
-                boardPixels = dbManager.GetCurrentImage();
-                PixelsCache = boardPixels;
-                LastRefresh = DateTime.Now;
-            }*/
+            //    boardPixels = dbManager.GetCurrentImage();
+            //    PixelsCache = boardPixels;
+            //    LastRefresh = DateTime.Now;
+            //}
 
             // do 25 lines
             RefreshBoard(25);
@@ -635,7 +650,7 @@ If you violate the server rules your pixels will be removed.
             // TODO Dispose stuff
             var stream = CommonHelper.GetStream(board.Bitmap);
             await Context.Channel.SendFileAsync(stream, "place.png", $"DB Time: {msDbTime}ms Draw Time: {watch.ElapsedMilliseconds}ms");
-
+            */
 
         }
 
@@ -693,6 +708,7 @@ If you violate the server rules your pixels will be removed.
         private async void GenerateTimelapseCommans(int x, int y, int size, List<SocketUser> socketUsers)
         {
             return;
+            /*
             try
             {
                 int textPadding = 50;
@@ -739,15 +755,15 @@ If you violate the server rules your pixels will be removed.
                 if (!Directory.Exists("TimelapseOutput"))
                     Directory.CreateDirectory("TimelapseOutput");
 
-                /*
-                var files = Directory.GetFiles("TimelapseOutput");
-                if (files.Length > 0)
-                {
-                    foreach (var file in files)
-                    {
-                        //File.Delete(file);
-                    }
-                }*/
+                //var files = Directory.GetFiles("TimelapseOutput");
+                //if (files.Length > 0)
+                //{
+                //    foreach (var file in files)
+                //    {
+                //        //File.Delete(file);
+                //    }
+                //}
+       
 
                 int pixelSize = 1_000 / size;
 
@@ -827,26 +843,26 @@ If you violate the server rules your pixels will be removed.
 
                         pixelCount++;
 
-                        /*
-                        if (last + step < history.SnowflakeTimePlaced)
-                        {
-                            // generate a new frame
-                            //last = history.SnowflakeTimePlaced;
+                        
+                        //if (last + step < history.SnowflakeTimePlaced)
+                        //{
+                        //    // generate a new frame
+                        //    //last = history.SnowflakeTimePlaced;
 
 
-                            text = $"{SnowflakeUtils.FromSnowflake(last).ToString("yyyy-MM-dd HH:mm:ss")} PixelsPlaced: {pixelCount.ToString("N0")} Users participated: {users.Count.ToString("N0")}";
+                        //    text = $"{SnowflakeUtils.FromSnowflake(last).ToString("yyyy-MM-dd HH:mm:ss")} PixelsPlaced: {pixelCount.ToString("N0")} Users participated: {users.Count.ToString("N0")}";
 
-                            frame = CopyAndDrawOnBitmap(board.Bitmap, text, 10, boardSize.Height - textPadding + 5, boardSize);
+                        //    frame = CopyAndDrawOnBitmap(board.Bitmap, text, 10, boardSize.Height - textPadding + 5, boardSize);
 
-                            file.Video.AddFrame(ToImageData(frame));
-
-
-                            //board.Graphics.DrawString($"{SnowflakeUtils.FromSnowflake(last).ToString()}", font, brush, new System.Drawing.Point(40, 40));
+                        //    file.Video.AddFrame(ToImageData(frame));
 
 
-                            //board.Bitmap.Save(Path.Combine("Timelapse", $"{fileName}{frameCounter.ToString("D6")}.png"));
-                            frameCounter++;
-                        }*/
+                        //    //board.Graphics.DrawString($"{SnowflakeUtils.FromSnowflake(last).ToString()}", font, brush, new System.Drawing.Point(40, 40));
+
+
+                        //    //board.Bitmap.Save(Path.Combine("Timelapse", $"{fileName}{frameCounter.ToString("D6")}.png"));
+                        //    frameCounter++;
+                        //}
                     }
 
 
@@ -879,6 +895,7 @@ If you violate the server rules your pixels will be removed.
                 string exString = ex.ToString();
                 await Context.Channel.SendMessageAsync(exString.Substring(0, Math.Min(2000, exString.Length)));
             }
+            */
         }
 
         private void FFmpegLoader_LogCallback(string message)
@@ -894,6 +911,8 @@ If you violate the server rules your pixels will be removed.
 
         private void RefreshBoard(int ySize)
         {
+            return; 
+            /*
             // use lock and stuff but lazy to do it properly haha xD and the db is dying atm (just for future myself)
             if (Refreshing)
                 return;
@@ -925,7 +944,7 @@ If you violate the server rules your pixels will be removed.
             finally
             {
                 Refreshing = false;
-            }
+            }*/
         }
 
 
@@ -1010,9 +1029,13 @@ If you violate the server rules your pixels will be removed.
                 watch.Stop();*/
 
                 // TODO Dispose stuff
+
+                // SYSTEM.DRAWING
+                /*
                 var stream = CommonHelper.GetStream(CurrentPlaceBitmap);
                 //await Context.Channel.SendFileAsync(stream, "place.png", $"DB Time: {msDbTime}ms Draw Time: {watch.ElapsedMilliseconds}ms");
                 await Context.Channel.SendFileAsync(stream, "place.png", $"DB Time: {msDbTime}ms Web Viewer: https://place.battlerush.dev/");
+                */
             }
             catch (Exception ex)
             {
@@ -1035,6 +1058,8 @@ If you violate the server rules your pixels will be removed.
 
         public async Task PixelHistoryTask(int x = -1, int y = -1, string all = null)
         {
+            return;
+            /*
             if ((x < 0 || x >= 1000 || y < 0 || y >= 1000) && all.ToLower() != "all")
             {
                 await Context.Channel.SendMessageAsync($"Pixel not found");
@@ -1093,7 +1118,7 @@ If you violate the server rules your pixels will be removed.
 
             watch.Stop();
 
-            await Context.Message.Channel.SendMessageAsync($"DB Time: {watch.ElapsedMilliseconds}ms", false, builder.Build());
+            await Context.Message.Channel.SendMessageAsync($"DB Time: {watch.ElapsedMilliseconds}ms", false, builder.Build());*/
         }
 
         public static Dictionary<ulong, DateTimeOffset> ZoomTimeout = new Dictionary<ulong, DateTimeOffset>();
@@ -1104,6 +1129,10 @@ If you violate the server rules your pixels will be removed.
         [Command("zoom")]
         public async Task ZoomIntoTheBoard(int x, int y, int size = 100)
         {
+            return;
+
+            // SYSTEM.DRAWING
+            /*
             if (size > 350 || size < 10)
             {
                 await Context.Channel.SendMessageAsync("Size can only be between 10 and 350");
@@ -1194,6 +1223,8 @@ If you violate the server rules your pixels will be removed.
             // size can be between 10 and 1000
             // accept hex or int as cord
 
+            */
+
         }
 
         [Command("perf")]
@@ -1205,6 +1236,8 @@ If you violate the server rules your pixels will be removed.
         [Command("perf")]
         public async Task PlacePerf(bool graphMode = true, int lastSize = 1440)
         {
+            return; 
+            /*
             PlaceDBManager dbManager = PlaceDBManager.Instance();
 
             var list = dbManager.GetPlacePerformanceInfo(lastSize);
@@ -1286,7 +1319,7 @@ If you violate the server rules your pixels will be removed.
                     output += "```";
                     await Context.Channel.SendMessageAsync(output);
                 }
-            }
+            }*/
         }
 
         public static List<long> PixelPlacementTimeLastMinute = new List<long>();
@@ -1519,7 +1552,8 @@ If you violate the server rules your pixels will be removed.
             if (colorString.IndexOf('#') == -1)
                 colorString = "#" + colorString;
 
-            System.Drawing.Color color = ColorTranslator.FromHtml(colorString);
+            if (!SKColor.TryParse(colorString, out SKColor color))
+                return; // invalid color
 
             PlaceDBManager dbManager = PlaceDBManager.Instance();
 
@@ -1548,7 +1582,7 @@ If you violate the server rules your pixels will be removed.
 
             if (!isBot && successfull)
             {
-                Context.Channel.SendMessageAsync($"Placed {color.R}.{color.G}.{color.B} on X: {x} Y: {y}");
+                Context.Channel.SendMessageAsync($"Placed {color.Red}.{color.Green}.{color.Blue} on X: {x} Y: {y}");
             }
         }
 

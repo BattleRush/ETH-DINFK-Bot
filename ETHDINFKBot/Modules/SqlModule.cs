@@ -9,9 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -19,7 +16,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
 using Discord;
-using ETHDINFKBot.Drawing;
+
+// SYSTEM.DRAWING
+// using ETHDINFKBot.Drawing;
 using MySqlConnector;
 
 namespace ETHDINFKBot.Modules
@@ -329,27 +328,30 @@ WHERE
             [Command("info")]
             public async Task TableInfoTables()
             {
-                try
-                {
-                    var dbInfos = await GetAllDBTableInfos();
+                return;
 
-                    // TODO dispose with using
-                    DrawDbSchema drawDbSchema = new DrawDbSchema(dbInfos);
-                    drawDbSchema.DrawAllTables();
+                // SYSTEM.DRAWING
+                //try
+                //{
+                //    var dbInfos = await GetAllDBTableInfos();
+
+                //    // TODO dispose with using
+                //    DrawDbSchema drawDbSchema = new DrawDbSchema(dbInfos);
+                //    drawDbSchema.DrawAllTables();
 
 
 
-                    var stream = CommonHelper.GetStream(drawDbSchema.Bitmap);
-                    Context.Channel.SendFileAsync(stream, "test.png");
+                //    var stream = CommonHelper.GetStream(drawDbSchema.Bitmap);
+                //    Context.Channel.SendFileAsync(stream, "test.png");
 
-                    drawDbSchema.Dispose();
-                    stream.Dispose();
+                //    drawDbSchema.Dispose();
+                //    stream.Dispose();
 
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, ex.Message);
-                }
+                //}
+                //catch (Exception ex)
+                //{
+                //    _logger.LogError(ex, ex.Message);
+                //}
             }
 
 
@@ -657,14 +659,15 @@ ORDER BY table_name DESC;", true, 50);
                 var queryResult = await SQLHelper.GetQueryResults(Context, commandSql, true, 50);
                 string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
 
-                var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString);
+                // SYSTEM.DRAWING
+                //var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString);
 
-                var stream = await drawTable.GetImage();
-                if (stream == null)
-                    return;// todo some message
+                //var stream = await drawTable.GetImage();
+                //if (stream == null)
+                //    return;// todo some message
 
-                await Context.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null, new Discord.MessageReference(Context.Message.Id));
-                stream.Dispose();
+                //await Context.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null, new Discord.MessageReference(Context.Message.Id));
+                //stream.Dispose();
 
                 // release the user again as the query finished
                 ActiveSQLCommands[userId] = DateTime.MinValue;

@@ -1,6 +1,8 @@
 ﻿using Discord;
 using ETHBot.DataLayer.Data.Discord;
-using ETHDINFKBot.Drawing;
+
+// SYSTEM.DRAWING
+// using ETHDINFKBot.Drawing;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,6 +17,9 @@ namespace ETHDINFKBot.Helpers
 
         public static Stream GetMessageGraph(DateTime from, DateTime to, int groupByMins = 5)
         {
+            // SYSTEM.DRAWING
+            return new MemoryStream();
+            /*
             var dataPoints = DatabaseManager.Instance().GetMessageCountGrouped(from, to, groupByMins);
             var drawInfo = DrawingHelper.GetEmptyGraphics();
             var padding = DrawingHelper.DefaultPadding;
@@ -29,7 +34,7 @@ namespace ETHDINFKBot.Helpers
 
             drawInfo.Bitmap.Dispose();
             drawInfo.Graphics.Dispose();
-            return stream;
+            return stream;*/
         }
 
 

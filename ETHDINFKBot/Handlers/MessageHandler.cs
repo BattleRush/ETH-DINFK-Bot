@@ -7,7 +7,6 @@ using ETHBot.DataLayer.Data.Enums;
 using ETHDINFKBot.Helpers;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -305,6 +304,8 @@ namespace ETHDINFKBot.Handlers
                             {
                                 try
                                 {
+                                    // SYSTEM.DRAWING
+                                    /*
                                     Bitmap bmp;
                                     using (var ms = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
                                     {
@@ -314,6 +315,7 @@ namespace ETHDINFKBot.Handlers
                                     var stream = CommonHelper.GetStream(resImage);
 
                                     await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.png", "", false, null, null, false, null, new Discord.MessageReference(SocketMessage.ReferencedMessage?.Id));
+                                    */
                                 }
                                 catch (Exception ex) 
                                 { 

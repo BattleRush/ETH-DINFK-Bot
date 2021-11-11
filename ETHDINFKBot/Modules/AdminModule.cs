@@ -3,7 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using ETHBot.DataLayer;
 using ETHBot.DataLayer.Data.Enums;
-using ETHDINFKBot.Drawing;
+//using ETHDINFKBot.Drawing;
 using ETHDINFKBot.Helpers;
 using ETHDINFKBot.Log;
 using ICSharpCode.SharpZipLib.GZip;
@@ -486,16 +486,16 @@ namespace ETHDINFKBot.Modules
 
                 }
 
+                // SYSTEM.DRAWING
 
+                //var drawTable = new DrawTable(header, data, "");
 
-                var drawTable = new DrawTable(header, data, "");
+                //var stream = await drawTable.GetImage();
+                //if (stream == null)
+                //    return;// todo some message
 
-                var stream = await drawTable.GetImage();
-                if (stream == null)
-                    return;// todo some message
-
-                await Context.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null, new Discord.MessageReference(Context.Message.Id));
-                stream.Dispose();
+                //await Context.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null, new Discord.MessageReference(Context.Message.Id));
+                //stream.Dispose();
             }
 
             [Command("lock")]
@@ -724,6 +724,8 @@ namespace ETHDINFKBot.Modules
                             data.Add(channelInfoRow);
                         }
 
+                        // SYSTEM.DRAWING
+                        /*
                         var drawTable = new DrawTable(header, data, "");
 
                         var stream = await drawTable.GetImage();
@@ -731,7 +733,7 @@ namespace ETHDINFKBot.Modules
                             return;// todo some message
 
                         await Context.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null, new Discord.MessageReference(Context.Message.Id));
-                        stream.Dispose();
+                        stream.Dispose();*/
                     }
                 }
 
