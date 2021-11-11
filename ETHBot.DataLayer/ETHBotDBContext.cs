@@ -44,7 +44,8 @@ namespace ETHBot.DataLayer
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionbuilder)
         {
-            optionbuilder.UseLoggerFactory(loggerFactory).UseMySql(ConnectionString).EnableSensitiveDataLogging();
+            optionbuilder.UseLoggerFactory(loggerFactory).UseMySql(ConnectionString,
+            new MySqlServerVersion(new Version(10, 3, 31))).EnableSensitiveDataLogging();
         }
 
         public DbSet<BannedLink> BannedLinks { get; set; }
