@@ -285,19 +285,25 @@ namespace ETHDINFKBot
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 string www = "/var/www/wss";
+                try
+                {
+                    //string www = @"C:\Temp\wss";
+                    // Create and prepare a new SSL server context
+                    var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
+                    //var context = new SslContext(SslProtocols.Tls12);
+                    // Create a new WebSocket server
+                    PlaceServer = new PlaceServer(context, IPAddress.Any, 9000);
+                    PlaceServer.AddStaticContent(www, "/place");
 
-                //string www = @"C:\Temp\wss";
-                // Create and prepare a new SSL server context
-                var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
-                //var context = new SslContext(SslProtocols.Tls12);
-                // Create a new WebSocket server
-                PlaceServer = new PlaceServer(context, IPAddress.Any, 9000);
-                PlaceServer.AddStaticContent(www, "/place");
-
-                // Start the server
-                Console.Write("Server starting...");
-                PlaceServer.Start();
-                Console.WriteLine("Done!");
+                    // Start the server
+                    Console.Write("Server starting...");
+                    PlaceServer.Start();
+                    Console.WriteLine("Done!");
+                }
+                catch(Exception ex)
+                {
+                    Console.Write("Error while starting WS: " + ex.ToString());
+                }
             }
             else
             {
