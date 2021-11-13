@@ -1,343 +1,372 @@
-﻿//using System;
-//using System.Collections.Generic;
-//using System.Drawing;
-//using System.Drawing.Drawing2D;
-//using System.Linq;
-//using System.Text;
-//using System.Threading.Tasks;
-
-//namespace ETHDINFKBot.Drawing
-//{
-
-//    public class GridSize
-//    {
-//        public int XMin { get; set; }
-//        public int XMax { get; set; }
-//        public int XSize { get; set; }
-
-//        public int YMin { get; set; }
-//        public int YMax { get; set; }
-//        public int YSize { get; set; }
-//        public GridSize()
-//        {
-
-//        }
-
-//        public GridSize(Bitmap bitmap, Padding padding)
-//        {
-//            int width = bitmap.Width;
-//            int height = bitmap.Height;
-
-//            XMin = padding.Left;
-//            XMax = width - padding.Right;
-//            XSize = XMax - XMin;
-
-//            YMin = height - padding.Bottom;
-//            YMax = padding.Top;
-//            YSize = YMin - YMax;
-//        }
-//    }
-
-
-//    public class Padding
-//    {
-//        public int Top { get; set; }
-//        public int Right { get; set; }
-//        public int Bottom { get; set; }
-//        public int Left { get; set; }
-//        public Padding()
-//        {
-
-//        }
-
-//        public Padding(int padding)
-//        {
-//            Top = padding;
-//            Right = padding;
-//            Bottom = padding;
-//            Left = padding;
-//        }
-
-//        public Padding(int top, int right, int bottom, int left)
-//        {
-//            Top = top;
-//            Right = right;
-//            Bottom = bottom;
-//            Left = left;
-//        }
-//    }
-
-//    // TODO move some points to point / line graph
-//    public static class DrawingHelper
-//    {
-//        public static (Graphics Graphics, Bitmap Bitmap) GetEmptyGraphics(int width = 1920, int height = 1080)
-//        {
-//            var bitmap = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format24bppRgb); // TODO see if needed format
-//            var graphics = Graphics.FromImage(bitmap);
-//            graphics.SmoothingMode = SmoothingMode.AntiAlias;
-//            graphics.Clear(DrawingHelper.DiscordBackgroundColor);
-
-//            return (graphics, bitmap);
-//        }
-
-
-//        // TODO duplicate params similar to GetPoints
-//        public static (List<string> XAxisLables, List<string> YAxisLabels) GetLabels(Dictionary<DateTime, int> data, int columns, int rows, bool yZeroIndexed = true, DateTime? minDate = null, DateTime? maxDate = null, string suffix = "")
-//        {
-//            if (columns < 1)
-//                columns = 1;
-//            if (rows < 1)
-//                rows = 1;
-
-
-//            // dupe code from GetPoints
-//            DateTime firstDateTime = minDate ?? data.First().Key;
-//            DateTime lastDateTime = maxDate ?? data.Last().Key;
-
-//            long totalSec = (long)(lastDateTime - firstDateTime).TotalSeconds; // sec granularity
-//            int minVal = int.MaxValue;
-//            int maxVal = int.MinValue;
-//            foreach (var item in data)
-//            {
-//                if (item.Value < minVal)
-//                    minVal = item.Value;
-//                if (item.Value > maxVal)
-//                    maxVal = item.Value;
-//            }
+﻿using SkiaSharp;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ETHDINFKBot.Drawing
+{
+    public class GridSize
+    {
+        public int XMin { get; set; }
+        public int XMax { get; set; }
+        public int XSize { get; set; }
+
+        public int YMin { get; set; }
+        public int YMax { get; set; }
+        public int YSize { get; set; }
+        public GridSize()
+        {
+
+        }
+
+        public GridSize(SKBitmap bitmap, Padding padding)
+        {
+            int width = bitmap.Width;
+            int height = bitmap.Height;
+
+            XMin = padding.Left;
+            XMax = width - padding.Right;
+            XSize = XMax - XMin;
+
+            YMin = height - padding.Bottom;
+            YMax = padding.Top;
+            YSize = YMin - YMax;
+        }
+    }
+
+    public class Padding
+    {
+        public int Top { get; set; }
+        public int Right { get; set; }
+        public int Bottom { get; set; }
+        public int Left { get; set; }
+        public Padding()
+        {
+
+        }
+
+        public Padding(int padding)
+        {
+            Top = padding;
+            Right = padding;
+            Bottom = padding;
+            Left = padding;
+        }
+
+        public Padding(int top, int right, int bottom, int left)
+        {
+            Top = top;
+            Right = right;
+            Bottom = bottom;
+            Left = left;
+        }
+    }
+
+    // TODO move some points to point / line graph
+    public static class DrawingHelper
+    {
+        public static (SKCanvas Canvas, SKBitmap Bitmap) GetEmptyGraphics(int width = 1920, int height = 1080)
+        {
+            var bitmap = new SKBitmap(width, height); // TODO see if needed format
+            var graphics = new SKCanvas(bitmap);
+            graphics.Clear(DrawingHelper.DiscordBackgroundColor);
+
+            // TODO Verify if this is better
+
+            //https://docs.microsoft.com/en-us/dotnet/api/skiasharp.skpaint?view=skiasharp-2.80.2
+            //var info = new SKImageInfo(width, height);
+            //using (var surface = SKSurface.Create(info))
+            //{
+            //    SKCanvas canvas = surface.Canvas;
+            //}
+
+            return (graphics, bitmap);
+        }
+
+
+        // TODO duplicate params similar to GetPoints
+        public static (List<string> XAxisLables, List<string> YAxisLabels) GetLabels(Dictionary<DateTime, int> data, int columns, int rows, bool yZeroIndexed = true, DateTime? minDate = null, DateTime? maxDate = null, string suffix = "")
+        {
+            if (columns < 1)
+                columns = 1;
+
+            if (rows < 1)
+                rows = 1;
+
+            // dupe code from GetPoints
+            DateTime firstDateTime = minDate ?? data.First().Key;
+            DateTime lastDateTime = maxDate ?? data.Last().Key;
+
+            long totalSec = (long)(lastDateTime - firstDateTime).TotalSeconds; // sec granularity
+            int minVal = int.MaxValue;
+            int maxVal = int.MinValue;
+            foreach (var item in data)
+            {
+                if (item.Value < minVal)
+                    minVal = item.Value;
+                if (item.Value > maxVal)
+                    maxVal = item.Value;
+            }
 
-//            if (yZeroIndexed)
-//                minVal = 0;
-//            // dupe code end -> add generic class TODO
+            if (yZeroIndexed)
+                minVal = 0;
+            // dupe code end -> add generic class TODO
 
-//            // X AXIS
-//            long intervalColumn = totalSec / columns;
+            // X AXIS
+            long intervalColumn = totalSec / columns;
 
-//            List<string> xAxisLabels = new List<string>();
-//            DateTimeOffset currentDate = firstDateTime;
-//            xAxisLabels.Add(currentDate.ToString("MM.dd\nHH:mm"));
+            List<string> xAxisLabels = new List<string>();
+            DateTimeOffset currentDate = firstDateTime;
+            xAxisLabels.Add(currentDate.ToString("MM.dd\nHH:mm"));
 
-//            for (int i = 0; i < columns; i++)
-//            {
-//                currentDate = currentDate.AddSeconds(intervalColumn);
-//                xAxisLabels.Add(currentDate.ToString("MM.dd\nHH:mm"));
-//            }
+            for (int i = 0; i < columns; i++)
+            {
+                currentDate = currentDate.AddSeconds(intervalColumn);
+                xAxisLabels.Add(currentDate.ToString("MM.dd\nHH:mm"));
+            }
 
 
-//            // Y AXIS
-//            int intervalRow = (maxVal - minVal) / rows;
+            // Y AXIS
+            int intervalRow = (maxVal - minVal) / rows;
 
-//            int currentValue = minVal;
+            int currentValue = minVal;
 
-//            List<string> yAxisLabels = new List<string>();
-//            yAxisLabels.Add(currentValue.ToString());
+            List<string> yAxisLabels = new List<string>();
+            yAxisLabels.Add(currentValue.ToString());
 
-//            for (int i = 0; i < rows; i++)
-//            {
-//                currentValue += intervalRow;
-//                yAxisLabels.Add(currentValue.ToString() + suffix);
-//            }
+            for (int i = 0; i < rows; i++)
+            {
+                currentValue += intervalRow;
+                yAxisLabels.Add(currentValue.ToString() + suffix);
+            }
 
-//            return (xAxisLabels, yAxisLabels);
-//        }
+            return (xAxisLabels, yAxisLabels);
+        }
 
-//        public static List<Point> GetPoints(Dictionary<DateTime, int> data, GridSize gridSize, bool yZeroIndexed = true, DateTime? minDate = null, DateTime? maxDate = null, bool overlapDays = false)
-//        {
-//            // TODO implement overlap days
+        public static List<SKPoint> GetPoints(Dictionary<DateTime, int> data, GridSize gridSize, bool yZeroIndexed = true, DateTime? minDate = null, DateTime? maxDate = null, bool overlapDays = false)
+        {
+            // TODO implement overlap days
 
-//            List<Point> dataPoints = new List<Point>();
+            List<SKPoint> dataPoints = new List<SKPoint>();
 
-//            // assume the dictionary is ordered
-//            // todo ensure that just in case
+            // assume the dictionary is ordered
+            // todo ensure that just in case
 
-//            DateTime firstDateTime = minDate ?? data.First().Key;
-//            DateTime lastDateTime = maxDate ?? data.Last().Key;
+            DateTime firstDateTime = minDate ?? data.First().Key;
+            DateTime lastDateTime = maxDate ?? data.Last().Key;
 
-//            long totalSec = (long)(lastDateTime - firstDateTime).TotalSeconds; // sec granularity
+            long totalSec = (long)(lastDateTime - firstDateTime).TotalSeconds; // sec granularity
 
-//            int minVal = int.MaxValue;
-//            int maxVal = int.MinValue;
+            int minVal = int.MaxValue;
+            int maxVal = int.MinValue;
 
-//            foreach (var item in data)
-//            {
-//                if (item.Value < minVal)
-//                    minVal = item.Value;
-//                if (item.Value > maxVal)
-//                    maxVal = item.Value;
-//            }
+            foreach (var item in data)
+            {
+                if (item.Value < minVal)
+                    minVal = item.Value;
+                if (item.Value > maxVal)
+                    maxVal = item.Value;
+            }
 
-//            if (yZeroIndexed)
-//                minVal = 0;
+            if (yZeroIndexed)
+                minVal = 0;
 
 
-//            foreach (var item in data)
-//            {
-//                if (maxVal == 0)
-//                    break;
+            foreach (var item in data)
+            {
+                if (maxVal == 0)
+                    break;
 
-//                long currentTotalSec = (long)(item.Key - firstDateTime).TotalSeconds; // sec granularity
+                long currentTotalSec = (long)(item.Key - firstDateTime).TotalSeconds; // sec granularity
 
-//                decimal xPercentage = currentTotalSec / (decimal)totalSec;
-//                decimal yPercentage = (item.Value - minVal) / (decimal)(maxVal - minVal);
+                decimal xPercentage = currentTotalSec / (decimal)totalSec;
+                decimal yPercentage = (item.Value - minVal) / (decimal)(maxVal - minVal);
 
-//                int xpos = (int)(gridSize.XSize * xPercentage) + gridSize.XMin;
-//                int ypos = gridSize.YSize - (int)(gridSize.YSize * yPercentage) + gridSize.YMax;
+                int xpos = (int)(gridSize.XSize * xPercentage) + gridSize.XMin;
+                int ypos = gridSize.YSize - (int)(gridSize.YSize * yPercentage) + gridSize.YMax;
 
-//                dataPoints.Add(new Point(xpos, ypos));
-//            }
+                dataPoints.Add(new SKPoint(xpos, ypos));
+            }
 
-//            return dataPoints;
-//        }
+            return dataPoints;
+        }
 
-//        public static void DrawPoints(Graphics graphics, Bitmap bitmap, List<Point> points, int size = 6, Pen pen = null, string text = "", int index = 0)
-//        {
-//            if (pen == null)
-//                pen = Pen_Blue_Transparent;
+        public static void DrawPoints(SKCanvas canvas, SKBitmap bitmap, List<SKPoint> points, int size = 6, SKPaint paint = null, string text = "", int index = 0)
+        {
+            if (paint == null)
+            {
+                paint = new SKPaint()
+                {
+                    Color = WhiteColor
+                };
+            }
 
-//            foreach (var point in points)
-//                graphics.DrawRectangle(pen, new Rectangle(point.X - size / 2, point.Y - size / 2, size, size));
+            foreach (var point in points)
+                canvas.DrawRect(new SKRect(point.X - size / 2, point.Y - size / 2, size, size), paint);
 
-//            // draw Legend
+            // draw Legend
 
-//            int heigth = bitmap.Height;
-//            int labelWidth = 250;
+            int heigth = bitmap.Height;
+            int labelWidth = 250;
 
-//            int yOffset = 50;
-//            int xOffset = 110;
+            int yOffset = 50;
+            int xOffset = 110;
 
-//            graphics.DrawRectangle(pen, new Rectangle(xOffset - 5 + labelWidth * index - size / 2, heigth - yOffset + 10 - size / 2, size, size));
-//            graphics.DrawString(text, TitleFont, pen.Brush, new Point(xOffset + labelWidth * index, heigth - yOffset));
-//        }
+            canvas.DrawRect(new SKRect(xOffset - 5 + labelWidth * index - size / 2, heigth - yOffset + 10 - size / 2, size, size), paint);
+            canvas.DrawText(text, new SKPoint(xOffset + labelWidth * index, heigth - yOffset), DefaultTextPaint); // TODO Correct paint?
+        }
 
-//        public static void DrawLine(Graphics graphics, Bitmap bitmap, List<Point> points, int size = 6, Pen pen = null, string text = "", int index = 0, bool drawPoint = false)
-//        {
-//            if (pen == null)
-//                pen = Pen_Blue_Transparent;
+        public static void DrawLine(SKCanvas canvas, SKBitmap bitmap, List<SKPoint> points, int size = 6, SKPaint paint = null, string text = "", int index = 0, bool drawPoint = false)
+        {
+            if (paint == null)
+            {
+                paint = new SKPaint()
+                {
+                    Color = WhiteColor
+                };
+            }
+
+            if (points.Count == 0)
+                return;
 
-//            if (points.Count == 0)
-//                return;
-
-//            Point prevPoint = points.First();
-//            foreach (var point in points)
-//            {
-//                if (drawPoint)
-//                    graphics.DrawRectangle(pen, new Rectangle(point.X - size / 2, point.Y - size / 2, size, size));
-
-//                graphics.DrawLine(pen, prevPoint, point);
-//                prevPoint = point;
-//            }
-
-//            // draw Legend
-
-//            int heigth = bitmap.Height;
-//            int labelWidth = 250;
-
-//            int yOffset = 50;
-//            int xOffset = 120;
-
-//            int iconDist = 20;
-
-//            if (drawPoint)
-//                graphics.DrawRectangle(pen, new Rectangle(xOffset - iconDist / 2 + labelWidth * index - size / 2, heigth - yOffset + 10 - size / 2, size, size));
-
-//            pen.Width = 2;
-//            graphics.DrawLine(pen, new Point(xOffset - iconDist + labelWidth * index, heigth - yOffset + 10), new Point(xOffset + labelWidth * index, heigth - yOffset + 10));
-//            graphics.DrawString(text, TitleFont, pen.Brush, new Point(xOffset + labelWidth * index, heigth - yOffset));
-//        }
-
-//        public static void DrawGrid(Graphics graphics, GridSize gridSize, Padding padding, List<string> xAxis, List<string> yAxis, string title, List<string> secondYAxis = null)
-//        {
-//            var pen = Pen_White;
-//            var font = TitleFont;
-//            var brush = SolidBrush_White;
-
-//            // TODO consider what to do with the last entry -> add empty label?
-//            int columns = xAxis.Count - 1;
-//            int rows = yAxis.Count - 1;
-
-//            int fontHeight = 11;
-
-//            // draw columns
-//            for (int i = 0; i <= columns; i++)
-//            {
-//                graphics.DrawString($"{xAxis[i]}", font, brush, new Point(gridSize.XMin + (i * (gridSize.XSize / columns)) - 25, gridSize.YMin + fontHeight-3));
-
-//                if (i < columns)
-//                    graphics.DrawLine(pen, new Point(gridSize.XMin + (i * (gridSize.XSize / columns)), gridSize.YMin), new Point(gridSize.XMin + (i * (gridSize.XSize / columns)), gridSize.YMax));
-//            }
-//            graphics.DrawLine(pen, new Point(gridSize.XMax, gridSize.YMin), new Point(gridSize.XMax, gridSize.YMax));
-
-//            // draw rows
-//            for (int i = 0; i <= rows; i++)
-//            {
-//                graphics.DrawString($"{yAxis[i]}", font, brush, new Point(20, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i - fontHeight / 2 /* to center it vertically */));
-//                if (secondYAxis != null)
-//                    graphics.DrawString($"{secondYAxis[i]}", font, brush, new Point(gridSize.XMax + 10, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i - fontHeight / 2 /* to center it vertically */));
-
-//                if (i < rows)
-//                    graphics.DrawLine(pen, new Point(gridSize.XMin, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i), new Point(gridSize.XMax, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i));
-//            }
-//            graphics.DrawLine(pen, new Point(gridSize.XMin, gridSize.YMax), new Point(gridSize.XMax, gridSize.YMax));
-
-//            // Draw title
-//            graphics.DrawString(title, font, brush, new Point(100, 20));
-//        }
-
-
-//        /* USE THIS TO ENFORCE THE SAME STYLE FOR ALL IMAGES*/
-//        public static Color DiscordBackgroundColor
-//        {
-//            get { return Color.FromArgb(54, 57, 63); }
-//        }
-
-//        public static Padding DefaultPadding
-//        {
-//            get { return new Padding(75, 100, 125, 100); }
-//        }
-
-//        public static Font NormalTextFont
-//        {
-//            get { return new Font("Arial", 11); }
-//        }
-
-//        public static Font LargerTextFont
-//        {
-//            get { return new Font("Arial", 14); }
-//        }
-
-//        public static Font TitleFont
-//        {
-//            get { return new Font("Arial", 16); }
-//        }
-
-//        public static Pen Pen_White
-//        {
-//            get { return new Pen(SolidBrush_White); }
-//        }
-//        public static Pen Pen_Blue_Transparent
-//        {
-//            get { return new Pen(Color.FromArgb(172, 224, 128, 0), 15); }
-//        }
-//        public static SolidBrush SolidBrush_Yellow
-//        {
-//            get { return new SolidBrush(Color.Yellow); }
-//        }
-//        public static SolidBrush SolidBrush_Black
-//        {
-//            get { return new SolidBrush(Color.Black); }
-//        }
-
-//        public static SolidBrush SolidBrush_White
-//        {
-//            get { return new SolidBrush(Color.White); }
-//        }
-
-//        public static SolidBrush SolidBrush_Red
-//        {
-//            get { return new SolidBrush(Color.Red); }
-//        }
-//        public static SolidBrush SolidBrush_Blue
-//        {
-//            get { return new SolidBrush(Color.Blue); }
-//        }
-//    }
-//}
+            SKPoint prevPoint = points.First();
+            foreach (var point in points)
+            {
+                if (drawPoint)
+                    canvas.DrawRect(new SKRect(point.X - size / 2, point.Y - size / 2, size, size), paint);
+
+                canvas.DrawLine(prevPoint, point, paint);
+                prevPoint = point;
+            }
+
+            // draw Legend
+
+            int heigth = bitmap.Height;
+            int labelWidth = 250;
+
+            int yOffset = 50;
+            int xOffset = 120;
+
+            int iconDist = 20;
+
+            if (drawPoint)
+                canvas.DrawRect(new SKRect(xOffset - iconDist / 2 + labelWidth * index - size / 2, heigth - yOffset + 10 - size / 2, size, size), paint);
+
+            //pen.Width = 2;
+
+            canvas.DrawLine(new SKPoint(xOffset - iconDist + labelWidth * index, heigth - yOffset + 10), new SKPoint(xOffset + labelWidth * index, heigth - yOffset + 10), paint);
+            canvas.DrawText(text, new SKPoint(xOffset + labelWidth * index, heigth - yOffset), DefaultTextPaint); // TODO Correct paint?
+        }
+
+        public static void DrawGrid(SKCanvas canvas, GridSize gridSize, Padding padding, List<string> xAxis, List<string> yAxis, string title, List<string> secondYAxis = null)
+        {
+            //var pen = Pen_White;
+            //var font = TitleFont;
+            //var brush = SolidBrush_White;
+
+            var paint = new SKPaint(); // TODO Define paint -> TODO Pass as parameter
+
+            // TODO consider what to do with the last entry -> add empty label?
+            int columns = xAxis.Count - 1;
+            int rows = yAxis.Count - 1;
+
+            int fontHeight = 11;
+
+            // draw columns
+            for (int i = 0; i <= columns; i++)
+            {
+                canvas.DrawText($"{xAxis[i]}", new SKPoint(gridSize.XMin + (i * (gridSize.XSize / columns)) - 25, gridSize.YMin + fontHeight - 3), DefaultTextPaint);
+
+                if (i < columns)
+                    canvas.DrawLine(new SKPoint(gridSize.XMin + (i * (gridSize.XSize / columns)), gridSize.YMin), new SKPoint(gridSize.XMin + (i * (gridSize.XSize / columns)), gridSize.YMax), paint);
+            }
+            canvas.DrawLine(new SKPoint(gridSize.XMax, gridSize.YMin), new SKPoint(gridSize.XMax, gridSize.YMax), paint);
+
+            // draw rows
+            for (int i = 0; i <= rows; i++)
+            {
+                canvas.DrawText($"{yAxis[i]}", new SKPoint(20, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i - fontHeight / 2 /* to center it vertically */), DefaultTextPaint);
+                if (secondYAxis != null)
+                    canvas.DrawText($"{secondYAxis[i]}", new SKPoint(gridSize.XMax + 10, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i - fontHeight / 2 /* to center it vertically */), DefaultTextPaint);
+
+                if (i < rows)
+                    canvas.DrawLine(new SKPoint(gridSize.XMin, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i), new SKPoint(gridSize.XMax, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i), paint);
+            }
+            canvas.DrawLine(new SKPoint(gridSize.XMin, gridSize.YMax), new SKPoint(gridSize.XMax, gridSize.YMax), paint);
+
+            // Draw title
+            canvas.DrawText(title, new SKPoint(100, 20), TitleTextPaint);
+
+            var paint3 = new SKPaint
+            {
+                TextSize = 64.0f,
+                IsAntialias = true,
+                Color = new SKColor(136, 136, 136),
+                TextScaleX = 1.5f
+
+            };
+        }
+
+        /* USE THIS TO ENFORCE THE SAME STYLE FOR ALL IMAGES*/
+        public static SKColor DiscordBackgroundColor
+        {
+            get { return new SKColor(54, 57, 63); }
+        }
+        public static SKColor WhiteColor
+        {
+            get { return new SKColor(255, 255, 255); }
+        }
+
+        public static Padding DefaultPadding
+        {
+            get { return new Padding(75, 100, 125, 100); }
+        }
+
+        public static SKTypeface Typeface_Arial
+        {
+            get { return SKTypeface.FromFamilyName("Arial", SKFontStyle.Normal); }
+        }
+
+        public static SKPaint DefaultTextPaint
+        {
+            get
+            {
+                return new SKPaint()
+                {
+                    Typeface = Typeface_Arial,
+                    TextSize = NormalTextSize,
+                    Color = WhiteColor,
+                    TextEncoding = SKTextEncoding.Utf8,
+                    IsAntialias = true
+                };
+            }
+        }
+
+        public static SKPaint TitleTextPaint
+        {
+            get
+            {
+                return new SKPaint()
+                {
+                    Typeface = Typeface_Arial,
+                    TextSize = TitleTextSize,
+                    Color = WhiteColor,
+                    TextEncoding = SKTextEncoding.Utf8,
+                    IsAntialias = true
+                };
+            }
+        }
+
+        public static int TitleTextSize
+        {
+            get { return 16; }
+        }
+
+        public static int NormalTextSize
+        {
+            get { return 11; }
+        }
+    }
+}
