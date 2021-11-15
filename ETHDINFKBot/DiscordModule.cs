@@ -143,71 +143,78 @@ namespace ETHDINFKBot
         [Alias("about")]
         public async Task VersionOutput()
         {
-            var currentProcessCpuUsage = GetCpuUsageForProcess();
-            var proc = Process.GetCurrentProcess();
+            try
+            {
+                var currentProcessCpuUsage = GetCpuUsageForProcess();
+                var proc = Process.GetCurrentProcess();
 
-            var currentAssembly = Assembly.GetExecutingAssembly();
-            var assembly = Assembly.GetExecutingAssembly();
-            var version = assembly.GetName().Version;
-            FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
-            string productVersion = fileVersionInfo.ProductVersion;
-            string fileVersion = fileVersionInfo.FileVersion;
-            bool isDebug = fileVersionInfo.IsDebug;
-
-
-
-            var netCoreVer = Environment.Version;
-            var runtimeVer = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
-            var osVersion = Environment.OSVersion;
-            var applicationOnlineTime = (DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime());
+                var currentAssembly = Assembly.GetExecutingAssembly();
+                var assembly = Assembly.GetExecutingAssembly();
+                var version = assembly.GetName().Version;
+                FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
+                string productVersion = fileVersionInfo.ProductVersion;
+                string fileVersion = fileVersionInfo.FileVersion;
+                bool isDebug = fileVersionInfo.IsDebug;
 
 
-            var processorCount = Environment.ProcessorCount;
-            var ram = proc.WorkingSet64;
-            var freeBytes = new DriveInfo(assembly.Location).AvailableFreeSpace;
-            var totalBytes = new DriveInfo(assembly.Location).TotalSize;
 
-            EmbedBuilder builder = new EmbedBuilder();
+                var netCoreVer = Environment.Version;
+                var runtimeVer = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
+                var osVersion = Environment.OSVersion;
+                var applicationOnlineTime = (DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime());
 
-            builder.WithTitle($"{Program.Client.CurrentUser.Username} Version Info");
-            //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
 
-            string prefix = Program.CurrentPrefix;
+                var processorCount = Environment.ProcessorCount;
+                var ram = proc.WorkingSet64;
+                var freeBytes = new DriveInfo(assembly.Location).AvailableFreeSpace;
+                var totalBytes = new DriveInfo(assembly.Location).TotalSize;
 
-            builder.WithDescription($@"For more information about the bot type ""{prefix}help"" or ""{prefix}source""");
+                EmbedBuilder builder = new EmbedBuilder();
 
-            int g = 0;
+                builder.WithTitle($"{Program.Client.CurrentUser.Username} Version Info");
+                //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
+
+                string prefix = Program.CurrentPrefix;
+
+                builder.WithDescription($@"For more information about the bot type ""{prefix}help"" or ""{prefix}source""");
+
+                int g = 0;
 #if DEBUG
-            g = 192;
+                g = 192;
 #endif
 
-            builder.WithColor(0, g, 255);
+                builder.WithColor(0, g, 255);
 
-            builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
 
-            builder.WithCurrentTimestamp();
-            //builder.WithAuthor(author);
-            builder.AddField("Version", $"{version.ToString()}", true);
-            builder.AddField("Product Version", $"{productVersion}", true);
-            builder.AddField("File Version", $"{fileVersion}", true);
-            builder.AddField("Build Mode", $"{(isDebug ? "Debug" : "Release")}", true);
-            builder.AddField(".NET Version", $"{netCoreVer.ToString()}", true);
-            builder.AddField("Runtime Version", $"{runtimeVer.ToString()}", true);
-            builder.AddField("OS Version", $"{osVersion.ToString()}", true);
-            builder.AddField("Online for", $"{ToReadableString(applicationOnlineTime)}", true);
-            builder.AddField("Processor Count", $"{processorCount.ToString("N0")}", true);
-            builder.AddField("Git Branch", $"{ThisAssembly.Git.Branch}", true);
-            builder.AddField("Git Commit", $"{ThisAssembly.Git.Commit}", true);
-            builder.AddField("Last Commit", $"{ThisAssembly.Git.CommitDate}", true);
-            builder.AddField("Git Tag", $"{ThisAssembly.Git.Tag}", true);
+                builder.WithCurrentTimestamp();
+                //builder.WithAuthor(author);
+                builder.AddField("Version", $"{version.ToString()}", true);
+                builder.AddField("Product Version", $"{productVersion}", true);
+                builder.AddField("File Version", $"{fileVersion}", true);
+                builder.AddField("Build Mode", $"{(isDebug ? "Debug" : "Release")}", true);
+                builder.AddField(".NET Version", $"{netCoreVer.ToString()}", true);
+                builder.AddField("Runtime Version", $"{runtimeVer.ToString()}", true);
+                builder.AddField("OS Version", $"{osVersion.ToString()}", true);
+                builder.AddField("Online for", $"{ToReadableString(applicationOnlineTime)}", true);
+                builder.AddField("Processor Count", $"{processorCount.ToString("N0")}", true);
+                builder.AddField("Git Branch", $"{ThisAssembly.Git.Branch}", true);
+                builder.AddField("Git Commit", $"{ThisAssembly.Git.Commit}", true);
+                builder.AddField("Last Commit", $"{ThisAssembly.Git.CommitDate}", true);
+                builder.AddField("Git Tag", $"{ThisAssembly.Git.Tag}", true);
 
-            double cpuUsage = await currentProcessCpuUsage;
+                double cpuUsage = await currentProcessCpuUsage;
 
-            builder.AddField("CPU", $"{Math.Round(cpuUsage, 2)}%", true);
-            builder.AddField("RAM", $"{Math.Round(ram / 1024d / 1024d / 1024d, 2)} GB", true);
-            builder.AddField("DISK", $"{Math.Round((totalBytes - freeBytes) / 1024d / 1024d / 1024d, 2)} GB out of {Math.Round(totalBytes / 1024d / 1024d / 1024d, 2)} GB ({Math.Round(100 * ((totalBytes - freeBytes) / (decimal)totalBytes), 2)}%)", true);
+                builder.AddField("CPU", $"{Math.Round(cpuUsage, 2)}%", true);
+                builder.AddField("RAM", $"{Math.Round(ram / 1024d / 1024d / 1024d, 2)} GB", true);
+                builder.AddField("DISK", $"{Math.Round((totalBytes - freeBytes) / 1024d / 1024d / 1024d, 2)} GB out of {Math.Round(totalBytes / 1024d / 1024d / 1024d, 2)} GB ({Math.Round(100 * ((totalBytes - freeBytes) / (decimal)totalBytes), 2)}%)", true);
 
-            Context.Channel.SendMessageAsync("", false, builder.Build());
+                Context.Channel.SendMessageAsync("", false, builder.Build());
+            }
+            catch (Exception ex)
+            {
+                Context.Channel.SendMessageAsync(ex.ToString());
+            }
         }
 
         [Command("help")]
@@ -719,7 +726,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     }
 
                     var channel = "unknown";
-                    if(dbMessage?.DiscordChannelId != null)
+                    if (dbMessage?.DiscordChannelId != null)
                         channel = $"<#{dbMessage?.DiscordChannelId}>";
 
                     // RoleIds smaller than 100 cant exist due to the Id size, so they are reserved for internal code
