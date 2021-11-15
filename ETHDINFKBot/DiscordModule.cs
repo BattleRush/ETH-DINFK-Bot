@@ -147,11 +147,11 @@ namespace ETHDINFKBot
             {
                 var currentProcessCpuUsage = GetCpuUsageForProcess();
                 var proc = Process.GetCurrentProcess();
-
+                var file = proc.MainModule.FileName;
                 var currentAssembly = Assembly.GetExecutingAssembly();
                 var assembly = Assembly.GetExecutingAssembly();
                 var version = assembly.GetName().Version;
-                FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.CodeBase);
+                FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(file);
                 string productVersion = fileVersionInfo.ProductVersion;
                 string fileVersion = fileVersionInfo.FileVersion;
                 bool isDebug = fileVersionInfo.IsDebug;
