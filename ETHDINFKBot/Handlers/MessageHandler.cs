@@ -5,6 +5,7 @@ using ETHBot.DataLayer.Data;
 using ETHBot.DataLayer.Data.Discord;
 using ETHBot.DataLayer.Data.Enums;
 using ETHDINFKBot.Helpers;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -241,10 +242,10 @@ namespace ETHDINFKBot.Handlers
                 if (CommandInfos.Any(i => i.Name.ToLower() == SocketMessage.Content.ToLower().Replace(".", "")))
                     return;
 
-                if (SocketMessage.Content.StartsWith("."))
+                if (SocketMessage.Content.StartsWith(Program.CurrentPrefix))
                 {
                     // check if the emoji exists and if the emojis is animated
-                    string name = SocketMessage.Content.Substring(1, SocketMessage.Content.Length - 1);
+                    string name = SocketMessage.Content.Substring(Program.CurrentPrefix.Length, SocketMessage.Content.Length - Program.CurrentPrefix.Length);
                     int index = -1;
 
                     if (name.Contains('-'))
@@ -296,7 +297,7 @@ namespace ETHDINFKBot.Handlers
                                 try
                                 {
                                     using (var stream = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
-                                      await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.gif", "", false, null, null, false, null, new Discord.MessageReference(SocketMessage.ReferencedMessage?.Id));
+                                      await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.gif", "", false, null, null, false, null, new MessageReference(SocketMessage.ReferencedMessage?.Id));
                                 }
                                 catch (Exception ex) { }
                             }
@@ -304,26 +305,26 @@ namespace ETHDINFKBot.Handlers
                             {
                                 try
                                 {
-                                    // SYSTEM.DRAWING
-                                    /*
-                                    Bitmap bmp;
+
+                                    SKBitmap bmp;
                                     using (var ms = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
                                     {
-                                        bmp = new Bitmap(ms);
+                                        bmp = SKBitmap.Decode(ms); 
                                     }
                                     var resImage = CommonHelper.ResizeImage(bmp, Math.Min(bmp.Height, 64));
                                     var stream = CommonHelper.GetStream(resImage);
 
-                                    await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.png", "", false, null, null, false, null, new Discord.MessageReference(SocketMessage.ReferencedMessage?.Id));
-                                    */
+                                    await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.png", "", false, null, null, false, null, new MessageReference(SocketMessage.ReferencedMessage?.Id));
+                                    
                                 }
                                 catch (Exception ex) 
-                                { 
+                                {
+                                    await SocketMessage.Channel.SendMessageAsync(ex.ToString());
                                 }
                             }
                         }
 
-                        await SocketTextChannel.SendMessageAsync($"(.{emote.EmoteName}) by <@{SocketGuildUser.Id}>");
+                        await SocketTextChannel.SendMessageAsync($"({Program.CurrentPrefix}{emote.EmoteName}) by <@{SocketGuildUser.Id}>");
                     }
                 }
             }

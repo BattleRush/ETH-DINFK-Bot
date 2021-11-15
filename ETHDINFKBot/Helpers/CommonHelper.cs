@@ -1,11 +1,11 @@
 ﻿using Discord.WebSocket;
 using ETHBot.DataLayer;
 using ETHBot.DataLayer.Data.Discord;
-//SYSTEM.DRAWING
-//using ETHDINFKBot.Drawing;
+using ETHDINFKBot.Drawing;
 using Reddit;
 using Reddit.Controllers;
 using RedditScrapper;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 
@@ -22,8 +22,6 @@ namespace ETHDINFKBot.Helpers
         {
             return c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
         }
-
-
 
         public static bool ContainsForbiddenQuery(string command)
         {
@@ -63,20 +61,37 @@ namespace ETHDINFKBot.Helpers
         }
 
 
-        /*
-        public static Stream GetStream(Bitmap bitmap)
+        
+        public static Stream GetStream(SKBitmap bitmap)
         {
             Stream ms = new MemoryStream();
-            if(bitmap != null)
-                bitmap.Save(ms, ImageFormat.Png);
-            ms.Position = 0;
+            if (bitmap == null)
+            {
+                return null;
+            }
+
+            try
+            {
+                IntPtr p;
+                IntPtr pixels = bitmap.GetPixels(out p); // this line and the next
+                using (var img = SKImage.FromPixels(bitmap.Info, pixels, bitmap.Width * bitmap.BytesPerPixel))
+                {
+                    var data = img.Encode(SKEncodedImageFormat.Png, 100);
+                    data.SaveTo(ms);
+                }
+
+                ms.Position = 0;
+            }
+            catch (Exception ex)    
+            {
+                return null; // TODO log error
+            }
+
 
             return ms;
 
             //await Context.Channel.SendFileAsync(ms, "test.png");
-        }*/
-
-        // source https://stackoverflow.com/questions/1922040/how-to-resize-an-image-c-sharp
+        }
 
         /// <summary>
         /// Resize the image to the specified width and height.
@@ -84,37 +99,25 @@ namespace ETHDINFKBot.Helpers
         /// <param name="image">The image to resize.</param>
         /// <param name="width">The width to resize to.</param>
         /// <param name="height">The height to resize to.</param>
+        /// <param name="width">(OPTIONAL) The width to resize too, if negative then ratio of the height will be taken</param>
         /// <returns>The resized image.</returns>
-        /*public static Bitmap ResizeImage(System.Drawing.Image image, int height)
+        public static SKBitmap ResizeImage(SKBitmap bitmap, int height, int width = -1)
         {
-
-            decimal ratio = image.Width / (decimal)image.Height;
-
-            var destRect = new Rectangle(0, 0, (int)(height * ratio), height);
-            var destImage = new Bitmap((int)(height * ratio), height);
-
-            destImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
-
-            using (var graphics = Graphics.FromImage(destImage))
+            SKSizeI size;
+            if (width > 0) {
+                size = new SKSizeI(width, height);
+            }
+            else
             {
-                graphics.CompositingMode = CompositingMode.SourceCopy;
-                graphics.CompositingQuality = CompositingQuality.HighQuality;
-                graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                graphics.SmoothingMode = SmoothingMode.HighQuality;
-                graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-
-                using (var wrapMode = new ImageAttributes())
-                {
-                    wrapMode.SetWrapMode(WrapMode.TileFlipXY);
-                    graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, wrapMode);
-                }
+                decimal ratio = bitmap.Width / (decimal)bitmap.Height;
+                size = new SKSizeI((int)(height * ratio), height); // Verify if correct to ratio the height
             }
 
-            return destImage;
+            var resized = bitmap.Resize(size, SKFilterQuality.High);
+
+            return resized;
         }
-        */
-
-
+        
         // https://stackoverflow.com/a/19553611
         public static string DisplayWithSuffix(int num)
         {
@@ -127,9 +130,6 @@ namespace ETHDINFKBot.Helpers
             if (number.EndsWith("3")) return number + "rd";
             return number + "th";
         }
-
-
-
 
         public static async Task ScrapReddit(List<string> subredditNames, ISocketMessageChannel channel)
         {
@@ -254,6 +254,5 @@ namespace ETHDINFKBot.Helpers
 
             DatabaseManager.Instance().SetSubredditScaperStatus(subredditName, false);
         }
-
     }
 }

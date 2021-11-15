@@ -4,8 +4,7 @@ using Discord.WebSocket;
 using ETHBot.DataLayer.Data.Fun;
 using ETHDINFKBot.Data;
 
-// SYSTEM.DRAWING
-//using ETHDINFKBot.Drawing;
+using ETHDINFKBot.Drawing;
 using ETHDINFKBot.Enums;
 using ETHDINFKBot.Helpers;
 using FFMediaToolkit;
@@ -113,14 +112,11 @@ namespace ETHDINFKBot.Modules
 
         public static bool? LockedBoard = null;
 
-        // SYSTEM.DRAWING
-        //public static Bitmap CurrentPlaceBitmap;
+        public static SKBitmap CurrentPlaceBitmap;
         public static int LastYRefreshed = 0;
 
         private bool IsPlaceLocked()
         {
-            // SYSTEM.DRAWING
-            /*
             if (CurrentPlaceBitmap == null)
             {
 
@@ -134,7 +130,6 @@ namespace ETHDINFKBot.Modules
                     Thread.Sleep(100);
                 }
             }
-            */
 
             if (LockedBoard == null)
             {
@@ -147,7 +142,7 @@ namespace ETHDINFKBot.Modules
 
         // Bitmap -> ImageData (safe)
 
-        // SYSTEM.DRAWING
+        // SYSTEM.DRAWING -> TODO EVEN NEEDED?
         /*
         public static ImageData ToImageData(Bitmap bitmap)
         {
@@ -465,33 +460,26 @@ If you violate the server rules your pixels will be removed.
 
             var boardPixels = dbManager.GetCurrentImage(x, x + size, y, y + size);
 
-            // SYSTEM.DRAWING
-            /*
             var board = DrawingHelper.GetEmptyGraphics(size, size);
 
             foreach (var pixel in boardPixels)
             {
-                var color = System.Drawing.Color.FromArgb(pixel.R, pixel.G, pixel.B);
+                var color = new SKColor(pixel.R, pixel.G, pixel.B);
                 board.Bitmap.SetPixel(pixel.XPos - x, pixel.YPos - y, color);
             }
             watch.Stop();
 
             // TODO Dispose stuff
             var stream = CommonHelper.GetStream(board.Bitmap);
-            await Context.Channel.SendFileAsync(stream, $"verify_{x}_{y}.png", $"PIXELVERIFY {x} {y} SUCCESS Time: {watch.ElapsedMilliseconds}ms");*/
+            await Context.Channel.SendFileAsync(stream, $"verify_{x}_{y}.png", $"PIXELVERIFY {x} {y} SUCCESS Time: {watch.ElapsedMilliseconds}ms");
         }
 
 
         [Command("grid")]
         public async Task ViewGrid(int x = 0, int y = 0, int size = 1000)
         {
-            return;
-
-            // SYSTEM.DRAWING
-            /*
             int padding = 50;
 
-            // SYSTEM.DRAWING
             if (size < 50 || size > 1000 || CurrentPlaceBitmap == null)
             {
                 await Context.Channel.SendMessageAsync("Size can only be between 50 and 1000 or CurrentPlaceBitmap is null");
@@ -550,9 +538,9 @@ If you violate the server rules your pixels will be removed.
                     {
                         XPos = xNow,
                         YPos = yNow,
-                        R = color.R,
-                        G = color.G,
-                        B = color.B
+                        R = color.Red,
+                        G = color.Green,
+                        B = color.Blue
                     });
                 }
             }
@@ -568,15 +556,15 @@ If you violate the server rules your pixels will be removed.
 
             watch.Restart();
 
-            var redColor = System.Drawing.Color.FromArgb(255, 0, 0);
-            var whiteColor = System.Drawing.Color.FromArgb(255, 255, 255);
+            var redColor = new SKColor(255, 0, 0);
+            var whiteColor = new SKColor(255, 255, 255);
 
             int minXText = -1;
             int minYText = -1;
 
-            var pen = DrawingHelper.Pen_White;
-            var font = DrawingHelper.LargerTextFont;
-            var brush = DrawingHelper.SolidBrush_White;
+            //var pen = DrawingHelper.Pen_White;
+            //var font = DrawingHelper.LargerTextFont;
+            //var brush = DrawingHelper.SolidBrush_White;
 
             try
             {
@@ -601,10 +589,8 @@ If you violate the server rules your pixels will be removed.
 
             foreach (var pixel in boardPixels)
             {
-                var color = System.Drawing.Color.FromArgb(pixel.R, pixel.G, pixel.B);
+                var color = new SKColor(pixel.R, pixel.G, pixel.B);
                 //board.Bitmap.SetPixel(pixel.XPos, pixel.YPos, color);
-
-
 
                 for (int i = 0; i < pixelSize; i++)
                 {
@@ -621,8 +607,9 @@ If you violate the server rules your pixels will be removed.
 
                             if (minXText < xZero)
                             {
-                                board.Graphics.DrawString(pixel.XPos.ToString(), font, brush, new System.Drawing.Point(padding + (pixel.XPos - x) * pixelSize + i - 5, 15));
-                                board.Graphics.DrawString(pixel.XPos.ToString(), font, brush, new System.Drawing.Point(padding + (pixel.XPos - x) * pixelSize + i - 5, padding + boardSize + 10));
+                                // TODO verify if the size is right
+                                board.Canvas.DrawText(pixel.XPos.ToString(), new SKPoint(padding + (pixel.XPos - x) * pixelSize + i - 5, 15), DrawingHelper.DefaultTextPaint);
+                                board.Canvas.DrawText(pixel.XPos.ToString(), new SKPoint(padding + (pixel.XPos - x) * pixelSize + i - 5, padding + boardSize + 10), DrawingHelper.DefaultTextPaint);
 
                                 minXText = xZero;
                             }
@@ -636,8 +623,8 @@ If you violate the server rules your pixels will be removed.
 
                             if (minYText < yZero)
                             {
-                                board.Graphics.DrawString(pixel.YPos.ToString(), font, brush, new System.Drawing.Point(5, padding + (pixel.YPos - y) * pixelSize + j - 5));
-                                board.Graphics.DrawString(pixel.YPos.ToString(), font, brush, new System.Drawing.Point(padding + boardSize + 5, padding + (pixel.YPos - y) * pixelSize + j - 5));
+                                board.Canvas.DrawText(pixel.YPos.ToString(), new SKPoint(5, padding + (pixel.YPos - y) * pixelSize + j - 5), DrawingHelper.DefaultTextPaint);
+                                board.Canvas.DrawText(pixel.YPos.ToString(), new SKPoint(padding + boardSize + 5, padding + (pixel.YPos - y) * pixelSize + j - 5), DrawingHelper.DefaultTextPaint);
 
                                 minYText = yZero;
                             }
@@ -650,8 +637,6 @@ If you violate the server rules your pixels will be removed.
             // TODO Dispose stuff
             var stream = CommonHelper.GetStream(board.Bitmap);
             await Context.Channel.SendFileAsync(stream, "place.png", $"DB Time: {msDbTime}ms Draw Time: {watch.ElapsedMilliseconds}ms");
-            */
-
         }
 
         [Command("timelapse")]
@@ -911,8 +896,6 @@ If you violate the server rules your pixels will be removed.
 
         private void RefreshBoard(int ySize)
         {
-            return; 
-            /*
             // use lock and stuff but lazy to do it properly haha xD and the db is dying atm (just for future myself)
             if (Refreshing)
                 return;
@@ -931,7 +914,7 @@ If you violate the server rules your pixels will be removed.
                 var pixels = dbManager.GetImageByYLines(from, until);
 
                 foreach (var pixel in pixels)
-                    CurrentPlaceBitmap.SetPixel(pixel.XPos, pixel.YPos, System.Drawing.Color.FromArgb(pixel.R, pixel.G, pixel.B));
+                    CurrentPlaceBitmap.SetPixel(pixel.XPos, pixel.YPos, new SKColor(pixel.R, pixel.G, pixel.B));
 
                 LastYRefreshed = until;
                 if (LastYRefreshed > 999)
@@ -944,7 +927,7 @@ If you violate the server rules your pixels will be removed.
             finally
             {
                 Refreshing = false;
-            }*/
+            }
         }
 
 
@@ -1030,12 +1013,10 @@ If you violate the server rules your pixels will be removed.
 
                 // TODO Dispose stuff
 
-                // SYSTEM.DRAWING
-                /*
+        
                 var stream = CommonHelper.GetStream(CurrentPlaceBitmap);
                 //await Context.Channel.SendFileAsync(stream, "place.png", $"DB Time: {msDbTime}ms Draw Time: {watch.ElapsedMilliseconds}ms");
                 await Context.Channel.SendFileAsync(stream, "place.png", $"DB Time: {msDbTime}ms Web Viewer: https://place.battlerush.dev/");
-                */
             }
             catch (Exception ex)
             {
@@ -1058,8 +1039,6 @@ If you violate the server rules your pixels will be removed.
 
         public async Task PixelHistoryTask(int x = -1, int y = -1, string all = null)
         {
-            return;
-            /*
             if ((x < 0 || x >= 1000 || y < 0 || y >= 1000) && all.ToLower() != "all")
             {
                 await Context.Channel.SendMessageAsync($"Pixel not found");
@@ -1097,8 +1076,8 @@ If you violate the server rules your pixels will be removed.
             string messageText = "";
             foreach (var pixel in pixelHistory)
             {
-                var color = System.Drawing.Color.FromArgb(pixel.R, pixel.G, pixel.B);
-                var stringHex = ColorTranslator.ToHtml(color);
+                var color = new SKColor(pixel.R, pixel.G, pixel.B);
+                var stringHex = "#TODO set color hex";
 
                 ulong discordUserId = PlaceDiscordUsers.FirstOrDefault(i => i.PlaceDiscordUserId == pixel.PlaceDiscordUserId)?.DiscordUserId ?? 0;
                 if (all?.ToLower() == "all")
@@ -1118,7 +1097,7 @@ If you violate the server rules your pixels will be removed.
 
             watch.Stop();
 
-            await Context.Message.Channel.SendMessageAsync($"DB Time: {watch.ElapsedMilliseconds}ms", false, builder.Build());*/
+            await Context.Message.Channel.SendMessageAsync($"DB Time: {watch.ElapsedMilliseconds}ms", false, builder.Build());
         }
 
         public static Dictionary<ulong, DateTimeOffset> ZoomTimeout = new Dictionary<ulong, DateTimeOffset>();
@@ -1129,10 +1108,6 @@ If you violate the server rules your pixels will be removed.
         [Command("zoom")]
         public async Task ZoomIntoTheBoard(int x, int y, int size = 100)
         {
-            return;
-
-            // SYSTEM.DRAWING
-            /*
             if (size > 350 || size < 10)
             {
                 await Context.Channel.SendMessageAsync("Size can only be between 10 and 350");
@@ -1177,7 +1152,7 @@ If you violate the server rules your pixels will be removed.
             watch.Restart();
 
 
-            var redColor = System.Drawing.Color.FromArgb(255, 0, 0);
+            var redColor = new SKColor(255, 0, 0);
 
             try
             {
@@ -1194,7 +1169,7 @@ If you violate the server rules your pixels will be removed.
 
             foreach (var pixel in boardPixels)
             {
-                var color = System.Drawing.Color.FromArgb(pixel.R, pixel.G, pixel.B);
+                var color = new SKColor(pixel.R, pixel.G, pixel.B);
                 //board.Bitmap.SetPixel(pixel.XPos, pixel.YPos, color);
 
                 for (int i = 0; i < pixelSize; i++)
@@ -1206,12 +1181,7 @@ If you violate the server rules your pixels will be removed.
                 }
             }
 
-
             // for any out of bounds pixels for the sneaky people
-
-
-
-
 
             watch.Stop();
 
@@ -1222,9 +1192,6 @@ If you violate the server rules your pixels will be removed.
 
             // size can be between 10 and 1000
             // accept hex or int as cord
-
-            */
-
         }
 
         [Command("perf")]
@@ -1236,8 +1203,6 @@ If you violate the server rules your pixels will be removed.
         [Command("perf")]
         public async Task PlacePerf(bool graphMode = true, int lastSize = 1440)
         {
-            return; 
-            /*
             PlaceDBManager dbManager = PlaceDBManager.Instance();
 
             var list = dbManager.GetPlacePerformanceInfo(lastSize);
@@ -1265,12 +1230,12 @@ If you violate the server rules your pixels will be removed.
                     var dataPointListCount = DrawingHelper.GetPoints(dataPointsCount, gridSize, true, startTime, endTime);
                     var dataPointListFailed = DrawingHelper.GetPoints(dataPointsFailed, gridSize, true, startTime, endTime);
 
-                    DrawingHelper.DrawGrid(drawInfo.Graphics, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, $"Place Perf {list.Count} mins", labelsCount.YAxisLabels);
+                    DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, $"Place Perf {list.Count} mins", labelsCount.YAxisLabels);
                     // todo add 2. y Axis on the right
 
-                    DrawingHelper.DrawLine(drawInfo.Graphics, drawInfo.Bitmap, dataPointListAvg, 6, new Pen(System.Drawing.Color.LightGreen), "Avg in ms / min", 0, true);
-                    DrawingHelper.DrawLine(drawInfo.Graphics, drawInfo.Bitmap, dataPointListCount, 6, new Pen(System.Drawing.Color.Yellow), "Count / min", 1, true);
-                    DrawingHelper.DrawLine(drawInfo.Graphics, drawInfo.Bitmap, dataPointListFailed, 6, new Pen(System.Drawing.Color.DarkOrange), "Failed Count / min", 2, true);
+                    DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListAvg, 6, new SKPaint() { Color = new SKColor(255, 0, 0) }, "Avg in ms / min", 0, true); //new Pen(System.Drawing.Color.LightGreen)
+                    DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListCount, 6, new SKPaint() { Color = new SKColor(0, 255, 0) }, "Count / min", 1, true); // new Pen(System.Drawing.Color.Yellow)
+                    DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListFailed, 6, new SKPaint() { Color = new SKColor(0, 0, 255) }, "Failed Count / min", 2, true); // new Pen(System.Drawing.Color.DarkOrange)
 
                     // TODO add methods to the drawing lib
                     if (listStartUpTimes.Count > 0)
@@ -1279,15 +1244,15 @@ If you violate the server rules your pixels will be removed.
                         foreach (var startUpTimes in listStartUpTimes)
                         {
                             double percent = (startUpTimes.StartUpTime - startTime).TotalMinutes / totalMins;
-                            drawInfo.Graphics.DrawLine(new Pen(System.Drawing.Color.Red),
-                                new System.Drawing.Point((int)(gridSize.XMin + gridSize.XSize * percent), gridSize.YMin), new System.Drawing.Point((int)(gridSize.XMin + gridSize.XSize * percent), gridSize.YMax));
+                            int x = (int)(gridSize.XMin + gridSize.XSize * percent);
+                            drawInfo.Canvas.DrawLine(new SKPoint(x, gridSize.YMin), new SKPoint(x, gridSize.YMax), new SKPaint() { Color = new SKColor(255, 0, 0)});
                         }
                     }
 
                     var stream = CommonHelper.GetStream(drawInfo.Bitmap);
 
                     drawInfo.Bitmap.Dispose();
-                    drawInfo.Graphics.Dispose();
+                    drawInfo.Canvas.Dispose();
 
                     await Context.Channel.SendFileAsync(stream, "place_perf.png", $"");
                 }
@@ -1319,7 +1284,7 @@ If you violate the server rules your pixels will be removed.
                     output += "```";
                     await Context.Channel.SendMessageAsync(output);
                 }
-            }*/
+            }
         }
 
         public static List<long> PixelPlacementTimeLastMinute = new List<long>();
@@ -1392,8 +1357,10 @@ If you violate the server rules your pixels will be removed.
         }
 
         // DUPLICATE CODE WITH genchunk (which could be removed if this automatic code works)
-        private async void AutomaticGenChunk()
+        private async void AutomaticGenChunk(bool sendMessage = true)
         {
+            // TODO Create PlaceChunkTable to save info about each chunk
+
             Stopwatch watch = new Stopwatch();
             watch.Start();
 
@@ -1418,7 +1385,9 @@ If you violate the server rules your pixels will be removed.
             var totalPixelsChunked = GetTotalChunkedPixels();
 
             var totalPixelsPlaced = dbManager.GetBoardHistoryCount(lastPixelIdChunked, totalPixelsChunked);
-            await textChannel.SendMessageAsync($"Total pixels to load {totalPixelsPlaced.ToString("N0")}", false);
+
+            if(sendMessage)
+                await textChannel.SendMessageAsync($"Total pixels to load {totalPixelsPlaced.ToString("N0")}", false);
 
             //short chunkId = 0;
 
@@ -1497,8 +1466,9 @@ If you violate the server rules your pixels will be removed.
                 counter += 1;
             }
 
+            if(sendMessage)
+                await textChannel.SendMessageAsync($"Saved {file}", false);
 
-            await textChannel.SendMessageAsync($"Saved {file}", false);
             File.WriteAllBytes(filePath, data);
 
 
@@ -1512,8 +1482,8 @@ If you violate the server rules your pixels will be removed.
 
             DatabaseManager.Instance().SetBotSettings(botSettings);
 
-
-            await textChannel.SendMessageAsync($"Done. Timelapse has been updated automatically in {watch.ElapsedMilliseconds}ms", false);
+            if(sendMessage)
+                await textChannel.SendMessageAsync($"Done. Timelapse has been updated automatically in {watch.ElapsedMilliseconds}ms", false);
         }
 
         [Command("setpixel")]
@@ -1542,7 +1512,7 @@ If you violate the server rules your pixels will be removed.
                 // Verify if the current user is locked
                 if (MultiPlacement.ContainsKey(userId) && MultiPlacement[userId] > DateTime.UtcNow)
                 {
-                    if (new Random().Next(0, 25) % 25 == 0)
+                    if (new Random().Next(0, 10) % 10 == 0)
                         Context.Channel.SendMessageAsync($"You think you are being clever huh?");
 
                     return;

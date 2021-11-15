@@ -29,8 +29,7 @@ using System.Globalization;
 using System.Diagnostics;
 using Microsoft.Data.Sqlite;
 
-// SYSTEM.DRAWING
-//using ETHDINFKBot.Drawing;
+using ETHDINFKBot.Drawing;
 using System.Reflection;
 using TimeZoneConverter;
 
@@ -541,36 +540,56 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             int xOffsetFixForText = -3;
 
             int width = Math.Min(emojis.Count, 10) * blockSize + padding;
-            int height = (int)(Math.Ceiling(emojis.Count / 10d) * blockSize + paddingY);
+            int height = (int)(Math.Ceiling(emojis.Count / 10d) * blockSize + paddingY - 5);
 
             width = Math.Max(width + 25, 350); // because of the title
 
-            // SYSTEM.DRAWING
-            /*
-            Bitmap Bitmap = new Bitmap(width, height); // TODO insert into constructor
-            Graphics Graphics = Graphics.FromImage(Bitmap);
-            Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            Graphics.Clear(Color.FromArgb(54, 57, 63));
 
-            Font drawFont = new Font("Arial", 10, FontStyle.Bold);
-            Font drawFontTitle = new Font("Arial", 12, FontStyle.Bold);
-            Font drawFontIndex = new Font("Arial", 16, FontStyle.Bold);
+            SKBitmap bitmap = new SKBitmap(width, height); // TODO insert into constructor
+            SKCanvas canvas = new SKCanvas(bitmap);
 
-            Brush brush = new SolidBrush(Color.White);
-            Brush brushNormal = new SolidBrush(Color.LightSkyBlue);
-            Brush brushGif = new SolidBrush(Color.Coral);
-            Brush brushEmote = new SolidBrush(Color.Gold);
+            canvas.Clear(DrawingHelper.DiscordBackgroundColor);
 
-            Graphics.DrawString($"Normal emote", drawFont, brushNormal, new Point(10, 10));
-            Graphics.DrawString($"Gif emote", drawFont, brushGif, new Point(125, 10));
-            Graphics.DrawString($"Server emote", drawFont, brushEmote, new Point(210, 10));
+            //Font drawFont = new Font("Arial", 10, FontStyle.Bold);
+            //Font drawFontTitle = new Font("Arial", 12, FontStyle.Bold);
+            //Font drawFontIndex = new Font("Arial", 16, FontStyle.Bold);
 
-            Pen p = new Pen(brush);
+            //Brush brush = new SolidBrush(Color.White);
+            //Brush brushNormal = new SolidBrush(Color.LightSkyBlue);
+            //Brush brushGif = new SolidBrush(Color.Coral);
+            //Brush brushEmote = new SolidBrush(Color.Gold);
+
+            var normalEmotePaint = new SKPaint()
+            {
+                Color = new SKColor(255, 255, 255),
+                Typeface = DrawingHelper.Typeface_Arial,
+                TextSize = 13
+            };
+
+            var gifEmotePaint = new SKPaint()
+            {
+                Color = new SKColor(248, 131, 121),// Coral
+                Typeface = DrawingHelper.Typeface_Arial,
+                TextSize = 13
+            };
+
+            var serverEmotePaint = new SKPaint()
+            {
+                Color = new SKColor(255, 215, 0), // Gold
+                Typeface = DrawingHelper.Typeface_Arial,
+                TextSize = 13
+            };
+
+            canvas.DrawText($"Normal emote", new SKPoint(10, 15), normalEmotePaint);
+            canvas.DrawText($"Gif emote", new SKPoint(125, 15), gifEmotePaint);
+            canvas.DrawText($"Server emote", new SKPoint(210, 15), serverEmotePaint);
+
+            //Pen p = new Pen(brush);
 
             // TODO make it more robust and cleaner
             for (int i = 0; i < page; i++)
             {
-                Graphics.DrawString($"[{i}]", drawFontIndex, brush, new Point(10, i * blockSize + paddingY + 12));
+                canvas.DrawText($"[{i}]", new SKPoint(10, i * blockSize + paddingY + 12), new SKPaint() { Color = new SKColor(255, 255, 255), Typeface = DrawingHelper.Typeface_Arial, TextSize = 20 });
 
                 for (int j = 0; j < page; j++)
                 {
@@ -581,27 +600,26 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     {
                         var emote = emojis[i * page + j];
 
-                        Bitmap bmp;
+                        SKBitmap emoteBitmap;
                         using (var ms = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
                         {
-                            bmp = new Bitmap(ms);
+                            emoteBitmap = SKBitmap.Decode(ms);
                         }
 
-                        Brush b = brushNormal;
+                        SKPaint paint = normalEmotePaint;
 
                         if (emote.Animated)
-                        {
-                            b = brushGif;
-                        }
+                            paint = gifEmotePaint;
 
+                        // this server contains this emote
                         if (guildEmotes.Any(i => i.Id == emote.DiscordEmoteId))
-                        {
-                            // this server contains this emote
-                            b = brushEmote;
-                        }
+                            paint = serverEmotePaint;
 
-                        Graphics.DrawImage(bmp, j * blockSize + padding, i * blockSize + paddingY + yOffsetFixForImage, imgSize, imgSize);
-                        Graphics.DrawString($"{emote.EmoteName}", drawFont, b, new Point(j * blockSize + padding + xOffsetFixForText, i * blockSize + j % 2 * (imgSize + 15) + paddingY - 15));
+                        int x = j * blockSize + padding;
+                        int y = i * blockSize + paddingY + yOffsetFixForImage;
+
+                        canvas.DrawBitmap(emoteBitmap, new SKRect(x, y, x + imgSize, y + imgSize));
+                        canvas.DrawText($"{emote.EmoteName}", new SKPoint(x - 1, i * blockSize + j % 2 * (imgSize + 15) + paddingY), paint);
                     }
                     catch (Exception ex)
                     {
@@ -609,14 +627,15 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     }
                 }
 
-                Graphics.DrawLine(p, new Point(0, i * blockSize + paddingY - 15), new Point(width, i * blockSize + paddingY - 15));
+                canvas.DrawLine(new SKPoint(0, i * blockSize + paddingY - 15), new SKPoint(width, i * blockSize + paddingY - 15), DrawingHelper.DefaultDrawing);
             }
-            */
-            Stream mst = new MemoryStream();
-            //Bitmap.Save(mst, System.Drawing.Imaging.ImageFormat.Png);
-            mst.Position = 0;
 
-            return mst;
+            var stream = CommonHelper.GetStream(bitmap);
+
+            bitmap.Dispose();
+            canvas.Dispose();
+
+            return stream;
         }
 
         [Command("react")]
@@ -647,6 +666,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         [Command("ping")]
         public async Task GhostPing()
         {
+            // TODO Put replies into the ping history table aswell
+
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
 
@@ -667,12 +688,14 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 // Add reply message pings
                 pingHistory.AddRange(DatabaseManager.GetLastReplyHistory(20, user.Id));
 
-                pingHistory = pingHistory.OrderByDescending(i => i.DiscordMessageId).ToList();
+                pingHistory = pingHistory.OrderByDescending(i => i.DiscordMessageId).ToList(); // TODO Change to reply id
 
                 EmbedBuilder builder = new EmbedBuilder();
                 builder.WithTitle($"Your last pings");
 
                 pingHistory = pingHistory.Take(20).ToList();
+
+                int count = 0;
 
                 string messageText = "";
                 foreach (var item in pingHistory)
@@ -681,18 +704,31 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     //    continue;
 
                     var dbMessage = DatabaseManager.GetDiscordMessageById(item.DiscordMessageId);
+                    var dbChannel = DatabaseManager.GetDiscordChannel(dbMessage?.DiscordChannelId);
 
                     var dateTime = SnowflakeUtils.FromSnowflake(item.DiscordMessageId ?? 0); // TODO maybe track time in the ping history
 
                     var dateTimeCET = dateTime.Add(Program.TimeZoneInfo.GetUtcOffset(DateTime.Now)); // CEST CONVERSION
 
+                    string link = null;
+
+                    if (count < 5 && dbChannel != null)
+                    {
+                        link = $"https://discord.com/channels/{dbChannel.DiscordServerId}/{dbMessage.DiscordChannelId}/{dbMessage.DiscordMessageId}";
+                        count++;
+                    }
+
+                    var channel = "unknown";
+                    if(dbMessage?.DiscordChannelId != null)
+                        channel = $"<#{dbMessage?.DiscordChannelId}>";
+
                     // RoleIds smaller than 100 cant exist due to the Id size, so they are reserved for internal code
                     if (item.DiscordRoleId.HasValue && item.DiscordRoleId.Value >= 100)
-                        messageText += $"<@{item.FromDiscordUserId}> pinged <@&{item.DiscordRoleId}> at {dateTimeCET.ToString("dd.MM HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}"; // todo check for everyone or here
+                        messageText += $"<@{item.FromDiscordUserId}> {(link == null ? "pinged" : $"[pinged]({link})")} <@&{item.DiscordRoleId}> at {dateTimeCET.ToString("dd.MM HH:mm")} in {channel} {Environment.NewLine}"; // todo check for everyone or here
                     else if (item.DiscordRoleId.HasValue && item.DiscordRoleId.Value < 100)
-                        messageText += $"<@{item.FromDiscordUserId}> replied at {dateTimeCET.ToString("dd.MM HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}"; // todo check for everyone or here
+                        messageText += $"<@{item.FromDiscordUserId}> {(link == null ? "replied" : $"[replied]({link})")} at {dateTimeCET.ToString("dd.MM HH:mm")} in {channel} {Environment.NewLine}"; // todo check for everyone or here
                     else
-                        messageText += $"<@{item.FromDiscordUserId}> pinged at {dateTimeCET.ToString("dd.MM HH:mm")} in <#{dbMessage?.DiscordChannelId}> {Environment.NewLine}";
+                        messageText += $"<@{item.FromDiscordUserId}> {(link == null ? "pinged" : $"[pinged]({link})")} at {dateTimeCET.ToString("dd.MM HH:mm")} in {channel} {Environment.NewLine}";
                 }
 
                 messageText += Environment.NewLine;
@@ -842,7 +878,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             foreach (var emoji in emotes)
             {
-                string emoteString = $".{emoji.EmoteName} ";
+                string emoteString = $"{Program.CurrentPrefix}{emoji.EmoteName} ";
 
                 if (emoji.Animated)
                     emoteString = $"[{emoji.EmoteName}] ";
@@ -887,9 +923,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 text = text.Substring(0, 1990);
             }
             watch.Stop();
-            await Context.Channel.SendFileAsync(stream, $"emote_{search}.png", text + $"Time: {watch.ElapsedMilliseconds} ms");
+            var msg = await Context.Channel.SendFileAsync(stream, $"emote_{search}.png", text + $"Time: {watch.ElapsedMilliseconds} ms");
         }
-
 
         [Command("study", RunMode = RunMode.Async)]
         public async Task Study(ulong confirmId = 0)

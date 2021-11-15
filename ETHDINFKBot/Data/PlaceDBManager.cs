@@ -594,8 +594,7 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
 
             try
             {
-                // SYSTEM.DRAWING
-                //PlaceModule.CurrentPlaceBitmap?.SetPixel(x, y, color);
+                PlaceModule.CurrentPlaceBitmap?.SetPixel(x, y, color);
 
                 var server = Program.PlaceServer;
 
@@ -688,7 +687,20 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
                 //return null;
             }
             */
+#if DEBUG
+            string sqlQuery = $@"
+-- update the pixel on the live board
+INSERT INTO PlaceBoardPixels
+VALUES ({x}, {y}, {color.Red}, {color.Green}, {color.Blue})
+ON DUPLICATE KEY UPDATE
+R = {color.Red}, G = {color.Green}, B = {color.Blue};
 
+-- insert a new entry into history
+INSERT INTO PlaceBoardHistory (PlaceDiscordUserId, XPos, YPos, R, G, B, PlacedDateTime, Removed)
+VALUES ({placeUser.PlaceDiscordUserId},{x},{y},{color.Red},{color.Green},{color.Blue},@placedDateTime, 0);";
+#endif
+
+#if !DEBUG
             string sqlQuery = $@"
 -- update the pixel on the live board
 UPDATE PlaceBoardPixels
@@ -698,7 +710,7 @@ WHERE XPos = {x} AND YPos = {y};
 -- insert a new entry into history
 INSERT INTO PlaceBoardHistory (PlaceDiscordUserId, XPos, YPos, R, G, B, PlacedDateTime, Removed)
 VALUES ({placeUser.PlaceDiscordUserId},{x},{y},{color.Red},{color.Green},{color.Blue},@placedDateTime, 0)";
-
+#endif
 
             using (var connection = new MySqlConnection(Program.FULL_MariaDBReadOnlyConnectionString))
             {

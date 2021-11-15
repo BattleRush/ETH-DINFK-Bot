@@ -308,6 +308,10 @@ namespace ETHDINFKBot.Drawing
 
             };
         }
+        public static SKBitmap CropImage(SKBitmap bitmap, SKRect cropArea)
+        {
+            return bitmap; // TODO Implement crop
+        }
 
         /* USE THIS TO ENFORCE THE SAME STYLE FOR ALL IMAGES*/
         public static SKColor DiscordBackgroundColor
@@ -326,7 +330,8 @@ namespace ETHDINFKBot.Drawing
 
         public static SKTypeface Typeface_Arial
         {
-            get { return SKTypeface.FromFamilyName("Arial", SKFontStyle.Normal); }
+            //get { return SKTypeface.FromFamilyName("Arial", SKFontStyle.Normal); }
+            get { return SKTypeface.FromFamilyName("Tomaha", SKFontStyle.Normal); }
         }
 
         public static SKPaint DefaultTextPaint
@@ -354,6 +359,18 @@ namespace ETHDINFKBot.Drawing
                     TextSize = TitleTextSize,
                     Color = WhiteColor,
                     TextEncoding = SKTextEncoding.Utf8,
+                    IsAntialias = true
+                };
+            }
+        }
+
+        public static SKPaint DefaultDrawing
+        {
+            get
+            {
+                return new SKPaint()
+                {
+                    Color = WhiteColor,
                     IsAntialias = true
                 };
             }

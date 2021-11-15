@@ -1,97 +1,86 @@
-﻿//using ETHDINFKBot.Drawing;
-//using System;
-//using System.Collections.Generic;
-//using System.Drawing;
-//using System.Drawing.Drawing2D;
-//using System.Drawing.Imaging;
-//using System.IO;
-//using System.Linq;
-//using System.Text;
+﻿using ETHDINFKBot.Drawing;
+using SkiaSharp;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 
-//namespace ETHDINFKBot.Helpers
-//{
-//    // SYSTEM.DRAWING
-//    public class DrawDbSchema : IDisposable
-//    {
-//        public Bitmap Bitmap; // to get stream maybe change a bit to a method in this class to give the stream
-//        private Graphics Graphics;
-//        private List<DBTableInfo> DBTableInfo;
+namespace ETHDINFKBot.Helpers
+{
+    // SYSTEM.DRAWING
+    public class DrawDbSchema : IDisposable
+    {
+        public SKBitmap Bitmap; // to get stream maybe change a bit to a method in this class to give the stream
+        private SKCanvas Canvas;
+        private List<DBTableInfo> DBTableInfo;
 
 
-//        /* SETTINGS */
+        /* SETTINGS */
 
-//        private int TopPadding = 50;
-//        private int LeftPadding = 50;
-//        private int TableWidth = 400;
-//        private int ColumnCount = 5;
+        private int TopPadding = 50;
+        private int LeftPadding = 50;
+        private int TableWidth = 400;
+        private int ColumnCount = 5;
 
-//        private int RowHeight = 35;
+        private int RowHeight = 35;
 
-//        private Pen RelationPen = new Pen(Color.FromArgb(172, 224, 128, 0), 15);
-//        private Font TextFont = new Font("Arial", 11);
-//        private Font TitleFont = new Font("Arial", 16);
-//        private Brush WhiteBrush = new SolidBrush(Color.White);
+        //private Pen RelationPen = new Pen(Color.FromArgb(172, 224, 128, 0), 15);
+        //private Font TextFont = new Font("Arial", 11);
+        //private Font TitleFont = new Font("Arial", 16);
+        //private Brush WhiteBrush = new SolidBrush(Color.White);
 
-//        public DrawDbSchema(List<DBTableInfo> dbInfos)
-//        {
-//            Bitmap = new Bitmap(ColumnCount * (TableWidth + LeftPadding) + LeftPadding, 10000); // TODO insert into constructor
-//            Graphics = Graphics.FromImage(Bitmap);
-//            Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-//            DBTableInfo = dbInfos;
-//            Graphics.Clear(DrawingHelper.DiscordBackgroundColor);
-//        }
+        public DrawDbSchema(List<DBTableInfo> dbInfos)
+        {
+            Bitmap = new SKBitmap(ColumnCount * (TableWidth + LeftPadding) + LeftPadding, 10000); // TODO insert into constructor
+            Canvas = new SKCanvas(Bitmap);
 
-//        public void Dispose()
-//        {
-//            Bitmap.Dispose();
-//            Graphics.Dispose();
-//        }
+            DBTableInfo = dbInfos;
+            Canvas.Clear(DrawingHelper.DiscordBackgroundColor);
+        }
 
-//        //https://stackoverflow.com/questions/2265910/convert-an-image-to-grayscale
-//        public static Bitmap MakeGrayscale3(Bitmap original)
-//        {
-//            //create a blank bitmap the same size as original
-//            Bitmap newBitmap = new Bitmap(original.Width, original.Height);
+        public void Dispose()
+        {
+            Bitmap.Dispose();
+            Canvas.Dispose();
+        }
 
-//            //get a graphics object from the new image
-//            using (Graphics g = Graphics.FromImage(newBitmap))
-//            {
+        //https://docs.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/effects/color-filters
+        public static SKBitmap MakeGrayscale3(SKBitmap original)
+        {
+            // TODO TEST
 
-//                //create the grayscale ColorMatrix
-//                ColorMatrix colorMatrix = new ColorMatrix(
-//                   new float[][]
-//                   {
-//             new float[] {.3f, .3f, .3f, 0, 0},
-//             new float[] {.59f, .59f, .59f, 0, 0},
-//             new float[] {.11f, .11f, .11f, 0, 0},
-//             new float[] {0, 0, 0, 1, 0},
-//             new float[] {0, 0, 0, 0, 1}
-//                   });
+            //create a blank bitmap the same size as original
+            SKBitmap newBitmap = new SKBitmap(original.Width, original.Height);
 
-//                //create some image attributes
-//                using (ImageAttributes attributes = new ImageAttributes())
-//                {
+            //get a graphics object from the new image
+            using (SKCanvas g = new SKCanvas(newBitmap))
+            {
+                using (SKPaint paint = new SKPaint())
+                {
+                    paint.ColorFilter =
+                        SKColorFilter.CreateColorMatrix(new float[]
+                        {
+                    0.21f, 0.72f, 0.07f, 0, 0,
+                    0.21f, 0.72f, 0.07f, 0, 0,
+                    0.21f, 0.72f, 0.07f, 0, 0,
+                    0,     0,     0,     1, 0
+                        });
 
-//                    //set the color matrix attribute
-//                    attributes.SetColorMatrix(colorMatrix);
-
-//                    //draw the original image on the new image
-//                    //using the grayscale color matrix
-//                    g.DrawImage(original, new Rectangle(0, 0, original.Width, original.Height),
-//                                0, 0, original.Width, original.Height, GraphicsUnit.Pixel, attributes);
-//                }
-//            }
-//            return newBitmap;
-//        }
+                    g.DrawBitmap(newBitmap, new SKPoint(0, 0), paint);
+                }
+            }
+            return newBitmap;
+        }
 
 
-//        // TODO rework and cleanup
-//        public void DrawAllTables()
-//        {
-            
-//            //Pen p = new Pen(b);
+        // TODO rework and cleanup
+        public void DrawAllTables()
+        {
 
-//            //Brush b2 = new SolidBrush(Color.Red);
+            //Pen p = new Pen(b);
+
+            //Brush b2 = new SolidBrush(Color.Red);
 
 
 //#if DEBUG
@@ -99,230 +88,225 @@
 //#endif
 //            RelationPen.Width = 4;
 
-            
+
 //            Font drawFont2 = new Font("Arial", 16);
 //            SolidBrush drawBrush = new SolidBrush(Color.Black);
 
 
-//            string pathToImage = "";
+            string pathToImage = "";
 
-//#if DEBUG
-//            pathToImage = Path.Combine("Images", "keyicon.png");
-//#else
-//            pathToImage = Path.Combine(Program.BasePath, "Images", "keyicon.png");
-//#endif
+#if DEBUG
+            pathToImage = Path.Combine("Images", "keyicon.png");
+#else
+            pathToImage = Path.Combine(Program.BasePath, "Images", "keyicon.png");
+#endif
 
-//            var key = new Bitmap(pathToImage);
+            var key = SKBitmap.Decode("pathToImage");
 
-//            // possible linux fix for green tint
-//            key.MakeTransparent();
-
-
-//            var fkKey = MakeGrayscale3(key);
-
-//            var primaryKeys = GeneratePrimaryKeyPositions();
-
-//            DrawRelations(primaryKeys);
-//            var maxHeight = DrawTables(key, fkKey);
-
-//            Bitmap = CropImage(Bitmap, new Rectangle(0, 0, ColumnCount * (TableWidth + LeftPadding) + LeftPadding, maxHeight));
-//        }
-
-//        private int DrawTables(Bitmap pkImage, Bitmap fkImage)
-//        {
-//            int currentHeight = TopPadding;
-//            int currentRowMaxHeight = 0;
-//            int tableIndex = 0;
-
-//            Pen p = new Pen(WhiteBrush);
-
-//            foreach (var dbTable in DBTableInfo)
-//            {
-//                int tableHeight = dbTable.FieldInfos.Count * RowHeight;
-//                currentRowMaxHeight = Math.Max(currentRowMaxHeight, tableHeight);
-
-//                int countTable = 0;
-//                Graphics.DrawString(dbTable.TableName, TitleFont, WhiteBrush, new Point(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount), TopPadding + countTable * RowHeight + currentHeight - 35));
+            // possible linux fix for green tint
+            //key.MakeTransparent();
 
 
-//                foreach (var field in dbTable.FieldInfos)
-//                {
-//                    if (field.IsPrimaryKey)
-//                    {
-//                        int x = LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount) + TableWidth - 35;
-//                        int y = TopPadding + countTable * RowHeight + currentHeight + 8;
+            var fkKey = MakeGrayscale3(key);
 
-//                        Graphics.DrawImage(pkImage, x, y, 30, 20);
+            var primaryKeys = GeneratePrimaryKeyPositions();
 
-//                        //primaryKeys.Add(dbTable.TableName, new Point(x + 35, y + 4));
-//                    }
-//                    Brush brush = new SolidBrush(Color.FromArgb(128, 137, 153, 162)); // TODO move above
-//                    Graphics.FillRectangle(brush, new Rectangle(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount), TopPadding + countTable * RowHeight + currentHeight, TableWidth, RowHeight));
-//                    Graphics.DrawRectangle(p, new Rectangle(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount), TopPadding + countTable * RowHeight + currentHeight, TableWidth, RowHeight));
+            DrawRelations(primaryKeys);
+            var maxHeight = DrawTables(key, fkKey);
 
-//                    var type = field.Type.Replace("EGER", "");
+            Bitmap = DrawingHelper.CropImage(Bitmap, new SKRect(0, 0, ColumnCount * (TableWidth + LeftPadding) + LeftPadding, maxHeight));
+        }
 
-//                    Graphics.DrawString($"{field.Name} ({type}{(field.Nullable ? ", NULL" : "")})",
-//                        TextFont, WhiteBrush, new Point(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount) + 10, TopPadding + countTable * RowHeight + currentHeight + 10));
-
-//                    if (field.IsForeignKey && !field.IsPrimaryKey)
-//                    {
-//                        Graphics.DrawImage(fkImage, LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount) + TableWidth - 35, TopPadding + countTable * RowHeight + currentHeight + 8, 30, 20);
-
-//                        //if (primaryKeys.ContainsKey(field.ForeignKeyInfo.ToTable))
-//                        //{
-//                            //Graphics.DrawLine(p, new Point(leftPadding + (width + leftPadding) * count + width - 35, topPadding + countTable * height + custHeight + 8), primaryKeys[field.ForeignKeyInfo.ToTable]);
-//                        //}
-//                    }
-//                    countTable++;
-//                }
-
-//                tableIndex++;
-
-//                if (tableIndex % ColumnCount == 0)
-//                {
-//                    currentHeight += currentRowMaxHeight + TopPadding;
-//                    currentRowMaxHeight = 0;
-//                }
-//            }
-
-//            currentHeight += currentRowMaxHeight + TopPadding*2;
-//            return currentHeight;
-//        }
-
-//        private void DrawRelations(List<KeyValuePair<string, Point>> primaryKeys)
-//        {
-//            int currentHeight = TopPadding;
-//            int currentRowMaxHeight = 0;
-//            int tableIndex = 0;
-
-//            foreach (var dbTable in DBTableInfo)
-//            {
-//                int countTableRow = 0;
-//                foreach (var field in dbTable.FieldInfos)
-//                {
-//                    int tableHeight = dbTable.FieldInfos.Count * RowHeight;
-//                    currentRowMaxHeight = Math.Max(currentRowMaxHeight, tableHeight);
-
-//                    if (field.IsForeignKey && !field.IsPrimaryKey)
-//                    {
-//                        var tablePrimaryKeys = primaryKeys.Where(i => i.Key == field.ForeignKeyInfo.ToTable);
-//                        if (tablePrimaryKeys.Count() > 0)
-//                        {
-//                            var pkPos = tablePrimaryKeys.First();
-
-//                            if(tablePrimaryKeys.Count() > 1)
-//                            {
-//                                // composite PK -> match by name
-//                                // TODO
-
-//                                // workaround since only one coposite key for now but TODO FIX
-//                                pkPos = field.Name == "YPos" ? tablePrimaryKeys.Last() : pkPos;
-//                            }
-
-//                            var p1 = new Point(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount) + TableWidth, TopPadding + countTableRow * RowHeight + currentHeight + 20);
-//                            var p2 = pkPos.Value;
+        private int DrawTables(SKBitmap pkImage, SKBitmap fkImage)
+        {
+            int currentHeight = TopPadding;
+            int currentRowMaxHeight = 0;
+            int tableIndex = 0;
 
 
-//                            var ang1 = 135;
-//                            var ang2 = -135;
+            foreach (var dbTable in DBTableInfo)
+            {
+                int tableHeight = dbTable.FieldInfos.Count * RowHeight;
+                currentRowMaxHeight = Math.Max(currentRowMaxHeight, tableHeight);
 
-//                            if (p1.X == p2.X)
-//                            {
-//                                //p1.X += width;
-//                                ang1 = 0;
-//                                ang2 = 180;
-//                            }
-//                            else if (p1.X >= p2.X)
-//                            {
-//                                p1.X -= TableWidth;
-//                                ang1 = 135;
-//                                ang2 = -135;
-//                            }
-//                            else
-//                            {
-//                                p2.X -= TableWidth;
-//                                ang1 = 0;
-//                                ang2 = 0;
-//                            }
+                int countTable = 0;
+                Canvas.DrawText(dbTable.TableName, new SKPoint(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount), TopPadding + countTable * RowHeight + currentHeight - 35), DrawingHelper.TitleTextPaint);
 
 
+                foreach (var field in dbTable.FieldInfos)
+                {
+                    if (field.IsPrimaryKey)
+                    {
+                        int x = LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount) + TableWidth - 35;
+                        int y = TopPadding + countTable * RowHeight + currentHeight + 8;
 
-//                            var len = Math.Sqrt(Math.Pow(p2.X - p1.X, 2) + Math.Pow(p2.Y - p1.Y, 2));
+                        Canvas.DrawBitmap(pkImage, new SKPoint(x, y));
 
-//                            var length = (double)len * (1 / (double)3);
-       
-//                            var p11 = new Point((int)(p1.X + Math.Cos(ang1) * length), (int)(p1.Y + Math.Sin(ang1) * length));
-//                            var p12 = new Point((int)(p2.X - Math.Cos(ang2) * length), (int)(p2.Y + Math.Sin(ang2) * length));
+                        //primaryKeys.Add(dbTable.TableName, new Point(x + 35, y + 4));
+                    }
+
+                    //Brush brush = new SolidBrush(Color.FromArgb(128, 137, 153, 162)); // TODO move above
+                    
+                    // TODO Find coresponding function
+                    //Canvas.FillRect(brush, new SKRect(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount), TopPadding + countTable * RowHeight + currentHeight, TableWidth, RowHeight));
+                    
+                    Canvas.DrawRect(new SKRect(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount), TopPadding + countTable * RowHeight + currentHeight, TableWidth, RowHeight), DrawingHelper.DefaultDrawing);
+
+                    var type = field.Type.Replace("EGER", "");
+
+                    Canvas.DrawText($"{field.Name} ({type}{(field.Nullable ? ", NULL" : "")})", new SKPoint(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount) + 10, TopPadding + countTable * RowHeight + currentHeight + 10), DrawingHelper.DefaultTextPaint);
+
+                    if (field.IsForeignKey && !field.IsPrimaryKey)
+                    {
+                        Canvas.DrawBitmap(fkImage, LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount) + TableWidth - 35, TopPadding + countTable * RowHeight + currentHeight + 8);
+
+                        //if (primaryKeys.ContainsKey(field.ForeignKeyInfo.ToTable))
+                        //{
+                        //Graphics.DrawLine(p, new Point(leftPadding + (width + leftPadding) * count + width - 35, topPadding + countTable * height + custHeight + 8), primaryKeys[field.ForeignKeyInfo.ToTable]);
+                        //}
+                    }
+                    countTable++;
+                }
+
+                tableIndex++;
+
+                if (tableIndex % ColumnCount == 0)
+                {
+                    currentHeight += currentRowMaxHeight + TopPadding;
+                    currentRowMaxHeight = 0;
+                }
+            }
+
+            currentHeight += currentRowMaxHeight + TopPadding * 2;
+            return currentHeight;
+        }
+
+        private void DrawRelations(List<KeyValuePair<string, SKPoint>> primaryKeys)
+        {
+            int currentHeight = TopPadding;
+            int currentRowMaxHeight = 0;
+            int tableIndex = 0;
+
+            foreach (var dbTable in DBTableInfo)
+            {
+                int countTableRow = 0;
+                foreach (var field in dbTable.FieldInfos)
+                {
+                    int tableHeight = dbTable.FieldInfos.Count * RowHeight;
+                    currentRowMaxHeight = Math.Max(currentRowMaxHeight, tableHeight);
+
+                    if (field.IsForeignKey && !field.IsPrimaryKey)
+                    {
+                        var tablePrimaryKeys = primaryKeys.Where(i => i.Key == field.ForeignKeyInfo.ToTable);
+                        if (tablePrimaryKeys.Count() > 0)
+                        {
+                            var pkPos = tablePrimaryKeys.First();
+
+                            if (tablePrimaryKeys.Count() > 1)
+                            {
+                                // composite PK -> match by name
+                                // TODO
+
+                                // workaround since only one coposite key for now but TODO FIX
+                                pkPos = field.Name == "YPos" ? tablePrimaryKeys.Last() : pkPos;
+                            }
+
+                            var p1 = new SKPoint(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount) + TableWidth, TopPadding + countTableRow * RowHeight + currentHeight + 20);
+                            var p2 = pkPos.Value;
 
 
-//                            Graphics.DrawBezier(RelationPen, p1, p11, p12, p2);
-//                        }
-//                        else
-//                        {
+                            var ang1 = 135;
+                            var ang2 = -135;
 
-//                        }
-//                    }
-
-//                    countTableRow++;
-//                }
-
-//                tableIndex++;
-
-//                if (tableIndex % ColumnCount == 0)
-//                {
-//                    currentHeight += currentRowMaxHeight + TopPadding;
-//                    currentRowMaxHeight = 0;
-//                }
-//            }
-//        }
-
-//        private List<KeyValuePair<string, Point>> GeneratePrimaryKeyPositions()
-//        {
-//            // TODO remove constants
-
-//            List<KeyValuePair<string, Point>> primaryKeys = new List<KeyValuePair<string, Point>>();
-
-//            int currentHeight = TopPadding;
-//            int currentRowMaxHeight = 0;
-//            int tableIndex = 0;
-
-//            foreach (var dbTable in DBTableInfo)
-//            {
-//                int tableHeight = dbTable.FieldInfos.Count * RowHeight;
-//                currentRowMaxHeight = Math.Max(currentRowMaxHeight, tableHeight);
-
-//                int tableRow = 0;
-//                foreach (var field in dbTable.FieldInfos)
-//                {
-//                    if (field.IsPrimaryKey)
-//                    {
-//                        int x = LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount) + TableWidth - 35;
-//                        int y = currentHeight + tableRow * RowHeight + tableRow + 8 + TopPadding;
-
-//                        primaryKeys.Add(new KeyValuePair<string, Point>(dbTable.TableName, new Point(x + 35, y + 4)));
-//                    }
-
-//                    tableRow++;
-//                }
-
-//                tableIndex++;
-
-//                if (tableIndex % ColumnCount == 0)
-//                {
-//                    currentHeight += currentRowMaxHeight + TopPadding;
-//                    currentRowMaxHeight = 0;
-//                }
-//            }
-
-//            return primaryKeys;
-//        }
+                            if (p1.X == p2.X)
+                            {
+                                //p1.X += width;
+                                ang1 = 0;
+                                ang2 = 180;
+                            }
+                            else if (p1.X >= p2.X)
+                            {
+                                p1.X -= TableWidth;
+                                ang1 = 135;
+                                ang2 = -135;
+                            }
+                            else
+                            {
+                                p2.X -= TableWidth;
+                                ang1 = 0;
+                                ang2 = 0;
+                            }
 
 
-//        // TODO Duplicate 
-//        private static Bitmap CropImage(Bitmap bmpImage, Rectangle cropArea)
-//        {
-//            return bmpImage.Clone(cropArea, bmpImage.PixelFormat);
-//        }
-//    }
-//}
+
+                            var len = Math.Sqrt(Math.Pow(p2.X - p1.X, 2) + Math.Pow(p2.Y - p1.Y, 2));
+
+                            var length = (double)len * (1 / (double)3);
+
+                            var p11 = new SKPoint((int)(p1.X + Math.Cos(ang1) * length), (int)(p1.Y + Math.Sin(ang1) * length));
+                            var p12 = new SKPoint((int)(p2.X - Math.Cos(ang2) * length), (int)(p2.Y + Math.Sin(ang2) * length));
+
+
+                            Canvas.DrawLine(p1, p12, new SKPaint() { Color  = new SKColor(255, 0, 0)});
+                        }
+                        else
+                        {
+
+                        }
+                    }
+
+                    countTableRow++;
+                }
+
+                tableIndex++;
+
+                if (tableIndex % ColumnCount == 0)
+                {
+                    currentHeight += currentRowMaxHeight + TopPadding;
+                    currentRowMaxHeight = 0;
+                }
+            }
+        }
+
+        private List<KeyValuePair<string, SKPoint>> GeneratePrimaryKeyPositions()
+        {
+            // TODO remove constants
+
+            List<KeyValuePair<string, SKPoint>> primaryKeys = new List<KeyValuePair<string, SKPoint>>();
+
+            int currentHeight = TopPadding;
+            int currentRowMaxHeight = 0;
+            int tableIndex = 0;
+
+            foreach (var dbTable in DBTableInfo)
+            {
+                int tableHeight = dbTable.FieldInfos.Count * RowHeight;
+                currentRowMaxHeight = Math.Max(currentRowMaxHeight, tableHeight);
+
+                int tableRow = 0;
+                foreach (var field in dbTable.FieldInfos)
+                {
+                    if (field.IsPrimaryKey)
+                    {
+                        int x = LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount) + TableWidth - 35;
+                        int y = currentHeight + tableRow * RowHeight + tableRow + 8 + TopPadding;
+
+                        primaryKeys.Add(new KeyValuePair<string, SKPoint>(dbTable.TableName, new SKPoint(x + 35, y + 4)));
+                    }
+
+                    tableRow++;
+                }
+
+                tableIndex++;
+
+                if (tableIndex % ColumnCount == 0)
+                {
+                    currentHeight += currentRowMaxHeight + TopPadding;
+                    currentRowMaxHeight = 0;
+                }
+            }
+
+            return primaryKeys;
+        }
+    }
+}

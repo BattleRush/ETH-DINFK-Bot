@@ -17,8 +17,9 @@ using System.Threading.Tasks;
 using System.Linq;
 using Discord;
 
-// SYSTEM.DRAWING
-// using ETHDINFKBot.Drawing;
+
+using ETHDINFKBot.Drawing;
+
 using MySqlConnector;
 
 namespace ETHDINFKBot.Modules
@@ -328,30 +329,30 @@ WHERE
             [Command("info")]
             public async Task TableInfoTables()
             {
-                return;
-
-                // SYSTEM.DRAWING
-                //try
-                //{
-                //    var dbInfos = await GetAllDBTableInfos();
-
-                //    // TODO dispose with using
-                //    DrawDbSchema drawDbSchema = new DrawDbSchema(dbInfos);
-                //    drawDbSchema.DrawAllTables();
 
 
+                try
+                {
+                    var dbInfos = await GetAllDBTableInfos();
 
-                //    var stream = CommonHelper.GetStream(drawDbSchema.Bitmap);
-                //    Context.Channel.SendFileAsync(stream, "test.png");
+                    // TODO dispose with using
+                    DrawDbSchema drawDbSchema = new DrawDbSchema(dbInfos);
+                    drawDbSchema.DrawAllTables();
 
-                //    drawDbSchema.Dispose();
-                //    stream.Dispose();
 
-                //}
-                //catch (Exception ex)
-                //{
-                //    _logger.LogError(ex, ex.Message);
-                //}
+
+                    var stream = CommonHelper.GetStream(drawDbSchema.Bitmap);
+                    Context.Channel.SendFileAsync(stream, "test.png");
+
+                    drawDbSchema.Dispose();
+                    stream.Dispose();
+
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, ex.Message);
+                    Context.Channel.SendMessageAsync(ex.Message);
+                }
             }
 
 
@@ -400,7 +401,7 @@ WHERE
 
                 var queryResult = await SQLHelper.GetQueryResults(Context, $@"
 SELECT table_name FROM information_schema.tables
-WHERE table_schema = '{Program.MariaDBDBName}' 
+WHERE table_schema = '{Program.MariaDBDBName ?? "ETHBot"}' 
 ORDER BY table_name DESC;", true, 50);
 
                 // Add tables incase they arent in the list above for their correct order
@@ -449,7 +450,7 @@ ORDER BY table_name DESC;", true, 50);
                             DbTableInfos.Add(GetTableInfo(command, item));
                         }
 
-                        
+
                         using (var command = context.Database.GetDbConnection().CreateCommand())
                         {
                             command.CommandText = $@"select
