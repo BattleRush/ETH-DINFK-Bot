@@ -47,3 +47,13 @@ jobs:
         username: ${{ secrets.REMOTE_USER }}
         privateKey: ${{ secrets.REMOTE_SSH_KEY }}
         passphrase: ${{ secrets.REMOTE_SSH_PASSPHRASE }}
+        
+    - name: CHMOD the executable
+      uses: garygrossgarten/github-action-ssh@release
+      with:
+        command: chmod +x ${{ secrets.REMOTE_TARGET }}/ETHDINFKBot
+        host: ${{ secrets.REMOTE_HOST }}
+        username: ${{ secrets.REMOTE_USER }}
+        passphrase: ${{ secrets.REMOTE_SSH_PASSPHRASE }}
+        privateKey: ${{ secrets.REMOTE_SSH_KEY }}
+
