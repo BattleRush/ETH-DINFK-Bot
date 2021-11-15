@@ -151,7 +151,7 @@ namespace ETHDINFKBot
                 var currentAssembly = Assembly.GetExecutingAssembly();
                 var assembly = Assembly.GetExecutingAssembly();
                 var version = assembly.GetName().Version;
-                FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
+                FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.CodeBase);
                 string productVersion = fileVersionInfo.ProductVersion;
                 string fileVersion = fileVersionInfo.FileVersion;
                 bool isDebug = fileVersionInfo.IsDebug;
