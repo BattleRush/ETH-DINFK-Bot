@@ -94,26 +94,24 @@ namespace ETHDINFKBot
             byte[] response = new byte[1 + size * size * 3];
             response[0] = (byte)MessageEnum.FullImage_Response; // response for image
 
-            return response;
 
-            // SYSTEM.DRAWING
-            /*
+
             int index = 1;
             if (PlaceModule.CurrentPlaceBitmap == null)
                 return response;
 
             try
             {
-                Bitmap cloneBitmap = PlaceModule.CurrentPlaceBitmap.Clone(new Rectangle(new Point(0, 0), new Size(size, size)), PlaceModule.CurrentPlaceBitmap.PixelFormat);
+                SKBitmap cloneBitmap = PlaceModule.CurrentPlaceBitmap.Copy();
 
                 for (int y = 0; y < size; y++)
                 {
                     for (int x = 0; x < size; x++)
                     {
-                        Color c = cloneBitmap.GetPixel(x, y);
-                        response[index] = c.R;
-                        response[index + 1] = c.G;
-                        response[index + 2] = c.B;
+                        SKColor c = cloneBitmap.GetPixel(x, y);
+                        response[index] = c.Red;
+                        response[index + 1] = c.Green;
+                        response[index + 2] = c.Blue;
                         index += 3;
                     }
                 }
@@ -123,7 +121,7 @@ namespace ETHDINFKBot
                 return null; // TODO logs
             }
 
-            return response;*/
+            return response;
         }
 
         // TODO duplicate from chunk gen
