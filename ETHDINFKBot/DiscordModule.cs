@@ -166,8 +166,8 @@ namespace ETHDINFKBot
 
                 var processorCount = Environment.ProcessorCount;
                 var ram = proc.WorkingSet64;
-                var freeBytes = new DriveInfo(assembly.Location).AvailableFreeSpace;
-                var totalBytes = new DriveInfo(assembly.Location).TotalSize;
+                var freeBytes = new DriveInfo(file).AvailableFreeSpace;
+                var totalBytes = new DriveInfo(file).TotalSize;
 
                 EmbedBuilder builder = new EmbedBuilder();
 
