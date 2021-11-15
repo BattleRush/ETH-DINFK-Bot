@@ -36,7 +36,7 @@ jobs:
       run: dotnet publish ETHDINFKBot -p:PublishSingleFile=true -r linux-x64 --self-contained false -c Release -o deploy
       
     - name: Copy via ssh
-      uses: garygrossgarten/github-action-scp@v0.5.3
+      uses: garygrossgarten/github-action-scp@v0.7.3
       with:
         recursive: true
         atomicPut: true
