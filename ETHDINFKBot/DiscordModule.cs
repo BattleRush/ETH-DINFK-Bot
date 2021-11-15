@@ -147,7 +147,7 @@ namespace ETHDINFKBot
             {
                 var currentProcessCpuUsage = GetCpuUsageForProcess();
                 var proc = Process.GetCurrentProcess();
- 
+
                 var currentAssembly = Assembly.GetExecutingAssembly();
                 var assembly = Assembly.GetExecutingAssembly();
                 var version = assembly.GetName().Version;
@@ -702,8 +702,6 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                 pingHistory = pingHistory.Take(20).ToList();
 
-                int count = 0;
-
                 string messageText = "";
                 foreach (var item in pingHistory)
                 {
@@ -717,13 +715,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                     var dateTimeCET = dateTime.Add(Program.TimeZoneInfo.GetUtcOffset(DateTime.Now)); // CEST CONVERSION
 
-                    string link = null;
-
-                    if (count < 5 && dbChannel != null)
-                    {
-                        link = $"https://discord.com/channels/{dbChannel.DiscordServerId}/{dbMessage.DiscordChannelId}/{dbMessage.DiscordMessageId}";
-                        count++;
-                    }
+                    // should have space for all links
+                    string link = $"https://discord.com/channels/{dbChannel.DiscordServerId}/{dbMessage.DiscordChannelId}/{dbMessage.DiscordMessageId}";
 
                     var channel = "unknown";
                     if (dbMessage?.DiscordChannelId != null)
