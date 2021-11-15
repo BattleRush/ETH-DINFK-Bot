@@ -51,7 +51,7 @@ jobs:
     - name: CHMOD the executable
       uses: garygrossgarten/github-action-ssh@release
       with:
-        command: chmod 777 ${{ secrets.REMOTE_TARGET }}ETHDINFKBot
+        command: chmod +x ${{ secrets.REMOTE_TARGET }}/ETHDINFKBot
         host: ${{ secrets.HOST }}
         username: ${{ secrets.REMOTE_USER }}
         passphrase: ${{ secrets.REMOTE_SSH_PASSPHRASE }}
