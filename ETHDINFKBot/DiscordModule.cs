@@ -147,11 +147,11 @@ namespace ETHDINFKBot
             {
                 var currentProcessCpuUsage = GetCpuUsageForProcess();
                 var proc = Process.GetCurrentProcess();
-                var file = proc.MainModule.FileName;
+ 
                 var currentAssembly = Assembly.GetExecutingAssembly();
                 var assembly = Assembly.GetExecutingAssembly();
                 var version = assembly.GetName().Version;
-                FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(file);
+                FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(Environment.ProcessPath);
                 string productVersion = fileVersionInfo.ProductVersion;
                 string fileVersion = fileVersionInfo.FileVersion;
                 bool isDebug = fileVersionInfo.IsDebug;
@@ -166,8 +166,8 @@ namespace ETHDINFKBot
 
                 var processorCount = Environment.ProcessorCount;
                 var ram = proc.WorkingSet64;
-                var freeBytes = new DriveInfo(file).AvailableFreeSpace;
-                var totalBytes = new DriveInfo(file).TotalSize;
+                var freeBytes = new DriveInfo(Environment.ProcessPath).AvailableFreeSpace;
+                var totalBytes = new DriveInfo(Environment.ProcessPath).TotalSize;
 
                 EmbedBuilder builder = new EmbedBuilder();
 
