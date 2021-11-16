@@ -189,13 +189,13 @@ namespace ETHDINFKBot
 
                 builder.WithCurrentTimestamp();
                 //builder.WithAuthor(author);
-                builder.AddField("Version", $"{version.ToString()}", true);
-                builder.AddField("Product Version", $"{productVersion}", true);
-                builder.AddField("File Version", $"{fileVersion}", true);
+                builder.AddField("Version", $"{version?.ToString() ?? "N/A"}", true);
+                builder.AddField("Product Version", $"{productVersion ?? "N/A"}", true);
+                builder.AddField("File Version", $"{fileVersion ?? "N/A"}", true);
                 builder.AddField("Build Mode", $"{(isDebug ? "Debug" : "Release")}", true);
-                builder.AddField(".NET Version", $"{netCoreVer.ToString()}", true);
-                builder.AddField("Runtime Version", $"{runtimeVer.ToString()}", true);
-                builder.AddField("OS Version", $"{osVersion.ToString()}", true);
+                builder.AddField(".NET Version", $"{netCoreVer?.ToString() ?? "N/A"}", true);
+                builder.AddField("Runtime Version", $"{runtimeVer ?? "N/A"}", true);
+                builder.AddField("OS Version", $"{osVersion?.ToString() ?? "N/A"}", true);
                 builder.AddField("Online for", $"{ToReadableString(applicationOnlineTime)}", true);
                 builder.AddField("Processor Count", $"{processorCount.ToString("N0")}", true);
                 builder.AddField("Git Branch", $"{ThisAssembly.Git.Branch}", true);
