@@ -700,7 +700,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 EmbedBuilder builder = new EmbedBuilder();
                 builder.WithTitle($"Your last pings");
 
-                pingHistory = pingHistory.Take(20).ToList();
+                pingHistory = pingHistory.Take(18).ToList();
 
                 int count = 0;
 
