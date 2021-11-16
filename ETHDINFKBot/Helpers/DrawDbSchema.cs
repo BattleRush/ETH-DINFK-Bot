@@ -101,7 +101,7 @@ namespace ETHDINFKBot.Helpers
             pathToImage = Path.Combine(Program.BasePath, "Images", "keyicon.png");
 #endif
 
-            var key = SKBitmap.Decode("pathToImage");
+            var key = SKBitmap.Decode(pathToImage);
 
             // possible linux fix for green tint
             //key.MakeTransparent();

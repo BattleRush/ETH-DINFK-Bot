@@ -351,7 +351,7 @@ WHERE
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, ex.Message);
-                    Context.Channel.SendMessageAsync(ex.Message);
+                    Context.Channel.SendMessageAsync(ex.ToString());
                 }
             }
 
@@ -440,7 +440,7 @@ ORDER BY table_name DESC;", true, 50);
                     {
                         using (var command = context.Database.GetDbConnection().CreateCommand())
                         {
-                            command.CommandText = $"SHOW COLUMNS FROM {item} FROM {Program.MariaDBDBName}";
+                            command.CommandText = $"SHOW COLUMNS FROM {item} FROM {Program.MariaDBDBName ?? "ETHBot"}";
                             context.Database.OpenConnection();
                             if (item == "EmojiStatistics")
                             {
@@ -461,7 +461,7 @@ ORDER BY table_name DESC;", true, 50);
   from information_schema.table_constraints fk
   join information_schema.key_column_usage c
     on c.constraint_name = fk.constraint_name
-  where fk.constraint_type = 'FOREIGN KEY' AND c.TABLE_SCHEMA = '{Program.MariaDBDBName}' AND c.table_name = '{item}'; ";
+  where fk.constraint_type = 'FOREIGN KEY' AND c.TABLE_SCHEMA = '{Program.MariaDBDBName ?? "ETHBot"}' AND c.table_name = '{item}'; ";
                             context.Database.OpenConnection();
 
                             ForeignKeyInfos.Add(GetForeignKeyInfo(command, item));
