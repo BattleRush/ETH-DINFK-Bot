@@ -719,7 +719,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                     string link = null;
 
-                    if (count < 7 && dbChannel != null)
+                    if (count < 5 && dbChannel != null)
                     {
                         link = $"https://discord.com/channels/{dbChannel.DiscordServerId}/{dbMessage.DiscordChannelId}/{dbMessage.DiscordMessageId}";
                         count++;
