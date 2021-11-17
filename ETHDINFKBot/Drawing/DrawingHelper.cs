@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ETHDINFKBot.Drawing
 {
@@ -252,7 +250,12 @@ namespace ETHDINFKBot.Drawing
             int iconDist = 20;
 
             if (drawPoint)
-                canvas.DrawRect(new SKRect(xOffset - iconDist / 2 + labelWidth * index - size / 2, heigth - yOffset + 10 - size / 2, size, size), paint);
+            {
+                int x = xOffset - iconDist / 2 + labelWidth * index;
+                int y = heigth - yOffset + 10;
+
+                canvas.DrawRect(new SKRect(x - size / 2, y - size / 2, x + size / 2, y + size / 2), paint);
+            }
 
             //pen.Width = 2;
 
