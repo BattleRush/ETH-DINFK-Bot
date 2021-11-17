@@ -43,7 +43,7 @@ namespace ETHDINFKBot.Drawing
 
                 string text = row.ElementAt(i);
 
-                SKRect headerDestRect = new SKRect(offsetX, currentHeight, cellWidth, 500);
+                SKRect headerDestRect = new SKRect(offsetX, currentHeight, offsetX + cellWidth, currentHeight + 500);
 
                 var size = new SKSize();
                 try
@@ -83,7 +83,7 @@ namespace ETHDINFKBot.Drawing
             {
                 int offsetX = currentWidthStart;
                 int cellWidth = widths.ElementAt(i);
-                SKRect headerDestRect = new SKRect(offsetX, padding, cellWidth, (int)highestSize + 1);
+                SKRect headerDestRect = new SKRect(offsetX, padding, offsetX + cellWidth, padding + (int)highestSize + 1);
                 //g.DrawRectangle(Pens.Red, headerDestRect);
 
                 currentWidthStart += cellWidth;
