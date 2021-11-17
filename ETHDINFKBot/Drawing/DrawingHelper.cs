@@ -220,6 +220,9 @@ namespace ETHDINFKBot.Drawing
 
         public static void DrawLine(SKCanvas canvas, SKBitmap bitmap, List<SKPoint> points, int size = 6, SKPaint paint = null, string text = "", int index = 0, bool drawPoint = false)
         {
+            // Dont fill the rectangles
+            paint.Style = SKPaintStyle.Stroke;
+
             if (paint == null)
             {
                 paint = new SKPaint()
