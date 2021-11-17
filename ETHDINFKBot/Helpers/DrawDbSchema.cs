@@ -254,7 +254,15 @@ namespace ETHDINFKBot.Helpers
                             var p12 = new SKPoint((int)(p2.X - Math.Cos(ang2) * length), (int)(p2.Y + Math.Sin(ang2) * length));
 
 
-                            Canvas.DrawLine(p1, p2, new SKPaint() { Color  = new SKColor(255, 0, 0), StrokeWidth = 3, BlendMode = SKBlendMode.Lighten});
+                            using (SKPath path = new SKPath())
+                            {
+                                path.MoveTo(p1);
+                                path.CubicTo(p11, p12, p2);
+
+                                Canvas.DrawPath(path, new SKPaint() { Color = new SKColor(255, 0, 0), IsStroke = true, StrokeWidth = 4, IsAntialias = true, StrokeCap = SKStrokeCap.Square });
+                            }
+
+                            //Canvas.DrawLine(p1, p2, new SKPaint() { Color  = new SKColor(255, 0, 0), StrokeWidth = 3, BlendMode = SKBlendMode.Lighten});
                         }
                         else
                         {
