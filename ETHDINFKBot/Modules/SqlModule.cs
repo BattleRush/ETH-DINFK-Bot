@@ -660,15 +660,15 @@ ORDER BY table_name DESC;", true, 50);
                 var queryResult = await SQLHelper.GetQueryResults(Context, commandSql, true, 50);
                 string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
 
-                // SYSTEM.DRAWING
-                //var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString);
 
-                //var stream = await drawTable.GetImage();
-                //if (stream == null)
-                //    return;// todo some message
+                var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString);
 
-                //await Context.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null, new Discord.MessageReference(Context.Message.Id));
-                //stream.Dispose();
+                var stream = await drawTable.GetImage();
+                if (stream == null)
+                    return;// todo some message
+
+                await Context.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null, new Discord.MessageReference(Context.Message.Id));
+                stream.Dispose();
 
                 // release the user again as the query finished
                 ActiveSQLCommands[userId] = DateTime.MinValue;

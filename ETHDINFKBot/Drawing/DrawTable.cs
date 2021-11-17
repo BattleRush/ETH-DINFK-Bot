@@ -57,8 +57,10 @@ namespace ETHDINFKBot.Drawing
                 {
                     //Context.Channel.SendMessageAsync("debug: " + text);
                     // todo log the text for future bugfix
-                    text = Encoding.ASCII.GetString(Encoding.Convert(Encoding.UTF8, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback(string.Empty), new DecoderExceptionFallback()), Encoding.UTF8.GetBytes(text)));
-
+                    /*text = Encoding.ASCII.GetString(
+                        Encoding.Convert(Encoding.UTF8, 
+                        Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback(string.Empty), new DecoderExceptionFallback()), Encoding.UTF8.GetBytes(text)));
+                    */
                     //Context.Channel.SendMessageAsync("debug2: " + text);
                     // recalculate the size again
                     // TODO Correct measurement
@@ -71,12 +73,12 @@ namespace ETHDINFKBot.Drawing
                 //g.DrawRectangle(Pens.Red, headerDestRect);
               
                 // TODO likely wrong recalculate
-                canvas.DrawText(text, offsetX, cellWidth, DrawingHelper.DefaultTextPaint);
+                canvas.DrawText(text, currentWidthStart, currentHeight, DrawingHelper.DefaultTextPaint);
                 
                 currentWidthStart += cellWidth;
             }
 
-            //currentHeight += (int)highestSize + padding / 5;
+            currentHeight += (int)highestSize + padding / 5;
 
             currentWidthStart = padding;
             for (int i = 0; i < row.Count; i++)
