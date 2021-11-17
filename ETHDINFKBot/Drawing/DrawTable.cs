@@ -31,6 +31,56 @@ namespace ETHDINFKBot.Drawing
             return await GetQueryResultImage();
         }
 
+        // https://github.com/mono/SkiaSharp.Extended/issues/12
+        private float DrawTextArea(SKCanvas canvas, SKPaint paint, float x, float y, float maxWidth, float lineHeight, string text)
+        {
+            var spaceWidth = paint.MeasureText(" ");
+            var lines = text.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+            lines = lines.SelectMany(l => SplitLine(paint, maxWidth, l, spaceWidth)).ToArray();
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+                canvas.DrawText(line, x, y, paint);
+                y += lineHeight;
+            }
+
+            return y;
+        }
+
+        private string[] SplitLine(SKPaint paint, float maxWidth, string text, float spaceWidth)
+        {
+            var result = new List<string>();
+
+            var words = text.Split(new[] { " " }, StringSplitOptions.None);
+
+            var line = new StringBuilder();
+            float width = 0;
+            foreach (var word in words)
+            {
+                var wordWidth = paint.MeasureText(word);
+                var wordWithSpaceWidth = wordWidth + spaceWidth;
+                var wordWithSpace = word + " ";
+
+                if (width + wordWidth > maxWidth)
+                {
+                    result.Add(line.ToString());
+                    line = new StringBuilder(wordWithSpace);
+                    width = wordWithSpaceWidth;
+                }
+                else
+                {
+                    line.Append(wordWithSpace);
+                    width += wordWithSpaceWidth;
+                }
+            }
+
+            result.Add(line.ToString());
+
+            return result.ToArray();
+        }
+
+
         // start drawing TODO move to drawing lib
         private int DrawRow(SKCanvas canvas, List<string> row, int padding, int currentHeight, List<int> widths)
         {
@@ -45,13 +95,15 @@ namespace ETHDINFKBot.Drawing
 
                 SKRect headerDestRect = new SKRect(offsetX, currentHeight, offsetX + cellWidth, currentHeight + 500);
 
-                var size = new SKSize();
+                //var size = new SKSize();
                 try
                 {
+                    //new SKPaint().MeasureText("test",)
+
                     // TODO Correct measurement
-                    size = new SKSize(); // SKPaint.MeasureText(text);
-                    size.Height = 25;
-                    size.Width = 300;
+                    //size = new SKSize(); // SKPaint.MeasureText(text);
+                    //size.Height = 25;
+                    //ize.Width = 300;
                 }
                 catch (Exception ex)
                 {
@@ -67,18 +119,20 @@ namespace ETHDINFKBot.Drawing
                     //size = g.MeasureString(text, DefaultFont, new SizeF(cellWidth, 500), null);
                 }
 
-                if (size.Height > highestSize)
-                    highestSize = size.Height;
+                int usedHeight = (int)DrawTextArea(canvas, DrawingHelper.DefaultTextPaint, currentWidthStart, currentHeight, 300, 10, text);
+
+                if (usedHeight > highestSize)
+                    highestSize = usedHeight;
 
                 //g.DrawRectangle(Pens.Red, headerDestRect);
               
                 // TODO likely wrong recalculate
-                canvas.DrawText(text, currentWidthStart, currentHeight, DrawingHelper.DefaultTextPaint);
+                //canvas.DrawText(text, currentWidthStart, currentHeight, DrawingHelper.DefaultTextPaint);
                 
                 currentWidthStart += cellWidth;
             }
 
-            currentHeight += (int)highestSize + padding / 5;
+            currentHeight = (int)highestSize + padding / 5;
 
             currentWidthStart = padding;
             for (int i = 0; i < row.Count; i++)
@@ -202,7 +256,7 @@ namespace ETHDINFKBot.Drawing
             string cellWithInfo = "normal" + cellWidth + " " + string.Join(", ", widths);
 
             //await Context.Channel.SendMessageAsync(cellWithInfo, false, null, null, null, new Discord.MessageReference(Context.Message.Id));
-            currentHeight += DrawRow(canvas, Header, padding, currentHeight, widths);
+            currentHeight = DrawRow(canvas, Header, padding, currentHeight, widths);
 
             int failedDrawLineCount = 0;
             foreach (var row in Data)
@@ -217,7 +271,7 @@ namespace ETHDINFKBot.Drawing
                 }
                 try
                 {
-                    currentHeight += DrawRow(canvas, row, padding, currentHeight, widths);
+                    currentHeight = DrawRow(canvas, row, padding, currentHeight, widths);
                 }
                 catch (Exception ex)
                 {
