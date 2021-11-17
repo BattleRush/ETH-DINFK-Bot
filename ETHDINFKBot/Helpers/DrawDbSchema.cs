@@ -101,7 +101,8 @@ namespace ETHDINFKBot.Helpers
             pathToImage = Path.Combine(Program.BasePath, "Images", "keyicon.png");
 #endif
 
-            var key = SKBitmap.Decode("pathToImage");
+            var key = SKBitmap.Decode(pathToImage);
+            key = key.Resize(new SKSizeI(20, 20), SKFilterQuality.High);
 
             // possible linux fix for green tint
             //key.MakeTransparent();
@@ -135,10 +136,13 @@ namespace ETHDINFKBot.Helpers
 
                 foreach (var field in dbTable.FieldInfos)
                 {
+                    int tableCellX = LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount);
+                    int tableCellY = TopPadding + countTable * RowHeight + currentHeight;
+
                     if (field.IsPrimaryKey)
                     {
-                        int x = LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount) + TableWidth - 35;
-                        int y = TopPadding + countTable * RowHeight + currentHeight + 8;
+                        int x = tableCellX + TableWidth - 35;
+                        int y = tableCellY + 8;
 
                         Canvas.DrawBitmap(pkImage, new SKPoint(x, y));
 
@@ -150,15 +154,18 @@ namespace ETHDINFKBot.Helpers
                     // TODO Find coresponding function
                     //Canvas.FillRect(brush, new SKRect(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount), TopPadding + countTable * RowHeight + currentHeight, TableWidth, RowHeight));
                     
-                    Canvas.DrawRect(new SKRect(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount), TopPadding + countTable * RowHeight + currentHeight, TableWidth, RowHeight), DrawingHelper.DefaultDrawing);
+                    Canvas.DrawRect(new SKRect(tableCellX, tableCellY, tableCellX + TableWidth, tableCellY + RowHeight), new SKPaint()
+                    {
+                        Color = new SKColor(255, 255, 255, 50)
+                    });
 
                     var type = field.Type.Replace("EGER", "");
 
-                    Canvas.DrawText($"{field.Name} ({type}{(field.Nullable ? ", NULL" : "")})", new SKPoint(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount) + 10, TopPadding + countTable * RowHeight + currentHeight + 10), DrawingHelper.DefaultTextPaint);
+                    Canvas.DrawText($"{field.Name} ({type}{(field.Nullable ? ", NULL" : "")})", new SKPoint(tableCellX + 10, tableCellY + 10), DrawingHelper.DefaultTextPaint);
 
                     if (field.IsForeignKey && !field.IsPrimaryKey)
                     {
-                        Canvas.DrawBitmap(fkImage, LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount) + TableWidth - 35, TopPadding + countTable * RowHeight + currentHeight + 8);
+                        Canvas.DrawBitmap(fkImage, tableCellX + TableWidth - 35, tableCellY + 8);
 
                         //if (primaryKeys.ContainsKey(field.ForeignKeyInfo.ToTable))
                         //{
@@ -247,7 +254,15 @@ namespace ETHDINFKBot.Helpers
                             var p12 = new SKPoint((int)(p2.X - Math.Cos(ang2) * length), (int)(p2.Y + Math.Sin(ang2) * length));
 
 
-                            Canvas.DrawLine(p1, p12, new SKPaint() { Color  = new SKColor(255, 0, 0)});
+                            using (SKPath path = new SKPath())
+                            {
+                                path.MoveTo(p1);
+                                path.CubicTo(p11, p12, p2);
+
+                                Canvas.DrawPath(path, new SKPaint() { Color = new SKColor(255, 0, 0), IsStroke = true, StrokeWidth = 4, IsAntialias = true, StrokeCap = SKStrokeCap.Square });
+                            }
+
+                            //Canvas.DrawLine(p1, p2, new SKPaint() { Color  = new SKColor(255, 0, 0), StrokeWidth = 3, BlendMode = SKBlendMode.Lighten});
                         }
                         else
                         {

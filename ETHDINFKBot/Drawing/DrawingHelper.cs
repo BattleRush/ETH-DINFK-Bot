@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ETHDINFKBot.Drawing
 {
@@ -65,6 +63,7 @@ namespace ETHDINFKBot.Drawing
     }
 
     // TODO move some points to point / line graph
+    // TODO Draw rect consider uneven ints for rounding issues
     public static class DrawingHelper
     {
         public static (SKCanvas Canvas, SKBitmap Bitmap) GetEmptyGraphics(int width = 1920, int height = 1080)
@@ -214,7 +213,10 @@ namespace ETHDINFKBot.Drawing
             int yOffset = 50;
             int xOffset = 110;
 
-            canvas.DrawRect(new SKRect(xOffset - 5 + labelWidth * index - size / 2, heigth - yOffset + 10 - size / 2, size, size), paint);
+            int x = xOffset - 5 + labelWidth * index;
+            int y = heigth - yOffset + 10;
+
+            canvas.DrawRect(new SKRect(x - size / 2, y - size / 2, x + size / 2, y + size / 2), paint);
             canvas.DrawText(text, new SKPoint(xOffset + labelWidth * index, heigth - yOffset), DefaultTextPaint); // TODO Correct paint?
         }
 
@@ -238,7 +240,7 @@ namespace ETHDINFKBot.Drawing
             foreach (var point in points)
             {
                 if (drawPoint)
-                    canvas.DrawRect(new SKRect(point.X - size / 2, point.Y - size / 2, size, size), paint);
+                    canvas.DrawRect(new SKRect(point.X - size / 2, point.Y - size / 2, point.X + size / 2, point.Y + size / 2), paint);
 
                 canvas.DrawLine(prevPoint, point, paint);
                 prevPoint = point;
@@ -255,7 +257,12 @@ namespace ETHDINFKBot.Drawing
             int iconDist = 20;
 
             if (drawPoint)
-                canvas.DrawRect(new SKRect(xOffset - iconDist / 2 + labelWidth * index - size / 2, heigth - yOffset + 10 - size / 2, size, size), paint);
+            {
+                int x = xOffset - iconDist / 2 + labelWidth * index;
+                int y = heigth - yOffset + 10;
+
+                canvas.DrawRect(new SKRect(x - size / 2, y - size / 2, x + size / 2, y + size / 2), paint);
+            }
 
             //pen.Width = 2;
 
@@ -311,9 +318,21 @@ namespace ETHDINFKBot.Drawing
 
             };
         }
-        public static SKBitmap CropImage(SKBitmap bitmap, SKRect cropArea)
+        public static SKBitmap CropImage(SKBitmap bitmap, SKRect cropRect)
         {
-            return bitmap; // TODO Implement crop
+            
+            SKBitmap croppedBitmap = new SKBitmap((int)cropRect.Width,
+                                                  (int)cropRect.Height);
+            SKRect dest = new SKRect(0, 0, cropRect.Width, cropRect.Height);
+            SKRect source = new SKRect(cropRect.Left, cropRect.Top,
+                                       cropRect.Right, cropRect.Bottom);
+
+            using (SKCanvas canvas = new SKCanvas(croppedBitmap))
+            {
+                canvas.DrawBitmap(bitmap, source, dest);
+            }
+
+            return croppedBitmap;
         }
 
         /* USE THIS TO ENFORCE THE SAME STYLE FOR ALL IMAGES*/

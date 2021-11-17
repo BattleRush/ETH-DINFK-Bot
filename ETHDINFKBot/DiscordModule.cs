@@ -189,13 +189,13 @@ namespace ETHDINFKBot
 
                 builder.WithCurrentTimestamp();
                 //builder.WithAuthor(author);
-                builder.AddField("Version", $"{version.ToString()}", true);
-                builder.AddField("Product Version", $"{productVersion}", true);
-                builder.AddField("File Version", $"{fileVersion}", true);
+                builder.AddField("Version", $"{version?.ToString() ?? "N/A"}", true);
+                builder.AddField("Product Version", $"{productVersion ?? "N/A"}", true);
+                builder.AddField("File Version", $"{fileVersion ?? "N/A"}", true);
                 builder.AddField("Build Mode", $"{(isDebug ? "Debug" : "Release")}", true);
-                builder.AddField(".NET Version", $"{netCoreVer.ToString()}", true);
-                builder.AddField("Runtime Version", $"{runtimeVer.ToString()}", true);
-                builder.AddField("OS Version", $"{osVersion.ToString()}", true);
+                builder.AddField(".NET Version", $"{netCoreVer?.ToString() ?? "N/A"}", true);
+                builder.AddField("Runtime Version", $"{runtimeVer ?? "N/A"}", true);
+                builder.AddField("OS Version", $"{osVersion?.ToString() ?? "N/A"}", true);
                 builder.AddField("Online for", $"{ToReadableString(applicationOnlineTime)}", true);
                 builder.AddField("Processor Count", $"{processorCount.ToString("N0")}", true);
                 builder.AddField("Git Branch", $"{ThisAssembly.Git.Branch}", true);
@@ -700,7 +700,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 EmbedBuilder builder = new EmbedBuilder();
                 builder.WithTitle($"Your last pings");
 
-                pingHistory = pingHistory.Take(20).ToList();
+                pingHistory = pingHistory.Take(18).ToList();
 
                 int count = 0;
 
@@ -719,7 +719,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                     string link = null;
 
-                    if (count < 7 && dbChannel != null)
+                    if (count < 5 && dbChannel != null)
                     {
                         link = $"https://discord.com/channels/{dbChannel.DiscordServerId}/{dbMessage.DiscordChannelId}/{dbMessage.DiscordMessageId}";
                         count++;

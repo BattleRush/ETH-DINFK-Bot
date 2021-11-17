@@ -351,7 +351,7 @@ WHERE
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, ex.Message);
-                    Context.Channel.SendMessageAsync(ex.Message);
+                    Context.Channel.SendMessageAsync(ex.ToString());
                 }
             }
 
@@ -440,7 +440,7 @@ ORDER BY table_name DESC;", true, 50);
                     {
                         using (var command = context.Database.GetDbConnection().CreateCommand())
                         {
-                            command.CommandText = $"SHOW COLUMNS FROM {item} FROM {Program.MariaDBDBName}";
+                            command.CommandText = $"SHOW COLUMNS FROM {item} FROM {Program.MariaDBDBName ?? "ETHBot"}";
                             context.Database.OpenConnection();
                             if (item == "EmojiStatistics")
                             {
@@ -461,7 +461,7 @@ ORDER BY table_name DESC;", true, 50);
   from information_schema.table_constraints fk
   join information_schema.key_column_usage c
     on c.constraint_name = fk.constraint_name
-  where fk.constraint_type = 'FOREIGN KEY' AND c.TABLE_SCHEMA = '{Program.MariaDBDBName}' AND c.table_name = '{item}'; ";
+  where fk.constraint_type = 'FOREIGN KEY' AND c.TABLE_SCHEMA = '{Program.MariaDBDBName ?? "ETHBot"}' AND c.table_name = '{item}'; ";
                             context.Database.OpenConnection();
 
                             ForeignKeyInfos.Add(GetForeignKeyInfo(command, item));
@@ -660,15 +660,15 @@ ORDER BY table_name DESC;", true, 50);
                 var queryResult = await SQLHelper.GetQueryResults(Context, commandSql, true, 50);
                 string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
 
-                // SYSTEM.DRAWING
-                //var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString);
 
-                //var stream = await drawTable.GetImage();
-                //if (stream == null)
-                //    return;// todo some message
+                var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString);
 
-                //await Context.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null, new Discord.MessageReference(Context.Message.Id));
-                //stream.Dispose();
+                var stream = await drawTable.GetImage();
+                if (stream == null)
+                    return;// todo some message
+
+                await Context.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null, new Discord.MessageReference(Context.Message.Id));
+                stream.Dispose();
 
                 // release the user again as the query finished
                 ActiveSQLCommands[userId] = DateTime.MinValue;
