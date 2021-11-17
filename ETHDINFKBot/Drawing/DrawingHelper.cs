@@ -235,7 +235,7 @@ namespace ETHDINFKBot.Drawing
             foreach (var point in points)
             {
                 if (drawPoint)
-                    canvas.DrawRect(new SKRect(point.X - size / 2, point.Y - size / 2, size, size), paint);
+                    canvas.DrawRect(new SKRect(point.X - size / 2, point.Y - size / 2, point.X + size / 2, point.Y + size / 2), paint);
 
                 canvas.DrawLine(prevPoint, point, paint);
                 prevPoint = point;

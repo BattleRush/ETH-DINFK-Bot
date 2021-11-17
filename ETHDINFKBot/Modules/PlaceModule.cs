@@ -1207,6 +1207,9 @@ If you violate the server rules your pixels will be removed.
 
             var list = dbManager.GetPlacePerformanceInfo(lastSize);
 
+            if(list.Count == 0) 
+                return;
+
             var startTime = list.First().DateTime;
             var endTime = list.Last().DateTime;
 
