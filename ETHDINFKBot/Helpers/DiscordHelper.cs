@@ -128,7 +128,10 @@ namespace ETHDINFKBot.Helpers
                 }
             }
 
-            var general = client.GetGuild(guildId).GetTextChannel(channelId); // #spam
+            var spamChannel = client.GetGuild(guildId).GetTextChannel(channelId); // #spam
+
+            if(birthdayUsers.Count == 0)
+                await spamChannel.SendMessageAsync("No birthdays today <:sadge:851469686578741298> maybe tomorrow...");
 
             foreach (var birthdayUser in birthdayUsers)
             {
@@ -160,7 +163,7 @@ namespace ETHDINFKBot.Helpers
 
                 //builder.WithCurrentTimestamp();
 
-                var message = await general.SendMessageAsync("", false, builder.Build());
+                var message = await spamChannel.SendMessageAsync("", false, builder.Build());
 
                 if (reactions)
                 {
