@@ -98,7 +98,7 @@ namespace ETHDINFKBot.Helpers
 #if DEBUG
             pathToImage = Path.Combine("Images", "Icons");
 #else
-            pathToImage = Path.Combine(Program.BasePath, "Icons", "Images");
+            pathToImage = Path.Combine(Program.BasePath, "Images", "Icons");
 #endif
 
             var pkBitmap = SKBitmap.Decode(Path.Combine(pathToImage, "pk.png"));
