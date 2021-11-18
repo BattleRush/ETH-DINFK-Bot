@@ -297,11 +297,38 @@ WHERE
                     {
                         try
                         {
+
+                            string genetalType = "null";
+                            string type = reader.GetString(1);
+                            if (type.Contains("("))
+                                type = type.Substring(0, type.IndexOf('('));
+
+                            type = type.ToLower();
+
+                            switch (type)
+                            {
+                                case "tinyint": // TODO SmallInt 1 is bool
+                                case "int":
+                                case "bigint":
+                                case "smallint":
+                                    genetalType = "int";
+                                    break;
+                                case "varchar":
+                                    genetalType = "string";
+                                    break;
+                                case "datetime":
+                                    genetalType = "datetime";
+                                    break;
+                                default:
+                                    break;
+                            }
+
                             DBFieldInfo field = new DBFieldInfo()
                             {
                                 //Id = reader.GetInt32(0),
                                 Name = reader.GetString(0),
                                 Type = reader.GetString(1),
+                                GeneralType = genetalType,
                                 Nullable = reader.GetString(2) == "YES",
                                 // df value needed?
                                 IsPrimaryKey = reader.GetString(3) == "PRI"
@@ -398,6 +425,10 @@ WHERE
                 };
 
 
+#if DEBUG
+                tableList = new List<string>(); // Clear because on windows the capitalization of tables is different and currently that breaks some SQL Queries
+#endif
+
 
                 var queryResult = await SQLHelper.GetQueryResults(Context, $@"
 SELECT table_name FROM information_schema.tables
@@ -490,7 +521,7 @@ ORDER BY table_name DESC;", true, 50);
                         {
                             foreach (var fk in ForeignKeyInfo)
                             {
-                                if (item2.Name == fk.FromTableFieldName && item.TableName == fk.FromTable)
+                                if (item2.Name == fk.FromTableFieldName && item.TableName.ToLower() == fk.FromTable.ToLower())
                                 {
                                     item2.IsForeignKey = true;
                                     item2.ForeignKeyInfo = fk;
@@ -523,11 +554,6 @@ ORDER BY table_name DESC;", true, 50);
 
             }
         }
-
-
-
-
-
 
 
         // TODO DUPLICATE REMOVE

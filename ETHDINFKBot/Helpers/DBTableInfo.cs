@@ -18,7 +18,9 @@ namespace ETHDINFKBot.Helpers
         public bool IsForeignKey { get; set; }
         public bool Nullable { get; set; }
         public string Name { get; set; }
-        public string Type { get; set; } // TODO other type?
+        public string Type { get; set; } // TODO other type
+                                         // 
+        public string GeneralType { get; set; }
 
         public ForeignKeyInfo ForeignKeyInfo { get; set; }
 

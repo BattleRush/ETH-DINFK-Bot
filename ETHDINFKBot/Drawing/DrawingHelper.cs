@@ -251,76 +251,67 @@ namespace ETHDINFKBot.Drawing
             int heigth = bitmap.Height;
             int labelWidth = 250;
 
-            int yOffset = 50;
+            int yOffset = 25; // TODO Make padding depending
             int xOffset = 120;
 
             int iconDist = 20;
 
+            var textPaint = MediumTextPaint;
+
             if (drawPoint)
             {
                 int x = xOffset - iconDist / 2 + labelWidth * index;
-                int y = heigth - yOffset + 10;
+                int y = heigth - yOffset - (int)textPaint.TextSize / 2;
 
                 canvas.DrawRect(new SKRect(x - size / 2, y - size / 2, x + size / 2, y + size / 2), paint);
             }
 
             //pen.Width = 2;
 
-            canvas.DrawLine(new SKPoint(xOffset - iconDist + labelWidth * index, heigth - yOffset + 10), new SKPoint(xOffset + labelWidth * index, heigth - yOffset + 10), paint);
-            canvas.DrawText(text, new SKPoint(xOffset + labelWidth * index, heigth - yOffset), DefaultTextPaint); // TODO Correct paint?
+            canvas.DrawLine(new SKPoint(xOffset - iconDist + labelWidth * index, heigth - yOffset - textPaint.TextSize / 2), new SKPoint(xOffset + labelWidth * index, heigth - yOffset - textPaint.TextSize / 2), paint);
+            canvas.DrawText(text, new SKPoint(xOffset + labelWidth * index, heigth - yOffset), textPaint); // TODO Correct paint?
         }
 
         public static void DrawGrid(SKCanvas canvas, GridSize gridSize, Padding padding, List<string> xAxis, List<string> yAxis, string title, List<string> secondYAxis = null)
         {
-            //var pen = Pen_White;
-            //var font = TitleFont;
-            //var brush = SolidBrush_White;
-
-            var paint = new SKPaint(); // TODO Define paint -> TODO Pass as parameter
-
             // TODO consider what to do with the last entry -> add empty label?
             int columns = xAxis.Count - 1;
             int rows = yAxis.Count - 1;
 
-            int fontHeight = 11;
+
+            var labelPaint = MediumTextPaint;
 
             // draw columns
             for (int i = 0; i <= columns; i++)
             {
-                canvas.DrawText($"{xAxis[i]}", new SKPoint(gridSize.XMin + (i * (gridSize.XSize / columns)) - 25, gridSize.YMin + fontHeight - 3), DefaultTextPaint);
+                canvas.DrawText($"{xAxis[i]}", new SKPoint(gridSize.XMin + (i * (gridSize.XSize / columns)) - 25, gridSize.YMin + labelPaint.TextSize), labelPaint);
 
                 if (i < columns)
-                    canvas.DrawLine(new SKPoint(gridSize.XMin + (i * (gridSize.XSize / columns)), gridSize.YMin), new SKPoint(gridSize.XMin + (i * (gridSize.XSize / columns)), gridSize.YMax), paint);
+                    canvas.DrawLine(new SKPoint(gridSize.XMin + (i * (gridSize.XSize / columns)), gridSize.YMin), new SKPoint(gridSize.XMin + (i * (gridSize.XSize / columns)), gridSize.YMax), DefaultDrawing);
             }
-            canvas.DrawLine(new SKPoint(gridSize.XMax, gridSize.YMin), new SKPoint(gridSize.XMax, gridSize.YMax), paint);
+            canvas.DrawLine(new SKPoint(gridSize.XMax, gridSize.YMin), new SKPoint(gridSize.XMax, gridSize.YMax), DefaultDrawing);
 
             // draw rows
             for (int i = 0; i <= rows; i++)
             {
-                canvas.DrawText($"{yAxis[i]}", new SKPoint(20, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i - fontHeight / 2 /* to center it vertically */), DefaultTextPaint);
+                var leftText = labelPaint;
+                leftText.TextAlign = SKTextAlign.Right;
+
+                canvas.DrawText($"{yAxis[i]}", new SKPoint(padding.Left - 5, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i + labelPaint.TextSize / 2), labelPaint);
                 if (secondYAxis != null)
-                    canvas.DrawText($"{secondYAxis[i]}", new SKPoint(gridSize.XMax + 10, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i - fontHeight / 2 /* to center it vertically */), DefaultTextPaint);
+                    canvas.DrawText($"{secondYAxis[i]}", new SKPoint(gridSize.XMax + 15, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i + labelPaint.TextSize / 2), labelPaint);
 
                 if (i < rows)
-                    canvas.DrawLine(new SKPoint(gridSize.XMin, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i), new SKPoint(gridSize.XMax, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i), paint);
+                    canvas.DrawLine(new SKPoint(gridSize.XMin, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i), new SKPoint(gridSize.XMax, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i), DefaultDrawing);
             }
-            canvas.DrawLine(new SKPoint(gridSize.XMin, gridSize.YMax), new SKPoint(gridSize.XMax, gridSize.YMax), paint);
+            canvas.DrawLine(new SKPoint(gridSize.XMin, gridSize.YMax), new SKPoint(gridSize.XMax, gridSize.YMax), DefaultDrawing);
 
             // Draw title
-            canvas.DrawText(title, new SKPoint(100, 20), TitleTextPaint);
-
-            var paint3 = new SKPaint
-            {
-                TextSize = 64.0f,
-                IsAntialias = true,
-                Color = new SKColor(136, 136, 136),
-                TextScaleX = 1.5f
-
-            };
+            canvas.DrawText(title, new SKPoint(padding.Left, padding.Top / 2), TitleTextPaint);
         }
         public static SKBitmap CropImage(SKBitmap bitmap, SKRect cropRect)
         {
-            
+
             SKBitmap croppedBitmap = new SKBitmap((int)cropRect.Width,
                                                   (int)cropRect.Height);
             SKRect dest = new SKRect(0, 0, cropRect.Width, cropRect.Height);
@@ -347,7 +338,7 @@ namespace ETHDINFKBot.Drawing
 
         public static Padding DefaultPadding
         {
-            get { return new Padding(75, 100, 125, 100); }
+            get { return new Padding(75, 75, 75, 75); }
         }
 
         public static SKTypeface Typeface_Arial
@@ -370,6 +361,20 @@ namespace ETHDINFKBot.Drawing
                 };
             }
         }
+        public static SKPaint MediumTextPaint
+        {
+            get
+            {
+                return new SKPaint()
+                {
+                    Typeface = Typeface_Arial,
+                    TextSize = MediumTextSize,
+                    Color = WhiteColor,
+                    TextEncoding = SKTextEncoding.Utf8,
+                    IsAntialias = true
+                };
+            }
+        }
 
         public static SKPaint TitleTextPaint
         {
@@ -379,6 +384,21 @@ namespace ETHDINFKBot.Drawing
                 {
                     Typeface = Typeface_Arial,
                     TextSize = TitleTextSize,
+                    Color = WhiteColor,
+                    TextEncoding = SKTextEncoding.Utf8,
+                    IsAntialias = true
+                };
+            }
+        }
+
+        public static SKPaint LargeTextPaint
+        {
+            get
+            {
+                return new SKPaint()
+                {
+                    Typeface = Typeface_Arial,
+                    TextSize = LargeTextSize,
                     Color = WhiteColor,
                     TextEncoding = SKTextEncoding.Utf8,
                     IsAntialias = true
@@ -398,6 +418,10 @@ namespace ETHDINFKBot.Drawing
             }
         }
 
+        public static int LargeTextSize
+        {
+            get { return 20; }
+        }
         public static int TitleTextSize
         {
             get { return 16; }
@@ -406,6 +430,10 @@ namespace ETHDINFKBot.Drawing
         public static int NormalTextSize
         {
             get { return 11; }
+        }
+        public static int MediumTextSize
+        {
+            get { return 14; }
         }
     }
 }
