@@ -3,9 +3,9 @@ using ETHDINFKBot.Data;
 using ETHDINFKBot.Enums;
 using ETHDINFKBot.Modules;
 using NetCoreServer;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -20,7 +20,7 @@ namespace ETHDINFKBot
     {
         public PlaceSession(WssServer server) : base(server) { }
 
-        public void SendPixel(short x, short y, Color color)
+        public void SendPixel(short x, short y, SKColor color)
         {
             //if (Sessions != null)
             //{
@@ -36,11 +36,11 @@ namespace ETHDINFKBot
                 data[3] = yBytes[0];
                 data[4] = yBytes[1];
 
-                data[5] = color.R;
-                data[6] = color.G;
-                data[7] = color.B;
+                data[5] = color.Red;
+                data[6] = color.Green;
+                data[7] = color.Blue;
 
-                Console.WriteLine($"Send: {x}/{y} paint R:{color.R}|G:{color.G}|B:{color.B}");
+                Console.WriteLine($"Send: {x}/{y} paint R:{color.Red}|G:{color.Green}|B:{color.Blue}");
 
                 //Sessions.Broadcast(data);
             //}
@@ -88,10 +88,13 @@ namespace ETHDINFKBot
         }
         private byte[] GetFullImageResponse()
         {
+           
             int size = 1000;
 
             byte[] response = new byte[1 + size * size * 3];
             response[0] = (byte)MessageEnum.FullImage_Response; // response for image
+
+
 
             int index = 1;
             if (PlaceModule.CurrentPlaceBitmap == null)
@@ -99,16 +102,16 @@ namespace ETHDINFKBot
 
             try
             {
-                Bitmap cloneBitmap = PlaceModule.CurrentPlaceBitmap.Clone(new Rectangle(new Point(0, 0), new Size(size, size)), PlaceModule.CurrentPlaceBitmap.PixelFormat);
+                SKBitmap cloneBitmap = PlaceModule.CurrentPlaceBitmap.Copy();
 
                 for (int y = 0; y < size; y++)
                 {
                     for (int x = 0; x < size; x++)
                     {
-                        Color c = cloneBitmap.GetPixel(x, y);
-                        response[index] = c.R;
-                        response[index + 1] = c.G;
-                        response[index + 2] = c.B;
+                        SKColor c = cloneBitmap.GetPixel(x, y);
+                        response[index] = c.Red;
+                        response[index + 1] = c.Green;
+                        response[index + 2] = c.Blue;
                         index += 3;
                     }
                 }

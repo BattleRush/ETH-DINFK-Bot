@@ -9,6 +9,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MySqlConnector;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -545,7 +546,7 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
                 return null;
             }
         }
-        public bool PlacePixel(short x, short y, System.Drawing.Color color, short placeDiscordUserId)
+        public bool PlacePixel(short x, short y, SKColor color, short placeDiscordUserId)
         {
             // TODO REPLOAD THE BEFORE
             if (PlaceModule.PlaceDiscordUsers.Count == 0)
@@ -562,7 +563,7 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
             return PlacePixel(x, y, color, placeUser);
         }
 
-        public bool PlacePixel(short x, short y, System.Drawing.Color color, ulong discordUserId)
+        public bool PlacePixel(short x, short y, SKColor color, ulong discordUserId)
         {
             // TODO REPLOAD THE BEFORE
             if (PlaceModule.PlaceDiscordUsers.Count == 0)
@@ -583,7 +584,7 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
             return PlacePixel(x, y, color, placeUser);
         }
 
-        public bool PlacePixel(short x, short y, System.Drawing.Color color, PlaceDiscordUser placeUser)
+        public bool PlacePixel(short x, short y, SKColor color, PlaceDiscordUser placeUser)
         {
             if (x < 0 || x >= 1000 || y < 0 || y >= 1000)
                 return false; // reject these entries
@@ -611,9 +612,11 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
                     data[3] = yBytes[0];
                     data[4] = yBytes[1];
 
-                    data[5] = color.R;
-                    data[6] = color.G;
-                    data[7] = color.B;
+               
+
+                    data[5] = color.Red;
+                    data[6] = color.Green;
+                    data[7] = color.Blue;
 
                     data[8] = Convert.ToByte(placeUser.PlaceDiscordUserId);
 
@@ -684,17 +687,30 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
                 //return null;
             }
             */
+#if DEBUG
+            string sqlQuery = $@"
+-- update the pixel on the live board
+INSERT INTO PlaceBoardPixels
+VALUES ({x}, {y}, {color.Red}, {color.Green}, {color.Blue})
+ON DUPLICATE KEY UPDATE
+R = {color.Red}, G = {color.Green}, B = {color.Blue};
 
+-- insert a new entry into history
+INSERT INTO PlaceBoardHistory (PlaceDiscordUserId, XPos, YPos, R, G, B, PlacedDateTime, Removed)
+VALUES ({placeUser.PlaceDiscordUserId},{x},{y},{color.Red},{color.Green},{color.Blue},@placedDateTime, 0);";
+#endif
+
+#if !DEBUG
             string sqlQuery = $@"
 -- update the pixel on the live board
 UPDATE PlaceBoardPixels
-SET R = {color.R}, G = {color.G}, B = {color.B}
+SET R = {color.Red}, G = {color.Green}, B = {color.Blue}
 WHERE XPos = {x} AND YPos = {y};
 
 -- insert a new entry into history
 INSERT INTO PlaceBoardHistory (PlaceDiscordUserId, XPos, YPos, R, G, B, PlacedDateTime, Removed)
-VALUES ({placeUser.PlaceDiscordUserId},{x},{y},{color.R},{color.G},{color.B},@placedDateTime, 0)";
-
+VALUES ({placeUser.PlaceDiscordUserId},{x},{y},{color.Red},{color.Green},{color.Blue},@placedDateTime, 0)";
+#endif
 
             using (var connection = new MySqlConnection(Program.FULL_MariaDBReadOnlyConnectionString))
             {

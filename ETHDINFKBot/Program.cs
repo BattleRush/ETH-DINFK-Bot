@@ -20,9 +20,6 @@ using ETHBot.DataLayer.Data.Discord;
 using ETHBot.DataLayer.Data;
 using ETHBot.DataLayer.Data.Enums;
 using Microsoft.Extensions.Logging;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 using System.Net;
 using ETHDINFKBot.Helpers;
 using System.Threading;
@@ -285,19 +282,27 @@ namespace ETHDINFKBot
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 string www = "/var/www/wss";
+                try
+                {
+                    //string www = @"C:\Temp\wss";
+                    // Create and prepare a new SSL server context
+                    var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
+                    //var context = new SslContext(SslProtocols.Tls12);
+                    // Create a new WebSocket server
+                    PlaceServer = new PlaceServer(context, IPAddress.Any, 9000);
+                    PlaceServer.AddStaticContent(www, "/place");
 
-                //string www = @"C:\Temp\wss";
-                // Create and prepare a new SSL server context
-                var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
-                //var context = new SslContext(SslProtocols.Tls12);
-                // Create a new WebSocket server
-                PlaceServer = new PlaceServer(context, IPAddress.Any, 9000);
-                PlaceServer.AddStaticContent(www, "/place");
+                    PlaceServer.OptionKeepAlive = true;
 
-                // Start the server
-                Console.Write("Server starting...");
-                PlaceServer.Start();
-                Console.WriteLine("Done!");
+                    // Start the server
+                    Console.Write("Server starting...");
+                    PlaceServer.Start();
+                    Console.WriteLine("Done!");
+                }
+                catch (Exception ex)
+                {
+                    Console.Write("Error while starting WS: " + ex.ToString());
+                }
             }
             else
             {
@@ -852,7 +857,7 @@ namespace ETHDINFKBot
 
             // Wait for 5 sec
 
-            await Task.Delay(TimeSpan.FromSeconds(5));
+            await Task.Delay(TimeSpan.FromSeconds(10));
 
             CollectFirstDailyPostMessages = false;
 
@@ -865,7 +870,7 @@ namespace ETHDINFKBot
             var dbManager = DatabaseManager.Instance();
 
             var firstPoster = dbManager.GetDiscordUserById(firstMessage.Author.Id);
-            dbManager.UpdateDiscordUser(new ETHBot.DataLayer.Data.Discord.DiscordUser()
+            dbManager.UpdateDiscordUser(new DiscordUser()
             {
                 DiscordUserId = user.Id,
                 DiscriminatorValue = user.DiscriminatorValue,
@@ -900,6 +905,21 @@ namespace ETHDINFKBot
                         "https://tenor.com/view/kawaii-confetti-happiness-confetti-gif-11981055",
                         "https://tenor.com/view/wow-fireworks-3d-gifs-artist-woohoo-gif-18062148"
                     };
+
+            int count = 1;
+            // TODO limit to maybe 10 max
+            foreach (var item in FirstDailyPostsCandidates.OrderBy(i => i.Id))
+            {
+                if (item.Channel is SocketGuildChannel)
+                {
+                    var guildChannel = item.Channel as SocketGuildChannel;
+
+                    string link = $"https://discord.com/channels/{guildChannel.Guild.Id}/{item.Channel.Id}/{item.Id}";
+                    var postTime = SnowflakeUtils.FromSnowflake(item.Id).AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1);
+                    builder.AddField($"{CommonHelper.DisplayWithSuffix(count)} {item.Author.Username}", $"[with]({link}) {(postTime - postTime.Date).TotalMilliseconds.ToString("N0")}ms");
+                    count++;
+                }
+            }
 
             string randomGif = randomGifs[new Random().Next(randomGifs.Count)];
             await firstMessage.Channel.SendMessageAsync(randomGif);

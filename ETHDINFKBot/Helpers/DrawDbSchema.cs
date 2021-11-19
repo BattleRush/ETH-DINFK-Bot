@@ -1,9 +1,7 @@
 ﻿using ETHDINFKBot.Drawing;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -12,8 +10,8 @@ namespace ETHDINFKBot.Helpers
 {
     public class DrawDbSchema : IDisposable
     {
-        public Bitmap Bitmap; // to get stream maybe change a bit to a method in this class to give the stream
-        private Graphics Graphics;
+        public SKBitmap Bitmap; // to get stream maybe change a bit to a method in this class to give the stream
+        private SKCanvas Canvas;
         private List<DBTableInfo> DBTableInfo;
 
 
@@ -26,58 +24,49 @@ namespace ETHDINFKBot.Helpers
 
         private int RowHeight = 35;
 
-        private Pen RelationPen = new Pen(Color.FromArgb(172, 224, 128, 0), 15);
-        private Font TextFont = new Font("Arial", 11);
-        private Font TitleFont = new Font("Arial", 16);
-        private Brush WhiteBrush = new SolidBrush(Color.White);
+        //private Pen RelationPen = new Pen(Color.FromArgb(172, 224, 128, 0), 15);
+        //private Font TextFont = new Font("Arial", 11);
+        //private Font TitleFont = new Font("Arial", 16);
+        //private Brush WhiteBrush = new SolidBrush(Color.White);
 
         public DrawDbSchema(List<DBTableInfo> dbInfos)
         {
-            Bitmap = new Bitmap(ColumnCount * (TableWidth + LeftPadding) + LeftPadding, 10000); // TODO insert into constructor
-            Graphics = Graphics.FromImage(Bitmap);
-            Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            Bitmap = new SKBitmap(ColumnCount * (TableWidth + LeftPadding) + LeftPadding, 10000); // TODO insert into constructor
+            Canvas = new SKCanvas(Bitmap);
+
             DBTableInfo = dbInfos;
-            Graphics.Clear(DrawingHelper.DiscordBackgroundColor);
+            Canvas.Clear(DrawingHelper.DiscordBackgroundColor);
         }
 
         public void Dispose()
         {
             Bitmap.Dispose();
-            Graphics.Dispose();
+            Canvas.Dispose();
         }
 
-        //https://stackoverflow.com/questions/2265910/convert-an-image-to-grayscale
-        public static Bitmap MakeGrayscale3(Bitmap original)
+        //https://docs.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/effects/color-filters
+        public static SKBitmap MakeGrayscale3(SKBitmap original)
         {
+            // TODO TEST
+
             //create a blank bitmap the same size as original
-            Bitmap newBitmap = new Bitmap(original.Width, original.Height);
+            SKBitmap newBitmap = new SKBitmap(original.Width, original.Height);
 
             //get a graphics object from the new image
-            using (Graphics g = Graphics.FromImage(newBitmap))
+            using (SKCanvas g = new SKCanvas(newBitmap))
             {
-
-                //create the grayscale ColorMatrix
-                ColorMatrix colorMatrix = new ColorMatrix(
-                   new float[][]
-                   {
-             new float[] {.3f, .3f, .3f, 0, 0},
-             new float[] {.59f, .59f, .59f, 0, 0},
-             new float[] {.11f, .11f, .11f, 0, 0},
-             new float[] {0, 0, 0, 1, 0},
-             new float[] {0, 0, 0, 0, 1}
-                   });
-
-                //create some image attributes
-                using (ImageAttributes attributes = new ImageAttributes())
+                using (SKPaint paint = new SKPaint())
                 {
+                    paint.ColorFilter =
+                        SKColorFilter.CreateColorMatrix(new float[]
+                        {
+                    0.21f, 0.72f, 0.07f, 0, 0,
+                    0.21f, 0.72f, 0.07f, 0, 0,
+                    0.21f, 0.72f, 0.07f, 0, 0,
+                    0,     0,     0,     1, 0
+                        });
 
-                    //set the color matrix attribute
-                    attributes.SetColorMatrix(colorMatrix);
-
-                    //draw the original image on the new image
-                    //using the grayscale color matrix
-                    g.DrawImage(original, new Rectangle(0, 0, original.Width, original.Height),
-                                0, 0, original.Width, original.Height, GraphicsUnit.Pixel, attributes);
+                    g.DrawBitmap(newBitmap, new SKPoint(0, 0), paint);
                 }
             }
             return newBitmap;
@@ -87,53 +76,61 @@ namespace ETHDINFKBot.Helpers
         // TODO rework and cleanup
         public void DrawAllTables()
         {
-            
+
             //Pen p = new Pen(b);
 
             //Brush b2 = new SolidBrush(Color.Red);
 
 
-#if DEBUG
-            RelationPen = new Pen(Color.FromArgb(172, 128, 224, 0), 15);
-#endif
-            RelationPen.Width = 4;
+            //#if DEBUG
+            //            RelationPen = new Pen(Color.FromArgb(172, 128, 224, 0), 15);
+            //#endif
+            //            RelationPen.Width = 4;
 
-            
-            Font drawFont2 = new Font("Arial", 16);
-            SolidBrush drawBrush = new SolidBrush(Color.Black);
+
+            //            Font drawFont2 = new Font("Arial", 16);
+            //            SolidBrush drawBrush = new SolidBrush(Color.Black);
 
 
             string pathToImage = "";
 
 #if DEBUG
-            pathToImage = Path.Combine("Images", "keyicon.png");
+            pathToImage = Path.Combine("Images", "Icons");
 #else
-            pathToImage = Path.Combine(Program.BasePath, "Images", "keyicon.png");
+            pathToImage = Path.Combine(Program.BasePath, "Images", "Icons");
 #endif
 
-            var key = new Bitmap(pathToImage);
+            var pkBitmap = SKBitmap.Decode(Path.Combine(pathToImage, "pk.png"));
+            pkBitmap = pkBitmap.Resize(new SKSizeI(35, 20), SKFilterQuality.High);
+
+            var fkBitmap = SKBitmap.Decode(Path.Combine(pathToImage, "fk.png"));
+            fkBitmap = fkBitmap.Resize(new SKSizeI(35, 20), SKFilterQuality.High);
+
+            Dictionary<string, SKBitmap> icons = new Dictionary<string, SKBitmap>();
+            icons.Add("int", SKBitmap.Decode(Path.Combine(pathToImage,  "Integer_16x.png")));
+            icons.Add("string", SKBitmap.Decode(Path.Combine(pathToImage, "String_16x.png")));
+            icons.Add("bool", SKBitmap.Decode(Path.Combine(pathToImage, "TrueFalse_16x.png")));
+            icons.Add("datetime", SKBitmap.Decode(Path.Combine(pathToImage, "DateTimeAxis_16x.png")));
 
             // possible linux fix for green tint
-            key.MakeTransparent();
+            //key.MakeTransparent();
 
 
-            var fkKey = MakeGrayscale3(key);
 
             var primaryKeys = GeneratePrimaryKeyPositions();
 
             DrawRelations(primaryKeys);
-            var maxHeight = DrawTables(key, fkKey);
+            var maxHeight = DrawTables(pkBitmap, fkBitmap, icons);
 
-            Bitmap = CropImage(Bitmap, new Rectangle(0, 0, ColumnCount * (TableWidth + LeftPadding) + LeftPadding, maxHeight));
+            Bitmap = DrawingHelper.CropImage(Bitmap, new SKRect(0, 0, ColumnCount * (TableWidth + LeftPadding) + LeftPadding, maxHeight));
         }
 
-        private int DrawTables(Bitmap pkImage, Bitmap fkImage)
+        private int DrawTables(SKBitmap pkImage, SKBitmap fkImage, Dictionary<string, SKBitmap> icons)
         {
             int currentHeight = TopPadding;
             int currentRowMaxHeight = 0;
             int tableIndex = 0;
 
-            Pen p = new Pen(WhiteBrush);
 
             foreach (var dbTable in DBTableInfo)
             {
@@ -141,36 +138,64 @@ namespace ETHDINFKBot.Helpers
                 currentRowMaxHeight = Math.Max(currentRowMaxHeight, tableHeight);
 
                 int countTable = 0;
-                Graphics.DrawString(dbTable.TableName, TitleFont, WhiteBrush, new Point(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount), TopPadding + countTable * RowHeight + currentHeight - 35));
+                Canvas.DrawText(dbTable.TableName, new SKPoint(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount), TopPadding + countTable * RowHeight + currentHeight - 8), DrawingHelper.LargeTextPaint);
 
 
                 foreach (var field in dbTable.FieldInfos)
                 {
+                    int tableCellX = LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount);
+                    int tableCellY = TopPadding + countTable * RowHeight + currentHeight;
+
+                    // For PK/FK Images
+                    int x = tableCellX + TableWidth - 40;
+                    int y = tableCellY + 8;
+
                     if (field.IsPrimaryKey)
                     {
-                        int x = LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount) + TableWidth - 35;
-                        int y = TopPadding + countTable * RowHeight + currentHeight + 8;
 
-                        Graphics.DrawImage(pkImage, x, y, 30, 20);
+
+                        Canvas.DrawBitmap(pkImage, new SKPoint(x, y));
 
                         //primaryKeys.Add(dbTable.TableName, new Point(x + 35, y + 4));
                     }
-                    Brush brush = new SolidBrush(Color.FromArgb(128, 137, 153, 162)); // TODO move above
-                    Graphics.FillRectangle(brush, new Rectangle(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount), TopPadding + countTable * RowHeight + currentHeight, TableWidth, RowHeight));
-                    Graphics.DrawRectangle(p, new Rectangle(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount), TopPadding + countTable * RowHeight + currentHeight, TableWidth, RowHeight));
+
+                    //Brush brush = new SolidBrush(Color.FromArgb(128, 137, 153, 162)); // TODO move above
+
+                    // TODO Find coresponding function
+                    //Canvas.FillRect(brush, new SKRect(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount), TopPadding + countTable * RowHeight + currentHeight, TableWidth, RowHeight));
+
+                    // Border
+                    Canvas.DrawRect(new SKRect(tableCellX, tableCellY, tableCellX + TableWidth, tableCellY + RowHeight), new SKPaint()
+                    {
+                        Color = new SKColor(255, 255, 255),
+                        Style = SKPaintStyle.Stroke
+                    });
+
+                    Canvas.DrawRect(new SKRect(tableCellX, tableCellY, tableCellX + TableWidth, tableCellY + RowHeight), new SKPaint()
+                    {
+                        Color = new SKColor(255, 255, 255, 50)
+                    });
 
                     var type = field.Type.Replace("EGER", "");
 
-                    Graphics.DrawString($"{field.Name} ({type}{(field.Nullable ? ", NULL" : "")})",
-                        TextFont, WhiteBrush, new Point(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount) + 10, TopPadding + countTable * RowHeight + currentHeight + 10));
+                    Canvas.DrawText($"{field.Name} ({type}{(field.Nullable ? ", NULL" : "")})", new SKPoint(tableCellX + 25 /* for the icon*/ + 8, tableCellY + RowHeight / 2 + (int)(DrawingHelper.TitleTextPaint.TextSize / 2)), DrawingHelper.TitleTextPaint);
+
+                    if (icons.ContainsKey(field.GeneralType))
+                    {
+                        var bitmap = icons[field.GeneralType];
+                        // TODO the resize once
+                        var icon = bitmap.Resize(new SKSizeI(25, 25), SKFilterQuality.High);
+
+                        Canvas.DrawBitmap(icon, tableCellX + 5, tableCellY + 5);
+                    }
 
                     if (field.IsForeignKey && !field.IsPrimaryKey)
                     {
-                        Graphics.DrawImage(fkImage, LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount) + TableWidth - 35, TopPadding + countTable * RowHeight + currentHeight + 8, 30, 20);
+                        Canvas.DrawBitmap(fkImage, x, y);
 
                         //if (primaryKeys.ContainsKey(field.ForeignKeyInfo.ToTable))
                         //{
-                            //Graphics.DrawLine(p, new Point(leftPadding + (width + leftPadding) * count + width - 35, topPadding + countTable * height + custHeight + 8), primaryKeys[field.ForeignKeyInfo.ToTable]);
+                        //Graphics.DrawLine(p, new Point(leftPadding + (width + leftPadding) * count + width - 35, topPadding + countTable * height + custHeight + 8), primaryKeys[field.ForeignKeyInfo.ToTable]);
                         //}
                     }
                     countTable++;
@@ -185,11 +210,11 @@ namespace ETHDINFKBot.Helpers
                 }
             }
 
-            currentHeight += currentRowMaxHeight + TopPadding*2;
+            currentHeight += currentRowMaxHeight + TopPadding * 2;
             return currentHeight;
         }
 
-        private void DrawRelations(List<KeyValuePair<string, Point>> primaryKeys)
+        private void DrawRelations(List<KeyValuePair<string, SKPoint>> primaryKeys)
         {
             int currentHeight = TopPadding;
             int currentRowMaxHeight = 0;
@@ -210,7 +235,7 @@ namespace ETHDINFKBot.Helpers
                         {
                             var pkPos = tablePrimaryKeys.First();
 
-                            if(tablePrimaryKeys.Count() > 1)
+                            if (tablePrimaryKeys.Count() > 1)
                             {
                                 // composite PK -> match by name
                                 // TODO
@@ -219,7 +244,7 @@ namespace ETHDINFKBot.Helpers
                                 pkPos = field.Name == "YPos" ? tablePrimaryKeys.Last() : pkPos;
                             }
 
-                            var p1 = new Point(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount) + TableWidth, TopPadding + countTableRow * RowHeight + currentHeight + 20);
+                            var p1 = new SKPoint(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount) + TableWidth, TopPadding + countTableRow * RowHeight + currentHeight + RowHeight / 2);
                             var p2 = pkPos.Value;
 
 
@@ -250,12 +275,20 @@ namespace ETHDINFKBot.Helpers
                             var len = Math.Sqrt(Math.Pow(p2.X - p1.X, 2) + Math.Pow(p2.Y - p1.Y, 2));
 
                             var length = (double)len * (1 / (double)3);
-       
-                            var p11 = new Point((int)(p1.X + Math.Cos(ang1) * length), (int)(p1.Y + Math.Sin(ang1) * length));
-                            var p12 = new Point((int)(p2.X - Math.Cos(ang2) * length), (int)(p2.Y + Math.Sin(ang2) * length));
+
+                            var p11 = new SKPoint((int)(p1.X + Math.Cos(ang1) * length), (int)(p1.Y + Math.Sin(ang1) * length));
+                            var p12 = new SKPoint((int)(p2.X - Math.Cos(ang2) * length), (int)(p2.Y + Math.Sin(ang2) * length));
 
 
-                            Graphics.DrawBezier(RelationPen, p1, p11, p12, p2);
+                            using (SKPath path = new SKPath())
+                            {
+                                path.MoveTo(p1);
+                                path.CubicTo(p11, p12, p2);
+
+                                Canvas.DrawPath(path, new SKPaint() { Color = new SKColor(255, 0, 0), IsStroke = true, StrokeWidth = 4, IsAntialias = true, StrokeCap = SKStrokeCap.Square });
+                            }
+
+                            //Canvas.DrawLine(p1, p2, new SKPaint() { Color  = new SKColor(255, 0, 0), StrokeWidth = 3, BlendMode = SKBlendMode.Lighten});
                         }
                         else
                         {
@@ -276,11 +309,11 @@ namespace ETHDINFKBot.Helpers
             }
         }
 
-        private List<KeyValuePair<string, Point>> GeneratePrimaryKeyPositions()
+        private List<KeyValuePair<string, SKPoint>> GeneratePrimaryKeyPositions()
         {
             // TODO remove constants
 
-            List<KeyValuePair<string, Point>> primaryKeys = new List<KeyValuePair<string, Point>>();
+            List<KeyValuePair<string, SKPoint>> primaryKeys = new List<KeyValuePair<string, SKPoint>>();
 
             int currentHeight = TopPadding;
             int currentRowMaxHeight = 0;
@@ -297,9 +330,9 @@ namespace ETHDINFKBot.Helpers
                     if (field.IsPrimaryKey)
                     {
                         int x = LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount) + TableWidth - 35;
-                        int y = currentHeight + tableRow * RowHeight + tableRow + 8 + TopPadding;
+                        int y = currentHeight + tableRow * RowHeight + TopPadding + RowHeight / 2;
 
-                        primaryKeys.Add(new KeyValuePair<string, Point>(dbTable.TableName, new Point(x + 35, y + 4)));
+                        primaryKeys.Add(new KeyValuePair<string, SKPoint>(dbTable.TableName, new SKPoint(x + 35, y + 4)));
                     }
 
                     tableRow++;
@@ -315,13 +348,6 @@ namespace ETHDINFKBot.Helpers
             }
 
             return primaryKeys;
-        }
-
-
-        // TODO Duplicate 
-        private static Bitmap CropImage(Bitmap bmpImage, Rectangle cropArea)
-        {
-            return bmpImage.Clone(cropArea, bmpImage.PixelFormat);
         }
     }
 }

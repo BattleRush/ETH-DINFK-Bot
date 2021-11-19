@@ -21,7 +21,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 5.0.x
+        dotnet-version: 6.0.x
         
     - name: Restore dependencies
       run: dotnet restore
@@ -33,10 +33,10 @@ jobs:
       run: dotnet test --no-build --verbosity normal     
         
     - name: Dotnet Publish
-      run: dotnet publish -c Release -o deploy
+      run: dotnet publish ETHDINFKBot -p:PublishSingleFile=true -r linux-x64 --self-contained false -c Release -o deploy
       
     - name: Copy via ssh
-      uses: garygrossgarten/github-action-scp@v0.5.3
+      uses: garygrossgarten/github-action-scp@v0.7.3
       with:
         recursive: true
         atomicPut: true
@@ -47,3 +47,13 @@ jobs:
         username: ${{ secrets.REMOTE_USER }}
         privateKey: ${{ secrets.REMOTE_SSH_KEY }}
         passphrase: ${{ secrets.REMOTE_SSH_PASSPHRASE }}
+        
+    - name: CHMOD the executable
+      uses: garygrossgarten/github-action-ssh@release
+      with:
+        command: chmod +x ${{ secrets.REMOTE_TARGET }}/ETHDINFKBot
+        host: ${{ secrets.REMOTE_HOST }}
+        username: ${{ secrets.REMOTE_USER }}
+        passphrase: ${{ secrets.REMOTE_SSH_PASSPHRASE }}
+        privateKey: ${{ secrets.REMOTE_SSH_KEY }}
+

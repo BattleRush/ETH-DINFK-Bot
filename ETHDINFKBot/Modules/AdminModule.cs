@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using ETHBot.DataLayer;
 using ETHBot.DataLayer.Data.Enums;
 using ETHDINFKBot.Drawing;
+//using ETHDINFKBot.Drawing;
 using ETHDINFKBot.Helpers;
 using ETHDINFKBot.Log;
 using ICSharpCode.SharpZipLib.GZip;
@@ -402,7 +403,7 @@ namespace ETHDINFKBot.Modules
             {
                 var author = Context.Message.Author;
                 var guildUser = Context.Message.Author as SocketGuildUser;
-                if (author.Id != ETHDINFKBot.Program.Owner || guildUser.GuildPermissions.ManageChannels)
+                if (!(author.Id == ETHDINFKBot.Program.Owner || guildUser.GuildPermissions.ManageChannels))
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -485,8 +486,6 @@ namespace ETHDINFKBot.Modules
                     data.Add(currentRecord);
 
                 }
-
-
 
                 var drawTable = new DrawTable(header, data, "");
 

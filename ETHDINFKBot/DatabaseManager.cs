@@ -426,8 +426,11 @@ namespace ETHDINFKBot
             }
         }
 
-        public DiscordChannel GetDiscordChannel(ulong id)
+        public DiscordChannel GetDiscordChannel(ulong? id)
         {
+            if (id == null)
+                return null;
+
             try
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())

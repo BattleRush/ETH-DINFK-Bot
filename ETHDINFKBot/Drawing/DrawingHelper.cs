@@ -1,14 +1,10 @@
-﻿using System;
+﻿using SkiaSharp;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ETHDINFKBot.Drawing
 {
-
     public class GridSize
     {
         public int XMin { get; set; }
@@ -23,7 +19,7 @@ namespace ETHDINFKBot.Drawing
 
         }
 
-        public GridSize(Bitmap bitmap, Padding padding)
+        public GridSize(SKBitmap bitmap, Padding padding)
         {
             int width = bitmap.Width;
             int height = bitmap.Height;
@@ -37,7 +33,6 @@ namespace ETHDINFKBot.Drawing
             YSize = YMin - YMax;
         }
     }
-
 
     public class Padding
     {
@@ -68,14 +63,23 @@ namespace ETHDINFKBot.Drawing
     }
 
     // TODO move some points to point / line graph
+    // TODO Draw rect consider uneven ints for rounding issues
     public static class DrawingHelper
     {
-        public static (Graphics Graphics, Bitmap Bitmap) GetEmptyGraphics(int width = 1920, int height = 1080)
+        public static (SKCanvas Canvas, SKBitmap Bitmap) GetEmptyGraphics(int width = 1920, int height = 1080)
         {
-            var bitmap = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format24bppRgb); // TODO see if needed format
-            var graphics = Graphics.FromImage(bitmap);
-            graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            var bitmap = new SKBitmap(width, height); // TODO see if needed format
+            var graphics = new SKCanvas(bitmap);
             graphics.Clear(DrawingHelper.DiscordBackgroundColor);
+
+            // TODO Verify if this is better
+
+            //https://docs.microsoft.com/en-us/dotnet/api/skiasharp.skpaint?view=skiasharp-2.80.2
+            //var info = new SKImageInfo(width, height);
+            //using (var surface = SKSurface.Create(info))
+            //{
+            //    SKCanvas canvas = surface.Canvas;
+            //}
 
             return (graphics, bitmap);
         }
@@ -86,9 +90,9 @@ namespace ETHDINFKBot.Drawing
         {
             if (columns < 1)
                 columns = 1;
+
             if (rows < 1)
                 rows = 1;
-
 
             // dupe code from GetPoints
             DateTime firstDateTime = minDate ?? data.First().Key;
@@ -140,11 +144,11 @@ namespace ETHDINFKBot.Drawing
             return (xAxisLabels, yAxisLabels);
         }
 
-        public static List<Point> GetPoints(Dictionary<DateTime, int> data, GridSize gridSize, bool yZeroIndexed = true, DateTime? minDate = null, DateTime? maxDate = null, bool overlapDays = false)
+        public static List<SKPoint> GetPoints(Dictionary<DateTime, int> data, GridSize gridSize, bool yZeroIndexed = true, DateTime? minDate = null, DateTime? maxDate = null, bool overlapDays = false)
         {
             // TODO implement overlap days
 
-            List<Point> dataPoints = new List<Point>();
+            List<SKPoint> dataPoints = new List<SKPoint>();
 
             // assume the dictionary is ordered
             // todo ensure that just in case
@@ -182,19 +186,24 @@ namespace ETHDINFKBot.Drawing
                 int xpos = (int)(gridSize.XSize * xPercentage) + gridSize.XMin;
                 int ypos = gridSize.YSize - (int)(gridSize.YSize * yPercentage) + gridSize.YMax;
 
-                dataPoints.Add(new Point(xpos, ypos));
+                dataPoints.Add(new SKPoint(xpos, ypos));
             }
 
             return dataPoints;
         }
 
-        public static void DrawPoints(Graphics graphics, Bitmap bitmap, List<Point> points, int size = 6, Pen pen = null, string text = "", int index = 0)
+        public static void DrawPoints(SKCanvas canvas, SKBitmap bitmap, List<SKPoint> points, int size = 6, SKPaint paint = null, string text = "", int index = 0)
         {
-            if (pen == null)
-                pen = Pen_Blue_Transparent;
+            if (paint == null)
+            {
+                paint = new SKPaint()
+                {
+                    Color = WhiteColor
+                };
+            }
 
             foreach (var point in points)
-                graphics.DrawRectangle(pen, new Rectangle(point.X - size / 2, point.Y - size / 2, size, size));
+                canvas.DrawRect(new SKRect(point.X - size / 2, point.Y - size / 2, size, size), paint);
 
             // draw Legend
 
@@ -204,25 +213,36 @@ namespace ETHDINFKBot.Drawing
             int yOffset = 50;
             int xOffset = 110;
 
-            graphics.DrawRectangle(pen, new Rectangle(xOffset - 5 + labelWidth * index - size / 2, heigth - yOffset + 10 - size / 2, size, size));
-            graphics.DrawString(text, TitleFont, pen.Brush, new Point(xOffset + labelWidth * index, heigth - yOffset));
+            int x = xOffset - 5 + labelWidth * index;
+            int y = heigth - yOffset + 10;
+
+            canvas.DrawRect(new SKRect(x - size / 2, y - size / 2, x + size / 2, y + size / 2), paint);
+            canvas.DrawText(text, new SKPoint(xOffset + labelWidth * index, heigth - yOffset), DefaultTextPaint); // TODO Correct paint?
         }
 
-        public static void DrawLine(Graphics graphics, Bitmap bitmap, List<Point> points, int size = 6, Pen pen = null, string text = "", int index = 0, bool drawPoint = false)
+        public static void DrawLine(SKCanvas canvas, SKBitmap bitmap, List<SKPoint> points, int size = 6, SKPaint paint = null, string text = "", int index = 0, bool drawPoint = false)
         {
-            if (pen == null)
-                pen = Pen_Blue_Transparent;
+            // Dont fill the rectangles
+            paint.Style = SKPaintStyle.Stroke;
+
+            if (paint == null)
+            {
+                paint = new SKPaint()
+                {
+                    Color = WhiteColor
+                };
+            }
 
             if (points.Count == 0)
                 return;
 
-            Point prevPoint = points.First();
+            SKPoint prevPoint = points.First();
             foreach (var point in points)
             {
                 if (drawPoint)
-                    graphics.DrawRectangle(pen, new Rectangle(point.X - size / 2, point.Y - size / 2, size, size));
+                    canvas.DrawRect(new SKRect(point.X - size / 2, point.Y - size / 2, point.X + size / 2, point.Y + size / 2), paint);
 
-                graphics.DrawLine(pen, prevPoint, point);
+                canvas.DrawLine(prevPoint, point, paint);
                 prevPoint = point;
             }
 
@@ -231,113 +251,189 @@ namespace ETHDINFKBot.Drawing
             int heigth = bitmap.Height;
             int labelWidth = 250;
 
-            int yOffset = 50;
+            int yOffset = 25; // TODO Make padding depending
             int xOffset = 120;
 
             int iconDist = 20;
 
-            if (drawPoint)
-                graphics.DrawRectangle(pen, new Rectangle(xOffset - iconDist / 2 + labelWidth * index - size / 2, heigth - yOffset + 10 - size / 2, size, size));
+            var textPaint = MediumTextPaint;
 
-            pen.Width = 2;
-            graphics.DrawLine(pen, new Point(xOffset - iconDist + labelWidth * index, heigth - yOffset + 10), new Point(xOffset + labelWidth * index, heigth - yOffset + 10));
-            graphics.DrawString(text, TitleFont, pen.Brush, new Point(xOffset + labelWidth * index, heigth - yOffset));
+            if (drawPoint)
+            {
+                int x = xOffset - iconDist / 2 + labelWidth * index;
+                int y = heigth - yOffset - (int)textPaint.TextSize / 2;
+
+                canvas.DrawRect(new SKRect(x - size / 2, y - size / 2, x + size / 2, y + size / 2), paint);
+            }
+
+            //pen.Width = 2;
+
+            canvas.DrawLine(new SKPoint(xOffset - iconDist + labelWidth * index, heigth - yOffset - textPaint.TextSize / 2), new SKPoint(xOffset + labelWidth * index, heigth - yOffset - textPaint.TextSize / 2), paint);
+            canvas.DrawText(text, new SKPoint(xOffset + labelWidth * index, heigth - yOffset), textPaint); // TODO Correct paint?
         }
 
-        public static void DrawGrid(Graphics graphics, GridSize gridSize, Padding padding, List<string> xAxis, List<string> yAxis, string title, List<string> secondYAxis = null)
+        public static void DrawGrid(SKCanvas canvas, GridSize gridSize, Padding padding, List<string> xAxis, List<string> yAxis, string title, List<string> secondYAxis = null)
         {
-            var pen = Pen_White;
-            var font = TitleFont;
-            var brush = SolidBrush_White;
-
             // TODO consider what to do with the last entry -> add empty label?
             int columns = xAxis.Count - 1;
             int rows = yAxis.Count - 1;
 
-            int fontHeight = 11;
+
+            var labelPaint = MediumTextPaint;
 
             // draw columns
             for (int i = 0; i <= columns; i++)
             {
-                graphics.DrawString($"{xAxis[i]}", font, brush, new Point(gridSize.XMin + (i * (gridSize.XSize / columns)) - 25, gridSize.YMin + fontHeight-3));
+                canvas.DrawText($"{xAxis[i]}", new SKPoint(gridSize.XMin + (i * (gridSize.XSize / columns)) - 25, gridSize.YMin + labelPaint.TextSize), labelPaint);
 
                 if (i < columns)
-                    graphics.DrawLine(pen, new Point(gridSize.XMin + (i * (gridSize.XSize / columns)), gridSize.YMin), new Point(gridSize.XMin + (i * (gridSize.XSize / columns)), gridSize.YMax));
+                    canvas.DrawLine(new SKPoint(gridSize.XMin + (i * (gridSize.XSize / columns)), gridSize.YMin), new SKPoint(gridSize.XMin + (i * (gridSize.XSize / columns)), gridSize.YMax), DefaultDrawing);
             }
-            graphics.DrawLine(pen, new Point(gridSize.XMax, gridSize.YMin), new Point(gridSize.XMax, gridSize.YMax));
+            canvas.DrawLine(new SKPoint(gridSize.XMax, gridSize.YMin), new SKPoint(gridSize.XMax, gridSize.YMax), DefaultDrawing);
 
             // draw rows
             for (int i = 0; i <= rows; i++)
             {
-                graphics.DrawString($"{yAxis[i]}", font, brush, new Point(20, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i - fontHeight / 2 /* to center it vertically */));
+                var leftText = labelPaint;
+                leftText.TextAlign = SKTextAlign.Right;
+
+                canvas.DrawText($"{yAxis[i]}", new SKPoint(padding.Left - 5, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i + labelPaint.TextSize / 2), labelPaint);
                 if (secondYAxis != null)
-                    graphics.DrawString($"{secondYAxis[i]}", font, brush, new Point(gridSize.XMax + 10, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i - fontHeight / 2 /* to center it vertically */));
+                    canvas.DrawText($"{secondYAxis[i]}", new SKPoint(gridSize.XMax + 15, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i + labelPaint.TextSize / 2), labelPaint);
 
                 if (i < rows)
-                    graphics.DrawLine(pen, new Point(gridSize.XMin, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i), new Point(gridSize.XMax, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i));
+                    canvas.DrawLine(new SKPoint(gridSize.XMin, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i), new SKPoint(gridSize.XMax, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i), DefaultDrawing);
             }
-            graphics.DrawLine(pen, new Point(gridSize.XMin, gridSize.YMax), new Point(gridSize.XMax, gridSize.YMax));
+            canvas.DrawLine(new SKPoint(gridSize.XMin, gridSize.YMax), new SKPoint(gridSize.XMax, gridSize.YMax), DefaultDrawing);
 
             // Draw title
-            graphics.DrawString(title, font, brush, new Point(100, 20));
+            canvas.DrawText(title, new SKPoint(padding.Left, padding.Top / 2), TitleTextPaint);
+        }
+        public static SKBitmap CropImage(SKBitmap bitmap, SKRect cropRect)
+        {
+
+            SKBitmap croppedBitmap = new SKBitmap((int)cropRect.Width,
+                                                  (int)cropRect.Height);
+            SKRect dest = new SKRect(0, 0, cropRect.Width, cropRect.Height);
+            SKRect source = new SKRect(cropRect.Left, cropRect.Top,
+                                       cropRect.Right, cropRect.Bottom);
+
+            using (SKCanvas canvas = new SKCanvas(croppedBitmap))
+            {
+                canvas.DrawBitmap(bitmap, source, dest);
+            }
+
+            return croppedBitmap;
         }
 
-
         /* USE THIS TO ENFORCE THE SAME STYLE FOR ALL IMAGES*/
-        public static Color DiscordBackgroundColor
+        public static SKColor DiscordBackgroundColor
         {
-            get { return Color.FromArgb(54, 57, 63); }
+            get { return new SKColor(54, 57, 63); }
+        }
+        public static SKColor WhiteColor
+        {
+            get { return new SKColor(255, 255, 255); }
         }
 
         public static Padding DefaultPadding
         {
-            get { return new Padding(75, 100, 125, 100); }
+            get { return new Padding(75, 75, 75, 75); }
         }
 
-        public static Font NormalTextFont
+        public static SKTypeface Typeface_Arial
         {
-            get { return new Font("Arial", 11); }
+            //get { return SKTypeface.FromFamilyName("Arial", SKFontStyle.Normal); }
+            get { return SKTypeface.FromFamilyName("Tomaha", SKFontStyle.Normal); }
         }
 
-        public static Font LargerTextFont
+        public static SKPaint DefaultTextPaint
         {
-            get { return new Font("Arial", 14); }
+            get
+            {
+                return new SKPaint()
+                {
+                    Typeface = Typeface_Arial,
+                    TextSize = NormalTextSize,
+                    Color = WhiteColor,
+                    TextEncoding = SKTextEncoding.Utf8,
+                    IsAntialias = true
+                };
+            }
+        }
+        public static SKPaint MediumTextPaint
+        {
+            get
+            {
+                return new SKPaint()
+                {
+                    Typeface = Typeface_Arial,
+                    TextSize = MediumTextSize,
+                    Color = WhiteColor,
+                    TextEncoding = SKTextEncoding.Utf8,
+                    IsAntialias = true
+                };
+            }
         }
 
-        public static Font TitleFont
+        public static SKPaint TitleTextPaint
         {
-            get { return new Font("Arial", 16); }
+            get
+            {
+                return new SKPaint()
+                {
+                    Typeface = Typeface_Arial,
+                    TextSize = TitleTextSize,
+                    Color = WhiteColor,
+                    TextEncoding = SKTextEncoding.Utf8,
+                    IsAntialias = true
+                };
+            }
         }
 
-        public static Pen Pen_White
+        public static SKPaint LargeTextPaint
         {
-            get { return new Pen(SolidBrush_White); }
-        }
-        public static Pen Pen_Blue_Transparent
-        {
-            get { return new Pen(Color.FromArgb(172, 224, 128, 0), 15); }
-        }
-        public static SolidBrush SolidBrush_Yellow
-        {
-            get { return new SolidBrush(Color.Yellow); }
-        }
-        public static SolidBrush SolidBrush_Black
-        {
-            get { return new SolidBrush(Color.Black); }
+            get
+            {
+                return new SKPaint()
+                {
+                    Typeface = Typeface_Arial,
+                    TextSize = LargeTextSize,
+                    Color = WhiteColor,
+                    TextEncoding = SKTextEncoding.Utf8,
+                    IsAntialias = true
+                };
+            }
         }
 
-        public static SolidBrush SolidBrush_White
+        public static SKPaint DefaultDrawing
         {
-            get { return new SolidBrush(Color.White); }
+            get
+            {
+                return new SKPaint()
+                {
+                    Color = WhiteColor,
+                    IsAntialias = true
+                };
+            }
         }
 
-        public static SolidBrush SolidBrush_Red
+        public static int LargeTextSize
         {
-            get { return new SolidBrush(Color.Red); }
+            get { return 20; }
         }
-        public static SolidBrush SolidBrush_Blue
+        public static int TitleTextSize
         {
-            get { return new SolidBrush(Color.Blue); }
+            get { return 16; }
+        }
+
+        public static int NormalTextSize
+        {
+            get { return 11; }
+        }
+        public static int MediumTextSize
+        {
+            get { return 14; }
         }
     }
 }

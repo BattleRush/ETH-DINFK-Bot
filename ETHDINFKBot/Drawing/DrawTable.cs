@@ -1,9 +1,8 @@
 ﻿using ETHDINFKBot.Helpers;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -13,9 +12,9 @@ namespace ETHDINFKBot.Drawing
 {
     public class DrawTable
     {
-        private Font DefaultFont = DrawingHelper.LargerTextFont;
-        private Brush DefaultBrush = DrawingHelper.SolidBrush_White;
-        private Pen DefaultPen = DrawingHelper.Pen_White;
+        //private Font DefaultFont = DrawingHelper.LargerTextFont;
+        //private Brush DefaultBrush = DrawingHelper.SolidBrush_White;
+        //private Pen DefaultPen = DrawingHelper.Pen_White;
 
         private List<string> Header;
         private List<List<string>> Data;
@@ -32,8 +31,58 @@ namespace ETHDINFKBot.Drawing
             return await GetQueryResultImage();
         }
 
+        // https://github.com/mono/SkiaSharp.Extended/issues/12
+        private float DrawTextArea(SKCanvas canvas, SKPaint paint, float x, float y, float maxWidth, float lineHeight, string text)
+        {
+            var spaceWidth = paint.MeasureText(" ");
+            var lines = text.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+            lines = lines.SelectMany(l => SplitLine(paint, maxWidth, l, spaceWidth)).ToArray();
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+                canvas.DrawText(line, x, y, paint);
+                y += lineHeight;
+            }
+
+            return y;
+        }
+
+        private string[] SplitLine(SKPaint paint, float maxWidth, string text, float spaceWidth)
+        {
+            var result = new List<string>();
+
+            var words = text.Split(new[] { " " }, StringSplitOptions.None);
+
+            var line = new StringBuilder();
+            float width = 0;
+            foreach (var word in words)
+            {
+                var wordWidth = paint.MeasureText(word);
+                var wordWithSpaceWidth = wordWidth + spaceWidth;
+                var wordWithSpace = word + " ";
+
+                if (width + wordWidth > maxWidth)
+                {
+                    result.Add(line.ToString());
+                    line = new StringBuilder(wordWithSpace);
+                    width = wordWithSpaceWidth;
+                }
+                else
+                {
+                    line.Append(wordWithSpace);
+                    width += wordWithSpaceWidth;
+                }
+            }
+
+            result.Add(line.ToString());
+
+            return result.ToArray();
+        }
+
+
         // start drawing TODO move to drawing lib
-        private int DrawRow(Graphics g, List<string> row, int padding, int currentHeight, List<int> widths)
+        private int DrawRow(SKCanvas canvas, List<string> row, int padding, int currentHeight, List<int> widths)
         {
             float highestSize = 0;
             int currentWidthStart = padding;
@@ -44,43 +93,53 @@ namespace ETHDINFKBot.Drawing
 
                 string text = row.ElementAt(i);
 
-                Rectangle headerDestRect = new Rectangle(offsetX, currentHeight, cellWidth, 500);
+                SKRect headerDestRect = new SKRect(offsetX, currentHeight, offsetX + cellWidth, currentHeight + 500);
 
-                var size = new SizeF();
+                //var size = new SKSize();
                 try
                 {
-                    size = g.MeasureString(text, DefaultFont, new SizeF(cellWidth, 500), null);
+                    //new SKPaint().MeasureText("test",)
+
+                    // TODO Correct measurement
+                    //size = new SKSize(); // SKPaint.MeasureText(text);
+                    //size.Height = 25;
+                    //ize.Width = 300;
                 }
                 catch (Exception ex)
                 {
                     //Context.Channel.SendMessageAsync("debug: " + text);
                     // todo log the text for future bugfix
-                    text = Encoding.ASCII.GetString(Encoding.Convert(Encoding.UTF8, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback(string.Empty), new DecoderExceptionFallback()), Encoding.UTF8.GetBytes(text)));
-
+                    /*text = Encoding.ASCII.GetString(
+                        Encoding.Convert(Encoding.UTF8, 
+                        Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback(string.Empty), new DecoderExceptionFallback()), Encoding.UTF8.GetBytes(text)));
+                    */
                     //Context.Channel.SendMessageAsync("debug2: " + text);
                     // recalculate the size again
-                    size = g.MeasureString(text, DefaultFont, new SizeF(cellWidth, 500), null);
+                    // TODO Correct measurement
+                    //size = g.MeasureString(text, DefaultFont, new SizeF(cellWidth, 500), null);
                 }
 
-                if (size.Height > highestSize)
-                    highestSize = size.Height;
+                int usedHeight = (int)DrawTextArea(canvas, DrawingHelper.DefaultTextPaint, currentWidthStart, currentHeight, 300, 10, text);
+
+                if (usedHeight > highestSize)
+                    highestSize = usedHeight;
 
                 //g.DrawRectangle(Pens.Red, headerDestRect);
-                using (StringFormat sf = new StringFormat())
-                {
-                    g.DrawString(text, DefaultFont, DefaultBrush, headerDestRect, sf);
-                }
+              
+                // TODO likely wrong recalculate
+                //canvas.DrawText(text, currentWidthStart, currentHeight, DrawingHelper.DefaultTextPaint);
+                
                 currentWidthStart += cellWidth;
             }
 
-            //currentHeight += (int)highestSize + padding / 5;
+            currentHeight = (int)highestSize + padding / 5;
 
             currentWidthStart = padding;
             for (int i = 0; i < row.Count; i++)
             {
                 int offsetX = currentWidthStart;
                 int cellWidth = widths.ElementAt(i);
-                Rectangle headerDestRect = new Rectangle(offsetX, padding, cellWidth, (int)highestSize + 1);
+                SKRect headerDestRect = new SKRect(offsetX, padding, offsetX + cellWidth, padding + (int)highestSize + 1);
                 //g.DrawRectangle(Pens.Red, headerDestRect);
 
                 currentWidthStart += cellWidth;
@@ -91,22 +150,20 @@ namespace ETHDINFKBot.Drawing
 
         private List<int> DefineTableCellWidths(int normalCellWidth)
         {
-            Graphics g;
-            var b = new Bitmap(2000, 2000); // TODO insert into constructor
-            g = Graphics.FromImage(b);
-            g.SmoothingMode = SmoothingMode.AntiAlias;
+            var bitmap = new SKBitmap(2000, 2000); // TODO insert into constructor
+            SKCanvas canvas = new SKCanvas(bitmap);
 
-            g.Clear(DrawingHelper.DiscordBackgroundColor);
+            canvas.Clear(DrawingHelper.DiscordBackgroundColor);
 
             // a cell can be max 1000 pixels wide
-            var maxSize = new SizeF(1000, 1000);
+            var maxSize = new SKSize(1000, 1000);
 
             int[] maxWidthNeeded = new int[Header.Count];
 
             // the minimum size is the header text size
             for (int i = 0; i < Header.Count; i++)
             {
-                var size = g.MeasureString(Header.ElementAt(i), DefaultFont, maxSize, null);
+                var size = new SKSizeI(250, 20);// TODO g.MeasureString(Header.ElementAt(i), DefaultFont, maxSize, null);
                 maxWidthNeeded[i] = (int)size.Width + 10;
             }
 
@@ -115,7 +172,7 @@ namespace ETHDINFKBot.Drawing
             {
                 foreach (var row in Data)
                 {
-                    var size = g.MeasureString(row.ElementAt(i), DefaultFont, maxSize, null);
+                    var size = new SKSizeI(250, 20);// TODO g.MeasureString(row.ElementAt(i), DefaultFont, maxSize, null);
 
                     int currentWidth = (int)size.Width + 10;
 
@@ -158,8 +215,8 @@ namespace ETHDINFKBot.Drawing
                 }
             }
 
-            g.Dispose();
-            b.Dispose();
+            canvas.Dispose();
+            bitmap.Dispose();
 
             return maxWidthNeeded.ToList();
         }
@@ -171,18 +228,13 @@ namespace ETHDINFKBot.Drawing
 
 
             // todo make dynamic 
-
-            Bitmap Bitmap;
-            Graphics Graphics;
-
             int width = 1920;
             int height = 10000;
 
-            Bitmap = new Bitmap(width, height); // TODO insert into constructor
-            Graphics = Graphics.FromImage(Bitmap);
-            Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            SKBitmap bitmap = new SKBitmap(width, height); // TODO insert into constructor
+            SKCanvas canvas = new SKCanvas(bitmap);
 
-            Graphics.Clear(DrawingHelper.DiscordBackgroundColor);
+            canvas.Clear(DrawingHelper.DiscordBackgroundColor);
 
             int padding = 20;
 
@@ -204,14 +256,14 @@ namespace ETHDINFKBot.Drawing
             string cellWithInfo = "normal" + cellWidth + " " + string.Join(", ", widths);
 
             //await Context.Channel.SendMessageAsync(cellWithInfo, false, null, null, null, new Discord.MessageReference(Context.Message.Id));
-            currentHeight += DrawRow(Graphics, Header, padding, currentHeight, widths);
+            currentHeight = DrawRow(canvas, Header, padding, currentHeight, widths);
 
             int failedDrawLineCount = 0;
             foreach (var row in Data)
             {
                 try
                 {
-                    Graphics.DrawLine(DefaultPen, padding, currentHeight, Math.Max(width - padding, 0), currentHeight);
+                    canvas.DrawLine(padding, currentHeight, Math.Max(width - padding, 0), currentHeight, DrawingHelper.DefaultDrawing);
                 }
                 catch (Exception ex)
                 {
@@ -219,7 +271,7 @@ namespace ETHDINFKBot.Drawing
                 }
                 try
                 {
-                    currentHeight += DrawRow(Graphics, row, padding, currentHeight, widths);
+                    currentHeight = DrawRow(canvas, row, padding, currentHeight, widths);
                 }
                 catch (Exception ex)
                 {
@@ -231,7 +283,7 @@ namespace ETHDINFKBot.Drawing
 
             try
             {
-                Graphics.DrawLine(DefaultPen, padding, currentHeight, Math.Max(width - padding, 0), currentHeight);
+                canvas.DrawLine(padding, currentHeight, Math.Max(width - padding, 0), currentHeight, DrawingHelper.DefaultDrawing);
             }
             catch (Exception ex)
             {
@@ -245,10 +297,9 @@ namespace ETHDINFKBot.Drawing
 
             watchDraw.Stop();
             //
-            Graphics.DrawString($"{AdditionalString} DrawTime: {watchDraw.ElapsedMilliseconds.ToString("N0")}ms",
-                DrawingHelper.TitleFont, 
-                DrawingHelper.SolidBrush_Yellow, 
-                new Point(padding, currentHeight + padding));
+            canvas.DrawText($"{AdditionalString} DrawTime: {watchDraw.ElapsedMilliseconds.ToString("N0")}ms",
+                new SKPoint(padding, currentHeight + padding),
+                DrawingHelper.TitleTextPaint); // TODO Different color for text
 
             //List<int> rowHeight = new List<int>();
             //Rectangle DestinationRectangle = new Rectangle(10, 10, cellWidth, 500);
@@ -256,18 +307,14 @@ namespace ETHDINFKBot.Drawing
             //var size = Graphics.MeasureCharacterRanges("", drawFont2, DestinationRectangle, null);
             //Graphics.DrawString($"{(int)((maxValue / yNum) * i)}", drawFont2, b, new Point(40, 10 + ySize - (ySize / yNum) * i));
 
-            Bitmap = CropImage(Bitmap, new Rectangle(0, 0, 1920, currentHeight + padding * 3));
+            bitmap = DrawingHelper.CropImage(bitmap, new SKRect(0, 0, 1920, currentHeight + padding * 3));
 
-            var stream = CommonHelper.GetStream(Bitmap);
-            Bitmap.Dispose();
-            Graphics.Dispose();
+            var stream = CommonHelper.GetStream(bitmap);
+            bitmap.Dispose();
+            canvas.Dispose();
             return stream;
         }
 
-        private static Bitmap CropImage(Bitmap bmpImage, Rectangle cropArea)
-        {
-            return bmpImage.Clone(cropArea, bmpImage.PixelFormat);
-        }
         // end drawing
     }
 }

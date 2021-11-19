@@ -1,10 +1,10 @@
 ﻿using ETHBot.DataLayer.Data.Fun;
 using ETHDINFKBot.Data;
 using ETHDINFKBot.Modules;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -98,7 +98,10 @@ namespace ETHDINFKBot.Helpers
                 short x = short.Parse(args[0]);
                 short y = short.Parse(args[1]);
 
-                System.Drawing.Color color = ColorTranslator.FromHtml(args[2]);
+                //SKColor color = ColorTranslator.FromHtml(args[2]);
+
+                if (!SKColor.TryParse(args[2], out SKColor color))
+                    continue;
 
                 var success = placeDBManager.PlacePixel(x, y, color, placeDiscordUserId);
 

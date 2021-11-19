@@ -9,9 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -19,7 +16,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
 using Discord;
+
+
 using ETHDINFKBot.Drawing;
+
 using MySqlConnector;
 
 namespace ETHDINFKBot.Modules
@@ -297,11 +297,38 @@ WHERE
                     {
                         try
                         {
+
+                            string genetalType = "null";
+                            string type = reader.GetString(1);
+                            if (type.Contains("("))
+                                type = type.Substring(0, type.IndexOf('('));
+
+                            type = type.ToLower();
+
+                            switch (type)
+                            {
+                                case "tinyint": // TODO SmallInt 1 is bool
+                                case "int":
+                                case "bigint":
+                                case "smallint":
+                                    genetalType = "int";
+                                    break;
+                                case "varchar":
+                                    genetalType = "string";
+                                    break;
+                                case "datetime":
+                                    genetalType = "datetime";
+                                    break;
+                                default:
+                                    break;
+                            }
+
                             DBFieldInfo field = new DBFieldInfo()
                             {
                                 //Id = reader.GetInt32(0),
                                 Name = reader.GetString(0),
                                 Type = reader.GetString(1),
+                                GeneralType = genetalType,
                                 Nullable = reader.GetString(2) == "YES",
                                 // df value needed?
                                 IsPrimaryKey = reader.GetString(3) == "PRI"
@@ -329,6 +356,8 @@ WHERE
             [Command("info")]
             public async Task TableInfoTables()
             {
+
+
                 try
                 {
                     var dbInfos = await GetAllDBTableInfos();
@@ -349,6 +378,7 @@ WHERE
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, ex.Message);
+                    Context.Channel.SendMessageAsync(ex.ToString());
                 }
             }
 
@@ -395,10 +425,14 @@ WHERE
                 };
 
 
+#if DEBUG
+                tableList = new List<string>(); // Clear because on windows the capitalization of tables is different and currently that breaks some SQL Queries
+#endif
+
 
                 var queryResult = await SQLHelper.GetQueryResults(Context, $@"
 SELECT table_name FROM information_schema.tables
-WHERE table_schema = '{Program.MariaDBDBName}' 
+WHERE table_schema = '{Program.MariaDBDBName ?? "ETHBot"}' 
 ORDER BY table_name DESC;", true, 50);
 
                 // Add tables incase they arent in the list above for their correct order
@@ -437,7 +471,7 @@ ORDER BY table_name DESC;", true, 50);
                     {
                         using (var command = context.Database.GetDbConnection().CreateCommand())
                         {
-                            command.CommandText = $"SHOW COLUMNS FROM {item} FROM {Program.MariaDBDBName}";
+                            command.CommandText = $"SHOW COLUMNS FROM {item} FROM {Program.MariaDBDBName ?? "ETHBot"}";
                             context.Database.OpenConnection();
                             if (item == "EmojiStatistics")
                             {
@@ -447,7 +481,7 @@ ORDER BY table_name DESC;", true, 50);
                             DbTableInfos.Add(GetTableInfo(command, item));
                         }
 
-                        
+
                         using (var command = context.Database.GetDbConnection().CreateCommand())
                         {
                             command.CommandText = $@"select
@@ -458,7 +492,7 @@ ORDER BY table_name DESC;", true, 50);
   from information_schema.table_constraints fk
   join information_schema.key_column_usage c
     on c.constraint_name = fk.constraint_name
-  where fk.constraint_type = 'FOREIGN KEY' AND c.TABLE_SCHEMA = '{Program.MariaDBDBName}' AND c.table_name = '{item}'; ";
+  where fk.constraint_type = 'FOREIGN KEY' AND c.TABLE_SCHEMA = '{Program.MariaDBDBName ?? "ETHBot"}' AND c.table_name = '{item}'; ";
                             context.Database.OpenConnection();
 
                             ForeignKeyInfos.Add(GetForeignKeyInfo(command, item));
@@ -487,7 +521,7 @@ ORDER BY table_name DESC;", true, 50);
                         {
                             foreach (var fk in ForeignKeyInfo)
                             {
-                                if (item2.Name == fk.FromTableFieldName && item.TableName == fk.FromTable)
+                                if (item2.Name == fk.FromTableFieldName && item.TableName.ToLower() == fk.FromTable.ToLower())
                                 {
                                     item2.IsForeignKey = true;
                                     item2.ForeignKeyInfo = fk;
@@ -520,11 +554,6 @@ ORDER BY table_name DESC;", true, 50);
 
             }
         }
-
-
-
-
-
 
 
         // TODO DUPLICATE REMOVE
@@ -656,6 +685,7 @@ ORDER BY table_name DESC;", true, 50);
 
                 var queryResult = await SQLHelper.GetQueryResults(Context, commandSql, true, 50);
                 string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
+
 
                 var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString);
 
