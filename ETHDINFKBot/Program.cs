@@ -994,7 +994,7 @@ namespace ETHDINFKBot
                     DiscordHelper.ReloadRoles(user.Guild);
                 }
 
-                if (CollectFirstDailyPostMessages)
+                if (CollectFirstDailyPostMessages  && !user.IsBot)
                     FirstDailyPostsCandidates.Add(m);
 
                 // duplicate code of the code above
