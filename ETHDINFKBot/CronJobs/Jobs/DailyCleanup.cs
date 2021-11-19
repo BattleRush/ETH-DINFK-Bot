@@ -60,7 +60,7 @@ GROUP BY PH.FromDiscordUserId
 ORDER BY MAX(PH.DiscordMessageId)";
 
 
-            var queryResult = await SQLHelper.GetQueryResults(null, sqlQuery, true, 50);
+            var queryResult = await SQLHelper.GetQueryResults(null, sqlQuery, true, 50, true);
 
             var utcNow = DateTime.UtcNow;
 
