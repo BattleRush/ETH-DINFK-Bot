@@ -12,9 +12,9 @@ namespace ETHDINFKBot.CronJobs.Jobs
     public class GitPullMessageJob : CronJobService
     {
         private readonly ILogger<GitPullMessageJob> _logger;
-        private readonly string Name = "BackupDBJob";
+        private readonly string Name = "GitPullMessageJob";
 
-        public GitPullMessageJob(IScheduleConfig<BackupDBJob> config, ILogger<GitPullMessageJob> logger)
+        public GitPullMessageJob(IScheduleConfig<GitPullMessageJob> config, ILogger<GitPullMessageJob> logger)
             : base(config.CronExpression, config.TimeZoneInfo)
         {
             _logger = logger;

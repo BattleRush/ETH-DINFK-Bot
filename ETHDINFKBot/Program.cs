@@ -142,7 +142,7 @@ namespace ETHDINFKBot
                        //services.AddCronJob<CronJobTest>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"* * * * *"; });
 
                        // once a day at 1 or 2 AM CET/CEST
-                       services.AddCronJob<DailyCleanup>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"15 10 * * *"; });
+                       services.AddCronJob<DailyCleanup>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 17 * * *"; });
 
                        // TODO adjust for summer time in CET/CEST
                        services.AddCronJob<DailyStatsJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 23 * * *"; });
@@ -165,6 +165,7 @@ namespace ETHDINFKBot
                    })
                    .StartAsync();
 
+                // TODO check if HostBuilder Faulted -> likely wrong cron job implementation
 
                 Configuration = new ConfigurationBuilder()
                   .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
@@ -528,6 +529,7 @@ namespace ETHDINFKBot
             var guild = Program.Client.GetGuild(guildId);
 
             // list should always be empty
+            ChannelPositions = new Dictionary<ulong, int>();
 
             foreach (var item in guild.Channels)
                 ChannelPositions.Add(item.Id, item.Position);
