@@ -1,8 +1,6 @@
 ﻿using Discord;
 using ETHBot.DataLayer.Data.Discord;
-
-// SYSTEM.DRAWING
-// using ETHDINFKBot.Drawing;
+using ETHDINFKBot.Drawing;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,9 +15,6 @@ namespace ETHDINFKBot.Helpers
 
         public static Stream GetMessageGraph(DateTime from, DateTime to, int groupByMins = 5)
         {
-            // SYSTEM.DRAWING
-            return new MemoryStream();
-            /*
             var dataPoints = DatabaseManager.Instance().GetMessageCountGrouped(from, to, groupByMins);
             var drawInfo = DrawingHelper.GetEmptyGraphics();
             var padding = DrawingHelper.DefaultPadding;
@@ -27,14 +22,14 @@ namespace ETHDINFKBot.Helpers
             var gridSize = new GridSize(drawInfo.Bitmap, padding);
             var dataPointList = DrawingHelper.GetPoints(dataPoints, gridSize, true, from, to);
 
-            DrawingHelper.DrawGrid(drawInfo.Graphics, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, "Stats table");
-            DrawingHelper.DrawPoints(drawInfo.Graphics, drawInfo.Bitmap, dataPointList, 6, null, "Message count", 0);
+            DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, "Stats table");
+            DrawingHelper.DrawPoints(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, 6, null, "Message count", 0);
 
             var stream = CommonHelper.GetStream(drawInfo.Bitmap);
 
             drawInfo.Bitmap.Dispose();
-            drawInfo.Graphics.Dispose();
-            return stream;*/
+            drawInfo.Canvas.Dispose();
+            return stream;
         }
 
 

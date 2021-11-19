@@ -8,7 +8,6 @@ using System.Text;
 
 namespace ETHDINFKBot.Helpers
 {
-    // SYSTEM.DRAWING
     public class DrawDbSchema : IDisposable
     {
         public SKBitmap Bitmap; // to get stream maybe change a bit to a method in this class to give the stream
