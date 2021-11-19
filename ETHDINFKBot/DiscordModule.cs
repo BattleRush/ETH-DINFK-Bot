@@ -265,7 +265,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.AddField("SQL", $"```{prefix}sql (table info) | (query[d] <query>)```", true);
             builder.AddField("Emote", $"```{prefix}emote <search_string> [<page>] | {prefix}<emote_name>```");
             builder.AddField("React (only this server emotes)", $"```{prefix}react <message_id> <emote_name>```", true);
-            //builder.AddField("Space Min: 1 Max: 5", $"```{prefix}space [<amount>]```", true);
+            builder.AddField("Space Min: 1 Max: 5", $"```{prefix}space [<amount>]```", true);
             builder.AddField("WIP Command", $"```{prefix}messagegraph [all|lernphase|bp]```", true);
             builder.AddField("ETH DINFK Place", $"```Type '{prefix}place help' for more information```");
 
@@ -1782,8 +1782,6 @@ ORDER BY RANDOM() LIMIT 1
         [Command("space")]
         public async Task SpaceCommand(int amount = 1)
         {
-            return;
-
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
 
