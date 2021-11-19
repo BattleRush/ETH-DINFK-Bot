@@ -279,7 +279,7 @@ namespace ETHDINFKBot.Handlers
                             builder.WithColor(0, 0, 255);
                             
                             //add first attachement as thumbnail (if attachment is not picture, height == null) 
-                            if(Message.Attachments != null && Message.Attachments.First.Height != null)
+                            if(Message.Attachments != null && Message.Attachments.FirstOrDefault()?.Height != null)
                             {
                                 builder.WithThumbnailUrl(Message.Attachments.First.Url);
                             }
