@@ -69,23 +69,30 @@ ORDER BY MAX(PH.DiscordMessageId)";
 
             foreach (var row in queryResult.Data)
             {
-                var dateTimeLastPing = SnowflakeUtils.FromSnowflake(Convert.ToUInt64(row[1]));
-
-                if ((utcNow - dateTimeLastPing).TotalHours >= 72)
+                try
                 {
-                    ulong userId = Convert.ToUInt64(row[0]);
-                    // last ping is over 72h
+                    var dateTimeLastPing = SnowflakeUtils.FromSnowflake(Convert.ToUInt64(row[1]));
 
-                    var guildUser = guild.GetUser(userId);
-
-                    if (guildUser.Roles.Any(i => i.Id == pingHellRoleId))
+                    if ((utcNow - dateTimeLastPing).TotalHours >= 72)
                     {
-                        // remove the role from user
-                        await guildUser.RemoveRoleAsync(rolePingHell);
+                        ulong userId = Convert.ToUInt64(row[0]);
+                        // last ping is over 72h
 
-                        // send in spam that they are free
-                        await textChannel.SendMessageAsync($"<@{userId}> finally escaped PingHell May you never ping it ever again.");
+                        var guildUser = guild.GetUser(userId);
+
+                        if (guildUser.Roles.Any(i => i.Id == pingHellRoleId))
+                        {
+                            // remove the role from user
+                            await guildUser.RemoveRoleAsync(rolePingHell);
+
+                            // send in spam that they are free
+                            await textChannel.SendMessageAsync($"<@{userId}> finally escaped PingHell May you never ping it ever again.");
+                        }
                     }
+                }
+                catch (Exception ex)
+                {
+                    await textChannel.SendMessageAsync($"Failed to remove pinghell: {ex.ToString()}");
                 }
             }
         }
