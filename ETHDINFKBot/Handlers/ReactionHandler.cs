@@ -262,7 +262,7 @@ namespace ETHDINFKBot.Handlers
                     var downvoteCount = Message.Reactions.Where(i => i.Key is Emote emote && emote.Id == DiscordEmotes["that"]).FirstOrDefault();
 
 
-                    if (upvoteCount.Value.ReactionCount > 10 && upvoteCount.Value.ReactionCount > downvoteCount.Value.ReactionCount)
+                    if (upvoteCount.Value.ReactionCount > 15 && upvoteCount.Value.ReactionCount > downvoteCount.Value.ReactionCount)
                     {
                         // TODO not fixed ids
                         var adminSuggestionChannel = SocketGuild.GetTextChannel(DiscordChannels["pullrequest"]);
@@ -277,9 +277,16 @@ namespace ETHDINFKBot.Handlers
 
                             builder.WithTitle($"{SocketGuildMessageUser.Username} has a suggestion");
                             builder.WithColor(0, 0, 255);
-
+                            
+                            //add first attachement as thumbnail (if attachment is not picture, height == null) 
+                            if(Message.Attachments != null && Message.Attachments.First.Height != null)
+                            {
+                                builder.WithThumbnailUrl(Message.Attachments.First.Url);
+                            }
+                            
                             builder.WithCurrentTimestamp();
-                            builder.AddField("Suggestion", Message.Content);
+                            //if no content, add content
+                            builder.AddField("Suggestion", (Message.Content == null ? "No content provided." : Message.Content));
                             builder.AddField("Up/Downvotes", "<:this:"+ DiscordEmotes["this"]+ "> " + upvoteCount.Value.ReactionCount + " / <:that:"+ DiscordEmotes["that"]+ "> " + downvoteCount.Value.ReactionCount);
                             var link = $"https://discord.com/channels/{SocketGuild.Id}/{SocketGuildChannel.Id}/{Message.Id}";
 
