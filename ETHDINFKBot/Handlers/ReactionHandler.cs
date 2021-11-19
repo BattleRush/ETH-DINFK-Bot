@@ -286,7 +286,7 @@ namespace ETHDINFKBot.Handlers
                             
                             builder.WithCurrentTimestamp();
                             //if no content, add content
-                            builder.AddField("Suggestion", Message.Content ?? "No content provided.");
+                            builder.AddField("Suggestion", (Message.Content.Length > 0 ? Message.Content : "No content provided.");
                             builder.AddField("Up/Downvotes", "<:this:"+ DiscordEmotes["this"]+ "> " + upvoteCount.Value.ReactionCount + " / <:that:"+ DiscordEmotes["that"]+ "> " + downvoteCount.Value.ReactionCount);
                             var link = $"https://discord.com/channels/{SocketGuild.Id}/{SocketGuildChannel.Id}/{Message.Id}";
 
