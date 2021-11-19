@@ -292,6 +292,8 @@ namespace ETHDINFKBot
                     PlaceServer = new PlaceServer(context, IPAddress.Any, 9000);
                     PlaceServer.AddStaticContent(www, "/place");
 
+                    PlaceServer.OptionKeepAlive = true;
+
                     // Start the server
                     Console.Write("Server starting...");
                     PlaceServer.Start();
