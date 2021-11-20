@@ -21,7 +21,7 @@ namespace ETHBot.DataLayer.Data.Discord
         [StringLength(128)]
         public string DirectLink { get; set; }
 
-        [StringLength(2000)]
+        [StringLength(4000)]
         public string Content { get; set; } // No file support yet
 
         public bool SendInDM { get; set; } // not used
