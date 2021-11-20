@@ -230,7 +230,7 @@ namespace ETHDINFKBot.Modules
                 }
 
                 var archiveFiles = Directory.GetFiles(archivePath);
-                await .Channel.SendMessageAsync($"Created {archiveFiles.Length} archives", false);
+                await Context.Channel.SendMessageAsync($"Created {archiveFiles.Length} archives", false);
 
                 // Send file infos
 
