@@ -44,7 +44,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
         public async void RemovePingHell()
         {
 
-            var guild = Program.Client.GetGuild(747752542741725244);
+            var guild = Program.Client.GetGuild(Program.BaseGuild);
             var textChannel = guild.GetTextChannel(768600365602963496);
 
 

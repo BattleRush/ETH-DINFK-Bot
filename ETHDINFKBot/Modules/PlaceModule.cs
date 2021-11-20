@@ -1368,7 +1368,7 @@ If you violate the server rules your pixels will be removed.
             watch.Start();
 
             // todo config
-            ulong guildId = 747752542741725244;
+            ulong guildId = Program.BaseGuild;
             ulong spamChannel = 768600365602963496;
 
             var guild = Program.Client.GetGuild(guildId);

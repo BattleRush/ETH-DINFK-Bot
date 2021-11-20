@@ -180,14 +180,14 @@ namespace ETHDINFKBot.CronJobs.Jobs
             string result = "";
 
             // todo config
-            ulong guildId = 747752542741725244;
+            ulong guildId = Program.BaseGuild;
             ulong spamChannel = 768600365602963496;
             var guild = Program.Client.GetGuild(guildId);
             var textChannel = guild.GetTextChannel(spamChannel);
 
             foreach (var item in Program.Client.Guilds)
             {
-                if (item.Id != 747752542741725244)
+                if (item.Id != Program.BaseGuild)
                     continue; // only sync eth dinfk for now
 
                 foreach (var botChannelSetting in botChannelSettings)

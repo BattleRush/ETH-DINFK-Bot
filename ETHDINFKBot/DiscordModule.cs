@@ -670,7 +670,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         }
 
         [Command("ping")]
-        public async Task PingInfo(/*ulong userId = 0*/)
+        public async Task PingInfo(ulong? userId = null)
         {
             // TODO allow ping to pass for info
             // TODO Put replies into the ping history table aswell
@@ -683,10 +683,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 var user = Context.Message.Author as SocketGuildUser;
 
                 // load the user in question
-                //if (userId > 0)
-                //{
-                    //user = Program.Client.GetUser(userId) as SocketGuildUser;
-                //}
+                if (userId.HasValue)
+                    user = Program.Client.GetGuild(Program.BaseGuild).GetUser(userId.Value) as SocketGuildUser;
 
                 List<PingHistory> pingHistory = new();
 

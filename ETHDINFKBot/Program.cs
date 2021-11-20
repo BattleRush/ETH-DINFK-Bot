@@ -74,6 +74,7 @@ namespace ETHDINFKBot
         public static string MariaDBReadOnlyUserName { get; set; }
         public static string MariaDBReadOnlyConnectionString { get; set; }
         public static string MariaDBDBName { get; set; }
+        public static ulong BaseGuild { get; set; }
 
         public static string CurrentPrefix { get; set; }
 
@@ -173,6 +174,8 @@ namespace ETHDINFKBot
 
                 DiscordToken = Configuration["DiscordToken"];
                 Owner = Convert.ToUInt64(Configuration["Owner"]);
+                BaseGuild = Convert.ToUInt64(Configuration["BaseGuild"]);
+
                 BasePath = Configuration["BasePath"];
                 ConnectionString = Configuration["ConnectionString"];
                 // TODO Update for new connection strings and dev/prod
@@ -187,6 +190,7 @@ namespace ETHDINFKBot
                 RedditAppId = Configuration["Reddit:AppId"];
                 RedditRefreshToken = Configuration["Reddit:RefreshToken"];
                 RedditAppSecret = Configuration["Reddit:AppSecret"];
+
 
 
                 //BackupDBOnStartup();
@@ -405,7 +409,7 @@ namespace ETHDINFKBot
         {
             if (channel is SocketGuildChannel guildChannel)
             {
-                ulong guildId = 747752542741725244;
+                ulong guildId = Program.BaseGuild;
 
 #if DEBUG
                 guildId = 774286694794919986;
@@ -426,7 +430,7 @@ namespace ETHDINFKBot
         {
             if (channel is SocketGuildChannel guildChannel)
             {
-                ulong guildId = 747752542741725244;
+                ulong guildId = Program.BaseGuild;
 
 #if DEBUG
                 guildId = 774286694794919986;
@@ -448,7 +452,7 @@ namespace ETHDINFKBot
             if (originalChannel is SocketGuildChannel originalGuildChannel
                 && newChannel is SocketGuildChannel newGuildChannel)
             {
-                ulong guildId = 747752542741725244;
+                ulong guildId = Program.BaseGuild;
                 ulong adminBotChannel = 747768907992924192;
 
 #if DEBUG
@@ -521,7 +525,7 @@ namespace ETHDINFKBot
         // TODO Cleanup -> Remove (migration only
         private Task Client_Ready()
         {
-            ulong guildId = 747752542741725244; // TODO Update
+            ulong guildId = Program.BaseGuild; // TODO Update
 #if DEBUG
             guildId = 774286694794919986;
 #endif
@@ -830,7 +834,7 @@ namespace ETHDINFKBot
         public static bool SendedAnWChallenge = false;
         public async void NewAnWChallenge()
         {
-            var anwChannel = Client.GetGuild(747752542741725244).GetTextChannel(772551551818268702);
+            var anwChannel = Client.GetGuild(Program.BaseGuild).GetTextChannel(772551551818268702);
 
             // todo do more dynamic
             /*
@@ -946,7 +950,7 @@ namespace ETHDINFKBot
 
             FirstDailyPostsCandidates = new List<SocketMessage>(); // Reset
 
-            DiscordHelper.DiscordUserBirthday(Client, 747752542741725244, 768600365602963496, true); // on first daily post trigger birthday messages -> TODO maybe move to a cron job
+            DiscordHelper.DiscordUserBirthday(Client, Program.BaseGuild, 768600365602963496, true); // on first daily post trigger birthday messages -> TODO maybe move to a cron job
         }
 
 

@@ -13,7 +13,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
     public class StartAllSubredditsJobs : CronJobService
     {
-        private readonly ulong GuildId = 747752542741725244;
+        private readonly ulong GuildId = Program.BaseGuild;
         private readonly ulong SpamChannelId = 768600365602963496; // todo config?
 
         private readonly ILogger<StartAllSubredditsJobs> _logger;

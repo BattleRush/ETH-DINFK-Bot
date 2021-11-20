@@ -16,7 +16,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
         private readonly ILogger<SpaceXSubredditJob> _logger;
         private readonly string Name = "SpaceXSubredditJob";
 
-        private readonly ulong GuildId = 747752542741725244;
+        private readonly ulong GuildId = Program.BaseGuild;
         private readonly ulong ChannelId = 817846795367481344; // todo config?
 
         public SpaceXSubredditJob(IScheduleConfig<SpaceXSubredditJob> config, ILogger<SpaceXSubredditJob> logger)

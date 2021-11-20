@@ -86,18 +86,18 @@ namespace ETHDINFKBot.Modules
                             i.Nickname = targerUser.nick;
                         });
 
-                        Context.Channel.SendMessageAsync("Fixing " + user.Username, false);
+                        await Context.Channel.SendMessageAsync("Fixing " + user.Username, false);
 
                     }
                     catch (Exception ex)
                     {
-                        Context.Channel.SendMessageAsync(ex.Message + " on " + user.Username, false);
+                        await Context.Channel.SendMessageAsync(ex.Message + " on " + user.Username, false);
                     }
                 }
             }
             catch (Exception ex)
             {
-                Context.Channel.SendMessageAsync(ex.Message, false);
+                await Context.Channel.SendMessageAsync(ex.Message, false);
             }
         }
 
@@ -107,7 +107,7 @@ namespace ETHDINFKBot.Modules
             var author = Context.Message.Author;
             if (author.Id != ETHDINFKBot.Program.Owner)
             {
-                Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
             }
 
@@ -128,7 +128,7 @@ namespace ETHDINFKBot.Modules
             builder.AddField("admin kill", "Do I really need to explain this one");
             builder.AddField("admin blockemote <id> <block>", "Block an emote from being selectable");
 
-            Context.Channel.SendMessageAsync("", false, builder.Build());
+            await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
         [Command("kill")]
@@ -137,9 +137,10 @@ namespace ETHDINFKBot.Modules
             var author = Context.Message.Author;
             if (author.Id != ETHDINFKBot.Program.Owner)
             {
-                Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
             }
+
             Context.Channel.SendMessageAsync("I'll be back!", false);
             Process.GetCurrentProcess().Kill();
         }
@@ -150,7 +151,7 @@ namespace ETHDINFKBot.Modules
             var author = Context.Message.Author;
             if (author.Id != ETHDINFKBot.Program.Owner)
             {
-                Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
             }
 
@@ -165,11 +166,11 @@ namespace ETHDINFKBot.Modules
                     File.Delete(emoteInfo.LocalPath);
                 }
 
-                Context.Channel.SendMessageAsync($"Successfully set block status of emote {emoteId} to: {blockStatus}", false);
+                await Context.Channel.SendMessageAsync($"Successfully set block status of emote {emoteId} to: {blockStatus}", false);
             }
             else
             {
-                Context.Channel.SendMessageAsync($"Failed to set block status of emote {emoteId}", false);
+                await Context.Channel.SendMessageAsync($"Failed to set block status of emote {emoteId}", false);
             }
         }
 
@@ -179,13 +180,13 @@ namespace ETHDINFKBot.Modules
             var author = Context.Message.Author;
             if (author.Id != ETHDINFKBot.Program.Owner)
             {
-                Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
             }
 
             var allEmotes = DatabaseManager.Instance().GetEmotes().OrderBy(i => i.DiscordEmoteId).ToList(); // sort it to ensure they are chronologically in there
 
-            Context.Channel.SendMessageAsync($"Successfully retreived {allEmotes.Count} emotes", false);
+            await Context.Channel.SendMessageAsync($"Successfully retreived {allEmotes.Count} emotes", false);
 
             var emotesPath = Path.Combine(Program.BasePath, "Emotes");
             var archivePath = Path.Combine(emotesPath, "Archive");
@@ -229,7 +230,7 @@ namespace ETHDINFKBot.Modules
                 }
 
                 var archiveFiles = Directory.GetFiles(archivePath);
-                Context.Channel.SendMessageAsync($"Created {archiveFiles.Length} archives", false);
+                await .Channel.SendMessageAsync($"Created {archiveFiles.Length} archives", false);
 
                 // Send file infos
 
@@ -244,13 +245,13 @@ namespace ETHDINFKBot.Modules
                 if (Directory.Exists(archivePath))
                     Directory.Delete(archivePath, true);
 
-                Context.Channel.SendMessageAsync($"Done", false);
+                await Context.Channel.SendMessageAsync($"Done", false);
 
             }
             catch (Exception ex)
             {
                 string error = $"Error: {ex.ToString()}";
-                Context.Channel.SendMessageAsync(error.Substring(0, Math.Min(2000, error.Length)), false);
+                await Context.Channel.SendMessageAsync(error.Substring(0, Math.Min(2000, error.Length)), false);
             }
         }
 
@@ -309,7 +310,7 @@ namespace ETHDINFKBot.Modules
                 var guildUser = Context.Message.Author as SocketGuildUser;
                 if (author.Id != ETHDINFKBot.Program.Owner || guildUser.GuildPermissions.ManageChannels)
                 {
-                    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
                 }
 
@@ -327,7 +328,7 @@ namespace ETHDINFKBot.Modules
                 builder.AddField("admin rant dt <type id>", "Delete type");
                 builder.AddField("admin rant dr <rant id>", "Delete rant");
 
-                Context.Channel.SendMessageAsync("", false, builder.Build());
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
 
             [Command("all")]
@@ -347,7 +348,7 @@ namespace ETHDINFKBot.Modules
                 builder.WithCurrentTimestamp();
                 builder.AddField("Types [Id, Name]", allTypes);
 
-                Context.Channel.SendMessageAsync("", false, builder.Build());
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
 
             [Command("add")]
@@ -361,7 +362,7 @@ namespace ETHDINFKBot.Modules
                 }*/
 
                 bool success = DatabaseManager.Instance().AddRantType(type);
-                Context.Channel.SendMessageAsync($"Added {type} Success: {success}", false);
+                await Context.Channel.SendMessageAsync($"Added {type} Success: {success}", false);
             }
 
             [Command("dt")]
@@ -370,12 +371,12 @@ namespace ETHDINFKBot.Modules
                 var author = Context.Message.Author;
                 if (author.Id != ETHDINFKBot.Program.Owner)
                 {
-                    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
                 }
 
                 bool success = DatabaseManager.Instance().DeleteRantType(typeId);
-                Context.Channel.SendMessageAsync("Delete success: " + success, false);
+                await Context.Channel.SendMessageAsync("Delete success: " + success, false);
             }
 
 
@@ -385,12 +386,12 @@ namespace ETHDINFKBot.Modules
                 var author = Context.Message.Author;
                 if (author.Id != ETHDINFKBot.Program.Owner)
                 {
-                    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
                 }
 
                 bool success = DatabaseManager.Instance().DeleteRantMessage(typeId);
-                Context.Channel.SendMessageAsync("Delete success: " + success, false);
+                await Context.Channel.SendMessageAsync("Delete success: " + success, false);
             }
         }
 
@@ -405,7 +406,7 @@ namespace ETHDINFKBot.Modules
                 var guildUser = Context.Message.Author as SocketGuildUser;
                 if (!(author.Id == ETHDINFKBot.Program.Owner || guildUser.GuildPermissions.ManageChannels))
                 {
-                    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
                 }
 
@@ -426,7 +427,7 @@ namespace ETHDINFKBot.Modules
                 builder.AddField("admin channel all <permission>", "Set the MINIMUM permissions for ALL channels");
                 builder.AddField("admin channel flags", "Returns help with the flag infos");
 
-                Context.Channel.SendMessageAsync("", false, builder.Build());
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
 
             /* public static IEnumerable<Enum> GetAllFlags(Enum e)
@@ -447,7 +448,7 @@ namespace ETHDINFKBot.Modules
             [RequireUserPermission(GuildPermission.ManageChannels)]
             public async Task GetLockInfo()
             {
-                ulong guildId = 747752542741725244;
+                ulong guildId = Program.BaseGuild;
 
 #if DEBUG
                 guildId = 774286694794919986;
@@ -507,12 +508,12 @@ namespace ETHDINFKBot.Modules
                 botSettings.ChannelOrderLocked = lockChannels;
                 botSettings = DatabaseManager.Instance().SetBotSettings(botSettings);
 
-                Context.Message.Channel.SendMessageAsync($"Set Global Postion Lock to: {botSettings.ChannelOrderLocked}");
+                await Context.Message.Channel.SendMessageAsync($"Set Global Postion Lock to: {botSettings.ChannelOrderLocked}");
 
                 if (botSettings.ChannelOrderLocked)
                 {
                     // TODO Setting
-                    ulong guildId = 747752542741725244;
+                    ulong guildId = Program.BaseGuild;
 
 #if DEBUG
                     guildId = 774286694794919986;
