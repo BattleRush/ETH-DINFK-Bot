@@ -30,7 +30,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
         {
             try
             {
-                ulong guildId = Program.BaseGuild;
+                ulong guildId = 747752542741725244;
                 ulong eprogChannel = 755401575790280826;
                 var guild = Program.Client.GetGuild(guildId);
                 var textChannel = guild.GetTextChannel(eprogChannel);

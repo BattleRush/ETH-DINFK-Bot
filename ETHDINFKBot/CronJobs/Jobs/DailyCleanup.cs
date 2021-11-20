@@ -25,7 +25,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
         public override Task StartAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("{Name} starts.");
+            _logger.LogInformation($"{Name} starts.");
             return base.StartAsync(cancellationToken);
         }
 
@@ -44,7 +44,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
         public async void RemovePingHell()
         {
 
-            var guild = Program.Client.GetGuild(Program.BaseGuild);
+            var guild = Program.Client.GetGuild(747752542741725244);
             var textChannel = guild.GetTextChannel(768600365602963496);
 
 
