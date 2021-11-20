@@ -41,8 +41,8 @@ namespace ETHDINFKBot
     {
         private readonly ILogger _logger = new Logger<DiscordModule>(Program.Logger);
 
-        public static NekoClient NekoClient = new NekoClient("BattleRush's Helper");
-        public static NekosFun NekosFun = new NekosFun();
+        //public static NekoClient NekoClient = new NekoClient("BattleRush's Helper");
+        //public static NekosFun NekosFun = new NekosFun();
 
         static List<RestUserMessage> LastMessages = new List<RestUserMessage>();
 
@@ -57,7 +57,7 @@ namespace ETHDINFKBot
         private bool AllowedToRun(BotPermissionType type)
         {
             // since this is always calles works for now as workaround
-            NekoClient.LogType = LogType.None;
+            //NekoClient.LogType = LogType.None;
 
             var channelSettings = DatabaseManager.GetChannelSetting(Context.Message.Channel.Id);
             if (Context.Message.Author.Id != Program.Owner
@@ -108,7 +108,7 @@ namespace ETHDINFKBot
 
         // https://stackoverflow.com/a/4423615/3144729
         // TODO Move into a helper
-        private string ToReadableString(TimeSpan span)
+        private static string ToReadableString(TimeSpan span)
         {
             string formatted = string.Format("{0}{1}{2}{3}",
                 span.Duration().Days > 0 ? string.Format("{0:0} day{1}, ", span.Days, span.Days == 1 ? string.Empty : "s") : string.Empty,
@@ -125,7 +125,7 @@ namespace ETHDINFKBot
 
         // GET CPU USAGE
         // https://medium.com/@jackwild/getting-cpu-usage-in-net-core-7ef825831b8b
-        private async Task<double> GetCpuUsageForProcess()
+        private static async Task<double> GetCpuUsageForProcess()
         {
             var startTime = DateTime.UtcNow;
             var startCpuUsage = Process.GetCurrentProcess().TotalProcessorTime;
@@ -230,7 +230,7 @@ namespace ETHDINFKBot
             var author = Context.Message.Author;
             LogManager.ProcessMessage(author, BotMessageType.Other);
 
-            EmbedBuilder builder = new EmbedBuilder();
+            EmbedBuilder builder = new();
 
             builder.WithTitle($"{Program.Client.CurrentUser.Username} Help");
             //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
@@ -293,7 +293,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             var reply = await new DuckSharpClient().GetInstantAnswerAsync(searchString);
 
-            EmbedBuilder builder = new EmbedBuilder();
+            EmbedBuilder builder = new();
 
             builder.WithTitle("Search for " + searchString);
             builder.WithDescription(reply.AbstractText + Environment.NewLine + reply.AbstractUrl);
@@ -551,8 +551,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             width = Math.Max(width + 25, 350); // because of the title
 
 
-            SKBitmap bitmap = new SKBitmap(width, height); // TODO insert into constructor
-            SKCanvas canvas = new SKCanvas(bitmap);
+            SKBitmap bitmap = new(width, height); // TODO insert into constructor
+            SKCanvas canvas = new(bitmap);
 
             canvas.Clear(DrawingHelper.DiscordBackgroundColor);
 
@@ -661,7 +661,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         }
 
         [Command("today")]
-        public async Task TodaysBirthdays()
+        public void TodaysBirthdays()
         {
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
@@ -688,7 +688,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     //user = Program.Client.GetUser(userId) as SocketGuildUser;
                 //}
 
-                List<PingHistory> pingHistory = new List<PingHistory>();
+                List<PingHistory> pingHistory = new();
 
                 pingHistory.AddRange(DatabaseManager.GetLastPingHistory(50, user.Id, null));
 
@@ -957,83 +957,83 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             var msg = await Context.Channel.SendFileAsync(stream, $"emote_{search}.png", text + $"Time: {watch.ElapsedMilliseconds} ms");
         }
 
-        [Command("study", RunMode = RunMode.Async)]
-        public async Task Study(ulong confirmId = 0)
-        {
-            return;
-            if (confirmId == 0)
-            {
-                await Context.Channel.SendMessageAsync($"May contain spoilers to old exams! Once you receive the study role you will be only to chat for max of 15 mins at a time." + Environment.NewLine +
-                    $"If you are in cooldown, the bot will delete all your messages. Every question is designed to be able to solve within 5-10 mins. To recall your message write '.study'" + Environment.NewLine +
-                    $" To be able to chat you will need to solve a question each time. (All subject channels are exempt from this rule.)" + Environment.NewLine +
-                    $"Enter code: .study {Context.Message.Author.Id}", false);
-            }
-            else if (confirmId == Context.Message.Author.Id)
-            {
-                try
-                {
-                    var user = Context.User;
-                    var role = Context.Guild.Roles.FirstOrDefault(x => x.Id == 798639212818726952); // study role
-                    await (user as IGuildUser).AddRoleAsync(role);
-                    await Context.Channel.SendMessageAsync("Role assigned. Good luck!");
-                }
-                catch (Exception ex)
-                {
+        //[Command("study", RunMode = RunMode.Async)]
+        //public async Task Study(ulong confirmId = 0)
+        //{
+        //    return;
+        //    if (confirmId == 0)
+        //    {
+        //        await Context.Channel.SendMessageAsync($"May contain spoilers to old exams! Once you receive the study role you will be only to chat for max of 15 mins at a time." + Environment.NewLine +
+        //            $"If you are in cooldown, the bot will delete all your messages. Every question is designed to be able to solve within 5-10 mins. To recall your message write '.study'" + Environment.NewLine +
+        //            $" To be able to chat you will need to solve a question each time. (All subject channels are exempt from this rule.)" + Environment.NewLine +
+        //            $"Enter code: .study {Context.Message.Author.Id}", false);
+        //    }
+        //    else if (confirmId == Context.Message.Author.Id)
+        //    {
+        //        try
+        //        {
+        //            var user = Context.User;
+        //            var role = Context.Guild.Roles.FirstOrDefault(x => x.Id == 798639212818726952); // study role
+        //            await (user as IGuildUser).AddRoleAsync(role);
+        //            await Context.Channel.SendMessageAsync("Role assigned. Good luck!");
+        //        }
+        //        catch (Exception ex)
+        //        {
 
-                }
-            }
-            else
-            {
-                await Context.Channel.SendMessageAsync("Wrong code");
-            }
-        }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        await Context.Channel.SendMessageAsync("Wrong code");
+        //    }
+        //}
 
         [Command("question", RunMode = RunMode.Async)]
-        public async Task Question([Remainder] string filter = null)
+        public void AskQuestion([Remainder] string filter = null)
         {
             return;
-            try
-            {
-                // TODO disable subjects if the exam is behind
+            //try
+            //{
+            //    // TODO disable subjects if the exam is behind
 
-                StudyHelper helper = new StudyHelper();
+            //    StudyHelper helper = new StudyHelper();
 
-                var question = helper.GetRandomLinalgQuestion(filter);
-                //if (!Program.CurrentActiveQuestion.ContainsKey(Context.Message.Author.Id))
-                //    Program.CurrentActiveQuestion.Add(Context.Message.Author.Id, question);
+            //    var question = helper.GetRandomLinalgQuestion(filter);
+            //    //if (!Program.CurrentActiveQuestion.ContainsKey(Context.Message.Author.Id))
+            //    //    Program.CurrentActiveQuestion.Add(Context.Message.Author.Id, question);
 
-                PrintQuestion(question);
+            //    PrintQuestion(question);
 
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-            }
+            //}
+            //catch (Exception ex)
+            //{
+            //    _logger.LogError(ex, ex.Message);
+            //}
 
             // TODO place the question into global
         }
 
 
-        [Command("repeat", RunMode = RunMode.Async)]
-        public async Task RepeatQuestion()
-        {
-            return;
-            // TODO disable subjects if the exam is behind
+        //[Command("repeat", RunMode = RunMode.Async)]
+        //public async Task RepeatQuestion()
+        //{
+        //    return;
+        //    // TODO disable subjects if the exam is behind
 
-            StudyHelper helper = new StudyHelper();
+        //    StudyHelper helper = new StudyHelper();
 
-            Question question = null;
-            if (Program.CurrentActiveQuestion.ContainsKey(Context.Message.Author.Id))
-                question = Program.CurrentActiveQuestion[Context.Message.Author.Id];
+        //    Question question = null;
+        //    if (Program.CurrentActiveQuestion.ContainsKey(Context.Message.Author.Id))
+        //        question = Program.CurrentActiveQuestion[Context.Message.Author.Id];
 
-            if (question == null)
-                return;
+        //    if (question == null)
+        //        return;
 
 
-            PrintQuestion(question);
+        //    PrintQuestion(question);
 
-            // TODO place the question into global
-        }
+        //    // TODO place the question into global
+        //}
 
 
         [Command("tex", RunMode = RunMode.Async)]
@@ -1104,62 +1104,62 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             }
         }
 
-        [Command("wallpaper", RunMode = RunMode.Async)]
-        [Alias("wp")]
-        public async Task Wallpaper()
-        {
-            return;
-            if (AllowedToRun(BotPermissionType.EnableType2Commands))
-                return;
+        //[Command("wallpaper", RunMode = RunMode.Async)]
+        //[Alias("wp")]
+        //public async Task Wallpaper()
+        //{
+        //    return;
+        //    if (AllowedToRun(BotPermissionType.EnableType2Commands))
+        //        return;
 
-            var author = Context.Message.Author;
-            LogManager.ProcessMessage(author, BotMessageType.Wallpaper);
+        //    var author = Context.Message.Author;
+        //    LogManager.ProcessMessage(author, BotMessageType.Wallpaper);
 
-            var req = NekosFun.GetLink("wallpaper");
-            BannedLink report = null;
+        //    var req = NekosFun.GetLink("wallpaper");
+        //    BannedLink report = null;
 
-            string regenString = "";
+        //    string regenString = "";
 
-            do
-            {
-                try
-                {
-                    report = GetReportInfoByImage(req);
-                    if (report != null)
-                    {
+        //    do
+        //    {
+        //        try
+        //        {
+        //            report = GetReportInfoByImage(req);
+        //            if (report != null)
+        //            {
 
-                        var user = DatabaseManager.GetDiscordUserById(report.AddedByDiscordUserId);
-                        regenString += $"An image has been blocked by {user.Nickname}. Regenerating a new image just for you :)" + Environment.NewLine;
-                        req = NekosFun.GetLink("wallpaper");
+        //                var user = DatabaseManager.GetDiscordUserById(report.AddedByDiscordUserId);
+        //                regenString += $"An image has been blocked by {user.Nickname}. Regenerating a new image just for you :)" + Environment.NewLine;
+        //                req = NekosFun.GetLink("wallpaper");
 
-                        //return;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    return;
-                }
-            } while (report != null);
+        //                //return;
+        //            }
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            return;
+        //        }
+        //    } while (report != null);
 
-            if (regenString.Length > 0)
-            {
-                await Context.Channel.SendMessageAsync(regenString, false);
-            }
+        //    if (regenString.Length > 0)
+        //    {
+        //        await Context.Channel.SendMessageAsync(regenString, false);
+        //    }
 
-            var message = await Context.Channel.SendMessageAsync(req, false);
+        //    var message = await Context.Channel.SendMessageAsync(req, false);
 
-            // disabled for now
-            if (false)
-                await AddSaveReact(message);
+        //    // disabled for now
+        //    if (false)
+        //        await AddSaveReact(message);
 
-            AddMessageToList(message);
+        //    AddMessageToList(message);
 
-            if (new Random().Next(0, 20) == 0)
-            {
-                // Send only every x messages
-                await Context.Channel.SendMessageAsync("wallpaper may still contain some NSFW images. To remove them type '.block link' To get the link, right click the image -> Copy Link. Do not use < > around the link", false);
-            }
-        }
+        //    if (new Random().Next(0, 20) == 0)
+        //    {
+        //        // Send only every x messages
+        //        await Context.Channel.SendMessageAsync("wallpaper may still contain some NSFW images. To remove them type '.block link' To get the link, right click the image -> Copy Link. Do not use < > around the link", false);
+        //    }
+        //}
 
         /*
         [Command("animalears", RunMode = RunMode.Async)]
@@ -1210,7 +1210,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         }
         */
 
-        public async void AddMessageToList(RestUserMessage message)
+        public void AddMessageToList(RestUserMessage message)
         {
             if (!message.Author.IsBot)
             {
@@ -1618,21 +1618,21 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             await nukeMsg.DeleteAsync();
         }
 
-        [Command("countdown2021")]
-        public async Task countdown2021()
-        {
-            return;
-            var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
-            {
-                //Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
-                return;
-            }
+        //[Command("countdown2021")]
+        //public async Task countdown2021()
+        //{
+        //    return;
+        //    var author = Context.Message.Author;
+        //    if (author.Id != ETHDINFKBot.Program.Owner)
+        //    {
+        //        Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+        //        return;
+        //    }
 
-            Task t = new Task(() => CountdownLoop(Context));
-            t.Start();
+        //    Task t = new Task(() => CountdownLoop(Context));
+        //    t.Start();
 
-        }
+        //}
 
         private DateTime Now()
         {
@@ -1704,27 +1704,27 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
 
 
-        [Command("test")]
-        public async Task Test()
-        {
-            return;
-            if (AllowedToRun(BotPermissionType.EnableType2Commands))
-                return;
-            EmbedBuilder builder = new EmbedBuilder();
+        //[Command("test")]
+        //public async Task Test()
+        //{
+        //    return;
+        //    if (AllowedToRun(BotPermissionType.EnableType2Commands))
+        //        return;
+        //    EmbedBuilder builder = new EmbedBuilder();
 
-            builder.WithTitle("BattleRush's Helper Stats");
-            //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
+        //    builder.WithTitle("BattleRush's Helper Stats");
+        //    //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
 
-            builder.WithColor(0, 100, 175);
+        //    builder.WithColor(0, 100, 175);
 
-            // Profile image of top person -> to update
-            //builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
+        //    // Profile image of top person -> to update
+        //    //builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
 
-            builder.WithCurrentTimestamp();
-            builder.AddField("Top Emoji Usage", $"<:checkmark:778202017372831764>");
-            builder.AddField("<:checkmark:778202017372831764>", $"test");
-            await Context.Channel.SendMessageAsync("", false, builder.Build());
-        }
+        //    builder.WithCurrentTimestamp();
+        //    builder.AddField("Top Emoji Usage", $"<:checkmark:778202017372831764>");
+        //    builder.AddField("<:checkmark:778202017372831764>", $"test");
+        //    await Context.Channel.SendMessageAsync("", false, builder.Build());
+        //}
 
         [Command("r")]
         public async Task Reddit(string subreddit = "")
@@ -1877,22 +1877,22 @@ ORDER BY RANDOM() LIMIT 1
             await Context.Message.DeleteAsync();
         }
 
-        [Command("disk")]
-        public void DirSizeReddit()
-        {
-            return; // disable
-            try
-            {
-                DirectoryInfo info = new DirectoryInfo("Reddit");
-                long size = DirSize(info);
+        //[Command("disk")]
+        //public void DirSizeReddit()
+        //{
+        //    return; // disable
+        //    try
+        //    {
+        //        DirectoryInfo info = new DirectoryInfo("Reddit");
+        //        long size = DirSize(info);
 
-                Context.Channel.SendMessageAsync($"Current Reddit disk usage :{size / (decimal)1024 / 1024 / 1024} GB", false);
-            }
-            catch (Exception ex)
-            {
-                Context.Channel.SendMessageAsync(ex.ToString(), false);
-            }
-        }
+        //        Context.Channel.SendMessageAsync($"Current Reddit disk usage :{size / (decimal)1024 / 1024 / 1024} GB", false);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Context.Channel.SendMessageAsync(ex.ToString(), false);
+        //    }
+        //}
 
         public static long DirSize(DirectoryInfo d)
         {
@@ -1985,7 +1985,7 @@ ORDER BY RAND() LIMIT 1";// todo nsfw test
 
                         var subredditInfo = DatabaseManager.GetSubreddit(redditPost.SubredditInfoId);
 
-                        EmbedBuilder builder = new EmbedBuilder();
+                        EmbedBuilder builder = new();
 
                         builder.WithTitle(redditPost.PostTitle);
                         builder.WithUrl("https://www.reddit.com/" + redditPost.Permalink);
@@ -2094,7 +2094,7 @@ ORDER BY RANDOM() LIMIT 1
 
 
         [Command("testpiechart")]
-        public async Task testpiechart()
+        public void testpiechart()
         {
             return;
 
@@ -2122,7 +2122,7 @@ ORDER BY RANDOM() LIMIT 1
         }
 
         [Command("messagegraph")]
-        public async Task MessageGraph(string param = null)
+        public void MessageGraph(string param = null)
         {
             // STYTEM.DRAWING
             /*
@@ -2321,13 +2321,13 @@ ORDER BY RANDOM() LIMIT 1
             */
         }
 
-        private EmbedBuilder GenerateEmbedForFirstPoster(List<DiscordUser> users, bool daily)
+        private static EmbedBuilder GenerateEmbedForFirstPoster(List<DiscordUser> users, bool daily)
         {
             // Requires atlest 3 entries
             if (users.Count < 3)
                 return null;
 
-            EmbedBuilder builder = new EmbedBuilder();
+            EmbedBuilder builder = new();
             builder.WithColor(25, 100, 255);
 
             builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
@@ -2348,7 +2348,7 @@ ORDER BY RANDOM() LIMIT 1
             return builder;
         }
 
-        private EmbedBuilder GetEmbedForFirstDailyPosts(List<DiscordUser> users)
+        private static EmbedBuilder GetEmbedForFirstDailyPosts(List<DiscordUser> users)
         {
             var embedBuilder = GenerateEmbedForFirstPoster(users, true);
             embedBuilder.WithTitle("First Daily posters leaderboard");
@@ -2422,7 +2422,7 @@ ORDER BY RANDOM() LIMIT 1
             }
             catch (Exception ex)
             {
-                Context.Channel.SendMessageAsync(ex.ToString(), false);
+                await Context.Channel.SendMessageAsync(ex.ToString(), false);
             }
         }
 
@@ -2688,7 +2688,7 @@ ORDER BY RANDOM() LIMIT 1
 
             //await initMsg.DeleteAsync();
 
-            EmbedBuilder nextStage = new EmbedBuilder();
+            EmbedBuilder nextStage = new();
 
             nextStage.WithTitle($"Confirm to assign <@123841216662994944> to the next stage.");
             nextStage.WithColor(0, 0, 255);
@@ -2699,9 +2699,9 @@ ORDER BY RANDOM() LIMIT 1
             await reactMessage.AddReactionAsync(Emote.Parse($"<:this:{DiscordHelper.DiscordEmotes["this"]}>"));
         }
 
-        private async Task<bool> PrintProgressBar(SocketMessage m)
+        private static async Task<bool> PrintProgressBar(SocketMessage m)
         {
-            List<string> left = new List<string>() {
+            List<string> left = new() {
                 "<:left0:829444101308547136>",
                 "<:left1:829444101551423508>",
                 "<:left2:829444101614600252>",
@@ -2715,7 +2715,7 @@ ORDER BY RANDOM() LIMIT 1
                 "<:left10:829444368329998387>"
             };
 
-            List<string> middle = new List<string>() {
+            List<string> middle = new() {
 
                 "<:middle0:832534031177613352>",
                 "<:middle1:832534056138571796>",
@@ -2731,7 +2731,7 @@ ORDER BY RANDOM() LIMIT 1
             };
             // Progressbar right
 
-            List<string> right = new List<string>()
+            List<string> right = new()
             {
 
                 "<:right0:829444702105239613>",
