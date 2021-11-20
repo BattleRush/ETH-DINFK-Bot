@@ -12,7 +12,7 @@ namespace ETHBot.DataLayer.Data.Discord
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public ulong DiscordMessageId { get; set; }
 
-        [StringLength(2000)]
+        [StringLength(4000)]
         public string Content { get; set; }
 
         [ForeignKey("Channel")]

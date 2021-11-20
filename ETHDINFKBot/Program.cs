@@ -857,13 +857,14 @@ namespace ETHDINFKBot
             // only collisions happened on first daily post as there is less competition for first afternoon post
             CollectFirstDailyPostMessages = true;
 
-            // Wait for 5 sec
+            // Wait for 20 sec (10 before midnight and 10 after)
 
-            await Task.Delay(TimeSpan.FromSeconds(10));
+            await Task.Delay(TimeSpan.FromSeconds(20));
 
             CollectFirstDailyPostMessages = false;
 
-            var firstMessage = FirstDailyPostsCandidates.OrderBy(i => i.CreatedAt).First();
+            // Prevent entries that were created before midnight
+            var firstMessage = FirstDailyPostsCandidates.Where(i => i.CreatedAt.Hour != 23).OrderBy(i => i.CreatedAt).First();
 
             var timeNow = SnowflakeUtils.FromSnowflake(firstMessage.Id).AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1); // CEST CONVERSION
 
@@ -908,7 +909,10 @@ namespace ETHDINFKBot
                         "https://tenor.com/view/wow-fireworks-3d-gifs-artist-woohoo-gif-18062148"
                     };
 
-            int count = 1;
+            int beforeMidnight = FirstDailyPostsCandidates.Count(i => i.CreatedAt.Hour == 23);
+            int afterMidnight = FirstDailyPostsCandidates.Count() - beforeMidnight;
+
+            int count = beforeMidnight * (-1);
             // TODO limit to maybe 10 max
             foreach (var item in FirstDailyPostsCandidates.OrderBy(i => i.Id))
             {
@@ -918,7 +922,20 @@ namespace ETHDINFKBot
 
                     string link = $"https://discord.com/channels/{guildChannel.Guild.Id}/{item.Channel.Id}/{item.Id}";
                     var postTime = SnowflakeUtils.FromSnowflake(item.Id).AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1);
-                    builder.AddField($"{CommonHelper.DisplayWithSuffix(count)} {item.Author.Username}", $"[with]({link}) {(postTime - postTime.Date).TotalMilliseconds.ToString("N0")}ms");
+
+                    string title = CommonHelper.DisplayWithSuffix(count);
+
+                    if (count == 0)
+                        title = "**WINNER!**";
+
+                    if (count < 0)
+                        title = "Too early";
+
+                    builder.AddField($"{title} {item.Author.Username}", $"[with]({link}) {(postTime - postTime.Date).TotalMilliseconds.ToString("N0")}ms");
+
+                    if (count == 0)
+                        count++;
+
                     count++;
                 }
             }
@@ -981,10 +998,11 @@ namespace ETHDINFKBot
                 // TODO may cause problems if the bot is hosted in a timezone that doesnt switch to daylight at the same time as the hosting region
                 var timeNow = SnowflakeUtils.FromSnowflake(m.Id).AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1); // CEST CONVERSION
 
-                if (LastNewDailyMessagePost.Day != timeNow.Day && !user.IsBot)
+                // Add 10 seconds so messages before 00:00 are tracked to see which one was close
+                if (LastNewDailyMessagePost.Day != timeNow.AddSeconds(10).Day && !user.IsBot)
                 {
                     // Reset time 
-                    LastNewDailyMessagePost = DateTime.UtcNow.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1);
+                    LastNewDailyMessagePost = DateTime.UtcNow.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1).AddSeconds(10);
 
                     // This person is the first (or one of the first) one to post a new message
                     CollectFirstDailyPostMessages = true;
@@ -1006,7 +1024,7 @@ namespace ETHDINFKBot
                     // This person is the first one to post a new message
 
                     var firstPoster = dbManager.GetDiscordUserById(msg.Author.Id);
-                    dbManager.UpdateDiscordUser(new ETHBot.DataLayer.Data.Discord.DiscordUser()
+                    dbManager.UpdateDiscordUser(new DiscordUser()
                     {
                         DiscordUserId = user.Id,
                         DiscriminatorValue = user.DiscriminatorValue,

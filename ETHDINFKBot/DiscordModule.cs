@@ -671,8 +671,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         }
 
         [Command("ping")]
-        public async Task GhostPing()
+        public async Task PingInfo(/*ulong userId = 0*/)
         {
+            // TODO allow ping to pass for info
             // TODO Put replies into the ping history table aswell
 
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
@@ -682,29 +683,38 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             {
                 var user = Context.Message.Author as SocketGuildUser;
 
+                // load the user in question
+                //if (userId > 0)
+                //{
+                    //user = Program.Client.GetUser(userId) as SocketGuildUser;
+                //}
+
                 List<PingHistory> pingHistory = new List<PingHistory>();
 
-                pingHistory.AddRange(DatabaseManager.GetLastPingHistory(20, user.Id, null));
+                pingHistory.AddRange(DatabaseManager.GetLastPingHistory(50, user.Id, null));
 
                 foreach (var userRole in user.Roles)
                 {
                     ulong roleId = DiscordHelper.GetRoleIdFromMention(userRole);
-                    pingHistory.AddRange(DatabaseManager.GetLastPingHistory(20, null, roleId));
+                    pingHistory.AddRange(DatabaseManager.GetLastPingHistory(50, null, roleId));
                 }
 
                 // Add reply message pings
-                pingHistory.AddRange(DatabaseManager.GetLastReplyHistory(20, user.Id));
+                pingHistory.AddRange(DatabaseManager.GetLastReplyHistory(50, user.Id));
 
                 pingHistory = pingHistory.OrderByDescending(i => i.DiscordMessageId).ToList(); // TODO Change to reply id
 
                 EmbedBuilder builder = new EmbedBuilder();
-                builder.WithTitle($"Your last pings");
+                builder.WithTitle($"{(user.Id == 0 ? user.Username : "Your")} last 10 pings");
 
-                pingHistory = pingHistory.Take(18).ToList();
+                pingHistory = pingHistory.Take(40).ToList();
 
-                int count = 0;
+                
 
                 string messageText = "";
+                string currentBuilder = "";
+                int count = 1;
+
                 foreach (var item in pingHistory)
                 {
                     //if (item.DiscordMessageId == null)
@@ -719,23 +729,39 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                     string link = null;
 
-                    if (count < 5 && dbChannel != null)
-                    {
+                    if (dbChannel != null)
                         link = $"https://discord.com/channels/{dbChannel.DiscordServerId}/{dbMessage.DiscordChannelId}/{dbMessage.DiscordMessageId}";
-                        count++;
-                    }
 
                     var channel = "unknown";
                     if (dbMessage?.DiscordChannelId != null)
                         channel = $"<#{dbMessage?.DiscordChannelId}>";
 
+                    string line = "";
+
                     // RoleIds smaller than 100 cant exist due to the Id size, so they are reserved for internal code
                     if (item.DiscordRoleId.HasValue && item.DiscordRoleId.Value >= 100)
-                        messageText += $"<@{item.FromDiscordUserId}> {(link == null ? "pinged" : $"[pinged]({link})")} <@&{item.DiscordRoleId}> at {dateTimeCET.ToString("dd.MM HH:mm")} in {channel} {Environment.NewLine}"; // todo check for everyone or here
+                        line += $"<@{item.FromDiscordUserId}> {(link == null ? "pinged" : $"[pinged]({link})")} <@&{item.DiscordRoleId}> at {dateTimeCET.ToString("dd.MM HH:mm")} in {channel} {Environment.NewLine}"; // todo check for everyone or here
                     else if (item.DiscordRoleId.HasValue && item.DiscordRoleId.Value < 100)
-                        messageText += $"<@{item.FromDiscordUserId}> {(link == null ? "replied" : $"[replied]({link})")} at {dateTimeCET.ToString("dd.MM HH:mm")} in {channel} {Environment.NewLine}"; // todo check for everyone or here
+                        line += $"<@{item.FromDiscordUserId}> {(link == null ? "replied" : $"[replied]({link})")} at {dateTimeCET.ToString("dd.MM HH:mm")} in {channel} {Environment.NewLine}"; // todo check for everyone or here
                     else
-                        messageText += $"<@{item.FromDiscordUserId}> {(link == null ? "pinged" : $"[pinged]({link})")} at {dateTimeCET.ToString("dd.MM HH:mm")} in {channel} {Environment.NewLine}";
+                        line += $"<@{item.FromDiscordUserId}> {(link == null ? "pinged" : $"[pinged]({link})")} at {dateTimeCET.ToString("dd.MM HH:mm")} in {channel} {Environment.NewLine}";
+
+                    if(count <= 10)
+                    {
+                        messageText += line;
+                    }
+                    else 
+                    {
+                        currentBuilder += line;
+
+                        if (count % 5 == 0)
+                        {
+                            builder.AddField($"{(user.Id == 0 ? user.Username : "Your")} last {count} pings", currentBuilder, false);
+                            currentBuilder = "";
+                        }
+                    }
+
+                    count++;
                 }
 
                 messageText += Environment.NewLine;
@@ -750,7 +776,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             }
             catch (Exception ex)
             {
-
+                await Context.Message.Channel.SendMessageAsync(ex.ToString());
             }
         }
 
