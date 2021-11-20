@@ -114,7 +114,7 @@ WHERE
                     $"DB Size: {Math.Round(dbSizeInBytes / 1024d / 1024d / 1024d, 2)} GB {Environment.NewLine}" +
                     $"Query time: {watch.ElapsedMilliseconds.ToString("N0")}ms");
 
-                Context.Channel.SendMessageAsync("", false, builder.Build());
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
             catch (Exception ex)
             {
@@ -148,7 +148,7 @@ WHERE
                 builder.AddField($"{prefix}sql stats index", "Index Stats");
                 builder.AddField($"{prefix}sql stats table", "Table Stats");
 
-                Context.Channel.SendMessageAsync("", false, builder.Build());
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
 
             [Command("user")]
@@ -176,7 +176,7 @@ WHERE
 
                 var resultString = SQLHelper.GetRowStringFromResult(queryResult.Header, queryResult.Data, new List<int>() { 0, 1, 6, 7, 9, 10, 11, 12, 13, 17, 18, 21, 24 }, true);
 
-                Context.Channel.SendMessageAsync(resultString + Environment.NewLine + $"{queryResult.TotalResults.ToString("N0")} Row(s) affected Time: {queryResult.Time.ToString("N0")}ms");
+                await Context.Channel.SendMessageAsync(resultString + Environment.NewLine + $"{queryResult.TotalResults.ToString("N0")} Row(s) affected Time: {queryResult.Time.ToString("N0")}ms");
             }
 
             [Command("index")]
@@ -197,7 +197,7 @@ WHERE
 
                 var resultString = SQLHelper.GetRowStringFromResult(queryResult.Header, queryResult.Data, new List<int>() { 1, 2, 3 }, true);
 
-                Context.Channel.SendMessageAsync(resultString + Environment.NewLine + $"{queryResult.TotalResults.ToString("N0")} Row(s) affected Time: {queryResult.Time.ToString("N0")}ms");
+                await Context.Channel.SendMessageAsync(resultString + Environment.NewLine + $"{queryResult.TotalResults.ToString("N0")} Row(s) affected Time: {queryResult.Time.ToString("N0")}ms");
             }
 
             [Command("table")]
@@ -218,7 +218,7 @@ WHERE
 
                 var resultString = SQLHelper.GetRowStringFromResult(queryResult.Header, queryResult.Data, new List<int>() { 1, 2, 3, 4 }, true);
 
-                Context.Channel.SendMessageAsync(resultString + Environment.NewLine + $"{queryResult.TotalResults.ToString("N0")} Row(s) affected Time: {queryResult.Time.ToString("N0")}ms");
+                await Context.Channel.SendMessageAsync(resultString + Environment.NewLine + $"{queryResult.TotalResults.ToString("N0")} Row(s) affected Time: {queryResult.Time.ToString("N0")}ms");
             }
         }
 
@@ -238,11 +238,11 @@ WHERE
 
             // draw image?
 
-            [Command("help")]
+           /* [Command("help")]
             public async Task SqlTableHelp()
             {
 
-            }
+            }*/
 
 
 
@@ -369,7 +369,7 @@ WHERE
 
 
                     var stream = CommonHelper.GetStream(drawDbSchema.Bitmap);
-                    Context.Channel.SendFileAsync(stream, "test.png");
+                    await Context.Channel.SendFileAsync(stream, "test.png");
 
                     drawDbSchema.Dispose();
                     stream.Dispose();
@@ -378,7 +378,7 @@ WHERE
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, ex.Message);
-                    Context.Channel.SendMessageAsync(ex.ToString());
+                    await Context.Channel.SendMessageAsync(ex.ToString());
                 }
             }
 
@@ -621,7 +621,7 @@ ORDER BY table_name DESC;", true, 50);
 
             if (ActiveSQLCommands.ContainsKey(userId) && ActiveSQLCommands[userId].AddSeconds(15) > DateTime.Now)
             {
-                Context.Channel.SendMessageAsync("Are you in such a hurry, that you cant wait out the last query you send out?", false);
+                await Context.Channel.SendMessageAsync("Are you in such a hurry, that you cant wait out the last query you send out?", false);
                 return;
             }
 
@@ -672,7 +672,7 @@ ORDER BY table_name DESC;", true, 50);
 
             if (ActiveSQLCommands.ContainsKey(userId) && ActiveSQLCommands[userId].AddSeconds(15) > DateTime.Now)
             {
-                Context.Channel.SendMessageAsync("Are you in such a hurry, that you cant wait out the last query you send out?", false);
+                await Context.Channel.SendMessageAsync("Are you in such a hurry, that you cant wait out the last query you send out?", false);
                 return;
             }
 
@@ -701,7 +701,7 @@ ORDER BY table_name DESC;", true, 50);
             }
             catch (Exception ex)
             {
-                Context.Channel.SendMessageAsync("Is this all you got <:kekw:768912035928735775> " + ex.ToString(), false);
+                await Context.Channel.SendMessageAsync("Is this all you got <:kekw:768912035928735775> " + ex.ToString(), false);
             }
         }
     }

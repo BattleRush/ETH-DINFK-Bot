@@ -536,8 +536,8 @@ namespace ETHDINFKBot
 
             return Task.CompletedTask;
 
-            if (!TempDisableIncomming)
-                return Task.CompletedTask;
+            //if (!TempDisableIncomming)
+            //    return Task.CompletedTask;
             //OnlyHereToTestMyBadCodingSkills
 
             // todo config
@@ -641,7 +641,7 @@ namespace ETHDINFKBot
 
                         TempDisableIncomming = false;*/
 
-            return Task.CompletedTask;
+            //return Task.CompletedTask;
         }
 
         private Task Client_RoleCreated(SocketRole arg)
@@ -705,7 +705,7 @@ namespace ETHDINFKBot
         private Task Client_MessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel arg2)
         {
             return Task.CompletedTask;
-            if (TempDisableIncomming)
+           /* if (TempDisableIncomming)
                 return Task.CompletedTask;
 
             if (message.HasValue)
@@ -752,7 +752,7 @@ namespace ETHDINFKBot
                 }
             }
 
-            return Task.CompletedTask;
+            return Task.CompletedTask;*/
         }
 
         private async void AssignMutedRoleToUser(SocketGuild guild, SocketGuildUser user)
@@ -1118,7 +1118,7 @@ namespace ETHDINFKBot
                         if (new Random().Next(0, 5) == 0)
                         {
                             // Ignore the user than to reply takes 1 message away from the rate limit
-                            m.Channel.SendMessageAsync($"Stop spamming <@{m.Author.Id}> your current timeout is {SpamCache[m.Author.Id]} UTC");
+                            await m.Channel.SendMessageAsync($"Stop spamming <@{m.Author.Id}> your current timeout is {SpamCache[m.Author.Id]} UTC");
                         }
 
                         return;
@@ -1436,7 +1436,7 @@ Rebooting.........");
             nextStage.WithCurrentTimestamp();
 
             var reactMessage = await m.Channel.SendMessageAsync("Process Initialization Check", false, nextStage.Build());
-            reactMessage.AddReactionAsync(Emote.Parse($"<:this:{DiscordHelper.DiscordEmotes["this"]}>"));
+            await reactMessage.AddReactionAsync(Emote.Parse($"<:this:{DiscordHelper.DiscordEmotes["this"]}>"));
 
 
             return true;

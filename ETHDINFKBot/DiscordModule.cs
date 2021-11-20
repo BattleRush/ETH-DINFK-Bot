@@ -103,7 +103,7 @@ namespace ETHDINFKBot
             builder.WithAuthor(ownerUser);
             builder.WithCurrentTimestamp();
 
-            Context.Channel.SendMessageAsync("", false, builder.Build());
+            await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
         // https://stackoverflow.com/a/4423615/3144729
@@ -209,11 +209,11 @@ namespace ETHDINFKBot
                 builder.AddField("RAM", $"{Math.Round(ram / 1024d / 1024d / 1024d, 2)} GB", true);
                 builder.AddField("DISK", $"{Math.Round((totalBytes - freeBytes) / 1024d / 1024d / 1024d, 2)} GB out of {Math.Round(totalBytes / 1024d / 1024d / 1024d, 2)} GB ({Math.Round(100 * ((totalBytes - freeBytes) / (decimal)totalBytes), 2)}%)", true);
 
-                Context.Channel.SendMessageAsync("", false, builder.Build());
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
             catch (Exception ex)
             {
-                Context.Channel.SendMessageAsync(ex.ToString());
+                await Context.Channel.SendMessageAsync(ex.ToString());
             }
         }
 
@@ -275,7 +275,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.AddField($"Random Exam Question (for now only LinAlg) Total tracking: {new StudyHelper().GetQuestionCount()} question(s)", $"```{prefix}question [Exam] (Exams: {new StudyHelper().GetExams()})```");
             //builder.AddField(".next", "```Regenerate a new question.```");
 
-            Context.Channel.SendMessageAsync("", false, builder.Build());
+            await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
         [Command("duck")]
@@ -319,7 +319,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 builder.AddField(item.Text, item.FirstUrl);
             }
 
-            Context.Channel.SendMessageAsync("", false, builder.Build());
+            await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
         [Command("google")]
@@ -357,9 +357,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 builder.AddField(item.title, item.description + Environment.NewLine + item.url);
             }
 
-            Context.Channel.SendMessageAsync("", false, builder.Build());
+            await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
-
+        /*
         // TODO Rework
         [Command("neko")]
         public async Task Neko()
@@ -396,7 +396,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             if (report != null)
             {
                 var user = DatabaseManager.GetDiscordUserById(report.AddedByDiscordUserId);
-                Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
+                await Context.Channel.SendMessageAsync($"The current image has been blocked by {user.Nickname}. Try the command again to get a new image", false);
                 return;
             }
 
@@ -517,7 +517,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             var req = await NekoClient.Image_v3.NekoAvatar();
             Context.Channel.SendMessageAsync(req.ImageUrl, false);
-        }
+        }*/
 
         /*[Command("wallpaper")] // TODO INTEGRATE 2 wallpaper endpoints
         public async Task Wallpaper()
@@ -544,7 +544,6 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             int blockSize = imgSize + 35;
 
             int yOffsetFixForImage = 2;
-            int xOffsetFixForText = -3;
 
             int width = Math.Min(emojis.Count, 10) * blockSize + padding;
             int height = (int)(Math.Ceiling(emojis.Count / 10d) * blockSize + paddingY - 5);
@@ -658,7 +657,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 var message = await Context.Channel.GetMessageAsync(messageid);
                 await message.AddReactionAsync(emote);
             }
-            Context.Message.DeleteAsync();
+            await Context.Message.DeleteAsync();
         }
 
         [Command("today")]
@@ -707,7 +706,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 EmbedBuilder builder = new EmbedBuilder();
                 builder.WithTitle($"{(user.Id == 0 ? user.Username : "Your")} last 10 pings");
 
-                pingHistory = pingHistory.Take(40).ToList();
+                pingHistory = pingHistory.Take(35).ToList();
 
                 
 
@@ -806,7 +805,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.AddField("Bytes Received", $"{ws.BytesReceived.ToString("N0")}", true);
             builder.AddField("Bytes Sent", $"{ws.BytesSent.ToString("N0")}", true);
 
-            Context.Channel.SendMessageAsync("", false, builder.Build());
+            await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
 
@@ -881,7 +880,6 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     dupes.Add(emote.EmoteName.ToLower(), 1);
                 }
 
-                string offsetString = "";
                 if (debug)
                 {
                     emote.EmoteName = emote.DiscordEmoteId.ToString();
@@ -1044,7 +1042,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             var author = Context.Message.Author;
             if (author.Id != ETHDINFKBot.Program.Owner)
             {
-                Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
             }
 
@@ -1096,13 +1094,13 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             {
                 var msg = await Context.Channel.SendFileAsync(question.Image, $"test.png", text);
                 await Task.Delay(secWait * 1000);
-                msg.DeleteAsync();
+                await msg.DeleteAsync();
             }
             else
             {
                 var msg = await Context.Channel.SendMessageAsync(text);
                 await Task.Delay(secWait * 1000);
-                msg.DeleteAsync();
+                await msg.DeleteAsync();
             }
         }
 
@@ -1159,10 +1157,11 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             if (new Random().Next(0, 20) == 0)
             {
                 // Send only every x messages
-                Context.Channel.SendMessageAsync("wallpaper may still contain some NSFW images. To remove them type '.block link' To get the link, right click the image -> Copy Link. Do not use < > around the link", false);
+                await Context.Channel.SendMessageAsync("wallpaper may still contain some NSFW images. To remove them type '.block link' To get the link, right click the image -> Copy Link. Do not use < > around the link", false);
             }
         }
 
+        /*
         [Command("animalears", RunMode = RunMode.Async)]
         public async Task Animalears()
         {
@@ -1209,7 +1208,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             await AddSaveReact(message);
             AddMessageToList(message);
         }
-
+        */
 
         public async void AddMessageToList(RestUserMessage message)
         {
@@ -1245,7 +1244,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             if (image.Contains("discordapp") || !image.StartsWith("https://"))
             {
-                Context.Channel.SendMessageAsync($"You did not provide a valid link.", false);
+                await Context.Channel.SendMessageAsync($"You did not provide a valid link.", false);
                 return;
             }
 
@@ -1253,9 +1252,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             if (blockInfo != null)
             {
-                Context.Message.DeleteAsync();
+                await Context.Message.DeleteAsync();
                 var user = DatabaseManager.GetDiscordUserById(blockInfo.AddedByDiscordUserId);
-                Context.Channel.SendMessageAsync($"Image is already in the blacklist (blocked by {user.Nickname}) You were too slow {guildUser.Nickname} <:exmatrikulator:769624058005553152>", false);
+                await Context.Channel.SendMessageAsync($"Image is already in the blacklist (blocked by {user.Nickname}) You were too slow {guildUser.Nickname} <:exmatrikulator:769624058005553152>", false);
                 return;
             }
 
@@ -1285,12 +1284,12 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 if (message.Content == image)
                 {
                     // We are removing this item
-                    message.DeleteAsync();
+                    await message.DeleteAsync();
                 }
             }
 
-            Context.Channel.SendMessageAsync($"Added the image to blacklist by {guildUser.Nickname}", false);
-            Context.Message.DeleteAsync();
+            await Context.Channel.SendMessageAsync($"Added the image to blacklist by {guildUser.Nickname}", false);
+            await Context.Message.DeleteAsync();
         }
 
         private async Task AddSaveReact(RestUserMessage message)
@@ -1312,7 +1311,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             }
             else if (type.ToLower() == "help")
             {
-                HelpOutput();
+                await HelpOutput();
                 return;
             }
             else if (type.ToLower() == "types")
@@ -1330,7 +1329,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 builder.WithCurrentTimestamp();
                 builder.AddField("Types [Name]", allTypes);
 
-                Context.Channel.SendMessageAsync("", false, builder.Build());
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
             else
             {
@@ -1362,7 +1361,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 var guildChannel = (SocketGuildChannel)Context.Message.Channel;
 
                 bool successRant = DatabaseManager.AddRant(Context.Message.Id, Context.Message.Author.Id, guildChannel.Id, typeId, content);
-                Context.Channel.SendMessageAsync($"Added rant for {type} Success: {successRant}", false);
+                await Context.Channel.SendMessageAsync($"Added rant for {type} Success: {successRant}", false);
             }
         }
 
@@ -1389,17 +1388,17 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.WithCurrentTimestamp();
             builder.WithFooter($"RantId: {rant.RantMessageId} TypeId: {rant.RantTypeId}");
 
-            Context.Channel.SendMessageAsync("", false, builder.Build());
+            await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
-
+        /*
         [Command("graph")]
         public async Task Graph()
         {
 
 
 
-        }
+        }*/
 
 
         [Command("old_stats")]
@@ -1477,7 +1476,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 builder.AddField("Total Foxgirl", GetRankingString(topFoxgirl.Select(i => i.ServerUserName + ": " + i.Stats.TotalFoxgirl)), true);
                 builder.AddField("Total Animalears", GetRankingString(topAnimalears.Select(i => i.ServerUserName + ": " + i.Stats.TotalAnimalears)), true);
                 */
-                Context.Channel.SendMessageAsync("", false, builder.Build());
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
             catch (Exception ex)
             {
@@ -1511,11 +1510,11 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             if (amount < 1)
                 amount = 1;
 
-            Context.Message.DeleteAsync();
+            await Context.Message.DeleteAsync();
 
             for (int i = 0; i < amount; i++)
             {
-                Context.Channel.SendMessageAsync(message, false);
+                await Context.Channel.SendMessageAsync(message, false);
                 await Task.Delay(1250);
             }
         }
@@ -1534,7 +1533,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             if (fromBot)
             {
-                Context.Message.DeleteAsync();
+                await Context.Message.DeleteAsync();
             }
 
             var messages = await Context.Channel.GetMessagesAsync(100).FlattenAsync(); //defualt is 100
@@ -1600,7 +1599,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             var messages = Context.Channel.GetMessagesAsync(count).FlattenAsync(); //defualt is 100
 
             var messageCountDown = await Context.Channel.SendMessageAsync("https://media4.giphy.com/media/tBvPFCFQHSpEI/200.gif");
-            Context.Channel.SendMessageAsync($"Placing a tactical nuke KMN-{count}. Scheduled to detonate in 10 seconds.");
+            await Context.Channel.SendMessageAsync($"Placing a tactical nuke KMN-{count}. Scheduled to detonate in 10 seconds.");
 
             await Task.Delay(9250);
 
@@ -1724,7 +1723,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.WithCurrentTimestamp();
             builder.AddField("Top Emoji Usage", $"<:checkmark:778202017372831764>");
             builder.AddField("<:checkmark:778202017372831764>", $"test");
-            Context.Channel.SendMessageAsync("", false, builder.Build());
+            await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
         [Command("r")]
@@ -1754,7 +1753,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     }
 
                     // TODO better text
-                    Context.Channel.SendMessageAsync(allSubreddits, false);
+                    await Context.Channel.SendMessageAsync(allSubreddits, false);
                 }
             }
             else
@@ -1794,7 +1793,7 @@ ORDER BY RAND() LIMIT 1";// todo nsfw test
 
                 }
 
-                Context.Channel.SendMessageAsync(link, false);
+                await Context.Channel.SendMessageAsync(link, false);
 
             }
             /*
@@ -1813,8 +1812,8 @@ ORDER BY RANDOM() LIMIT 1
 
             if (amount < 1)
                 amount = 1;
-            if (amount > 5)
-                amount = 5;
+            if (amount > 2)
+                amount = 2;
 
             List<string> oneTimeEmotes = new List<string>() { "rocket", "ringed_planet", "boom", "comet", "sparkles", "full_moon", "earth_africa", "dizzy", "star", "star2" };
             try
@@ -1867,15 +1866,15 @@ ORDER BY RANDOM() LIMIT 1
                         message = message.Substring(0, 2000);
                     }
 
-                    Context.Channel.SendMessageAsync(message);
+                    await Context.Channel.SendMessageAsync(message);
                 }
             }
             catch (Exception ex)
             {
-                Context.Channel.SendMessageAsync(ex.ToString());
+                await Context.Channel.SendMessageAsync(ex.ToString());
             }
 
-            Context.Message.DeleteAsync();
+            await Context.Message.DeleteAsync();
         }
 
         [Command("disk")]
@@ -1930,7 +1929,7 @@ ORDER BY RANDOM() LIMIT 1
             if (subreddit.ToLower() == "all")
             {
                 string allSubreddits = "**Available subreddits**" + Environment.NewLine;
-                Context.Channel.SendMessageAsync(allSubreddits, false);
+                await Context.Channel.SendMessageAsync(allSubreddits, false);
                 allSubreddits = "";
 
                 using (ETHBotDBContext context = new ETHBotDBContext())
@@ -1944,7 +1943,7 @@ ORDER BY RANDOM() LIMIT 1
                         if (allSubreddits.Length > 1900)
                         {
                             // TODO better text
-                            Context.Channel.SendMessageAsync(allSubreddits, false);
+                            await Context.Channel.SendMessageAsync(allSubreddits, false);
                             allSubreddits = "";
                         }
                     }
@@ -2016,7 +2015,7 @@ ORDER BY RAND() LIMIT 1";// todo nsfw test
                         builder.AddField("Downvotes", redditPost.DownvoteCount, true);
                         builder.AddField("NSFW", redditPost.IsNSFW, true);
 
-                        Context.Channel.SendMessageAsync("", false, builder.Build());
+                        await Context.Channel.SendMessageAsync("", false, builder.Build());
 
                     }
 
@@ -2074,7 +2073,7 @@ ORDER BY RANDOM() LIMIT 1
 
         // todo dupe code
 
-        [Command("drawtest")]
+        /*[Command("drawtest")]
         public async Task drawtest()
         {
             return;
@@ -2091,7 +2090,7 @@ ORDER BY RANDOM() LIMIT 1
                 await Context.Channel.SendMessageAsync(ex.ToString().Substring(0, Math.Min(ex.ToString().Length, 1990)));
             }
 
-        }
+        }*/
 
 
         [Command("testpiechart")]
@@ -2448,7 +2447,7 @@ ORDER BY RANDOM() LIMIT 1
 
                 if (messagesToProcess.Count == 0)
                 {
-                    Context.Channel.SendMessageAsync("Done", false);
+                    await Context.Channel.SendMessageAsync("Done", false);
 
                     break;
                 }
@@ -2463,7 +2462,7 @@ ORDER BY RANDOM() LIMIT 1
 
                 File.AppendAllText(txtFile, textToAdd);
 
-                Context.Channel.SendMessageAsync($"Processed {messagesToProcess.Count}/{count} messages", false);
+                await Context.Channel.SendMessageAsync($"Processed {messagesToProcess.Count}/{count} messages", false);
             }
         }
 
@@ -2511,7 +2510,7 @@ ORDER BY RANDOM() LIMIT 1
             var author = Context.Message.Author;
             if (author.Id != 321022340412735509)
             {
-                Context.Channel.SendMessageAsync($"Unauthorized access atempt. Banning <@{author.Id}>", false);
+                await Context.Channel.SendMessageAsync($"Unauthorized access atempt. Banning <@{author.Id}>", false);
                 return;
             }
 
@@ -2642,9 +2641,9 @@ ORDER BY RANDOM() LIMIT 1
 
             var bytes = StringToByteArray(hex);
 
-            int size = 22;
+            // size = 22;
 
-            int pixelSize = 10;
+            //int pixelSize = 10;
 
             // SYSTEM.DRAWING
             /*
@@ -2683,7 +2682,7 @@ ORDER BY RANDOM() LIMIT 1
             var author = Context.Message.Author;
             if (author.Id != 123841216662994944)
             {
-                Context.Channel.SendMessageAsync($"Unauthorized access atempt. Banning <@{author.Id}>", false);
+                await Context.Channel.SendMessageAsync($"Unauthorized access atempt. Banning <@{author.Id}>", false);
                 return;
             }
 
@@ -2697,7 +2696,7 @@ ORDER BY RANDOM() LIMIT 1
             nextStage.WithCurrentTimestamp();
 
             var reactMessage = await m.Channel.SendMessageAsync("Process Initialization Check", false, nextStage.Build());
-            reactMessage.AddReactionAsync(Emote.Parse($"<:this:{DiscordHelper.DiscordEmotes["this"]}>"));
+            await reactMessage.AddReactionAsync(Emote.Parse($"<:this:{DiscordHelper.DiscordEmotes["this"]}>"));
         }
 
         private async Task<bool> PrintProgressBar(SocketMessage m)

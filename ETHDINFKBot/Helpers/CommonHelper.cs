@@ -139,7 +139,7 @@ namespace ETHDINFKBot.Helpers
                 await ScrapReddit(item, channel);
                 await Task.Delay(500);
             }
-            channel.SendMessageAsync($"Scraper ended :)", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
+            await channel.SendMessageAsync($"Scraper ended :)", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
         }
 
         public static async Task ScrapReddit(string subredditName, ISocketMessageChannel channel)
@@ -245,7 +245,7 @@ namespace ETHDINFKBot.Helpers
                 }
                 catch (Exception ex)
                 {
-                    channel.SendMessageAsync($"{subManager.SubredditName} scraper died RIP {ex.Message}", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
+                    await channel.SendMessageAsync($"{subManager.SubredditName} scraper died RIP {ex.Message}", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
                 }
 
                 //if(!ended)
