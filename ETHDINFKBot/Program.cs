@@ -868,7 +868,7 @@ namespace ETHDINFKBot
             CollectFirstDailyPostMessages = false;
 
             // Prevent entries that were created before midnight
-            var firstMessage = FirstDailyPostsCandidates.Where(i => i.CreatedAt.Hour != 23).OrderBy(i => i.CreatedAt).First();
+            var firstMessage = FirstDailyPostsCandidates.Where(i => i.CreatedAt.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1).Hour != 23).OrderBy(i => i.CreatedAt).First();
 
             var timeNow = SnowflakeUtils.FromSnowflake(firstMessage.Id).AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1); // CEST CONVERSION
 
@@ -913,7 +913,7 @@ namespace ETHDINFKBot
                         "https://tenor.com/view/wow-fireworks-3d-gifs-artist-woohoo-gif-18062148"
                     };
 
-            int beforeMidnight = FirstDailyPostsCandidates.Count(i => i.CreatedAt.Hour == 23);
+            int beforeMidnight = FirstDailyPostsCandidates.Count(i => i.CreatedAt.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1).Hour == 23);
             int afterMidnight = FirstDailyPostsCandidates.Count() - beforeMidnight;
 
             int count = beforeMidnight * (-1);
