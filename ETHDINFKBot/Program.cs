@@ -709,54 +709,54 @@ namespace ETHDINFKBot
         private Task Client_MessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel arg2)
         {
             return Task.CompletedTask;
-           /* if (TempDisableIncomming)
-                return Task.CompletedTask;
+            /* if (TempDisableIncomming)
+                 return Task.CompletedTask;
 
-            if (message.HasValue)
-            {
-                IMessage messageValue = message.Value;
+             if (message.HasValue)
+             {
+                 IMessage messageValue = message.Value;
 
-                if (!AllowedToRun(message.Value.Channel.Id, BotPermissionType.RemovedPingMessage))
-                    return Task.CompletedTask;
+                 if (!AllowedToRun(message.Value.Channel.Id, BotPermissionType.RemovedPingMessage))
+                     return Task.CompletedTask;
 
-                if (message.Value.Tags?.Where(i => i.Type == TagType.UserMention || i.Type == TagType.RoleMention).Count() > 0)
-                {
-                    if (message.Value.Content.StartsWith("$q"))
-                        return Task.CompletedTask; // exclude quotes
+                 if (message.Value.Tags?.Where(i => i.Type == TagType.UserMention || i.Type == TagType.RoleMention).Count() > 0)
+                 {
+                     if (message.Value.Content.StartsWith("$q"))
+                         return Task.CompletedTask; // exclude quotes
 
-                    if (message.Value.CreatedAt.UtcDateTime < DateTime.UtcNow.AddSeconds(-30))
-                        return Task.CompletedTask; // only track for first 30 secs
+                     if (message.Value.CreatedAt.UtcDateTime < DateTime.UtcNow.AddSeconds(-30))
+                         return Task.CompletedTask; // only track for first 30 secs
 
-                    EmbedBuilder builder = new EmbedBuilder();
-                    var guildUser = message.Value.Author as SocketGuildUser;
-                    builder.WithTitle($"{guildUser.Nickname} is a really bad person because he deleted a message with a ping");
+                     EmbedBuilder builder = new EmbedBuilder();
+                     var guildUser = message.Value.Author as SocketGuildUser;
+                     builder.WithTitle($"{guildUser.Nickname} is a really bad person because he deleted a message with a ping");
 
-                    string messageText = "";
-                    foreach (var item in message.Value.Tags.Where(i => i.Type == TagType.UserMention || i.Type == TagType.RoleMention))
-                    {
-                        string pefixForRole = item.Type == TagType.RoleMention ? "&" : "";
-                        messageText += $"Poor <@{pefixForRole}{item.Key}>" + Environment.NewLine;
-                    }
+                     string messageText = "";
+                     foreach (var item in message.Value.Tags.Where(i => i.Type == TagType.UserMention || i.Type == TagType.RoleMention))
+                     {
+                         string pefixForRole = item.Type == TagType.RoleMention ? "&" : "";
+                         messageText += $"Poor <@{pefixForRole}{item.Key}>" + Environment.NewLine;
+                     }
 
-                    messageText += Environment.NewLine;
-                    messageText += $"{guildUser.Nickname} you just got a new role <:yay:778745219733520426> Next time dont delete ghost pings" + Environment.NewLine;
+                     messageText += Environment.NewLine;
+                     messageText += $"{guildUser.Nickname} you just got a new role <:yay:778745219733520426> Next time dont delete ghost pings" + Environment.NewLine;
 
-                    var socketChannel = messageValue.Channel as SocketGuildChannel;
+                     var socketChannel = messageValue.Channel as SocketGuildChannel;
 
-                    AssignMutedRoleToUser(socketChannel.Guild, guildUser);
+                     AssignMutedRoleToUser(socketChannel.Guild, guildUser);
 
-                    builder.WithDescription(messageText);
-                    builder.WithColor(255, 64, 128);
+                     builder.WithDescription(messageText);
+                     builder.WithColor(255, 64, 128);
 
-                    builder.WithAuthor(message.Value.Author);
+                     builder.WithAuthor(message.Value.Author);
 
-                    builder.WithCurrentTimestamp();
+                     builder.WithCurrentTimestamp();
 
-                    message.Value.Channel.SendMessageAsync("", false, builder.Build());
-                }
-            }
+                     message.Value.Channel.SendMessageAsync("", false, builder.Build());
+                 }
+             }
 
-            return Task.CompletedTask;*/
+             return Task.CompletedTask;*/
         }
 
         private async void AssignMutedRoleToUser(SocketGuild guild, SocketGuildUser user)
@@ -935,7 +935,10 @@ namespace ETHDINFKBot
                     if (count < 0)
                         title = "Too early";
 
-                    builder.AddField($"{title} {item.Author.Username}", $"[with]({link}) {(postTime - postTime.Date).TotalMilliseconds.ToString("N0")}ms");
+                    int ms = (int)(postTime - postTime.Date).TotalMilliseconds;
+                    ms -= postTime < timeNow ? 24 * 60 * 60 * 1000 : 0; // if posted before first post -> remove 86,400,000ms
+
+                    builder.AddField($"{title} {item.Author.Username}", $"[with]({link}) {ms.ToString("N0")}ms");
 
                     if (count == 0)
                         count++;
@@ -1016,7 +1019,7 @@ namespace ETHDINFKBot
                     DiscordHelper.ReloadRoles(user.Guild);
                 }
 
-                if (CollectFirstDailyPostMessages  && !user.IsBot)
+                if (CollectFirstDailyPostMessages && !user.IsBot)
                     FirstDailyPostsCandidates.Add(m);
 
                 // duplicate code of the code above
