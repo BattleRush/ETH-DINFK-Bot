@@ -661,7 +661,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         }
 
         [Command("today")]
-        public void TodaysBirthdays()
+        public async Task TodaysBirthdays()
         {
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
