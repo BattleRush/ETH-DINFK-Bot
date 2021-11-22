@@ -704,7 +704,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 EmbedBuilder builder = new EmbedBuilder();
                 builder.WithTitle($"{(user.Id == 0 ? user.Username : "Your")} last 10 pings");
 
-                pingHistory = pingHistory.Take(35).ToList();
+                pingHistory = pingHistory.Take(30).ToList();
 
                 
 
