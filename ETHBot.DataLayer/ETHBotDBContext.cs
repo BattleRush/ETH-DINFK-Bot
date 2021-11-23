@@ -53,6 +53,7 @@ namespace ETHBot.DataLayer
         public DbSet<CommandType> CommandTypes { get; set; }
 
         public DbSet<DiscordChannel> DiscordChannels { get; set; }
+        public DbSet<DiscordThread> DiscordThreads { get; set; }
         public DbSet<DiscordMessage> DiscordMessages { get; set; }
         public DbSet<DiscordServer> DiscordServers { get; set; }
         public DbSet<DiscordUser> DiscordUsers { get; set; }

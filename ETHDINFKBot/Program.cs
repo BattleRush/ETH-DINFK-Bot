@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
@@ -56,7 +55,7 @@ namespace ETHDINFKBot
     class Program
     {
         public static DiscordSocketClient Client;
-        private CommandService commands;
+        private CommandService Commands;
 
         private IServiceProvider services;
         private static IConfiguration Configuration;
@@ -368,11 +367,12 @@ namespace ETHDINFKBot
 
             services = new ServiceCollection()
                 .AddSingleton(Client)
-                .AddSingleton<InteractiveService>()
+                //.AddSingleton<InteractiveService>()
                 .BuildServiceProvider();
 
-            commands = new CommandService();
-            await commands.AddModulesAsync(Assembly.GetEntryAssembly(), services);
+
+            Commands = new CommandService();
+            await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), services);
 
 
             /*if (DatabaseManager.GetDiscordServerById(747752542741725244) == null)
@@ -507,8 +507,12 @@ namespace ETHDINFKBot
                     Process.GetCurrentProcess().Kill();
                 }
             }
+#if DEBUG
+            Console.Write("Discord log: " + arg.Message);
+#else
             if (arg.Severity == LogSeverity.Error || arg.Severity == LogSeverity.Critical)
                 Console.Write("Discord log: " + arg.Message);
+#endif
 
             return Task.CompletedTask;
             //throw new NotImplementedException();
@@ -706,7 +710,8 @@ namespace ETHDINFKBot
 
             return Task.CompletedTask;
         }
-        private Task Client_MessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel arg2)
+
+        private Task Client_MessageDeleted(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel)
         {
             return Task.CompletedTask;
             /* if (TempDisableIncomming)
@@ -777,7 +782,7 @@ namespace ETHDINFKBot
             }*/
         }
 
-        private async void HandleReaction(Cacheable<IUserMessage, ulong> argMessage, ISocketMessageChannel argMessageChannel, SocketReaction argReaction, bool addedReaction)
+        private async void HandleReaction(Cacheable<IUserMessage, ulong> argMessage, Cacheable<IMessageChannel, ulong> argMessageChannel, SocketReaction argReaction, bool addedReaction)
         {
             try
             {
@@ -791,7 +796,8 @@ namespace ETHDINFKBot
                 }
                 else
                 {
-                    currentMessage = await argMessageChannel.GetMessageAsync(argMessage.Id);
+                    // TODO Check argMessageChannel.Value has value
+                    currentMessage = await argMessageChannel.Value.GetMessageAsync(argMessage.Id);
                 }
 
                 var channelSettings = BotChannelSettings?.SingleOrDefault(i => i.DiscordChannelId == argMessageChannel.Id);
@@ -804,12 +810,13 @@ namespace ETHDINFKBot
 
             }
         }
-        private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> argMessage, ISocketMessageChannel argMessageChannel, SocketReaction argReaction)
+
+        private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> argMessage, Cacheable<IMessageChannel, ulong> argMessageChannel, SocketReaction argReaction)
         {
             HandleReaction(argMessage, argMessageChannel, argReaction, true);
         }
 
-        private async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> argMessage, ISocketMessageChannel argMessageChannel, SocketReaction argReaction)
+        private async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> argMessage, Cacheable<IMessageChannel, ulong> argMessageChannel, SocketReaction argReaction)
         {
             HandleReaction(argMessage, argMessageChannel, argReaction, false);
         }
@@ -830,28 +837,6 @@ namespace ETHDINFKBot
 
 
         private static Dictionary<ulong, DateTime> SpamCache = new Dictionary<ulong, DateTime>();
-
-        public static bool SendedAnWChallenge = false;
-        public async void NewAnWChallenge()
-        {
-            var anwChannel = Client.GetGuild(Program.BaseGuild).GetTextChannel(772551551818268702);
-
-            // todo do more dynamic
-            /*
-            string name = "Count the Divisors";
-            string due = "Thursday, March 11, 2021 10:00:59 AM GMT+01:00";
-            int exp = 100;
-
-            EmbedBuilder builder = new EmbedBuilder();
-
-            builder.WithTitle($"A new AnW challenge has been uploaded");
-            builder.WithColor(128, 255, 128);
-            builder.WithDescription($"Task Name: **{name}** " + Environment.NewLine + $"Due date: {due}" + Environment.NewLine + $"EXP: {exp}");
-
-            builder.WithCurrentTimestamp();
-
-            await anwChannel.SendMessageAsync("May the fastest speedrunner win :)", false, builder.Build());*/
-        }
 
         // Because of the delay from discord there is a way that the "first daily" post arrives later than some other messages
         private static List<SocketMessage> FirstDailyPostsCandidates = new List<SocketMessage>();
@@ -956,7 +941,6 @@ namespace ETHDINFKBot
             DiscordHelper.DiscordUserBirthday(Client, Program.BaseGuild, 768600365602963496, true); // on first daily post trigger birthday messages -> TODO maybe move to a cron job
         }
 
-
         public async Task HandleCommandAsync(SocketMessage m)
         {
             if (TempDisableIncomming)
@@ -971,12 +955,18 @@ namespace ETHDINFKBot
             }
 
             // check if the emote is a command -> block
-            List<CommandInfo> commandList = commands.Commands.ToList();
+            List<CommandInfo> commandList = Commands.Commands.ToList();
 
             // ignore this channel -> high msg volume
             if (msg.Channel.Id != 819966095070330950)
             {
-                var channelSettings = BotChannelSettings?.SingleOrDefault(i => i.DiscordChannelId == msg.Channel.Id);
+                ulong channelId = msg.Channel.Id;
+
+                // Get the perms from the parent channel if the message was send in a thread
+                if(msg.Channel is SocketThreadChannel threadChannel)
+                    channelId = threadChannel.ParentChannel.Id;
+
+                var channelSettings = BotChannelSettings?.SingleOrDefault(i => i.DiscordChannelId == channelId);
 
                 MessageHandler msgHandler = new MessageHandler(msg, commandList, channelSettings);
                 await msgHandler.Run();
@@ -991,15 +981,6 @@ namespace ETHDINFKBot
 
                 var dbManager = DatabaseManager.Instance();
 
-                // todo do this in the future as scheduler
-
-                var openUtcDate = new DateTime(2021, 03, 04, 17, 0, 0, DateTimeKind.Utc);
-
-                if (!SendedAnWChallenge && (openUtcDate < DateTime.UtcNow) && (openUtcDate.AddMinutes(5) > DateTime.UtcNow)/*to prevent on restart that it sends again*/)
-                {
-                    SendedAnWChallenge = true;
-                    NewAnWChallenge();
-                }
 
                 // Use discord snowflake
                 // TODO may cause problems if the bot is hosted in a timezone that doesnt switch to daylight at the same time as the hosting region
@@ -1141,7 +1122,7 @@ namespace ETHDINFKBot
 
 
             var context = new SocketCommandContext(Client, msg);
-            commands.ExecuteAsync(context, argPos, services);
+            Commands.ExecuteAsync(context, argPos, services);
         }
 
 

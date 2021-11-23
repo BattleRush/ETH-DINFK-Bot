@@ -227,7 +227,7 @@ namespace ETHDINFKBot
                     {
                         emote.Blocked = blockStatus;
 
-                        if(blockStatus)
+                        if (blockStatus)
                             emote.LocalPath = null;
                         // TODO in case of unblock reload the file
 
@@ -445,6 +445,25 @@ namespace ETHDINFKBot
             }
         }
 
+        public DiscordThread GetDiscordThread(ulong? id)
+        {
+            if (id == null)
+                return null;
+
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordThreads.SingleOrDefault(i => i.DiscordThreadId == id);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
         public void UpdateDiscordChannel(DiscordChannel channel)
         {
             try
@@ -453,12 +472,80 @@ namespace ETHDINFKBot
                 {
                     var dbDiscordChannel = context.DiscordChannels.SingleOrDefault(i => i.DiscordChannelId == channel.DiscordChannelId);
                     if (dbDiscordChannel == null)
+                    {
                         CreateDiscordChannel(channel);
+                        return;
+                    }
 
                     bool changes = false;
                     if (dbDiscordChannel.ChannelName != channel.ChannelName)
                     {
                         dbDiscordChannel.ChannelName = channel.ChannelName;
+                        changes = true;
+                    }
+
+                    if (changes)
+                        context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+        }
+
+        public void UpdateDiscordThread(DiscordThread thread)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new())
+                {
+                    var dbDiscordThread = context.DiscordThreads.SingleOrDefault(i => i.DiscordThreadId == thread.DiscordThreadId);
+                    if (dbDiscordThread == null)
+                    {
+                        CreateDiscordThread(thread);
+                        return;
+                    }
+
+                    // TODO change the logic
+
+                    bool changes = false;
+                    if (dbDiscordThread.ThreadName != thread.ThreadName)
+                    {
+                        dbDiscordThread.ThreadName = thread.ThreadName;
+                        changes = true;
+                    }
+
+                    if (dbDiscordThread.MemberCount != thread.MemberCount)
+                    {
+                        dbDiscordThread.MemberCount = thread.MemberCount;
+                        changes = true;
+                    }
+
+                    if (dbDiscordThread.IsArchived != thread.IsArchived)
+                    {
+                        dbDiscordThread.IsArchived = thread.IsArchived;
+                        changes = true;
+                    }
+                    if (dbDiscordThread.IsLocked != thread.IsLocked)
+                    {
+                        dbDiscordThread.IsLocked = thread.IsLocked;
+                        changes = true;
+                    }
+                    if (dbDiscordThread.IsNsfw != thread.IsNsfw)
+                    {
+                        dbDiscordThread.IsNsfw = thread.IsNsfw;
+                        changes = true;
+                    }
+                    if (dbDiscordThread.IsPrivateThread != thread.IsPrivateThread)
+                    {
+                        dbDiscordThread.IsPrivateThread = thread.IsPrivateThread;
+                        changes = true;
+                    }
+
+                    if (dbDiscordThread.ThreadType != thread.ThreadType)
+                    {
+                        dbDiscordThread.ThreadType = thread.ThreadType;
                         changes = true;
                     }
 
@@ -499,6 +586,25 @@ namespace ETHDINFKBot
                 }
 
                 return GetDiscordChannel(channel.DiscordChannelId); // since this will rarely happen its fine i guess but we could probably return the original user
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public DiscordThread CreateDiscordThread(DiscordThread thread)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    context.DiscordThreads.Add(thread);
+                    context.SaveChanges();
+                }
+
+                return GetDiscordThread(thread.DiscordThreadId); // since this will rarely happen its fine i guess but we could probably return the original user
             }
             catch (Exception ex)
             {

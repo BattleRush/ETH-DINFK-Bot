@@ -15,9 +15,9 @@ namespace ETHBot.DataLayer.Data.Discord
         [StringLength(4000)]
         public string Content { get; set; }
 
-        [ForeignKey("Channel")]
+        [ForeignKey("DiscordChannel")]
         public ulong DiscordChannelId { get; set; }
-        public DiscordChannel Channel { get; set; }
+        public DiscordChannel DiscordChannel { get; set; }
 
         [ForeignKey("DiscordUser")]
         public ulong DiscordUserId { get; set; }
@@ -26,6 +26,10 @@ namespace ETHBot.DataLayer.Data.Discord
         [ForeignKey("ReplyMessage")]
         public ulong? ReplyMessageId { get; set; }
         public DiscordMessage ReplyMessage { get; set; }
+
+        [ForeignKey("DiscordThread")]
+        public ulong? DiscordThreadId { get; set; }
+        public DiscordThread DiscordThread { get; set; }
 
         public bool Preloaded { get; set; } // for older messages that were loaded afterwards
     }

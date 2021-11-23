@@ -190,7 +190,7 @@ namespace ETHDINFKBot.Modules
 
             var emotesPath = Path.Combine(Program.BasePath, "Emotes");
             var archivePath = Path.Combine(emotesPath, "Archive");
-            
+
             try
             {
 
@@ -629,6 +629,22 @@ namespace ETHDINFKBot.Modules
                 }
             }
 
+            // TODO move to common
+            private static string GetPermissionString(BotPermissionType flags)
+            {
+                List<string> permissionFlagNames = new List<string>();
+                foreach (BotPermissionType flag in Enum.GetValues(typeof(BotPermissionType)))
+                {
+                    var hasFlag = flags.HasFlag(flag);
+
+                    if (hasFlag)
+                        permissionFlagNames.Add($"{flag} ({(int)flag})");
+                }
+
+                return string.Join(", ", permissionFlagNames);
+            }
+
+
             [Command("info")]
 
             public async Task GetChannelInfoAsync(bool all = false)
@@ -681,8 +697,9 @@ namespace ETHDINFKBot.Modules
 
                         List<string> header = new List<string>()
                         {
-                            "Channel Id",
+                            "Category Name",
                             "Channel Name",
+                            "Thread Name",
                             "Permission value",
                             "Permission string",
                             "Preload old",
@@ -693,34 +710,87 @@ namespace ETHDINFKBot.Modules
 
                         List<List<string>> data = new List<List<string>>();
 
+                        var categories = Program.Client.GetGuild(Program.BaseGuild).CategoryChannels.OrderBy(i => i.Position);
 
-                        foreach (var channelSetting in botChannelSettings)
+
+                        foreach (var category in categories)
                         {
-                            List<string> channelInfoRow = new List<string>();
+                            // New category
+                            data.Add(new List<string>() {
+                                category.Name,
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                ""
+                            });
 
-                            var discordChannel = DatabaseManager.Instance().GetDiscordChannel(channelSetting.DiscordChannelId);
-
-                            if (discordChannel.DiscordServerId != guildChannel.Guild.Id)
-                                break; // dont show other server
-
-                            channelInfoRow.Add(discordChannel.DiscordChannelId.ToString());
-                            channelInfoRow.Add(discordChannel.ChannelName);
-                            channelInfoRow.Add(channelSetting.ChannelPermissionFlags.ToString());
-                            List<string> permissionFlagNames = new List<string>();
-                            foreach (BotPermissionType flag in Enum.GetValues(typeof(BotPermissionType)))
+                            // TODO Order
+                            foreach (var channel in category.Channels)
                             {
-                                var hasFlag = ((BotPermissionType)(channelSetting.ChannelPermissionFlags)).HasFlag(flag);
+                                var channelSetting = botChannelSettings.FirstOrDefault(i => i.DiscordChannelId == channel.Id);
 
-                                if (hasFlag)
-                                    permissionFlagNames.Add($"{flag} ({(int)flag})");
+                                // New channel
+                                data.Add(new List<string>() {
+                                    "",
+                                    channel.Name,
+                                    "",
+                                    channelSetting?.ChannelPermissionFlags.ToString() ?? "N/A",
+                                    GetPermissionString((BotPermissionType)(channelSetting?.ChannelPermissionFlags ?? 0)),
+                                    channelSetting?.OldestPostTimePreloaded.ToString() ?? "N/A",
+                                    channelSetting?.NewestPostTimePreloaded.ToString() ?? "N/A",
+                                    channelSetting?.ReachedOldestPreload.ToString() ?? "N/A"
+                                });
+
+                                if (channel is SocketTextChannel socketThextChannel)
+                                {
+                                    // Current channel is a thread
+
+                                    foreach (var thread in socketThextChannel.Threads)
+                                    {
+                                        // New thread
+                                        data.Add(new List<string>() {
+                                            "",
+                                            "",
+                                            "#" + thread.Name,
+                                            "N/A",
+                                            "N/A",
+                                            "N/A",
+                                            "N/A",
+                                            "N/A"
+                                        });
+                                    }
+                                }
                             }
-
-                            channelInfoRow.Add(string.Join(", " + Environment.NewLine, permissionFlagNames));
-                            channelInfoRow.Add(channelSetting.OldestPostTimePreloaded?.ToString());
-                            channelInfoRow.Add(channelSetting.NewestPostTimePreloaded?.ToString());
-                            channelInfoRow.Add(channelSetting.ReachedOldestPreload.ToString());
-                            data.Add(channelInfoRow);
                         }
+
+
+                        //var guildChannelInfos = Program.Client.GetGuild(Program.BaseGuild).Channels.OrderBy(i => i.Position);
+
+                        //foreach (var guildChannelInfo in guildChannelInfos)
+                        //{
+
+
+                        //    var discordChannel = DatabaseManager.Instance().GetDiscordChannel(channelSetting.DiscordChannelId);
+
+                        //    if (discordChannel.DiscordServerId != guildChannel.Guild.Id)
+                        //        break; // dont show other server
+
+
+                        //    //channelInfoRow.Add(discordChannel.DiscordChannelId.ToString());
+                        //    channelInfoRow.Add(guildChannelInfo.);
+                        //    channelInfoRow.Add(discordChannel.ChannelName);
+                        //    channelInfoRow.Add(channelSetting.ChannelPermissionFlags.ToString());
+
+
+                        //    channelInfoRow.Add(string.Join(", " + Environment.NewLine, permissionFlagNames));
+                        //    channelInfoRow.Add(channelSetting.OldestPostTimePreloaded?.ToString());
+                        //    channelInfoRow.Add(channelSetting.NewestPostTimePreloaded?.ToString());
+                        //    channelInfoRow.Add(channelSetting.ReachedOldestPreload.ToString());
+                        //    data.Add(channelInfoRow);
+                        //}
 
                         var drawTable = new DrawTable(header, data, "");
 

@@ -26,6 +26,7 @@ namespace ETHDINFKBot.Handlers
         private SocketUserMessage SocketMessage;
         private SocketGuildUser SocketGuildUser;
         private SocketTextChannel SocketTextChannel;
+        private SocketThreadChannel SocketThreadChannel;
         private SocketGuildChannel SocketGuildChannel;
         private SocketGuild SocketGuild;
 
@@ -40,9 +41,20 @@ namespace ETHDINFKBot.Handlers
             // verify what to do when these 2 cant be cast
             SocketGuildUser = socketMessage.Author as SocketGuildUser;
             SocketTextChannel = socketMessage.Channel as SocketTextChannel;
+            SocketThreadChannel = socketMessage.Channel as SocketThreadChannel;
             SocketGuildChannel = socketMessage.Channel as SocketGuildChannel;
+
+            if (socketMessage.Channel is SocketThreadChannel)
+            {
+                // The message if from a thread -> Replace the SocketChannel to the parent channel
+                SocketTextChannel = SocketThreadChannel.ParentChannel;
+                SocketGuildChannel = SocketThreadChannel.ParentChannel;
+            }
+
+            // Dont handle DM's
             if (SocketGuildChannel == null)
                 return;
+
             SocketGuild = SocketGuildChannel.Guild;
 
             ChannelSettings = channelSettings;
@@ -57,7 +69,7 @@ namespace ETHDINFKBot.Handlers
             if (SocketMessage.Author.IsWebhook || SocketGuildChannel == null)
                 return false; // slash commands are webhooks ???
 
-            AdministratorBait();
+            //AdministratorBait();
             EmojiDetection();
             Autoreact();
 
@@ -73,59 +85,80 @@ namespace ETHDINFKBot.Handlers
 
         private async Task<bool> CreateDiscordServerDBEntry()
         {
-            if (SocketGuildChannel != null)
-            {
-                var discordServer = DatabaseManager.GetDiscordServerById(SocketGuild.Id);
-                if (discordServer == null)
-                {
-                    var newDiscordServerEntry = DatabaseManager.CreateDiscordServer(new DiscordServer()
-                    {
-                        DiscordServerId = SocketGuild.Id,
-                        ServerName = SocketGuild.Name
-                    });
-
-                    return newDiscordServerEntry != null;
-                }
-
-                return true;
-            }
-            else
-            {
-                // NO DM Tracking
+            // NO DM Tracking
+            if (SocketGuildChannel == null)
                 return false;
+
+            var discordServer = DatabaseManager.GetDiscordServerById(SocketGuild.Id);
+
+            if (discordServer == null)
+            {
+                var newDiscordServerEntry = DatabaseManager.CreateDiscordServer(new DiscordServer()
+                {
+                    DiscordServerId = SocketGuild.Id,
+                    ServerName = SocketGuild.Name
+                });
+
+                return newDiscordServerEntry != null;
             }
+
+            return true;
         }
 
 
         private async Task<bool> CreateDiscordChannelDBEntry()
         {
-            // TODO UPDATE CHANNEL IF NEEDED
-            if (SocketGuildChannel != null)
+            // NO DM Tracking
+            if (SocketGuildChannel == null)
+                return false;
+
+            var discordChannel = new DiscordChannel()
             {
-                var discordChannel = new DiscordChannel()
-                {
-                    DiscordChannelId = SocketGuildChannel.Id,
-                    ChannelName = SocketGuildChannel.Name,
-                    DiscordServerId = SocketGuild.Id
-                };
-                var dbDiscordChannel = DatabaseManager.GetDiscordChannel(SocketGuildChannel.Id);
-                if (dbDiscordChannel == null)
-                {
-                    var newDiscordChannelEntry = DatabaseManager.CreateDiscordChannel(discordChannel);
-                    return newDiscordChannelEntry != null;
-                }
-                else
-                {
-                    DatabaseManager.UpdateDiscordChannel(discordChannel);
-                }
-                return true;
+                DiscordChannelId = SocketGuildChannel.Id,
+                ChannelName = SocketGuildChannel.Name,
+                DiscordServerId = SocketGuild.Id
+            };
+            var dbDiscordChannel = DatabaseManager.GetDiscordChannel(SocketGuildChannel.Id);
+            if (dbDiscordChannel == null)
+            {
+                var newDiscordChannelEntry = DatabaseManager.CreateDiscordChannel(discordChannel);
+                return newDiscordChannelEntry != null;
             }
             else
             {
-                // NO DM Tracking
-                return false;
+                DatabaseManager.UpdateDiscordChannel(discordChannel);
             }
 
+
+            // Create Thread
+            if (SocketThreadChannel != null)
+            {
+                var discordThread = new DiscordThread()
+                {
+                    DiscordChannelId = SocketThreadChannel.ParentChannel.Id,
+                    ThreadName = SocketThreadChannel.Name,
+                    DiscordThreadId = SocketThreadChannel.Id,
+                    IsArchived = SocketThreadChannel.IsArchived,
+                    IsLocked = SocketThreadChannel.IsLocked,
+                    IsPrivateThread = SocketThreadChannel.IsPrivateThread,
+                    IsNsfw = SocketThreadChannel.IsNsfw,
+                    MemberCount = SocketThreadChannel.MemberCount,
+                    ThreadType = (int)SocketThreadChannel.Type
+                };
+
+                var dbDiscordThread = DatabaseManager.GetDiscordThread(SocketThreadChannel.Id);
+                if (dbDiscordThread == null)
+                {
+                    var newDiscordThreadEntry = DatabaseManager.CreateDiscordThread(discordThread);
+                    return newDiscordThreadEntry != null;
+                }
+                else
+                {
+                    DatabaseManager.UpdateDiscordThread(discordThread);
+                }
+            }
+
+            return true;
         }
 
         private async Task<bool> CreateOrUpdateDBUser()
@@ -172,16 +205,31 @@ namespace ETHDINFKBot.Handlers
                         referenceMessageId = null; // original message is not in the db therefore do not link
                 }
 
-                var newDiscordMessageEntry = DatabaseManager.CreateDiscordMessage(new DiscordMessage()
+                var newDiscordMessageEntryCreated = DatabaseManager.CreateDiscordMessage(new DiscordMessage()
                 {
                     DiscordChannelId = SocketGuildChannel.Id,
                     DiscordUserId = SocketGuildUser.Id,
                     DiscordMessageId = SocketMessage.Id,
                     Content = SocketMessage.Content,
-                    ReplyMessageId = referenceMessageId
+                    ReplyMessageId = referenceMessageId,
+                    DiscordThreadId = SocketThreadChannel?.Id
                 }, true);
 
-                return newDiscordMessageEntry;
+                if(SocketMessage.Reference != null && newDiscordMessageEntryCreated)
+                {
+                    // This message is a reply to some message -> Create PingHistory
+                    // TODO if the reply contains a ping then we create a double entry
+                    DatabaseManager.CreatePingHistory(new PingHistory()
+                    {
+                        DiscordMessageId = SocketMessage.Id,
+                        DiscordRoleId = null,
+                        DiscordUserId = null,
+                        FromDiscordUserId = SocketGuildUser.Id,
+                        IsReply = true
+                    });
+                }
+
+                return newDiscordMessageEntryCreated;
             }
             else
             {
@@ -297,7 +345,7 @@ namespace ETHDINFKBot.Handlers
                                 try
                                 {
                                     using (var stream = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
-                                      await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.gif", "", false, null, null, false, null, new MessageReference(SocketMessage.ReferencedMessage?.Id));
+                                        await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.gif", "", false, null, null, false, null, new MessageReference(SocketMessage.ReferencedMessage?.Id));
                                 }
                                 catch (Exception ex) { }
                             }
@@ -309,15 +357,15 @@ namespace ETHDINFKBot.Handlers
                                     SKBitmap bmp;
                                     using (var ms = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
                                     {
-                                        bmp = SKBitmap.Decode(ms); 
+                                        bmp = SKBitmap.Decode(ms);
                                     }
                                     var resImage = CommonHelper.ResizeImage(bmp, Math.Min(bmp.Height, 64));
                                     var stream = CommonHelper.GetStream(resImage);
 
                                     await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.png", "", false, null, null, false, null, new MessageReference(SocketMessage.ReferencedMessage?.Id));
-                                    
+
                                 }
-                                catch (Exception ex) 
+                                catch (Exception ex)
                                 {
                                     await SocketMessage.Channel.SendMessageAsync(ex.ToString());
                                 }
