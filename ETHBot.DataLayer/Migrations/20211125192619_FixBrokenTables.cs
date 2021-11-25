@@ -51,17 +51,17 @@ namespace ETHBot.DataLayer.Migrations
                 name: "IX_DiscordChannels_ParentDiscordChannelId",
                 table: "DiscordChannels");
 
-            migrationBuilder.DropColumn(
-                name: "IsCategory",
-                table: "DiscordChannels");
+            //migrationBuilder.DropColumn(
+            //    name: "IsCategory",
+            //    table: "DiscordChannels");
 
-            migrationBuilder.DropColumn(
-                name: "ParentDiscordChannelId",
-                table: "DiscordChannels");
+            //migrationBuilder.DropColumn(
+            //    name: "ParentDiscordChannelId",
+            //    table: "DiscordChannels");
 
-            migrationBuilder.DropColumn(
-                name: "Position",
-                table: "DiscordChannels");
+            //migrationBuilder.DropColumn(
+            //    name: "Position",
+            //    table: "DiscordChannels");
         }
     }
 }
