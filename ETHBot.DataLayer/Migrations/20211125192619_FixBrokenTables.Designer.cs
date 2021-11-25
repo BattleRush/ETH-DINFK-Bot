@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ETHBot.DataLayer.Migrations
 {
     [DbContext(typeof(ETHBotDBContext))]
-    [Migration("20211125170639_UpdateDiscordChannelsIncludeCategories")]
-    partial class UpdateDiscordChannelsIncludeCategories
+    [Migration("20211125192619_FixBrokenTables")]
+    partial class FixBrokenTables
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -576,6 +576,9 @@ namespace ETHBot.DataLayer.Migrations
 
                     b.Property<ulong?>("DMDiscordMessageId")
                         .HasColumnType("bigint unsigned");
+
+                    b.Property<bool>("DeletedFromDM")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("DirectLink")
                         .HasMaxLength(128)
