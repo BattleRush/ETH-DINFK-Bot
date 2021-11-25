@@ -1704,6 +1704,27 @@ namespace ETHDINFKBot
                 return context.SavedMessages.Any(i => i.DiscordMessageId == messageId && i.SavedByDiscordUserId == savedByDiscordUserId); // TODO check it works
             }
         }
+        public bool DeleteInDmSavedMessage(ulong messageId)
+        {
+            using (ETHBotDBContext context = new ETHBotDBContext())
+            {
+                try
+                {
+                    var savedMessage = context.SavedMessages.SingleOrDefault(i => i.DMDiscordMessageId == messageId);
+                    if(savedMessage != null)
+                    {
+                        savedMessage.DeletedFromDM = true;
+                        context.SaveChanges();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+        }
 
         public bool SaveMessage(ulong messageId, ulong byDiscordUserId, ulong savedByDiscordUserId, string link, string content, bool byMessageCommand, ulong? dmMessageId = null)
         {

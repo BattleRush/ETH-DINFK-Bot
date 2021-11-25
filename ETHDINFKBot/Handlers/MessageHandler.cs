@@ -51,6 +51,9 @@ namespace ETHDINFKBot.Handlers
                 // The message if from a thread -> Replace the SocketChannel to the parent channel
                 SocketTextChannel = SocketThreadChannel.ParentChannel;
                 SocketGuildChannel = SocketThreadChannel.ParentChannel;
+
+                // TODO Fix the correct setting from the calling method
+                channelSettings = CommonHelper.GetChannelSettingByThreadId(SocketThreadChannel.Id);
             }
 
             // Dont handle DM's

@@ -72,7 +72,7 @@ namespace ETHDINFKBot.Handlers
                 builder.AddField("Guild", SocketTextChannel.Guild.Name, true);
                 builder.AddField("Channel", SocketTextChannel.Name, true);
                 builder.AddField("User", SocketMessage?.Author?.Username ?? "N/A", true);
-                builder.AddField("DirectLink", $"[Message Link to the message]({link})");
+                builder.AddField("DirectLink", $"[Link to the message]({link})");
 
                 builder.WithAuthor(SocketGuildUser);
                 builder.WithCurrentTimestamp();

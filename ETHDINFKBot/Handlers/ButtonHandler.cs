@@ -36,6 +36,7 @@ namespace ETHDINFKBot.Handlers
 
         private async Task<bool> DeleteSavePostInDM()
         {
+            DatabaseManager.DeleteInDmSavedMessage(SocketUserMessage.Id);
             await SocketUserMessage.DeleteAsync();
             return true;
         }

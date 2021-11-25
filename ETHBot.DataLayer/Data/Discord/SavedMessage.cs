@@ -37,5 +37,6 @@ namespace ETHBot.DataLayer.Data.Discord
 
         public bool TriggeredByCommand { get; set; }
         public ulong? DMDiscordMessageId { get; set; }
+        public bool DeletedFromDM { get; set; }
     }
 }
