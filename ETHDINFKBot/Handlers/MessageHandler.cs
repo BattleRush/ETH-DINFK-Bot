@@ -25,6 +25,7 @@ namespace ETHDINFKBot.Handlers
 
         private SocketUserMessage SocketMessage;
         private SocketGuildUser SocketGuildUser;
+        private SocketCategoryChannel SocketCategoryChannel;
         private SocketTextChannel SocketTextChannel;
         private SocketThreadChannel SocketThreadChannel;
         private SocketGuildChannel SocketGuildChannel;
@@ -39,8 +40,9 @@ namespace ETHDINFKBot.Handlers
             SocketMessage = socketMessage;
 
             // verify what to do when these 2 cant be cast
-            SocketGuildUser = socketMessage.Author as SocketGuildUser;
+            SocketGuildUser = socketMessage.Author as SocketGuildUser;   
             SocketTextChannel = socketMessage.Channel as SocketTextChannel;
+            SocketCategoryChannel = SocketTextChannel.Category as SocketCategoryChannel;
             SocketThreadChannel = socketMessage.Channel as SocketThreadChannel;
             SocketGuildChannel = socketMessage.Channel as SocketGuildChannel;
 
@@ -105,19 +107,53 @@ namespace ETHDINFKBot.Handlers
             return true;
         }
 
+        private async Task<bool> CreateDiscordChannelCategoryDBEntry()
+        {
+            if (SocketCategoryChannel == null)
+                return false;
 
+            var discordChannelCategory = new DiscordChannel()
+            {
+                DiscordChannelId = SocketCategoryChannel.Id,
+                ChannelName = SocketCategoryChannel.Name,
+                DiscordServerId = SocketGuild.Id,
+                IsCategory = true,
+                ParentDiscordChannel = null,
+                Position = SocketCategoryChannel.Position
+            };
+
+            var dbDiscordChannel = DatabaseManager.GetDiscordChannel(SocketCategoryChannel.Id);
+            if (dbDiscordChannel == null)
+            {
+                var newDiscordChannelEntry = DatabaseManager.CreateDiscordChannel(discordChannelCategory);
+                return newDiscordChannelEntry != null;
+            }
+            else
+            {
+                DatabaseManager.UpdateDiscordChannel(discordChannelCategory);
+            }
+
+            return true;
+        }
         private async Task<bool> CreateDiscordChannelDBEntry()
         {
             // NO DM Tracking
             if (SocketGuildChannel == null)
                 return false;
 
+            // Ensure CategoryChannel is created
+            await CreateDiscordChannelCategoryDBEntry();
+
             var discordChannel = new DiscordChannel()
             {
                 DiscordChannelId = SocketGuildChannel.Id,
                 ChannelName = SocketGuildChannel.Name,
-                DiscordServerId = SocketGuild.Id
+                DiscordServerId = SocketGuild.Id,
+                ParentDiscordChannelId = SocketCategoryChannel?.Id,
+                IsCategory = false,
+                Position = SocketGuildChannel.Position
             };
+
             var dbDiscordChannel = DatabaseManager.GetDiscordChannel(SocketGuildChannel.Id);
             if (dbDiscordChannel == null)
             {
@@ -128,7 +164,6 @@ namespace ETHDINFKBot.Handlers
             {
                 DatabaseManager.UpdateDiscordChannel(discordChannel);
             }
-
 
             // Create Thread
             if (SocketThreadChannel != null)

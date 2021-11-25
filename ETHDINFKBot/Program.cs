@@ -35,6 +35,7 @@ using System.Text;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using Discord.Net;
 
 namespace ETHDINFKBot
 {
@@ -92,7 +93,7 @@ namespace ETHDINFKBot
         private static DateTime LastNewDailyMessagePost = DateTime.Now;
         private static DateTime LastAfternoonMessagePost = DateTime.Now;
 
-        private static List<BotChannelSetting> BotChannelSettings;
+        //private static List<BotChannelSetting> BotChannelSettings;
 
         private static List<string> AllowedBotCommands;
 
@@ -239,7 +240,8 @@ namespace ETHDINFKBot
 
         public static void LoadChannelSettings()
         {
-            BotChannelSettings = DatabaseManager.Instance().GetAllChannelSettings();
+            // TODO load settings into cache
+            //BotChannelSettings = DatabaseManager.Instance().GetAllChannelSettings();
         }
 
         public async Task MainAsync(string token)
@@ -354,6 +356,14 @@ namespace ETHDINFKBot
 
             Client.Log += Client_Log;
 
+            // For message commands
+            Client.MessageCommandExecuted += MessageCommandHandler;
+
+            // For user commands
+            Client.UserCommandExecuted += UserCommandHandler;
+
+            Client.ButtonExecuted += Client_ButtonExecuted;
+
             await Client.LoginAsync(TokenType.Bot, token);
             await Client.StartAsync();
 
@@ -386,6 +396,28 @@ namespace ETHDINFKBot
 
             // Block this task until the program is closed.
             await Task.Delay(-1);
+        }
+
+        private async Task Client_ButtonExecuted(SocketMessageComponent arg)
+        {
+            ButtonHandler buttonHandler = new ButtonHandler(arg);
+            buttonHandler.Run();
+        }
+
+        public async Task MessageCommandHandler(SocketMessageCommand arg)
+        {
+            MessageCommandHandler mch = new MessageCommandHandler(arg);
+            await mch.Run();
+
+            await arg.RespondAsync("Requested " + arg.CommandName, null, false, true);
+        }
+
+        public async Task UserCommandHandler(SocketUserCommand arg)
+        {
+            UserCommandHandler uch = new UserCommandHandler(arg);
+            await uch.Run();
+
+            await arg.RespondAsync("Requested " + arg.CommandName, null, false, true);
         }
 
         private void ReloadChannelPositionLock(SocketGuild guild, bool delete, string channelName)
@@ -526,9 +558,58 @@ namespace ETHDINFKBot
         //    await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
         //}
 
+
+
+
+        private static async Task SetUpApplicationCommands()
+        {
+            ulong guildId = 774286694794919986;
+
+#if !DEBUG
+            guildId = Program.BaseGuild;
+#endif
+            // Let's build a guild command! We're going to need a guild so lets just put that in a variable.
+            var guild = Client.GetGuild(guildId);
+
+            // Next, lets create our user and message command builder. This is like the embed builder but for context menu commands.
+            var guildUserCommand = new UserCommandBuilder();
+            guildUserCommand.WithName("User's last Pings");
+            
+
+            // Note: Names have to be all lowercase and match the regular expression ^[\w -]{3,32}$
+            var guildMessageCommand = new MessageCommandBuilder();
+            guildMessageCommand.WithName("Save Message");
+
+
+            var guildMessageCommand2 = new MessageCommandBuilder();
+            guildMessageCommand2.WithName("Save Message2");
+
+            try
+            {
+                // Now that we have our builder, we can call the BulkOverwriteApplicationCommandAsync to make our context commands. Note: this will overwrite all your previous commands with this array.
+                await guild.BulkOverwriteApplicationCommandAsync(new ApplicationCommandProperties[]
+                {
+                    guildUserCommand.Build(),
+                    guildMessageCommand.Build()
+                    //guildMessageCommand2.Build()
+                });
+            }
+            catch (ApplicationCommandException exception)
+            {
+                // If our command was invalid, we should catch an ApplicationCommandException. This exception contains the path of the error as well as the error message. You can serialize the Error field in the exception to get a visual of where your error is.
+                var json = JsonConvert.SerializeObject(exception, Formatting.Indented);
+
+                // You can send this error somewhere or just print it to the console, for this example we're just going to print it.
+                Console.WriteLine(json);
+            }
+        }
+
+
         // TODO Cleanup -> Remove (migration only
         private Task Client_Ready()
         {
+            SetUpApplicationCommands();
+
             ulong guildId = Program.BaseGuild; // TODO Update
 #if DEBUG
             guildId = 774286694794919986;
@@ -800,7 +881,7 @@ namespace ETHDINFKBot
                     currentMessage = await argMessageChannel.Value.GetMessageAsync(argMessage.Id);
                 }
 
-                var channelSettings = BotChannelSettings?.SingleOrDefault(i => i.DiscordChannelId == argMessageChannel.Id);
+                var channelSettings = CommonHelper.GetChannelSettingByChannelId(argMessageChannel.Id);
 
                 ReactionHandler reactionHandler = new ReactionHandler(currentMessage, argReaction, channelSettings, addedReaction);
                 reactionHandler.Run();
@@ -946,11 +1027,38 @@ namespace ETHDINFKBot
             if (TempDisableIncomming)
                 return;
 
-            if (m is not SocketUserMessage msg) return;
+            if (m is not SocketUserMessage msg)
+                return;
 
             if (msg.Channel is not SocketGuildChannel guildChannel)
             {
                 // no DM parsing for now (maybe delete saved post) in the future
+                if (msg.Content == "AddDeleteButtons")
+                {
+                    var builderComponent = new ComponentBuilder().WithButton("Delete Message", "delete-saved-message-id", ButtonStyle.Danger);
+
+                    var messageToDelete = await msg.Channel.GetMessagesAsync(1000).FlattenAsync();
+                    if (messageToDelete != null)
+                    {
+                        foreach (var item in messageToDelete)
+                        {
+                            if (item.Components.Count == 0)
+                            {
+                                try
+                                {
+                                    // can only edit own messages
+                                    if (item.Author.IsBot)
+                                        await msg.Channel.ModifyMessageAsync(item.Id, i => i.Components = builderComponent.Build());
+                                }
+                                catch (Exception ex)
+                                {
+
+                                }
+                            }
+                        }
+                    }
+                }
+
                 return;
             }
 
@@ -963,10 +1071,10 @@ namespace ETHDINFKBot
                 ulong channelId = msg.Channel.Id;
 
                 // Get the perms from the parent channel if the message was send in a thread
-                if(msg.Channel is SocketThreadChannel threadChannel)
+                if (msg.Channel is SocketThreadChannel threadChannel)
                     channelId = threadChannel.ParentChannel.Id;
 
-                var channelSettings = BotChannelSettings?.SingleOrDefault(i => i.DiscordChannelId == channelId);
+                var channelSettings = CommonHelper.GetChannelSettingByChannelId(channelId);
 
                 MessageHandler msgHandler = new MessageHandler(msg, commandList, channelSettings);
                 await msgHandler.Run();

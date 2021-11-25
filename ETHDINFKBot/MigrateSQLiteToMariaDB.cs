@@ -697,7 +697,6 @@ namespace ETHDINFKBot
                                 DiscordMessageId = DiscordMessageId,
                                 DirectLink = DirectLink,
                                 Content = Content,
-                                SendInDM = SendInDM,
                                 SavedByDiscordUserId = SavedByDiscordUserId,
                                 ByDiscordUserId = ByDiscordUserId
                             });

@@ -160,7 +160,7 @@ namespace ETHDINFKBot.Handlers
                 var link = $"https://discord.com/channels/{SocketGuild.Id}/{SocketGuildChannel.Id}/{Message.Id}";
                 if (!string.IsNullOrWhiteSpace(Message.Content))
                 {
-                    DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, Message.Content);
+                    DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, Message.Content, false);
 
                     if (Message.Content.Length > 1750)
                     {
@@ -186,14 +186,14 @@ namespace ETHDINFKBot.Handlers
                 {
                     foreach (var item in Message.Embeds)
                     {
-                        DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, "Embed: " + item.ToString());
+                        DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, "Embed: " + item.ToString(), false);
                         await SocketGuildReactionUser.SendMessageAsync("", false, (Embed)item);
                     }
                 }
 
                 foreach (var item in Message.Attachments)
                 {
-                    DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, item.Url);
+                    DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, item.Url, false);
 
                     await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
                         $"{item.Url} {Environment.NewLine}" +
@@ -212,6 +212,7 @@ namespace ETHDINFKBot.Handlers
                     builder.AddField("Message Author", $"{authorUsername}", true);
 
                     builder.AddField("Info", $"To save a message react with <:savethis:780179874656419880> to a message", false);
+                    builder.AddField("**Deprication info**", $"This feature will soon no longer work trough reactions. Please use the new Method: (right click) Message -> Apps -> Save Message", false);
 
                     builder.WithAuthor(SocketGuildReactionUser);
                     builder.WithCurrentTimestamp();

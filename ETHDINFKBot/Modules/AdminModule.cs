@@ -693,8 +693,6 @@ namespace ETHDINFKBot.Modules
                     }
                     else
                     {
-                        var botChannelSettings = DatabaseManager.Instance().GetAllChannelSettings();
-
                         List<string> header = new List<string>()
                         {
                             "Category Name",
@@ -710,27 +708,28 @@ namespace ETHDINFKBot.Modules
 
                         List<List<string>> data = new List<List<string>>();
 
-                        var categories = Program.Client.GetGuild(Program.BaseGuild).CategoryChannels.OrderBy(i => i.Position);
-
+                        var categories = Program.Client.GetGuild(guildChannel.Guild.Id).CategoryChannels.OrderBy(i => i.Position);
 
                         foreach (var category in categories)
                         {
+                            var channelCategorySetting = CommonHelper.GetChannelSettingByChannelId(category.Id, false);
+
                             // New category
                             data.Add(new List<string>() {
                                 category.Name,
                                 "",
                                 "",
-                                "",
-                                "",
-                                "",
-                                "",
-                                ""
+                                channelCategorySetting?.ChannelPermissionFlags.ToString() ?? "N/A",
+                                GetPermissionString((BotPermissionType)(channelCategorySetting?.ChannelPermissionFlags ?? 0)),
+                                channelCategorySetting?.OldestPostTimePreloaded.ToString() ?? "N/A",
+                                channelCategorySetting?.NewestPostTimePreloaded.ToString() ?? "N/A",
+                                channelCategorySetting?.ReachedOldestPreload.ToString() ?? "N/A"
                             });
 
                             // TODO Order
                             foreach (var channel in category.Channels)
                             {
-                                var channelSetting = botChannelSettings.FirstOrDefault(i => i.DiscordChannelId == channel.Id);
+                                var channelSetting = CommonHelper.GetChannelSettingByChannelId(channel.Id, true);
 
                                 // New channel
                                 data.Add(new List<string>() {
@@ -750,16 +749,18 @@ namespace ETHDINFKBot.Modules
 
                                     foreach (var thread in socketThextChannel.Threads)
                                     {
+                                        var threadSetting = CommonHelper.GetChannelSettingByThreadId(thread.Id);
+
                                         // New thread
                                         data.Add(new List<string>() {
                                             "",
                                             "",
                                             "#" + thread.Name,
-                                            "N/A",
-                                            "N/A",
-                                            "N/A",
-                                            "N/A",
-                                            "N/A"
+                                            threadSetting?.ChannelPermissionFlags.ToString() ?? "N/A",
+                                            GetPermissionString((BotPermissionType)(threadSetting?.ChannelPermissionFlags ?? 0)),
+                                            threadSetting?.OldestPostTimePreloaded.ToString() ?? "N/A",
+                                            threadSetting?.NewestPostTimePreloaded.ToString() ?? "N/A",
+                                            threadSetting?.ReachedOldestPreload.ToString() ?? "N/A"
                                         });
                                     }
                                 }
@@ -824,7 +825,7 @@ namespace ETHDINFKBot.Modules
                     }
                     else
                     {
-                        var channel = guildChannel.Guild.GetTextChannel(channelId.Value);
+                        var channel = guildChannel.Guild.GetChannel(channelId.Value);
 
                         DatabaseManager.Instance().UpdateChannelSetting(channel.Id, flag);
                         Context.Channel.SendMessageAsync($"Set flag {flag} for channel {channel.Name}", false);

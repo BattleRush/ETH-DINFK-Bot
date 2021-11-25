@@ -484,6 +484,25 @@ namespace ETHDINFKBot
                         changes = true;
                     }
 
+                    if (dbDiscordChannel.ParentDiscordChannelId != channel.ParentDiscordChannelId)
+                    {
+                        dbDiscordChannel.ParentDiscordChannelId = channel.ParentDiscordChannelId;
+                        changes = true;
+                    }
+
+                    if (dbDiscordChannel.Position != channel.Position)
+                    {
+                        dbDiscordChannel.Position = channel.Position;
+                        changes = true;
+                    }
+
+                    // Likely never changes
+                    if (dbDiscordChannel.IsCategory != channel.IsCategory)
+                    {
+                        dbDiscordChannel.IsCategory = channel.IsCategory;
+                        changes = true;
+                    }
+
                     if (changes)
                         context.SaveChanges();
                 }
@@ -1686,12 +1705,12 @@ namespace ETHDINFKBot
             }
         }
 
-        public bool SaveMessage(ulong messageId, ulong byDiscordUserId, ulong savedByDiscordUserId, string link, string content)
+        public bool SaveMessage(ulong messageId, ulong byDiscordUserId, ulong savedByDiscordUserId, string link, string content, bool byMessageCommand, ulong? dmMessageId = null)
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
-                if (GetDiscordMessageById(messageId) == null)
-                    return false; // this message isnt tracked
+                bool isTracked = GetDiscordMessageById(messageId) != null;
+                //    return false; // this message isnt tracked
 
                 try
                 {
@@ -1701,12 +1720,13 @@ namespace ETHDINFKBot
                     var newSave = new SavedMessage()
                     {
                         DirectLink = link,
-                        SendInDM = false,
                         ByDiscordUserId = byDiscordUserId,
                         //ByDiscordUser = user,
-                        Content = content, // todo attachment
-                        DiscordMessageId = messageId,
-                        SavedByDiscordUserId = savedByDiscordUserId
+                        Content = isTracked ? content : "Not tracked", // todo attachment
+                        DiscordMessageId = isTracked ? messageId : null,
+                        SavedByDiscordUserId = savedByDiscordUserId,
+                        TriggeredByCommand = byMessageCommand,
+                        DMDiscordMessageId = dmMessageId
                         //SavedByDiscordUser = saveBy
                     };
 

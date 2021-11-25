@@ -1,5 +1,6 @@
 ﻿using Discord.WebSocket;
 using ETHBot.DataLayer;
+using ETHBot.DataLayer.Data;
 using ETHBot.DataLayer.Data.Discord;
 using ETHDINFKBot.Drawing;
 using Reddit;
@@ -61,7 +62,28 @@ namespace ETHDINFKBot.Helpers
         }
 
 
-        
+        public static BotChannelSetting GetChannelSettingByChannelId(ulong channelId, bool recursive = true)
+        {
+            var channelInfo = DatabaseManager.Instance().GetDiscordChannel(channelId);
+            var channelSetting = DatabaseManager.Instance().GetChannelSetting(channelId);
+
+            // If no setting found try until we reach a parent with some setting
+            if (channelSetting == null && channelInfo?.ParentDiscordChannelId != null && recursive)
+                return GetChannelSettingByChannelId(channelInfo.ParentDiscordChannelId.Value);
+
+            return channelSetting;
+        }
+
+        public static BotChannelSetting GetChannelSettingByThreadId(ulong threadId)
+        {
+            // find out the parent thread id
+            var thread = DatabaseManager.Instance().GetDiscordThread(threadId);
+            if (thread == null)
+                return null;
+
+            return GetChannelSettingByChannelId(thread.DiscordChannelId);
+        }
+
         public static Stream GetStream(SKBitmap bitmap)
         {
             Stream ms = new MemoryStream();
@@ -82,7 +104,7 @@ namespace ETHDINFKBot.Helpers
 
                 ms.Position = 0;
             }
-            catch (Exception ex)    
+            catch (Exception ex)
             {
                 return null; // TODO log error
             }
@@ -104,7 +126,8 @@ namespace ETHDINFKBot.Helpers
         public static SKBitmap ResizeImage(SKBitmap bitmap, int height, int width = -1)
         {
             SKSizeI size;
-            if (width > 0) {
+            if (width > 0)
+            {
                 size = new SKSizeI(width, height);
             }
             else
@@ -117,7 +140,7 @@ namespace ETHDINFKBot.Helpers
 
             return resized;
         }
-        
+
         // https://stackoverflow.com/a/19553611
         public static string DisplayWithSuffix(int num)
         {

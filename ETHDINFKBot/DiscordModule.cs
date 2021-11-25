@@ -685,88 +685,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 if (userId.HasValue)
                     user = Program.Client.GetGuild(Program.BaseGuild).GetUser(userId.Value) as SocketGuildUser;
 
-                List<PingHistory> pingHistory = new();
 
-                pingHistory.AddRange(DatabaseManager.GetLastPingHistory(50, user.Id, null));
-
-                foreach (var userRole in user.Roles)
-                {
-                    ulong roleId = DiscordHelper.GetRoleIdFromMention(userRole);
-                    pingHistory.AddRange(DatabaseManager.GetLastPingHistory(50, null, roleId));
-                }
-
-                // Add reply message pings
-                pingHistory.AddRange(DatabaseManager.GetLastReplyHistory(50, user.Id));
-
-                pingHistory = pingHistory.OrderByDescending(i => i.DiscordMessageId).ToList(); // TODO Change to reply id
-
-                EmbedBuilder builder = new EmbedBuilder();
-                builder.WithTitle($"{(user.Id == 0 ? user.Username : "Your")} last 10 pings");
-
-                pingHistory = pingHistory.Take(30).ToList();
-
-                
-
-                string messageText = "";
-                string currentBuilder = "";
-                int count = 1;
-
-                foreach (var item in pingHistory)
-                {
-                    //if (item.DiscordMessageId == null)
-                    //    continue;
-
-                    var dbMessage = DatabaseManager.GetDiscordMessageById(item.DiscordMessageId);
-                    var dbChannel = DatabaseManager.GetDiscordChannel(dbMessage?.DiscordChannelId);
-
-                    var dateTime = SnowflakeUtils.FromSnowflake(item.DiscordMessageId ?? 0); // TODO maybe track time in the ping history
-
-                    var dateTimeCET = dateTime.Add(Program.TimeZoneInfo.GetUtcOffset(DateTime.Now)); // CEST CONVERSION
-
-                    string link = null;
-
-                    if (dbChannel != null)
-                        link = $"https://discord.com/channels/{dbChannel.DiscordServerId}/{dbMessage.DiscordChannelId}/{dbMessage.DiscordMessageId}";
-
-                    var channel = "unknown";
-                    if (dbMessage?.DiscordChannelId != null)
-                        channel = $"<#{dbMessage?.DiscordChannelId}>";
-
-                    string line = "";
-
-                    // RoleIds smaller than 100 cant exist due to the Id size, so they are reserved for internal code
-                    if (item.DiscordRoleId.HasValue && item.DiscordRoleId.Value >= 100)
-                        line += $"<@{item.FromDiscordUserId}> {(link == null ? "pinged" : $"[pinged]({link})")} <@&{item.DiscordRoleId}> at {dateTimeCET.ToString("dd.MM HH:mm")} in {channel} {Environment.NewLine}"; // todo check for everyone or here
-                    else if (item.DiscordRoleId.HasValue && item.DiscordRoleId.Value < 100)
-                        line += $"<@{item.FromDiscordUserId}> {(link == null ? "replied" : $"[replied]({link})")} at {dateTimeCET.ToString("dd.MM HH:mm")} in {channel} {Environment.NewLine}"; // todo check for everyone or here
-                    else
-                        line += $"<@{item.FromDiscordUserId}> {(link == null ? "pinged" : $"[pinged]({link})")} at {dateTimeCET.ToString("dd.MM HH:mm")} in {channel} {Environment.NewLine}";
-
-                    if(count <= 10)
-                    {
-                        messageText += line;
-                    }
-                    else 
-                    {
-                        currentBuilder += line;
-
-                        if (count % 5 == 0)
-                        {
-                            builder.AddField($"{(user.Id == 0 ? user.Username : "Your")} last {count} pings", currentBuilder, false);
-                            currentBuilder = "";
-                        }
-                    }
-
-                    count++;
-                }
-
-                messageText += Environment.NewLine;
-
-                builder.WithDescription(messageText);
-                builder.WithColor(128, 64, 128);
-
-                builder.WithAuthor(user);
-                builder.WithCurrentTimestamp();
+                var pingHistory = DiscordHelper.GetTotalPingHistory(user, 30);
+                var builder = DiscordHelper.GetEmbedForPingHistory(pingHistory, user);
 
                 await Context.Message.Channel.SendMessageAsync("", false, builder.Build());
             }
