@@ -8,10 +8,16 @@ namespace ETHBot.DataLayer.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "SendInDM",
+                table: "SavedMessages");
+
+            migrationBuilder.AddColumn<bool>(
+                name: "TriggeredByCommand",
                 table: "SavedMessages",
-                newName: "TriggeredByCommand");
+                type: "tinyint(1)",
+                nullable: false,
+                defaultValue: false);
 
             migrationBuilder.AddColumn<ulong>(
                 name: "DMDiscordMessageId",
@@ -59,10 +65,16 @@ namespace ETHBot.DataLayer.Migrations
                 name: "IsReply",
                 table: "PingHistory");
 
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "TriggeredByCommand",
+                table: "SavedMessages");
+
+            migrationBuilder.AddColumn<bool>(
+                name: "SendInDM",
                 table: "SavedMessages",
-                newName: "SendInDM");
+                type: "tinyint(1)",
+                nullable: false,
+                defaultValue: false);
         }
     }
 }
