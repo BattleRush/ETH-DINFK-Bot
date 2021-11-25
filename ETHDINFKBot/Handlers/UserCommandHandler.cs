@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using ETHBot.DataLayer.Data.Enums;
 using ETHDINFKBot.Helpers;
 using System;
 using System.Collections.Generic;
@@ -51,7 +52,19 @@ namespace ETHDINFKBot.Handlers
                 var pingHistory = DiscordHelper.GetTotalPingHistory(DataSocketGuildUser, 30);
                 var builder = DiscordHelper.GetEmbedForPingHistory(pingHistory, DataSocketGuildUser);
 
-                await SocketUserCommand.Channel.SendMessageAsync("", false, builder.Build());
+                ulong channelId = 0;
+
+                if (SocketUserCommand.Channel is SocketThreadChannel SocketThreadChannel)
+                    channelId = SocketThreadChannel.ParentChannel.Id;
+                else
+                    channelId = SocketUserCommand.Channel.Id;
+
+                var settings = CommonHelper.GetChannelSettingByChannelId(channelId);
+
+                if (((BotPermissionType)settings.ChannelPermissionFlags).HasFlag(BotPermissionType.EnableType2Commands))
+                    await SocketUserCommand.Channel.SendMessageAsync("", false, builder.Build());
+                else
+                    return false;
             }
             catch (Exception ex)
             {

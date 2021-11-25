@@ -415,9 +415,12 @@ namespace ETHDINFKBot
         public async Task UserCommandHandler(SocketUserCommand arg)
         {
             UserCommandHandler uch = new UserCommandHandler(arg);
-            await uch.Run();
+            var result = await uch.Run();
 
-            await arg.RespondAsync("Requested " + arg.CommandName, null, false, true);
+            if (result)
+                await arg.RespondAsync("Requested " + arg.CommandName, null, false, true);
+            else
+                await arg.RespondAsync("Requested " + arg.CommandName + " failed. Likely you called the function in a channel the bot doesnt have permission to send this feature or an exception hapened.", null, false, true);
         }
 
         private void ReloadChannelPositionLock(SocketGuild guild, bool delete, string channelName)
@@ -574,7 +577,7 @@ namespace ETHDINFKBot
             // Next, lets create our user and message command builder. This is like the embed builder but for context menu commands.
             var guildUserCommand = new UserCommandBuilder();
             guildUserCommand.WithName("User's last Pings");
-            
+
 
             // Note: Names have to be all lowercase and match the regular expression ^[\w -]{3,32}$
             var guildMessageCommand = new MessageCommandBuilder();
