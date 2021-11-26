@@ -36,7 +36,7 @@ namespace ETHDINFKBot.Handlers
             // TODO Hangle with IDs dynamically
             switch (CommandName)
             {
-                case "User's last Pings":
+                case "User's last pings":
                     return await UserPingInfo();
                 default:
                     break;
@@ -49,7 +49,7 @@ namespace ETHDINFKBot.Handlers
         {
             try
             {
-                var pingHistory = DiscordHelper.GetTotalPingHistory(DataSocketGuildUser, 30);
+                var pingHistory = DiscordHelper.GetTotalPingHistory(DataSocketGuildUser, 10);
                 var builder = DiscordHelper.GetEmbedForPingHistory(pingHistory, DataSocketGuildUser);
 
                 ulong channelId = 0;

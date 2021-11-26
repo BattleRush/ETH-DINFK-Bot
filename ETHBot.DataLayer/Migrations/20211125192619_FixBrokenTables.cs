@@ -28,28 +28,28 @@ namespace ETHBot.DataLayer.Migrations
             //    nullable: false,
             //    defaultValue: 0);
 
-            migrationBuilder.CreateIndex(
-                name: "IX_DiscordChannels_ParentDiscordChannelId",
-                table: "DiscordChannels",
-                column: "ParentDiscordChannelId");
+            //migrationBuilder.CreateIndex(
+            //    name: "IX_DiscordChannels_ParentDiscordChannelId",
+            //    table: "DiscordChannels",
+            //    column: "ParentDiscordChannelId");
 
-            migrationBuilder.AddForeignKey(
-                name: "FK_DiscordChannels_DiscordChannels_ParentDiscordChannelId",
-                table: "DiscordChannels",
-                column: "ParentDiscordChannelId",
-                principalTable: "DiscordChannels",
-                principalColumn: "DiscordChannelId");
+            //migrationBuilder.AddForeignKey(
+            //    name: "FK_DiscordChannels_DiscordChannels_ParentDiscordChannelId",
+            //    table: "DiscordChannels",
+            //    column: "ParentDiscordChannelId",
+            //    principalTable: "DiscordChannels",
+            //    principalColumn: "DiscordChannelId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_DiscordChannels_DiscordChannels_ParentDiscordChannelId",
-                table: "DiscordChannels");
+            //migrationBuilder.DropForeignKey(
+            //    name: "FK_DiscordChannels_DiscordChannels_ParentDiscordChannelId",
+            //    table: "DiscordChannels");
 
-            migrationBuilder.DropIndex(
-                name: "IX_DiscordChannels_ParentDiscordChannelId",
-                table: "DiscordChannels");
+            //migrationBuilder.DropIndex(
+            //    name: "IX_DiscordChannels_ParentDiscordChannelId",
+            //    table: "DiscordChannels");
 
             //migrationBuilder.DropColumn(
             //    name: "IsCategory",

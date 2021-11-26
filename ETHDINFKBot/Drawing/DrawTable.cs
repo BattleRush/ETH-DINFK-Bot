@@ -82,7 +82,7 @@ namespace ETHDINFKBot.Drawing
 
 
         // start drawing TODO move to drawing lib
-        private int DrawRow(SKCanvas canvas, List<string> row, int padding, int currentHeight, List<int> widths)
+        private int DrawRow(SKCanvas canvas, List<string> row, int padding, int currentHeight, List<int> widths, bool isTitle = false)
         {
             float highestSize = 0;
             int currentWidthStart = padding;
@@ -119,16 +119,17 @@ namespace ETHDINFKBot.Drawing
                     //size = g.MeasureString(text, DefaultFont, new SizeF(cellWidth, 500), null);
                 }
 
-                int usedHeight = (int)DrawTextArea(canvas, DrawingHelper.DefaultTextPaint, currentWidthStart, currentHeight, 300, 10, text);
+                var paint = isTitle ? DrawingHelper.TitleTextPaint : DrawingHelper.DefaultTextPaint;
+                int usedHeight = (int)DrawTextArea(canvas, paint, currentWidthStart + 5, currentHeight, widths[i], paint.TextSize, text);
 
                 if (usedHeight > highestSize)
                     highestSize = usedHeight;
 
                 //g.DrawRectangle(Pens.Red, headerDestRect);
-              
+
                 // TODO likely wrong recalculate
                 //canvas.DrawText(text, currentWidthStart, currentHeight, DrawingHelper.DefaultTextPaint);
-                
+
                 currentWidthStart += cellWidth;
             }
 
@@ -148,7 +149,7 @@ namespace ETHDINFKBot.Drawing
             return (int)highestSize;
         }
 
-        private List<int> DefineTableCellWidths(int normalCellWidth)
+        private List<int> DefineTableCellWidths(int normalCellWidth, SKPaint headerPaint, SKPaint normalPaint)
         {
             var bitmap = new SKBitmap(2000, 2000); // TODO insert into constructor
             SKCanvas canvas = new SKCanvas(bitmap);
@@ -163,8 +164,8 @@ namespace ETHDINFKBot.Drawing
             // the minimum size is the header text size
             for (int i = 0; i < Header.Count; i++)
             {
-                var size = new SKSizeI(250, 20);// TODO g.MeasureString(Header.ElementAt(i), DefaultFont, maxSize, null);
-                maxWidthNeeded[i] = (int)size.Width + 10;
+                var width = headerPaint.MeasureText(Header[i]);
+                maxWidthNeeded[i] = (int)width + 10;
             }
 
             // find the max column size in the content
@@ -172,9 +173,8 @@ namespace ETHDINFKBot.Drawing
             {
                 foreach (var row in Data)
                 {
-                    var size = new SKSizeI(250, 20);// TODO g.MeasureString(row.ElementAt(i), DefaultFont, maxSize, null);
-
-                    int currentWidth = (int)size.Width + 10;
+                    var width = normalPaint.MeasureText(row[i]);
+                    int currentWidth = (int)width + 10;
 
                     if (maxWidthNeeded[i] < currentWidth)
                         maxWidthNeeded[i] = currentWidth;
@@ -251,19 +251,20 @@ namespace ETHDINFKBot.Drawing
 
             int currentHeight = padding;
 
-            List<int> widths = DefineTableCellWidths(cellWidth);
+            List<int> widths = DefineTableCellWidths(cellWidth, DrawingHelper.TitleTextPaint, DrawingHelper.DefaultTextPaint);
 
             string cellWithInfo = "normal" + cellWidth + " " + string.Join(", ", widths);
 
             //await Context.Channel.SendMessageAsync(cellWithInfo, false, null, null, null, new Discord.MessageReference(Context.Message.Id));
-            currentHeight = DrawRow(canvas, Header, padding, currentHeight, widths);
+            currentHeight = DrawRow(canvas, Header, padding, currentHeight+10, widths, true);
+
 
             int failedDrawLineCount = 0;
             foreach (var row in Data)
             {
                 try
                 {
-                    canvas.DrawLine(padding, currentHeight, Math.Max(width - padding, 0), currentHeight, DrawingHelper.DefaultDrawing);
+                    canvas.DrawLine(padding, currentHeight - 13, Math.Max(width - padding, 0), currentHeight - 13, DrawingHelper.DefaultDrawing);
                 }
                 catch (Exception ex)
                 {
@@ -272,6 +273,7 @@ namespace ETHDINFKBot.Drawing
                 try
                 {
                     currentHeight = DrawRow(canvas, row, padding, currentHeight, widths);
+                    currentHeight += 5;
                 }
                 catch (Exception ex)
                 {
@@ -283,7 +285,7 @@ namespace ETHDINFKBot.Drawing
 
             try
             {
-                canvas.DrawLine(padding, currentHeight, Math.Max(width - padding, 0), currentHeight, DrawingHelper.DefaultDrawing);
+                canvas.DrawLine(padding, currentHeight - 13, Math.Max(width - padding, 0), currentHeight - 13, DrawingHelper.DefaultDrawing);
             }
             catch (Exception ex)
             {
@@ -294,6 +296,15 @@ namespace ETHDINFKBot.Drawing
             {
                 //Context.Channel.SendMessageAsync($"Failed to draw {failedDrawLineCount} lines, widths: {string.Join(",", widths)}");
             }
+
+            int currentWidth = padding;
+            foreach (var curWidth in widths)
+            {
+                canvas.DrawLine(currentWidth, padding - 5, currentWidth, currentHeight - 13, DrawingHelper.DefaultDrawing);
+                currentWidth += curWidth;
+            }
+
+            canvas.DrawLine(currentWidth, padding - 5, currentWidth, currentHeight - 13, DrawingHelper.DefaultDrawing);
 
             watchDraw.Stop();
             //

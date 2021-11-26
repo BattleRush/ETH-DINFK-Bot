@@ -576,7 +576,7 @@ namespace ETHDINFKBot
 
             // Next, lets create our user and message command builder. This is like the embed builder but for context menu commands.
             var guildUserCommand = new UserCommandBuilder();
-            guildUserCommand.WithName("User's last Pings");
+            guildUserCommand.WithName("User's last pings");
 
 
             // Note: Names have to be all lowercase and match the regular expression ^[\w -]{3,32}$
