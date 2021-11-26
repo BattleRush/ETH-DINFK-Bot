@@ -209,7 +209,7 @@ namespace ETHDINFKBot.Drawing
                 // we need to distribute the free room over the flexContent by %
                 foreach (var column in flexColumns)
                 {
-                    float percentNeeded = (maxWidthNeeded[column] - normalCellWidth) / flexContent;
+                    float percentNeeded = (maxWidthNeeded[column] - normalCellWidth) / (float)flexContent;
                     float gettingFreeSpace = freeRoom * percentNeeded;
                     maxWidthNeeded[column] = normalCellWidth + (int)gettingFreeSpace;
                 }
