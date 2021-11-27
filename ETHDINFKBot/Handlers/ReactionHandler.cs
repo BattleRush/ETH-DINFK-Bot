@@ -154,6 +154,8 @@ namespace ETHDINFKBot.Handlers
                     return;
                 }
 
+                if (SocketGuildMessageUser == null)
+                    return; // Likely a DM reaction
 
                 string authorUsername = SocketGuildMessageUser.Nickname ?? SocketGuildMessageUser.Username;
 
