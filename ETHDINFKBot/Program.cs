@@ -1092,6 +1092,29 @@ namespace ETHDINFKBot
             {
                 ulong channelId = msg.Channel.Id;
 
+                if (msg.Author.IsWebhook)
+                {
+                    // Message was send by Webhook
+                    if(msg.Author.Id == 914168809068322827)
+                    {
+                        // BattleRush's Helper Webhook Id
+
+                        if (msg.Content.StartsWith("New Build available."))
+                        {
+                            // New Build has been deployed -> Restart application
+                            int fromBranch = msg.Content.IndexOf("Branch:");
+                            int fromCommit = msg.Content.IndexOf("Commit:");
+
+                            string branch = msg.Content.Substring(fromBranch + "Branch:".Length, fromCommit - fromBranch - "Branch:".Length).Trim();
+                            string commit = msg.Content.Substring(fromCommit + "Commit:".Length, msg.Content.Length - fromCommit - "Commit:".Length).Trim();
+
+
+                            msg.Channel.SendMessageAsync($"New Update detected with Branch: {branch} and Commit: {commit}. Restating to apply update...");
+                            Process.GetCurrentProcess().Kill();
+                        }
+                    }
+                }
+
                 // Get the perms from the parent channel if the message was send in a thread
                 if (msg.Channel is SocketThreadChannel threadChannel)
                     channelId = threadChannel.ParentChannel.Id;
