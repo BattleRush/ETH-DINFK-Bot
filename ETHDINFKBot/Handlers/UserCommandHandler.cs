@@ -59,7 +59,7 @@ namespace ETHDINFKBot.Handlers
                 else
                     channelId = SocketUserCommand.Channel.Id;
 
-                var settings = CommonHelper.GetChannelSettingByChannelId(channelId);
+                var settings = CommonHelper.GetChannelSettingByChannelId(channelId).Setting;
 
                 if (((BotPermissionType)settings.ChannelPermissionFlags).HasFlag(BotPermissionType.EnableType2Commands))
                     await SocketUserCommand.Channel.SendMessageAsync("", false, builder.Build());

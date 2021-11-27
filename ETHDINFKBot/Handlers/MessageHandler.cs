@@ -53,7 +53,7 @@ namespace ETHDINFKBot.Handlers
                 SocketGuildChannel = SocketThreadChannel.ParentChannel;
 
                 // TODO Fix the correct setting from the calling method
-                channelSettings = CommonHelper.GetChannelSettingByThreadId(SocketThreadChannel.Id);
+                channelSettings = CommonHelper.GetChannelSettingByThreadId(SocketThreadChannel.Id).Setting;
             }
 
             // Dont handle DM's
@@ -278,6 +278,10 @@ namespace ETHDINFKBot.Handlers
 
         private async void Autoreact()
         {
+            // For now disable for threads
+            if (SocketThreadChannel != null)
+                return;
+
             // Bot has permission to react in this channel
             if (ChannelSettings != null && ((BotPermissionType)ChannelSettings?.ChannelPermissionFlags).HasFlag(BotPermissionType.React))
             {

@@ -885,7 +885,7 @@ namespace ETHDINFKBot
                     currentMessage = await argMessageChannel.Value.GetMessageAsync(argMessage.Id);
                 }
 
-                var channelSettings = CommonHelper.GetChannelSettingByChannelId(argMessageChannel.Id);
+                var channelSettings = CommonHelper.GetChannelSettingByChannelId(argMessageChannel.Id).Setting;
 
                 ReactionHandler reactionHandler = new ReactionHandler(currentMessage, argReaction, channelSettings, addedReaction);
                 reactionHandler.Run();
@@ -1084,7 +1084,7 @@ namespace ETHDINFKBot
                 if (msg.Channel is SocketThreadChannel threadChannel)
                     channelId = threadChannel.ParentChannel.Id;
 
-                var channelSettings = CommonHelper.GetChannelSettingByChannelId(channelId);
+                var channelSettings = CommonHelper.GetChannelSettingByChannelId(channelId).Setting;
 
                 MessageHandler msgHandler = new MessageHandler(msg, commandList, channelSettings);
                 await msgHandler.Run();

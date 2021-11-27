@@ -424,7 +424,7 @@ namespace ETHDINFKBot.Modules
                 builder.AddField("admin channel lock <true|false>", "Locks the ordering of all channels and reverts any order changes when active");
                 builder.AddField("admin channel lockinfo", "Returns positions for all channels (if the Position lock is active)");
                 builder.AddField("admin channel preload <channelId> <amount>", "Loads old messages into the DB");
-                builder.AddField("admin channel set <permission>", "Set permissions for the current channel");
+                builder.AddField("admin channel set <permission> <channelId>", "Set permissions for the current channel or specific channel");
                 builder.AddField("admin channel all <permission>", "Set the MINIMUM permissions for ALL channels");
                 builder.AddField("admin channel flags", "Returns help with the flag infos");
 
@@ -716,7 +716,8 @@ namespace ETHDINFKBot.Modules
 
                         foreach (var category in categories)
                         {
-                            var channelCategorySetting = CommonHelper.GetChannelSettingByChannelId(category.Id, false);
+                            var channelCategorySettingInfo = CommonHelper.GetChannelSettingByChannelId(category.Id, false);
+                            var channelCategorySetting = channelCategorySettingInfo.Setting;
 
                             // New category
                             data.Add(new List<string>() {
@@ -730,19 +731,28 @@ namespace ETHDINFKBot.Modules
                                 channelCategorySetting?.ReachedOldestPreload.ToString() ?? "N/A"
                             });
 
+                            var cells = new List<TableCellInfo>() { new TableCellInfo() { ColumnId = 0, FontColor = new SkiaSharp.SKColor(255, 100, 0) } };
+                            if (channelCategorySettingInfo.Inherit)
+                            {
+                                cells.Add(new TableCellInfo() { ColumnId = 3, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                cells.Add(new TableCellInfo() { ColumnId = 4, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                cells.Add(new TableCellInfo() { ColumnId = 5, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                cells.Add(new TableCellInfo() { ColumnId = 6, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                cells.Add(new TableCellInfo() { ColumnId = 7, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                            }
+
                             tableRowInfos.Add(new TableRowInfo()
                             {
                                 RowId = data.Count - 1,
-                                Cells = new List<TableCellInfo>()
-                                {
-                                    new TableCellInfo(){ ColumnId = 0, FontColor = new SkiaSharp.SKColor(255,100,0)}
-                                }
+                                Cells = cells
                             });
+
 
                             // TODO Order
                             foreach (var channel in category.Channels)
                             {
-                                var channelSetting = CommonHelper.GetChannelSettingByChannelId(channel.Id, true);
+                                var channelSettingInfo = CommonHelper.GetChannelSettingByChannelId(channel.Id, true);
+                                var channelSetting = channelSettingInfo.Setting;
 
                                 // New channel
                                 data.Add(new List<string>() {
@@ -756,13 +766,20 @@ namespace ETHDINFKBot.Modules
                                     channelSetting?.ReachedOldestPreload.ToString() ?? "N/A"
                                 });
 
+                                var channelCells = new List<TableCellInfo>() { new TableCellInfo() { ColumnId = 1, FontColor = new SkiaSharp.SKColor(255, 255, 0) } };
+                                if (channelSettingInfo.Inherit)
+                                {
+                                    channelCells.Add(new TableCellInfo() { ColumnId = 3, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                    channelCells.Add(new TableCellInfo() { ColumnId = 4, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                    channelCells.Add(new TableCellInfo() { ColumnId = 5, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                    channelCells.Add(new TableCellInfo() { ColumnId = 6, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                    channelCells.Add(new TableCellInfo() { ColumnId = 7, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                }
+
                                 tableRowInfos.Add(new TableRowInfo()
                                 {
                                     RowId = data.Count - 1,
-                                    Cells = new List<TableCellInfo>()
-                                    {
-                                        new TableCellInfo(){ ColumnId = 1, FontColor = new SkiaSharp.SKColor(255,255,0)}
-                                    }
+                                    Cells = channelCells
                                 });
 
                                 if (channel is SocketTextChannel socketThextChannel)
@@ -771,7 +788,8 @@ namespace ETHDINFKBot.Modules
 
                                     foreach (var thread in socketThextChannel.Threads)
                                     {
-                                        var threadSetting = CommonHelper.GetChannelSettingByThreadId(thread.Id);
+                                        var threadSettingInfo = CommonHelper.GetChannelSettingByThreadId(thread.Id);
+                                        var threadSetting = threadSettingInfo.Setting;
 
                                         // New thread
                                         data.Add(new List<string>() {
@@ -786,13 +804,20 @@ namespace ETHDINFKBot.Modules
                                         });
 
 
+                                        var threadCells = new List<TableCellInfo>() { new TableCellInfo() { ColumnId = 2, FontColor = new SkiaSharp.SKColor(255, 255, 255) } };
+                                        if (threadSettingInfo.Inherit)
+                                        {
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 3, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 4, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 5, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 6, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 7, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                        }
+
                                         tableRowInfos.Add(new TableRowInfo()
                                         {
                                             RowId = data.Count - 1,
-                                            Cells = new List<TableCellInfo>()
-                                            {
-                                                new TableCellInfo(){ ColumnId = 2, FontColor = new SkiaSharp.SKColor(255,255,255)}
-                                            }
+                                            Cells = threadCells
                                         });
                                     }
                                 }

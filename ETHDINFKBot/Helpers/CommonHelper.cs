@@ -62,24 +62,24 @@ namespace ETHDINFKBot.Helpers
         }
 
 
-        public static BotChannelSetting GetChannelSettingByChannelId(ulong channelId, bool recursive = true)
+        public static (BotChannelSetting Setting, bool Inherit) GetChannelSettingByChannelId(ulong channelId, bool recursive = true)
         {
             var channelInfo = DatabaseManager.Instance().GetDiscordChannel(channelId);
             var channelSetting = DatabaseManager.Instance().GetChannelSetting(channelId);
 
             // If no setting found try until we reach a parent with some setting
             if (channelSetting == null && channelInfo?.ParentDiscordChannelId != null && recursive)
-                return GetChannelSettingByChannelId(channelInfo.ParentDiscordChannelId.Value);
+                return (GetChannelSettingByChannelId(channelInfo.ParentDiscordChannelId.Value).Setting, true);
 
-            return channelSetting;
+            return (channelSetting, false);
         }
 
-        public static BotChannelSetting GetChannelSettingByThreadId(ulong threadId)
+        public static (BotChannelSetting Setting, bool Inherit) GetChannelSettingByThreadId(ulong threadId)
         {
             // find out the parent thread id
             var thread = DatabaseManager.Instance().GetDiscordThread(threadId);
             if (thread == null)
-                return null;
+                return (null, false);
 
             return GetChannelSettingByChannelId(thread.DiscordChannelId);
         }

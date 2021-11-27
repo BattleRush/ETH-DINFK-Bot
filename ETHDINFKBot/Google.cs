@@ -26,12 +26,7 @@ namespace ETHDINFKBot
             {
                 string queryUrl = "https://www.google.com/search?q=" + HttpUtility.UrlEncode(query.ToLower()) + "&start=" + start + "&hl=en&gl=en&safe=active"; //Create The Query URL
                                                                                                                                                                 //if (cache.ContainsKey(queryUrl)) //Check If This Query Has Already Been Sent
-                                                                                                                                                                //    return cache[queryUrl]; //Return Directly From Cache // TODO FIx cache
-
-
                 SearchResult searchResult = new SearchResult();
-
-
 
                 string response = client.DownloadString(queryUrl); //Download The HTML From The Query URL
 
