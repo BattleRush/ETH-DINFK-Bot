@@ -1113,7 +1113,7 @@ namespace ETHDINFKBot
                             string commit = msg.Content.Substring(fromCommit + "Commit:".Length, msg.Content.Length - fromCommit - "Commit:".Length).Trim();
 
 
-                            msg.Channel.SendMessageAsync($"New Update detected with Branch: {branch} and Commit: {commit}. Restating to apply update...");
+                            await msg.Channel.SendMessageAsync($"New Update detected with Branch: {branch} and Commit: {commit}. Restating to apply update...");
                             Process.GetCurrentProcess().Kill();
                         }
                     }
