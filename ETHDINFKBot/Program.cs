@@ -143,7 +143,7 @@ namespace ETHDINFKBot
                        //services.AddCronJob<CronJobTest>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"* * * * *"; });
 
                        // once a day at 1 or 2 AM CET/CEST
-                       services.AddCronJob<DailyCleanup>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"40 * * * *"; }); // Changed to every hour at 30 mins
+                       services.AddCronJob<DailyCleanup>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"50 * * * *"; }); // Changed to every hour at 30 mins
 
                        // TODO adjust for summer time in CET/CEST
                        services.AddCronJob<DailyStatsJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 23 * * *"; });

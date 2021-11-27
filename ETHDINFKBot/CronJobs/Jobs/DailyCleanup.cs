@@ -66,6 +66,8 @@ ORDER BY MAX(PH.DiscordMessageId)";
             ulong pingHellRoleId = 895231323034222593;
             var rolePingHell = guild.Roles.FirstOrDefault(i => i.Id == pingHellRoleId);
 
+            await guild.DownloadUsersAsync(); // Download all users
+
             foreach (var row in queryResult.Data)
             {
                 try
