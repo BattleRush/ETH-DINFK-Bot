@@ -204,7 +204,7 @@ namespace ETHDINFKBot.Handlers
                 }
 
                 // Only temp until the function is disabled
-                msg = await SocketGuildReactionUser.SendMessageAsync($"Please use the new method to save messages: https://cdn.discordapp.com/attachments/843957532380889098/914184155342995456/unknown.png");
+                msg = await SocketGuildReactionUser.SendMessageAsync($"⚠⚠⚠ **IMPORTANT: Please use the new method to save messages. Save via reactions will be disabled in the near future** ⚠⚠⚠ https://cdn.discordapp.com/attachments/843957532380889098/914184155342995456/unknown.png");
 
                 // Be nice and add buttons
                 var builderComponent = new ComponentBuilder().WithButton("Delete Message", "delete-saved-message-id", ButtonStyle.Danger);
