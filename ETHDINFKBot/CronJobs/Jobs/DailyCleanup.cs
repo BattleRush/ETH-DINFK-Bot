@@ -46,9 +46,10 @@ namespace ETHDINFKBot.CronJobs.Jobs
             var guild = Program.Client.GetGuild(747752542741725244);
             var textChannel = guild.GetTextChannel(768600365602963496);
 
-
-            // Get users that havent pinged the role in the last 72h
-            var sqlQuery = @"
+            try
+            {
+                // Get users that havent pinged the role in the last 72h
+                var sqlQuery = @"
 SELECT 
     PH.FromDiscordUserID, 
     MAX(PH.DiscordMessageId)
@@ -59,19 +60,18 @@ GROUP BY PH.FromDiscordUserId
 ORDER BY MAX(PH.DiscordMessageId)";
 
 
-            var queryResult = await SQLHelper.GetQueryResults(null, sqlQuery, true, 50, true);
+                var queryResult = await SQLHelper.GetQueryResults(null, sqlQuery, true, 50, true);
 
-            var utcNow = DateTime.UtcNow;
+                var utcNow = DateTime.UtcNow;
 
-            ulong pingHellRoleId = 895231323034222593;
-            var rolePingHell = guild.Roles.FirstOrDefault(i => i.Id == pingHellRoleId);
+                ulong pingHellRoleId = 895231323034222593;
+                var rolePingHell = guild.Roles.FirstOrDefault(i => i.Id == pingHellRoleId);
 
-            await guild.DownloadUsersAsync(); // Download all users
+                await guild.DownloadUsersAsync(); // Download all users
 
-            foreach (var row in queryResult.Data)
-            {
-                try
+                foreach (var row in queryResult.Data)
                 {
+
                     var dateTimeLastPing = SnowflakeUtils.FromSnowflake(Convert.ToUInt64(row[1]));
 
                     if ((utcNow - dateTimeLastPing).TotalHours >= 72)
@@ -79,7 +79,7 @@ ORDER BY MAX(PH.DiscordMessageId)";
                         ulong userId = Convert.ToUInt64(row[0]);
                         // last ping is over 72h
 
-                        if(guild == null)
+                        if (guild == null)
                             throw new InvalidOperationException("Guild is null");
 
                         var guildUser = guild.GetUser(userId);
@@ -93,11 +93,12 @@ ORDER BY MAX(PH.DiscordMessageId)";
                             await textChannel.SendMessageAsync($"<@{userId}> finally escaped PingHell May you never ping it ever again.");
                         }
                     }
+
                 }
-                catch (Exception ex)
-                {
-                    await textChannel.SendMessageAsync($"Failed to remove pinghell: {ex.ToString()}");
-                }
+            }
+            catch (Exception ex)
+            {
+                await textChannel.SendMessageAsync($"Failed to remove pinghell: {ex.ToString()}");
             }
         }
 
