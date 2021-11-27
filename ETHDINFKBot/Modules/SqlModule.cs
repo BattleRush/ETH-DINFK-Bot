@@ -687,7 +687,7 @@ ORDER BY table_name DESC;", true, 50);
                 string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
 
 
-                var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString);
+                var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString, null);
 
                 var stream = await drawTable.GetImage();
                 if (stream == null)

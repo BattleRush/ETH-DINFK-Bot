@@ -7,6 +7,7 @@ using ETHDINFKBot.Drawing;
 //using ETHDINFKBot.Drawing;
 using ETHDINFKBot.Helpers;
 using ETHDINFKBot.Log;
+using ETHDINFKBot.Struct;
 using ICSharpCode.SharpZipLib.GZip;
 using ICSharpCode.SharpZipLib.Tar;
 using Newtonsoft.Json;
@@ -488,7 +489,7 @@ namespace ETHDINFKBot.Modules
 
                 }
 
-                var drawTable = new DrawTable(header, data, "");
+                var drawTable = new DrawTable(header, data, "", null);
 
                 var stream = await drawTable.GetImage();
                 if (stream == null)
@@ -708,7 +709,10 @@ namespace ETHDINFKBot.Modules
 
                         List<List<string>> data = new List<List<string>>();
 
+                        List<TableRowInfo> tableRowInfos = new List<TableRowInfo>();
+
                         var categories = Program.Client.GetGuild(guildChannel.Guild.Id).CategoryChannels.OrderBy(i => i.Position);
+
 
                         foreach (var category in categories)
                         {
@@ -726,6 +730,15 @@ namespace ETHDINFKBot.Modules
                                 channelCategorySetting?.ReachedOldestPreload.ToString() ?? "N/A"
                             });
 
+                            tableRowInfos.Add(new TableRowInfo()
+                            {
+                                RowId = data.Count - 1,
+                                Cells = new List<TableCellInfo>()
+                                {
+                                    new TableCellInfo(){ ColumnId = 0, FontColor = new SkiaSharp.SKColor(255,100,0)}
+                                }
+                            });
+
                             // TODO Order
                             foreach (var channel in category.Channels)
                             {
@@ -741,6 +754,15 @@ namespace ETHDINFKBot.Modules
                                     channelSetting?.OldestPostTimePreloaded.ToString() ?? "N/A",
                                     channelSetting?.NewestPostTimePreloaded.ToString() ?? "N/A",
                                     channelSetting?.ReachedOldestPreload.ToString() ?? "N/A"
+                                });
+
+                                tableRowInfos.Add(new TableRowInfo()
+                                {
+                                    RowId = data.Count - 1,
+                                    Cells = new List<TableCellInfo>()
+                                    {
+                                        new TableCellInfo(){ ColumnId = 1, FontColor = new SkiaSharp.SKColor(255,255,0)}
+                                    }
                                 });
 
                                 if (channel is SocketTextChannel socketThextChannel)
@@ -762,38 +784,23 @@ namespace ETHDINFKBot.Modules
                                             threadSetting?.NewestPostTimePreloaded.ToString() ?? "N/A",
                                             threadSetting?.ReachedOldestPreload.ToString() ?? "N/A"
                                         });
+
+
+                                        tableRowInfos.Add(new TableRowInfo()
+                                        {
+                                            RowId = data.Count - 1,
+                                            Cells = new List<TableCellInfo>()
+                                            {
+                                                new TableCellInfo(){ ColumnId = 2, FontColor = new SkiaSharp.SKColor(255,255,255)}
+                                            }
+                                        });
                                     }
                                 }
                             }
                         }
 
 
-                        //var guildChannelInfos = Program.Client.GetGuild(Program.BaseGuild).Channels.OrderBy(i => i.Position);
-
-                        //foreach (var guildChannelInfo in guildChannelInfos)
-                        //{
-
-
-                        //    var discordChannel = DatabaseManager.Instance().GetDiscordChannel(channelSetting.DiscordChannelId);
-
-                        //    if (discordChannel.DiscordServerId != guildChannel.Guild.Id)
-                        //        break; // dont show other server
-
-
-                        //    //channelInfoRow.Add(discordChannel.DiscordChannelId.ToString());
-                        //    channelInfoRow.Add(guildChannelInfo.);
-                        //    channelInfoRow.Add(discordChannel.ChannelName);
-                        //    channelInfoRow.Add(channelSetting.ChannelPermissionFlags.ToString());
-
-
-                        //    channelInfoRow.Add(string.Join(", " + Environment.NewLine, permissionFlagNames));
-                        //    channelInfoRow.Add(channelSetting.OldestPostTimePreloaded?.ToString());
-                        //    channelInfoRow.Add(channelSetting.NewestPostTimePreloaded?.ToString());
-                        //    channelInfoRow.Add(channelSetting.ReachedOldestPreload.ToString());
-                        //    data.Add(channelInfoRow);
-                        //}
-
-                        var drawTable = new DrawTable(header, data, "");
+                        var drawTable = new DrawTable(header, data, "", tableRowInfos);
 
                         var stream = await drawTable.GetImage();
                         if (stream == null)

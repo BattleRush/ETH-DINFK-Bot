@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace ETHDINFKBot.Struct
 {
-    public struct TableRow
+    public struct TableRowInfo
     {
-        public int Id; // Row
-        public List<TableCell> Cells;
+        public int RowId; // Row
+        public List<TableCellInfo> Cells;
     }
 }

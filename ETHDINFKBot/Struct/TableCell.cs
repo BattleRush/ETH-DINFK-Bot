@@ -7,9 +7,10 @@ using System.Threading.Tasks;
 
 namespace ETHDINFKBot.Struct
 {
-    public struct TableCell
+    public struct TableCellInfo
     {
-        public string Content;
-        public SKColor Color;
+        public int ColumnId;
+        public SKColor FontColor;
+        public SKColor BackgroundColor;
     }
 }
