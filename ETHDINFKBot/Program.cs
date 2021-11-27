@@ -143,7 +143,7 @@ namespace ETHDINFKBot
                        //services.AddCronJob<CronJobTest>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"* * * * *"; });
 
                        // once a day at 1 or 2 AM CET/CEST
-                       services.AddCronJob<DailyCleanup>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"30 * * * *"; }); // Changed to every hour at 30 mins
+                       services.AddCronJob<DailyCleanup>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"40 * * * *"; }); // Changed to every hour at 30 mins
 
                        // TODO adjust for summer time in CET/CEST
                        services.AddCronJob<DailyStatsJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 23 * * *"; });
@@ -202,6 +202,7 @@ namespace ETHDINFKBot
                 // In this case the update is running and the process loaded a half uploaded dll
                 // -> RESTART
 
+                Thread.Sleep(5000);
                 Process.GetCurrentProcess().Kill();
             }
             catch (Exception ex)
@@ -937,7 +938,13 @@ namespace ETHDINFKBot
             CollectFirstDailyPostMessages = false;
 
             // Prevent entries that were created before midnight
-            var firstMessage = FirstDailyPostsCandidates.Where(i => i.CreatedAt.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1).Hour != 23).OrderBy(i => i.CreatedAt).First();
+            SocketMessage firstMessage = null;
+
+            do
+            {
+                FirstDailyPostsCandidates.Where(i => i.CreatedAt.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1).Hour != 23).OrderBy(i => i.CreatedAt).First();
+                await Task.Delay(TimeSpan.FromSeconds(5)); // Check each 5 seconds if a new message arrived
+            } while (firstMessage != null);
 
             var timeNow = SnowflakeUtils.FromSnowflake(firstMessage.Id).AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1); // CEST CONVERSION
 

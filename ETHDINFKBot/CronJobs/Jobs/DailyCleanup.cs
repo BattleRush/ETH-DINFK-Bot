@@ -77,6 +77,9 @@ ORDER BY MAX(PH.DiscordMessageId)";
                         ulong userId = Convert.ToUInt64(row[0]);
                         // last ping is over 72h
 
+                        if(guild == null)
+                            throw new InvalidOperationException("Guild is null");
+
                         var guildUser = guild.GetUser(userId);
 
                         if (guildUser.Roles.Any(i => i.Id == pingHellRoleId))
