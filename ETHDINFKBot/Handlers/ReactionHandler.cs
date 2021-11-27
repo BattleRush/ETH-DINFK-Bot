@@ -204,7 +204,7 @@ namespace ETHDINFKBot.Handlers
                 }
 
                 // Only temp until the function is disabled
-                msg = await SocketGuildReactionUser.SendMessageAsync($"⚠⚠⚠ **IMPORTANT: Please use the new method to save messages. Save via reactions will be disabled in the near future** ⚠⚠⚠ https://cdn.discordapp.com/attachments/843957532380889098/914184155342995456/unknown.png");
+                msg = await SocketGuildReactionUser.SendMessageAsync($"⚠⚠⚠ **IMPORTANT: Please use the new method to save messages. Save via reactions will be disabled in the near future. See in the image bellow how to use the new method to save messages.** ⚠⚠⚠ https://cdn.discordapp.com/attachments/843957532380889098/914184155342995456/unknown.png");
 
                 // Be nice and add buttons
                 var builderComponent = new ComponentBuilder().WithButton("Delete Message", "delete-saved-message-id", ButtonStyle.Danger);
@@ -242,7 +242,7 @@ namespace ETHDINFKBot.Handlers
                     builder.AddField("Message Author", $"{authorUsername}", true);
 
                     builder.AddField("Info", $"To save a message react with <:savethis:780179874656419880> to a message", false);
-                    builder.AddField("**Deprication info**", $"This feature will soon no longer work trough reactions. Please use the new Method: (right click) Message -> Apps -> Save Message", false);
+                    builder.AddField("**Soon depricated info**", $"This feature will soon no longer work trough reactions. Please use the new Method: (right click) Message -> Apps -> Save Message", false);
 
                     builder.WithAuthor(SocketGuildReactionUser);
                     builder.WithCurrentTimestamp();
