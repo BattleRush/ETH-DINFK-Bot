@@ -564,7 +564,6 @@ namespace ETHDINFKBot
 #endif
 
             return Task.CompletedTask;
-            //throw new NotImplementedException();
         }
 
 
