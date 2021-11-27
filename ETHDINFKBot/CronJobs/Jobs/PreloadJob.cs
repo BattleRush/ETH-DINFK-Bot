@@ -45,11 +45,6 @@ namespace ETHDINFKBot.CronJobs.Jobs
             return base.StartAsync(cancellationToken);
         }
 
-
-
-
-
-
         // this one needs some reworking
         private async Task<PreloadResponse> ProcessLoadedMessages(ISocketMessageChannel textChannel, ulong messageIdFrom, Direction direction, int count = 50_000)
         {

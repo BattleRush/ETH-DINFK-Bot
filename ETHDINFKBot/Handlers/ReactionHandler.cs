@@ -160,6 +160,7 @@ namespace ETHDINFKBot.Handlers
                 string authorUsername = SocketGuildMessageUser.Nickname ?? SocketGuildMessageUser.Username;
 
                 var link = $"https://discord.com/channels/{SocketGuild.Id}/{SocketGuildChannel.Id}/{Message.Id}";
+                IUserMessage msg = null;
                 if (!string.IsNullOrWhiteSpace(Message.Content))
                 {
                     DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, Message.Content, false);
@@ -168,16 +169,16 @@ namespace ETHDINFKBot.Handlers
                     {
                         // the message is too big to send with other content
                         // Send a DM to the user
-                        await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
+                        msg = await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
                             $"Direct link: [{SocketGuild.Name}/{SocketGuildChannel.Name}/by {authorUsername}] <{link}>");
 
                         // Send a DM to the user
-                        await SocketGuildReactionUser.SendMessageAsync(Message.Content);
+                        msg = await SocketGuildReactionUser.SendMessageAsync(Message.Content);
                     }
                     else
                     {
                         // Send a DM to the user
-                        await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
+                        msg = await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
                             $"{Message.Content} {Environment.NewLine}" +
                             $"Direct link: [{SocketGuild.Name}/{SocketGuildChannel.Name}/by {authorUsername}] <{link}>");
                     }
@@ -189,7 +190,7 @@ namespace ETHDINFKBot.Handlers
                     foreach (var item in Message.Embeds)
                     {
                         DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, "Embed: " + item.ToString(), false);
-                        await SocketGuildReactionUser.SendMessageAsync("", false, (Embed)item);
+                        msg = await SocketGuildReactionUser.SendMessageAsync("", false, (Embed)item);
                     }
                 }
 
@@ -197,9 +198,36 @@ namespace ETHDINFKBot.Handlers
                 {
                     DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, item.Url, false);
 
-                    await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
+                    msg = await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
                         $"{item.Url} {Environment.NewLine}" +
                         $"Direct link: [{SocketGuild.Name}/{SocketGuildChannel.Name}/by {authorUsername}] <{link}>");
+                }
+
+                // Only temp until the function is disabled
+                msg = await SocketGuildReactionUser.SendMessageAsync($"Please use the new method to save messages: https://cdn.discordapp.com/attachments/843957532380889098/914184155342995456/unknown.png");
+
+                // Be nice and add buttons
+                var builderComponent = new ComponentBuilder().WithButton("Delete Message", "delete-saved-message-id", ButtonStyle.Danger);
+
+                var messageToDelete = await msg.Channel.GetMessagesAsync(500).FlattenAsync();
+                if (messageToDelete != null)
+                {
+                    foreach (var item in messageToDelete)
+                    {
+                        if (item.Components.Count == 0)
+                        {
+                            try
+                            {
+                                // can only edit own messages
+                                if (item.Author.IsBot)
+                                    await msg.Channel.ModifyMessageAsync(item.Id, i => i.Components = builderComponent.Build());
+                            }
+                            catch (Exception ex)
+                            {
+
+                            }
+                        }
+                    }
                 }
 
 
