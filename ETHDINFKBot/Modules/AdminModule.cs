@@ -3,6 +3,8 @@ using Discord.Commands;
 using Discord.WebSocket;
 using ETHBot.DataLayer;
 using ETHBot.DataLayer.Data.Enums;
+using ETHDINFKBot.CronJobs;
+using ETHDINFKBot.CronJobs.Jobs;
 using ETHDINFKBot.Drawing;
 //using ETHDINFKBot.Drawing;
 using ETHDINFKBot.Helpers;
@@ -10,6 +12,7 @@ using ETHDINFKBot.Log;
 using ETHDINFKBot.Struct;
 using ICSharpCode.SharpZipLib.GZip;
 using ICSharpCode.SharpZipLib.Tar;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Reddit;
 using Reddit.Controllers;
@@ -19,8 +22,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ETHDINFKBot.Modules
@@ -127,6 +132,7 @@ namespace ETHDINFKBot.Modules
             builder.AddField("admin rant help", "Help for rant command");
             builder.AddField("admin place help", "Help for place command");
             builder.AddField("admin kill", "Do I really need to explain this one");
+            builder.AddField("admin cronjob <name>", "Manually start a CronJob");
             builder.AddField("admin blockemote <id> <block>", "Block an emote from being selectable");
 
             await Context.Channel.SendMessageAsync("", false, builder.Build());
@@ -144,6 +150,78 @@ namespace ETHDINFKBot.Modules
 
             Context.Channel.SendMessageAsync("I'll be back!", false);
             Process.GetCurrentProcess().Kill();
+        }
+
+        private Type[] GetTypesInNamespace(Assembly assembly, string nameSpace)
+        {
+            return
+              assembly.GetTypes()
+                      .Where(t => string.Equals(t.Namespace, nameSpace, StringComparison.Ordinal))
+                      .ToArray();
+        }
+
+        [Command("cronjob")]
+        public async Task ManualCronJob(string cronJobName)
+        {
+            var author = Context.Message.Author;
+            if (author.Id != ETHDINFKBot.Program.Owner)
+            {
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
+            // TODO find a way to call them dynamically
+
+            /*
+            string baseNamespaceCronJobs = "ETHDINFKBot.CronJobs.Jobs";
+            Type[] typelist = GetTypesInNamespace(Assembly.GetExecutingAssembly(), baseNamespaceCronJobs);
+
+            Type type = Type.GetType(baseNamespaceCronJobs + "." + "DailyCleanup"); //target type
+
+            MethodInfo info = type.GetMethod("StartAsync");
+
+            CancellationTokenSource cts = new CancellationTokenSource();
+            CancellationToken token = cts.Token;
+            try
+            {
+                if (info.IsStatic)
+                    info.Invoke(null, new object[] { token });
+                else
+                    info.Invoke(type, new object[] { token });
+            }
+            catch (Exception ex)
+            {
+
+            }*/
+            try
+            {
+                CancellationTokenSource cts = new CancellationTokenSource();
+                CancellationToken token = cts.Token;
+                switch (cronJobName)
+                {
+                    case "DailyCleanup":
+                        var config = new ScheduleConfig<DailyCleanup>();
+                        config.TimeZoneInfo = TimeZoneInfo.Local;
+                        config.CronExpression = "* * * * *";
+
+                        var logger = Program.Logger.CreateLogger<DailyCleanup>();
+
+                        var job = new DailyCleanup(config, logger);
+                        job.StartAsync(token);
+                        break;
+
+                    /* TODO Add more jobs if needed*/
+                    default:
+                        await Context.Channel.SendMessageAsync("Only available: DailyCleanup", false);
+                        break;
+                }
+
+                cts.CancelAfter(TimeSpan.FromSeconds(30));
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync("Error: " + ex.ToString(), false);
+            }
         }
 
         [Command("blockemote")]
@@ -805,13 +883,13 @@ namespace ETHDINFKBot.Modules
 
 
                                         var threadCells = new List<TableCellInfo>() { new TableCellInfo() { ColumnId = 2, FontColor = new SkiaSharp.SKColor(255, 255, 255) } };
-                                        if (threadSettingInfo.Inherit)
+                                        if (threadSettingInfo.Inherit || true /*thread for now always inherit*/)
                                         {
-                                            threadCells.Add(new TableCellInfo() { ColumnId = 3, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
-                                            threadCells.Add(new TableCellInfo() { ColumnId = 4, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
-                                            threadCells.Add(new TableCellInfo() { ColumnId = 5, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
-                                            threadCells.Add(new TableCellInfo() { ColumnId = 6, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
-                                            threadCells.Add(new TableCellInfo() { ColumnId = 7, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 3, FontColor = new SkiaSharp.SKColor(144, 238, 144) });
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 4, FontColor = new SkiaSharp.SKColor(144, 238, 144) });
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 5, FontColor = new SkiaSharp.SKColor(144, 238, 144) });
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 6, FontColor = new SkiaSharp.SKColor(144, 238, 144) });
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 7, FontColor = new SkiaSharp.SKColor(144, 238, 144) });
                                         }
 
                                         tableRowInfos.Add(new TableRowInfo()

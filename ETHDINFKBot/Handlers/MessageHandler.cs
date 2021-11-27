@@ -75,7 +75,7 @@ namespace ETHDINFKBot.Handlers
                 return false; // slash commands are webhooks ???
 
             //AdministratorBait();
-            EmojiDetection();
+            EmoteDetection();
             Autoreact();
 
             // Log to DB
@@ -324,7 +324,7 @@ namespace ETHDINFKBot.Handlers
             }
         }
 
-        private async void EmojiDetection()
+        private async void EmoteDetection()
         {
             if (SocketGuildChannel != null)
             {
@@ -401,7 +401,7 @@ namespace ETHDINFKBot.Handlers
                                     {
                                         bmp = SKBitmap.Decode(ms);
                                     }
-                                    var resImage = CommonHelper.ResizeImage(bmp, Math.Min(bmp.Height, 64));
+                                    var resImage = CommonHelper.ResizeImage(bmp, Math.Min(bmp.Height, 48));
                                     var stream = CommonHelper.GetStream(resImage);
 
                                     await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.png", "", false, null, null, false, null, new MessageReference(SocketMessage.ReferencedMessage?.Id));
@@ -414,7 +414,7 @@ namespace ETHDINFKBot.Handlers
                             }
                         }
 
-                        await SocketTextChannel.SendMessageAsync($"({Program.CurrentPrefix}{emote.EmoteName}) by <@{SocketGuildUser.Id}>");
+                        await SocketMessage.Channel.SendMessageAsync($"({Program.CurrentPrefix}{emote.EmoteName}) by <@{SocketGuildUser.Id}>");
                     }
                 }
             }

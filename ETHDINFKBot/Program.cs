@@ -111,6 +111,7 @@ namespace ETHDINFKBot
         private LogManager LogManager = new LogManager(DatabaseManager.Instance());
 
         public static BotSetting BotSetting;
+        public static IHost Host;
 
         static void Main(string[] args)
         {
@@ -135,7 +136,7 @@ namespace ETHDINFKBot
 
                 // https://crontab.guru/
 
-                var host = new HostBuilder()
+                Host = new HostBuilder()
                    .ConfigureServices((hostContext, services) =>
                    {
                        // TODO read from DB
@@ -161,10 +162,22 @@ namespace ETHDINFKBot
                        // TODO adjust for summer time in CET/CEST
                        services.AddCronJob<GitPullMessageJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 21 * * TUE"; });// 22 CET each Tuesday
 
+                       //// For easier find for the manual trigger
+                       //services.AddByName<IHostedService>()
+                       //  .Add<DailyCleanup>("DailyCleanup")
+                       //  .Add<DailyStatsJob>("DailyStatsJob")
+                       //  .Add<PreloadJob>("PreloadJob")
+                       //  .Add<SpaceXSubredditJob>("SpaceXSubredditJob")
+                       //  .Add<StartAllSubredditsJobs>("StartAllSubredditsJobs")
+                       //  .Add<GitPullMessageJob>("GitPullMessageJob")
+                       //  .Build();
+
                        // TODO adjust for summer time in CET/CEST
                        //services.AddCronJob<BackupDBJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 * * *"; });// 0 am utc
                    })
-                   .StartAsync();
+                   .Build();
+
+                Host.StartAsync();
 
                 // TODO check if HostBuilder Faulted -> likely wrong cron job implementation
 
