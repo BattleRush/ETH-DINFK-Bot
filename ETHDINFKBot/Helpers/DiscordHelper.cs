@@ -11,7 +11,7 @@ namespace ETHDINFKBot.Helpers
 {
     public static class DiscordHelper
     {
-        // TODO add properties for the channels
+        // TODO add properties for the channels like server
         public static readonly Dictionary<string, ulong> DiscordChannels = new Dictionary<string, ulong>()
         {
             { "staff", 747754931905364000 },
@@ -19,7 +19,8 @@ namespace ETHDINFKBot.Helpers
             { "serversuggestions", 816776685407043614 },
             { "memes", 747758757395562557 },
             { "ethmemes", 758293511514226718 },
-            { "serotonin", 814440115392348171 }
+            { "serotonin", 814440115392348171 },
+            { "spam", 768600365602963496 }
         };
 
         public static readonly Dictionary<string, ulong> DiscordEmotes = new Dictionary<string, ulong>()

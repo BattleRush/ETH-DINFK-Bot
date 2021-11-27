@@ -633,6 +633,10 @@ namespace ETHDINFKBot
             //ulong spamChannel = 768600365602963496;
             var guild = Program.Client.GetGuild(guildId);
 
+            var textChannel = guild.GetTextChannel(DiscordHelper.DiscordChannels["spam"]);
+            if (textChannel != null)
+                textChannel.SendMessageAsync($"Restarted with Branch: {ThisAssembly.Git.Branch} and Commit: {ThisAssembly.Git.Commit}. Bot client ready. <@{Program.Owner}>");
+
             // list should always be empty
             ChannelPositions = new Dictionary<ulong, int>();
 
