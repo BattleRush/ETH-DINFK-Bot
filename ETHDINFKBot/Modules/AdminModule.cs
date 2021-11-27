@@ -810,13 +810,13 @@ namespace ETHDINFKBot.Modules
                             });
 
                             var cells = new List<TableCellInfo>() { new TableCellInfo() { ColumnId = 0, FontColor = new SkiaSharp.SKColor(255, 100, 0) } };
-                            if (channelCategorySettingInfo.Inherit)
+                            if (channelCategorySettingInfo.Inherit || true /* For now categories cant Inherit -> but show visually*/)
                             {
-                                cells.Add(new TableCellInfo() { ColumnId = 3, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
-                                cells.Add(new TableCellInfo() { ColumnId = 4, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
-                                cells.Add(new TableCellInfo() { ColumnId = 5, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
-                                cells.Add(new TableCellInfo() { ColumnId = 6, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
-                                cells.Add(new TableCellInfo() { ColumnId = 7, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                cells.Add(new TableCellInfo() { ColumnId = 3, FontColor = new SkiaSharp.SKColor(255, 100, 0) });
+                                cells.Add(new TableCellInfo() { ColumnId = 4, FontColor = new SkiaSharp.SKColor(255, 100, 0) });
+                                cells.Add(new TableCellInfo() { ColumnId = 5, FontColor = new SkiaSharp.SKColor(255, 100, 0) });
+                                cells.Add(new TableCellInfo() { ColumnId = 6, FontColor = new SkiaSharp.SKColor(255, 100, 0) });
+                                cells.Add(new TableCellInfo() { ColumnId = 7, FontColor = new SkiaSharp.SKColor(255, 100, 0) });
                             }
 
                             tableRowInfos.Add(new TableRowInfo()
@@ -883,7 +883,7 @@ namespace ETHDINFKBot.Modules
 
 
                                         var threadCells = new List<TableCellInfo>() { new TableCellInfo() { ColumnId = 2, FontColor = new SkiaSharp.SKColor(255, 255, 255) } };
-                                        if (threadSettingInfo.Inherit || true /*thread for now always inherit*/)
+                                        if (threadSettingInfo.Inherit || true /* Thread for now always inherit */)
                                         {
                                             threadCells.Add(new TableCellInfo() { ColumnId = 3, FontColor = new SkiaSharp.SKColor(144, 238, 144) });
                                             threadCells.Add(new TableCellInfo() { ColumnId = 4, FontColor = new SkiaSharp.SKColor(144, 238, 144) });
