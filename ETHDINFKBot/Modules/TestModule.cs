@@ -41,7 +41,7 @@ namespace ETHDINFKBot.Modules
         private readonly ILogger _logger = new Logger<TestModule>(Program.Logger);
 
         [Command("movie", RunMode = RunMode.Async)]
-        public async Task CreateMovie(bool stacked, int groupByHour, int fps, params ulong[] channelIds)
+        public async Task CreateMovie(bool stacked, int groupByHour, int fps, bool drawDots, params ulong[] channelIds)
         {
             var author = Context.Message.Author;
             if (author.Id != ETHDINFKBot.Program.Owner)
@@ -243,7 +243,7 @@ WHERE DiscordChannelId = 768600365602963496";
                         // todo add 2. y Axis on the right
                         var dataPointList = DrawingHelper.GetPoints(dataPoints, gridSize, true, startTime.DateTime, endTime.DateTime, false, maxY);
 
-                        DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, 6, new SKPaint() { Color = item.Color }, "msg in #" + item.ChannelName, lineIndex, true); //new Pen(System.Drawing.Color.LightGreen)
+                        DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, 6, new SKPaint() { Color = item.Color }, "msg in #" + item.ChannelName, lineIndex, drawDots); //new Pen(System.Drawing.Color.LightGreen)
                         lineIndex++;
                     }
 
