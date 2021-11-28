@@ -223,7 +223,7 @@ WHERE DiscordChannelId = 768600365602963496";
                     foreach (var item in parsedMessageInfos)
                     {
                         // TODO optimize some lines + move to draw helper
-                        var dataPoints = item.Info.Where(j => j.Key <= endTime).ToDictionary(j => j.Key.DateTime, j => j.Value);
+                        var dataPoints = item.Info.Where(j => j.Key <= endTime).OrderBy(i => i.Key).ToDictionary(j => j.Key.DateTime, j => j.Value);
 
                         // todo add 2. y Axis on the right
                         var dataPointList = DrawingHelper.GetPoints(dataPoints, gridSize, true, startTime.DateTime, endTime.DateTime);
