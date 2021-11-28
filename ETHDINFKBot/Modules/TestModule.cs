@@ -8,6 +8,7 @@ using FFMpegCore.Enums;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -45,12 +46,18 @@ SELECT
 FROM DiscordMessages
 WHERE DiscordChannelId = 768600365602963496";
 
+            Stopwatch watch = new Stopwatch();
+
+            watch.Start();
 
             List<DateTimeOffset> messageTimes = new List<DateTimeOffset>();
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
                 messageTimes = context.DiscordMessages.AsQueryable().Where(i => i.DiscordChannelId == 768600365602963496).Select(i => SnowflakeUtils.FromSnowflake(i.DiscordMessageId)).ToList();
             }
+            watch.Stop();
+
+            Context.Channel.SendMessageAsync($"Retreived data in {watch.ElapsedMilliseconds}ms");
 
             //var queryResult = await SQLHelper.GetQueryResults(null, sqlQuery, true, 10_000_000, true, true);
 
@@ -72,6 +79,9 @@ WHERE DiscordChannelId = 768600365602963496";
 
             int bound = (int)((lastDateTime - firstDateTime).TotalMinutes / maxFrames);
 
+
+            Context.Channel.SendMessageAsync($"Group by {bound} minutes");
+
             var groups = messageTimes.GroupBy(x =>
             {
                 var stamp = x;
@@ -80,6 +90,8 @@ WHERE DiscordChannelId = 768600365602963496";
                 return stamp;
             }).Select(g => new { TimeStamp = g.Key, Value = g.Count() }).ToList();
 
+
+            Context.Channel.SendMessageAsync($"Total frames {groups.Count}");
 
             Dictionary<DateTime, int> dataPointsSpam = new ();
 
@@ -107,6 +119,8 @@ WHERE DiscordChannelId = 768600365602963496";
 
             for (int i = 2; i <= dataPointsSpam.Count; i++)
             {
+                if(i % 100 == 0)
+                    Context.Channel.SendMessageAsync($"Frame gen {i} out of {dataPointsSpam.Count}");
 
                 // TODO optimize some lines + move to draw helper
                 var dataPoints = dataPointsSpam.Take(i).ToDictionary(i => i.Key, i => i.Value); ;
@@ -117,6 +131,7 @@ WHERE DiscordChannelId = 768600365602963496";
 
                 var drawInfo = DrawingHelper.GetEmptyGraphics();
                 var padding = DrawingHelper.DefaultPadding;
+                padding.Left = 200; // large numbers
                 var labels = DrawingHelper.GetLabels(dataPoints, 6, 10, true, startTime, endTime, " msg");
                 var gridSize = new GridSize(drawInfo.Bitmap, padding);
                 var dataPointList = DrawingHelper.GetPoints(dataPoints, gridSize, true, startTime, endTime);
@@ -150,7 +165,7 @@ WHERE DiscordChannelId = 768600365602963496";
             }
             catch (Exception ex)
             {
-
+                Context.Channel.SendMessageAsync(ex.ToString());
             }
         }
     }
