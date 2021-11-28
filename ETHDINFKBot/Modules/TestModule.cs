@@ -98,7 +98,7 @@ WHERE DiscordChannelId = 768600365602963496";
             var groups = messageTimes.GroupBy(x =>
             {
                 var stamp = x;
-                stamp = stamp.AddHours(-(stamp.Hour % 12));
+                stamp = stamp.AddHours(-(stamp.Hour % 3));
                 stamp = stamp.AddMinutes(-(stamp.Minute));
                 stamp = stamp.AddMilliseconds(-stamp.Millisecond - 1000 * stamp.Second);
                 return stamp;
