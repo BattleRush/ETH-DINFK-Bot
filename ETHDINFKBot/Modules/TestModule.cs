@@ -107,7 +107,7 @@ WHERE DiscordChannelId = 768600365602963496";
             var groups = messageTimes.GroupBy(x =>
             {
                 var stamp = x;
-                stamp.DateTime = stamp.DateTime.AddHours(-(stamp.DateTime.Hour % 12));
+                stamp.DateTime = stamp.DateTime.AddHours(-(stamp.DateTime.Hour % 24));
                 stamp.DateTime = stamp.DateTime.AddMinutes(-(stamp.DateTime.Minute));
                 stamp.DateTime = stamp.DateTime.AddMilliseconds(-stamp.DateTime.Millisecond - 1000 * stamp.DateTime.Second);
                 return stamp.DateTime;
@@ -180,6 +180,7 @@ WHERE DiscordChannelId = 768600365602963496";
                 Directory.CreateDirectory(basePath);
             if (!Directory.Exists(baseOutputPath))
                 Directory.CreateDirectory(baseOutputPath);
+
             try
             {
 
@@ -262,12 +263,12 @@ WHERE DiscordChannelId = 768600365602963496";
                 //var imageInfos = Directory.GetFiles(Path.Combine(basePath)).ToList().OrderBy(i => i).Select(i => ImageInfo.FromPath(i)).ToArray();
                 //FFMpeg.JoinImageSequence(fileName, frameRate: 30, imageInfos);
 
-                Context.Channel.SendFileAsync(fileName);
+                await Context.Channel.SendFileAsync(fileName);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while creating movie");
-                Context.Channel.SendMessageAsync(ex.ToString());
+                await Context.Channel.SendMessageAsync(ex.ToString());
             }
         }
     }
