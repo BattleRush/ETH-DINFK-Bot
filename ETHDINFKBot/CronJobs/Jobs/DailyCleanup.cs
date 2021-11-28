@@ -93,7 +93,7 @@ ORDER BY MAX(PH.DiscordMessageId)";
                             await guildUser.RemoveRoleAsync(rolePingHell);
 
                             // send in spam that they are free
-                            await textChannel.SendMessageAsync($"<@{userId}> finally escaped PingHell May you never ping it ever again.");
+                            await textChannel.SendMessageAsync($"<@{userId}> finally escaped PingHell. May you never ping it ever again.");
                         }
                     }
                 }

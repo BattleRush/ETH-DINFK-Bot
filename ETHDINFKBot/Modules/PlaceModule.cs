@@ -1224,8 +1224,8 @@ If you violate the server rules your pixels will be removed.
                     var dataPointsCount = list.ToDictionary(i => i.DateTime, i => i.SuccessCount);
                     var dataPointsFailed = list.ToDictionary(i => i.DateTime, i => i.FailedCount);
 
-                    int maxCountSuccess = list.OrderByDescending(i => i.SuccessCount).First().SuccessCount;
-                    int maxCountFailed = list.OrderByDescending(i => i.FailedCount).First().FailedCount;
+                    int maxCountSuccess = list.Select(i => i.SuccessCount).Max();
+                    int maxCountFailed = list.Select(i => i.FailedCount).Max();
 
                     int maxVal = Math.Max(maxCountFailed, maxCountSuccess);
 
