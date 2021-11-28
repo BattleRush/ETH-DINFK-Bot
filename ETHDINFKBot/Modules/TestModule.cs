@@ -28,7 +28,7 @@ namespace ETHDINFKBot.Modules
     [Group("test")]
     public class TestModule : ModuleBase<SocketCommandContext>
     {
-        [Command("movie")]
+        [Command("movie", RunMode = RunMode.Async)]
         public async Task CreateMovie()
         {
             var author = Context.Message.Author;
@@ -79,10 +79,9 @@ WHERE DiscordChannelId = 768600365602963496";
 
             int bound = (int)((lastDateTime - firstDateTime).TotalMinutes / maxFrames);
 
-            bound *= 10; // temp fix
+            Context.Channel.SendMessageAsync($"Group by {bound} minutes, Total mins {(lastDateTime - firstDateTime).TotalMinutes}");
 
-            Context.Channel.SendMessageAsync($"Group by {bound} minutes");
-
+            /*
             var groups = messageTimes.GroupBy(x =>
             {
                 var stamp = x;
@@ -90,11 +89,21 @@ WHERE DiscordChannelId = 768600365602963496";
                 stamp = stamp.AddMilliseconds(-stamp.DateTime.Millisecond - 1000 * stamp.DateTime.Second);
                 return stamp;
             }).Select(g => new { TimeStamp = g.Key, Value = g.Count() }).ToList();
+            */
 
+            // https://stackoverflow.com/questions/47763874/how-to-linq-query-group-by-2-hours-interval
+            var groups = messageTimes.GroupBy(x =>
+            {
+                var stamp = x;
+                stamp = stamp.AddHours(-(stamp.Hour % 6));
+                stamp = stamp.AddMinutes(-(stamp.Minute));
+                stamp = stamp.AddMilliseconds(-stamp.Millisecond - 1000 * stamp.Second);
+                return stamp;
+            }).Select(g => new { TimeStamp = g.Key, Value = g.Count() }).ToList();
 
             Context.Channel.SendMessageAsync($"Total frames {groups.Count}");
 
-            Dictionary<DateTime, int> dataPointsSpam = new ();
+            Dictionary<DateTime, int> dataPointsSpam = new();
 
             int val = 0;
             foreach (var group in groups)
@@ -120,7 +129,7 @@ WHERE DiscordChannelId = 768600365602963496";
 
             for (int i = 2; i <= dataPointsSpam.Count; i++)
             {
-                if(i % 100 == 0)
+                if (i % 100 == 0)
                     Context.Channel.SendMessageAsync($"Frame gen {i} out of {dataPointsSpam.Count}");
 
                 // TODO optimize some lines + move to draw helper
