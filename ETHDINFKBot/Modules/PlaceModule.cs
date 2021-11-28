@@ -1224,14 +1224,19 @@ If you violate the server rules your pixels will be removed.
                     var dataPointsCount = list.ToDictionary(i => i.DateTime, i => i.SuccessCount);
                     var dataPointsFailed = list.ToDictionary(i => i.DateTime, i => i.FailedCount);
 
+                    int maxCountSuccess = list.OrderByDescending(i => i.SuccessCount).First().SuccessCount;
+                    int maxCountFailed = list.OrderByDescending(i => i.FailedCount).First().FailedCount;
+
+                    int maxVal = Math.Max(maxCountFailed, maxCountSuccess);
+
                     var drawInfo = DrawingHelper.GetEmptyGraphics();
                     var padding = DrawingHelper.DefaultPadding;
                     var labels = DrawingHelper.GetLabels(dataPointsAvg, 6, 10, true, startTime, endTime, " ms");
                     var labelsCount = DrawingHelper.GetLabels(dataPointsCount, 6, 10, true, startTime, endTime);
                     var gridSize = new GridSize(drawInfo.Bitmap, padding);
                     var dataPointListAvg = DrawingHelper.GetPoints(dataPointsAvg, gridSize, true, startTime, endTime);
-                    var dataPointListCount = DrawingHelper.GetPoints(dataPointsCount, gridSize, true, startTime, endTime);
-                    var dataPointListFailed = DrawingHelper.GetPoints(dataPointsFailed, gridSize, true, startTime, endTime);
+                    var dataPointListCount = DrawingHelper.GetPoints(dataPointsCount, gridSize, true, startTime, endTime, false, maxVal);
+                    var dataPointListFailed = DrawingHelper.GetPoints(dataPointsFailed, gridSize, true, startTime, endTime, false, maxVal);
 
                     DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, $"Place Perf {list.Count} mins", labelsCount.YAxisLabels);
                     // todo add 2. y Axis on the right

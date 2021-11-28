@@ -144,7 +144,7 @@ namespace ETHDINFKBot.Drawing
             return (xAxisLabels, yAxisLabels);
         }
 
-        public static List<SKPoint> GetPoints(Dictionary<DateTime, int> data, GridSize gridSize, bool yZeroIndexed = true, DateTime? minDate = null, DateTime? maxDate = null, bool overlapDays = false)
+        public static List<SKPoint> GetPoints(Dictionary<DateTime, int> data, GridSize gridSize, bool yZeroIndexed = true, DateTime? minDate = null, DateTime? maxDate = null, bool overlapDays = false, int maxValue = -1)
         {
             // TODO implement overlap days
 
@@ -172,6 +172,9 @@ namespace ETHDINFKBot.Drawing
             if (yZeroIndexed)
                 minVal = 0;
 
+            // set max value incase its specified
+            if(maxValue > 0)
+                maxVal = maxValue;
 
             foreach (var item in data)
             {
