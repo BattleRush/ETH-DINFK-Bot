@@ -41,7 +41,7 @@ namespace ETHDINFKBot.Modules
         private readonly ILogger _logger = new Logger<TestModule>(Program.Logger);
 
         [Command("movie", RunMode = RunMode.Async)]
-        public async Task CreateMovie(bool stacked, int groupByHour, params ulong[] channelIds)
+        public async Task CreateMovie(bool stacked, int groupByHour, int fps, params ulong[] channelIds)
         {
             var author = Context.Message.Author;
             if (author.Id != ETHDINFKBot.Program.Owner)
@@ -266,9 +266,9 @@ WHERE DiscordChannelId = 768600365602963496";
                 string fileName = Path.Combine(baseOutputPath, $"movie_{random}.mp4");
 
                 var conversion = new Conversion();
-                conversion.SetInputFrameRate(30);
+                conversion.SetInputFrameRate(fps);
                 conversion.BuildVideoFromImages(files);
-                conversion.SetFrameRate(30);
+                conversion.SetFrameRate(fps);
                 conversion.SetPixelFormat(PixelFormat.rgb24);
                 conversion.SetOutput(fileName);
 
