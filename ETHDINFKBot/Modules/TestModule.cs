@@ -41,7 +41,7 @@ namespace ETHDINFKBot.Modules
         private readonly ILogger _logger = new Logger<TestModule>(Program.Logger);
 
         [Command("movie", RunMode = RunMode.Async)]
-        public async Task CreateMovie(bool stacked, params ulong[] channelIds)
+        public async Task CreateMovie(bool stacked, int groupByHour, params ulong[] channelIds)
         {
             var author = Context.Message.Author;
             if (author.Id != ETHDINFKBot.Program.Owner)
@@ -107,7 +107,7 @@ WHERE DiscordChannelId = 768600365602963496";
             var groups = messageTimes.GroupBy(x =>
             {
                 var stamp = x;
-                stamp.DateTime = stamp.DateTime.AddHours(-(stamp.DateTime.Hour % 24));
+                stamp.DateTime = stamp.DateTime.AddHours(-(stamp.DateTime.Hour % groupByHour));
                 stamp.DateTime = stamp.DateTime.AddMinutes(-(stamp.DateTime.Minute));
                 stamp.DateTime = stamp.DateTime.AddMilliseconds(-stamp.DateTime.Millisecond - 1000 * stamp.DateTime.Second);
                 return stamp.DateTime;
