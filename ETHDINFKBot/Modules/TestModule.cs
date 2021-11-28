@@ -128,7 +128,7 @@ WHERE DiscordChannelId = 768600365602963496";
                         if (!parsedMessageInfos.Any(i => i.ChannelId == value.ChannelId))
                         {
                             var channelDB = channels.SingleOrDefault(i => i.DiscordChannelId == value.ChannelId);
-                            if (channelDB != null)
+                            if (channelDB == null)
                                 continue;
 
                             // ingore this channel
