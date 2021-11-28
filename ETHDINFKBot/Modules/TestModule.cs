@@ -3,8 +3,9 @@ using Discord.Commands;
 using ETHBot.DataLayer;
 using ETHDINFKBot.Drawing;
 using ETHDINFKBot.Helpers;
-using FFMpegCore;
-using FFMpegCore.Enums;
+//using FFMpegCore;
+//using FFMpegCore.Enums; // removed because of System.Drawing issues
+using Xabe.FFmpeg;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -165,11 +166,24 @@ WHERE DiscordChannelId = 768600365602963496";
             try
             {
                 int random = new Random().Next(1_000_000_000);
-                GlobalFFOptions.Configure(options => options.BinaryFolder = Program.Settings.FFMpegPath);
+                //GlobalFFOptions.Configure(options => options.BinaryFolder = Program.Settings.FFMpegPath);
+                Xabe.FFmpeg.FFmpeg.SetExecutablesPath(Program.Settings.FFMpegPath);
 
-                var imageInfos = Directory.GetFiles(Path.Combine(basePath)).ToList().OrderBy(i => i).Select(i => ImageInfo.FromPath(i)).ToArray();
+                var files = Directory.GetFiles(Path.Combine(basePath)).ToList().OrderBy(i => i);
                 string fileName = Path.Combine(baseOutputPath, $"movie_{random}.mp4");
-                FFMpeg.JoinImageSequence(fileName, frameRate: 30, imageInfos);
+
+                var conversion = new Conversion();
+                conversion.SetInputFrameRate(30);
+                conversion.BuildVideoFromImages(files);
+                conversion.SetFrameRate(30);
+                conversion.SetPixelFormat(PixelFormat.rgb24);
+                conversion.SetOutput(fileName);
+
+                await conversion.Start();
+
+
+                //var imageInfos = Directory.GetFiles(Path.Combine(basePath)).ToList().OrderBy(i => i).Select(i => ImageInfo.FromPath(i)).ToArray();
+                //FFMpeg.JoinImageSequence(fileName, frameRate: 30, imageInfos);
 
                 Context.Channel.SendFileAsync(fileName);
             }
