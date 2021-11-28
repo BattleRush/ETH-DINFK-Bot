@@ -52,9 +52,14 @@ namespace ETHDINFKBot
         }
     }
 
+    public class Settings
+    {
+        public string FFMpegPath { get; set; }
+    }
 
     class Program
     {
+        public static Settings Settings = new Settings();
         public static DiscordSocketClient Client;
         private CommandService Commands;
 
@@ -204,7 +209,7 @@ namespace ETHDINFKBot
                 RedditRefreshToken = Configuration["Reddit:RefreshToken"];
                 RedditAppSecret = Configuration["Reddit:AppSecret"];
 
-
+                Settings.FFMpegPath = Configuration["FFMpegPath"];
 
                 //BackupDBOnStartup();
 

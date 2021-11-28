@@ -46,9 +46,9 @@ namespace ETHDINFKBot.CronJobs.Jobs
             var guild = Program.Client.GetGuild(747752542741725244);
             var textChannel = guild.GetTextChannel(768600365602963496);
 
-        
-                // Get users that havent pinged the role in the last 72h
-                var sqlQuery = @"
+
+            // Get users that havent pinged the role in the last 72h
+            var sqlQuery = @"
 SELECT 
     PH.FromDiscordUserID, 
     MAX(PH.DiscordMessageId)
@@ -59,12 +59,12 @@ GROUP BY PH.FromDiscordUserId
 ORDER BY MAX(PH.DiscordMessageId)";
 
 
-                var queryResult = await SQLHelper.GetQueryResults(null, sqlQuery, true, 50, true);
+            var queryResult = await SQLHelper.GetQueryResults(null, sqlQuery, true, 50, true);
 
-                var utcNow = DateTime.UtcNow;
+            var utcNow = DateTime.UtcNow;
 
-                ulong pingHellRoleId = 895231323034222593;
-                var rolePingHell = guild.Roles.FirstOrDefault(i => i.Id == pingHellRoleId);
+            ulong pingHellRoleId = 895231323034222593;
+            var rolePingHell = guild.Roles.FirstOrDefault(i => i.Id == pingHellRoleId);
 
             //await guild.DownloadUsersAsync(); // Download all users
 

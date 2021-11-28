@@ -76,7 +76,7 @@ namespace ETHDINFKBot.Helpers
             return resultString + Environment.NewLine + $"{queryResult.TotalResults.ToString("N0")} Row(s) affected Time: {queryResult.Time.ToString("N0")}ms";
         }
 
-        public static async Task<(List<string> Header, List<List<string>> Data, int TotalResults, long Time)> GetQueryResults(SocketCommandContext context, string commandSql, bool limitRows = false, int limitLength = 2000, bool fullUser = false)
+        public static async Task<(List<string> Header, List<List<string>> Data, int TotalResults, long Time)> GetQueryResults(SocketCommandContext context, string commandSql, bool limitRows = false, int limitLength = 2000, bool fullUser = false, bool diableCap = false)
         {
             // TODO Admin perms for daily jobs with no context object
             var author = context?.Message?.Author;
@@ -115,17 +115,21 @@ namespace ETHDINFKBot.Helpers
                         
                         while (reader.Read())
                         {
-                            // cap at 10k records to return in count (as temp fix if the query returns millions of rows)
-                            if (TotalResults == 10_000)
+                            if (!diableCap)
                             {
-                                command.Cancel();
-                                break;
-                            }
+                                // todo disable
+                                // cap at 10k records to return in count (as temp fix if the query returns millions of rows)
+                                if (TotalResults == 10_000)
+                                {
+                                    command.Cancel();
+                                    break;
+                                }
 
-                            if (TotalResults > 250)
-                            {
-                                TotalResults++;
-                                continue;
+                                if (TotalResults > 250)
+                                {
+                                    TotalResults++;
+                                    continue;
+                                }
                             }
 
 
