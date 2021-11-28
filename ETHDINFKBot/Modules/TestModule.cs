@@ -41,7 +41,7 @@ namespace ETHDINFKBot.Modules
         private readonly ILogger _logger = new Logger<TestModule>(Program.Logger);
 
         [Command("movie", RunMode = RunMode.Async)]
-        public async Task CreateMovie(params ulong[] channelIds)
+        public async Task CreateMovie(bool stacked, params ulong[] channelIds)
         {
             var author = Context.Message.Author;
             if (author.Id != ETHDINFKBot.Program.Owner)
@@ -181,6 +181,21 @@ WHERE DiscordChannelId = 768600365602963496";
             if (!Directory.Exists(baseOutputPath))
                 Directory.CreateDirectory(baseOutputPath);
 
+
+            if (stacked)
+            {
+                foreach (var info in parsedMessageInfos)
+                {
+                    var values = info.Info.OrderBy(i => i.Key);
+                    int val = 0;
+                    foreach (var value in values)
+                    {
+                        val += value.Value;
+                        info.Info[value.Key] = val;
+                    }
+                }
+            }
+
             try
             {
 
@@ -226,7 +241,7 @@ WHERE DiscordChannelId = 768600365602963496";
                         var dataPoints = item.Info.Where(j => j.Key <= endTime).OrderBy(i => i.Key).ToDictionary(j => j.Key.DateTime, j => j.Value);
 
                         // todo add 2. y Axis on the right
-                        var dataPointList = DrawingHelper.GetPoints(dataPoints, gridSize, true, startTime.DateTime, endTime.DateTime);
+                        var dataPointList = DrawingHelper.GetPoints(dataPoints, gridSize, true, startTime.DateTime, endTime.DateTime, false, maxY);
 
                         DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, 6, new SKPaint() { Color = item.Color }, "msg in #" + item.ChannelName, lineIndex, true); //new Pen(System.Drawing.Color.LightGreen)
                         lineIndex++;
