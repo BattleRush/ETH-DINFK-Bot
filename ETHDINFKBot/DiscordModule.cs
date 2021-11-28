@@ -664,8 +664,15 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         {
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
-
-            DiscordHelper.DiscordUserBirthday(Program.Client, Context.Guild.Id, Context.Message.Channel.Id, false);
+            try
+            {
+                DiscordHelper.DiscordUserBirthday(Program.Client, Context.Guild.Id, Context.Message.Channel.Id, false);
+            }
+            catch (Exception ex)
+            {
+                Context.Channel.SendMessageAsync(ex.ToString());
+                _logger.LogError(ex, "Error while DiscordHelper.DiscordUserBirthday");
+            }
         }
 
         [Command("ping")]

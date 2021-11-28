@@ -84,6 +84,8 @@ ORDER BY MAX(PH.DiscordMessageId)";
                             throw new InvalidOperationException("Guild is null");
 
                         var guildUser = guild.GetUser(userId);
+                        if (guildUser == null)
+                            continue;
 
                         if (guildUser.Roles.Any(i => i.Id == pingHellRoleId))
                         {
@@ -97,11 +99,12 @@ ORDER BY MAX(PH.DiscordMessageId)";
                 }
                 catch (Exception ex)
                 {
-                    await textChannel.SendMessageAsync($"Failed to remove pinghell ID: {row[0]} SnowFlakePing: {row[1]} | {ex.ToString()}");
-                    if(ex.InnerException != null)
-                    {
-                        await textChannel.SendMessageAsync($"InnerException: {ex.InnerException.ToString()}");
-                    }
+                    // Disable for now
+                    //await textChannel.SendMessageAsync($"Failed to remove pinghell ID: {row[0]} SnowFlakePing: {row[1]} | {ex.ToString()}");
+                    //if(ex.InnerException != null)
+                    //{
+                    //    await textChannel.SendMessageAsync($"InnerException: {ex.InnerException.ToString()}");
+                    //}
                 }
             }
         }
