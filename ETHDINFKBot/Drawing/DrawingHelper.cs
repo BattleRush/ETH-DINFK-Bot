@@ -86,6 +86,7 @@ namespace ETHDINFKBot.Drawing
 
 
         // TODO duplicate params similar to GetPoints
+        // TODO call other get labels
         public static (List<string> XAxisLables, List<string> YAxisLabels) GetLabels(Dictionary<DateTime, int> data, int columns, int rows, bool yZeroIndexed = true, DateTime? minDate = null, DateTime? maxDate = null, string suffix = "")
         {
             if (columns < 1)
@@ -144,11 +145,62 @@ namespace ETHDINFKBot.Drawing
             return (xAxisLabels, yAxisLabels);
         }
 
+        public static (List<string> XAxisLables, List<string> YAxisLabels) GetLabels(DateTime minX, DateTime maxX, int minY, int maxY, int columns, int rows, string suffix = "")
+        {
+            if (columns < 1)
+                columns = 1;
+
+            if (rows < 1)
+                rows = 1;
+
+            // dupe code from GetPoints
+            DateTime firstDateTime = minX;
+            DateTime lastDateTime = maxX;
+
+            long totalSec = (long)(lastDateTime - firstDateTime).TotalSeconds; // sec granularity
+            int minVal = minY;
+            int maxVal = maxY;
+
+            // dupe code end -> add generic class TODO
+
+            // X AXIS
+            long intervalColumn = totalSec / columns;
+
+            List<string> xAxisLabels = new List<string>();
+            DateTimeOffset currentDate = firstDateTime;
+            xAxisLabels.Add(currentDate.ToString("dd.MM.yy HH:mm"));
+
+            for (int i = 0; i < columns; i++)
+            {
+                currentDate = currentDate.AddSeconds(intervalColumn);
+                xAxisLabels.Add(currentDate.ToString("dd.MM.yy HH:mm"));
+            }
+
+
+            // Y AXIS
+            int intervalRow = (maxVal - minVal) / rows;
+
+            int currentValue = minVal;
+
+            List<string> yAxisLabels = new List<string>();
+            yAxisLabels.Add(currentValue.ToString());
+
+            for (int i = 0; i < rows; i++)
+            {
+                currentValue += intervalRow;
+                yAxisLabels.Add(currentValue.ToString() + suffix);
+            }
+
+            return (xAxisLabels, yAxisLabels);
+        }
+
         public static List<SKPoint> GetPoints(Dictionary<DateTime, int> data, GridSize gridSize, bool yZeroIndexed = true, DateTime? minDate = null, DateTime? maxDate = null, bool overlapDays = false, int maxValue = -1)
         {
             // TODO implement overlap days
 
             List<SKPoint> dataPoints = new List<SKPoint>();
+
+    
 
             // assume the dictionary is ordered
             // todo ensure that just in case
@@ -157,6 +209,9 @@ namespace ETHDINFKBot.Drawing
             DateTime lastDateTime = maxDate ?? data.Last().Key;
 
             long totalSec = (long)(lastDateTime - firstDateTime).TotalSeconds; // sec granularity
+
+            if(totalSec == 0) 
+                return dataPoints;
 
             int minVal = int.MaxValue;
             int maxVal = int.MinValue;

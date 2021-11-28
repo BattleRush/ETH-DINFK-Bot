@@ -15,15 +15,24 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Discord.WebSocket;
 
 namespace ETHDINFKBot.Modules
 {
 
     public class MessageInfo
     {
-        public int Count { get; set; }
         public ulong ChannelId { get; set; }
         public DateTimeOffset DateTime { get; set; }
+    }
+
+    public class ParsedMessageInfo
+    {
+        public ulong ChannelId { get; set; }
+        public string ChannelName { get; set; }
+        public Dictionary<DateTimeOffset, int> Info { get; set; }
+
+        public SKColor Color { get; set; }
     }
 
     [Group("test")]
@@ -32,7 +41,7 @@ namespace ETHDINFKBot.Modules
         private readonly ILogger _logger = new Logger<TestModule>(Program.Logger);
 
         [Command("movie", RunMode = RunMode.Async)]
-        public async Task CreateMovie()
+        public async Task CreateMovie(params ulong[] channelIds)
         {
             var author = Context.Message.Author;
             if (author.Id != ETHDINFKBot.Program.Owner)
@@ -53,10 +62,10 @@ WHERE DiscordChannelId = 768600365602963496";
 
             watch.Start();
 
-            List<DateTimeOffset> messageTimes = new List<DateTimeOffset>();
+            List<MessageInfo> messageTimes = new List<MessageInfo>();
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
-                messageTimes = context.DiscordMessages.AsQueryable().Where(i => i.DiscordChannelId == 768600365602963496).Select(i => SnowflakeUtils.FromSnowflake(i.DiscordMessageId)).ToList();
+                messageTimes = context.DiscordMessages.AsQueryable().Select(i => new MessageInfo() { ChannelId = i.DiscordChannelId, DateTime = SnowflakeUtils.FromSnowflake(i.DiscordMessageId) }).ToList();
             }
             watch.Stop();
 
@@ -75,8 +84,8 @@ WHERE DiscordChannelId = 768600365602963496";
             //    });
             //}
 
-            var firstDateTime = messageTimes.Min();
-            var lastDateTime = messageTimes.Max();
+            var firstDateTime = messageTimes.Min(i => i.DateTime);
+            var lastDateTime = messageTimes.Max(i => i.DateTime);
 
             double maxFrames = 600;
 
@@ -98,22 +107,64 @@ WHERE DiscordChannelId = 768600365602963496";
             var groups = messageTimes.GroupBy(x =>
             {
                 var stamp = x;
-                stamp = stamp.AddHours(-(stamp.Hour % 3));
-                stamp = stamp.AddMinutes(-(stamp.Minute));
-                stamp = stamp.AddMilliseconds(-stamp.Millisecond - 1000 * stamp.Second);
-                return stamp;
-            }).Select(g => new { TimeStamp = g.Key, Value = g.Count() }).ToList();
+                stamp.DateTime = stamp.DateTime.AddHours(-(stamp.DateTime.Hour % 12));
+                stamp.DateTime = stamp.DateTime.AddMinutes(-(stamp.DateTime.Minute));
+                stamp.DateTime = stamp.DateTime.AddMilliseconds(-stamp.DateTime.Millisecond - 1000 * stamp.DateTime.Second);
+                return stamp.DateTime;
+            }).Select(g => new { Key = g.Key, Value = g.ToList() }).ToList();
 
-            Context.Channel.SendMessageAsync($"Total frames {groups.Count}");
+            var keys = groups.Select(x => x.Key).ToList();
 
-            Dictionary<DateTime, int> dataPointsSpam = new();
+            List<ParsedMessageInfo> parsedMessageInfos = new List<ParsedMessageInfo>();
 
-            int val = 0;
-            foreach (var group in groups)
+            var channels = DatabaseManager.Instance().GetDiscordAllChannels(Context.Guild.Id);
+
+            try
             {
-                val += group.Value;
-                dataPointsSpam.Add(group.TimeStamp.DateTime, val);
+                foreach (var item in groups)
+                {
+                    foreach (var value in item.Value)
+                    {
+                        if (!parsedMessageInfos.Any(i => i.ChannelId == value.ChannelId))
+                        {
+                            var channelDB = channels.SingleOrDefault(i => i.DiscordChannelId == value.ChannelId);
+                            if (channelDB != null)
+                                continue;
+
+                            // ingore this channel
+                            if (channelIds.Length > 0 && !channelIds.Contains(value.ChannelId))
+                                continue;
+
+                            parsedMessageInfos.Add(new ParsedMessageInfo()
+                            {
+                                ChannelId = value.ChannelId,
+                                Info = new Dictionary<DateTimeOffset, int>(),
+                                ChannelName = channelDB.ChannelName,
+                                Color = new SKColor((byte)new Random().Next(0, 255), (byte)new Random().Next(0, 255), (byte)new Random().Next(0, 255))
+                            });
+                        }
+
+                        var channelInfo = parsedMessageInfos.Single(i => i.ChannelId == value.ChannelId);
+                        if (channelInfo.Info.ContainsKey(value.DateTime))
+                            channelInfo.Info[value.DateTime] += 1;
+                        else
+                            channelInfo.Info.Add(value.DateTime, 1);
+                    }
+                }
             }
+            catch (Exception ex)
+            {
+
+            }
+
+            Context.Channel.SendMessageAsync($"Total frames {groups.Count()}");
+
+            //int val = 0;
+            //foreach (var group in groups)
+            //{
+            //    val += group.Value;
+            //    dataPointsSpam.Add(group.TimeStamp.DateTime, val);
+            //}
 
             string basePath = Path.Combine(Program.BasePath, "MovieFrames");
             string baseOutputPath = Path.Combine(Program.BasePath, "MovieOutput");
@@ -129,44 +180,68 @@ WHERE DiscordChannelId = 768600365602963496";
                 Directory.CreateDirectory(basePath);
             if (!Directory.Exists(baseOutputPath))
                 Directory.CreateDirectory(baseOutputPath);
-
-            for (int i = 2; i <= dataPointsSpam.Count; i++)
-            {
-                if (i % 250 == 0)
-                    Context.Channel.SendMessageAsync($"Frame gen {i} out of {dataPointsSpam.Count}");
-
-                // TODO optimize some lines + move to draw helper
-                var dataPoints = dataPointsSpam.Take(i).ToDictionary(i => i.Key, i => i.Value); ;
-
-                var startTime = dataPoints.First().Key;
-                var endTime = dataPoints.Last().Key;
-
-
-                var drawInfo = DrawingHelper.GetEmptyGraphics();
-                var padding = DrawingHelper.DefaultPadding;
-                padding.Left = 200; // large numbers
-                var labels = DrawingHelper.GetLabels(dataPoints, 6, 10, true, startTime, endTime, " msg");
-                var gridSize = new GridSize(drawInfo.Bitmap, padding);
-                var dataPointList = DrawingHelper.GetPoints(dataPoints, gridSize, true, startTime, endTime);
-
-                DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, $"Messages in #spam");
-                // todo add 2. y Axis on the right
-
-                DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, 6, new SKPaint() { Color = new SKColor(255, 0, 0) }, "msg in #spam", 0, true); //new Pen(System.Drawing.Color.LightGreen)
-
-
-                using (var data = drawInfo.Bitmap.Encode(SKEncodedImageFormat.Png, 80))
-                {
-                    // save the data to a stream
-                    using (var stream = File.OpenWrite(Path.Combine(basePath, $"{i.ToString("D8")}.png")))
-                    {
-                        data.SaveTo(stream);
-                    }
-                }
-            }
-
             try
             {
+
+                for (int i = 2; i <= keys.Count; i++)
+                {
+                    if (i % 250 == 0)
+                        Context.Channel.SendMessageAsync($"Frame gen {i} out of {keys.Count}");
+
+                    var startTime = keys.Take(i).Min();
+                    var endTime = keys.Take(i).Max();
+
+                    int maxY = 0;
+
+                    // TODO calculate the rolling info
+
+                    foreach (var item in parsedMessageInfos)
+                    {
+                        foreach (var info in item.Info)
+                        {
+                            // only consider until this key
+                            if (info.Key > endTime)
+                                continue;
+
+                            if (maxY < info.Value)
+                                maxY = info.Value;
+                        }
+                    }
+
+                    var drawInfo = DrawingHelper.GetEmptyGraphics();
+                    var padding = DrawingHelper.DefaultPadding;
+
+                    padding.Left = 200; // large numbers
+
+                    var labels = DrawingHelper.GetLabels(startTime.DateTime, endTime.DateTime, 0, maxY, 6, 10, " msg");
+
+                    var gridSize = new GridSize(drawInfo.Bitmap, padding);
+
+                    DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, $"Messages count");
+                    int lineIndex = 0;
+                    foreach (var item in parsedMessageInfos)
+                    {
+                        // TODO optimize some lines + move to draw helper
+                        var dataPoints = item.Info.Where(j => j.Key <= endTime).ToDictionary(j => j.Key.DateTime, j => j.Value);
+
+                        // todo add 2. y Axis on the right
+                        var dataPointList = DrawingHelper.GetPoints(dataPoints, gridSize, true, startTime.DateTime, endTime.DateTime);
+
+                        DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, 6, new SKPaint() { Color = item.Color }, "msg in #" + item.ChannelName, lineIndex, true); //new Pen(System.Drawing.Color.LightGreen)
+                        lineIndex++;
+                    }
+
+                    using (var data = drawInfo.Bitmap.Encode(SKEncodedImageFormat.Png, 80))
+                    {
+                        // save the data to a stream
+                        using (var stream = File.OpenWrite(Path.Combine(basePath, $"{i.ToString("D8")}.png")))
+                        {
+                            data.SaveTo(stream);
+                        }
+                    }
+                }
+
+
                 int random = new Random().Next(1_000_000_000);
                 //GlobalFFOptions.Configure(options => options.BinaryFolder = Program.Settings.FFMpegPath);
                 Xabe.FFmpeg.FFmpeg.SetExecutablesPath(Program.Settings.FFMpegPath);
@@ -175,9 +250,9 @@ WHERE DiscordChannelId = 768600365602963496";
                 string fileName = Path.Combine(baseOutputPath, $"movie_{random}.mp4");
 
                 var conversion = new Conversion();
-                conversion.SetInputFrameRate(60);
+                conversion.SetInputFrameRate(30);
                 conversion.BuildVideoFromImages(files);
-                conversion.SetFrameRate(60);
+                conversion.SetFrameRate(30);
                 conversion.SetPixelFormat(PixelFormat.rgb24);
                 conversion.SetOutput(fileName);
 
