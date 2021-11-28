@@ -118,12 +118,12 @@ namespace ETHDINFKBot.Drawing
 
             List<string> xAxisLabels = new List<string>();
             DateTimeOffset currentDate = firstDateTime;
-            xAxisLabels.Add(currentDate.ToString("MM.dd\nHH:mm"));
+            xAxisLabels.Add(currentDate.ToString("dd.MM.YY HH:mm"));
 
             for (int i = 0; i < columns; i++)
             {
                 currentDate = currentDate.AddSeconds(intervalColumn);
-                xAxisLabels.Add(currentDate.ToString("MM.dd\nHH:mm"));
+                xAxisLabels.Add(currentDate.ToString("dd.MM.YY HH:mm"));
             }
 
 

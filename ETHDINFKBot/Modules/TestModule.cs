@@ -14,7 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using Microsoft.Extensions.Logging;
 
 namespace ETHDINFKBot.Modules
 {
@@ -29,6 +29,8 @@ namespace ETHDINFKBot.Modules
     [Group("test")]
     public class TestModule : ModuleBase<SocketCommandContext>
     {
+        private readonly ILogger _logger = new Logger<TestModule>(Program.Logger);
+
         [Command("movie", RunMode = RunMode.Async)]
         public async Task CreateMovie()
         {
@@ -173,9 +175,9 @@ WHERE DiscordChannelId = 768600365602963496";
                 string fileName = Path.Combine(baseOutputPath, $"movie_{random}.mp4");
 
                 var conversion = new Conversion();
-                conversion.SetInputFrameRate(30);
+                conversion.SetInputFrameRate(60);
                 conversion.BuildVideoFromImages(files);
-                conversion.SetFrameRate(30);
+                conversion.SetFrameRate(60);
                 conversion.SetPixelFormat(PixelFormat.rgb24);
                 conversion.SetOutput(fileName);
 
@@ -189,6 +191,7 @@ WHERE DiscordChannelId = 768600365602963496";
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error while creating movie");
                 Context.Channel.SendMessageAsync(ex.ToString());
             }
         }
