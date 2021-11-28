@@ -95,7 +95,7 @@ WHERE DiscordChannelId = 768600365602963496";
             var groups = messageTimes.GroupBy(x =>
             {
                 var stamp = x;
-                stamp = stamp.AddHours(-(stamp.Hour % 6));
+                stamp = stamp.AddHours(-(stamp.Hour % 12));
                 stamp = stamp.AddMinutes(-(stamp.Minute));
                 stamp = stamp.AddMilliseconds(-stamp.Millisecond - 1000 * stamp.Second);
                 return stamp;
@@ -129,7 +129,7 @@ WHERE DiscordChannelId = 768600365602963496";
 
             for (int i = 2; i <= dataPointsSpam.Count; i++)
             {
-                if (i % 100 == 0)
+                if (i % 250 == 0)
                     Context.Channel.SendMessageAsync($"Frame gen {i} out of {dataPointsSpam.Count}");
 
                 // TODO optimize some lines + move to draw helper
