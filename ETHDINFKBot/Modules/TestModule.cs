@@ -79,6 +79,7 @@ WHERE DiscordChannelId = 768600365602963496";
 
             int bound = (int)((lastDateTime - firstDateTime).TotalMinutes / maxFrames);
 
+            bound *= 10; // temp fix
 
             Context.Channel.SendMessageAsync($"Group by {bound} minutes");
 
