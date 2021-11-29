@@ -963,8 +963,8 @@ namespace ETHDINFKBot
 
             do
             {
-                firstMessage = FirstDailyPostsCandidates.Where(i => i.CreatedAt.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1).Hour != 23).OrderBy(i => i.CreatedAt).First();
-                await Task.Delay(TimeSpan.FromSeconds(5)); // Check each 5 seconds if a new message arrived
+                firstMessage = FirstDailyPostsCandidates.Where(i => i.CreatedAt.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1).Hour != 23).OrderBy(i => i.CreatedAt).FirstOrDefault();
+                await Task.Delay(TimeSpan.FromSeconds(2)); // Check each 5 seconds if a new message arrived
             } while (firstMessage != null);
 
             var timeNow = SnowflakeUtils.FromSnowflake(firstMessage.Id).AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1); // CEST CONVERSION
