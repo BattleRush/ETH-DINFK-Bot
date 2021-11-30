@@ -325,10 +325,11 @@ WHERE DiscordChannelId = 768600365602963496";
 
             watch.Start();
 
-            List<DateTime> messageTimes = new List<DateTime>();
+
+            List<MessageInfo> messageTimes = new List<MessageInfo>();
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
-                messageTimes = context.PlaceBoardHistory.AsQueryable().Select(i => i.PlacedDateTime).ToList();
+                messageTimes = context.PlaceBoardHistory.AsQueryable().Select(i => new MessageInfo() { DateTime = new DateTimeOffset(i.PlacedDateTime, TimeSpan.Zero) }).ToList();
             }
             watch.Stop();
 
@@ -347,8 +348,8 @@ WHERE DiscordChannelId = 768600365602963496";
             //    });
             //}
 
-            var firstDateTime = messageTimes.Min(i => i);
-            var lastDateTime = messageTimes.Max(i => i);
+            var firstDateTime = messageTimes.Min(i => i.DateTime).DateTime;
+            var lastDateTime = messageTimes.Max(i => i.DateTime).DateTime;
 
             double maxFrames = 600;
 
@@ -370,14 +371,14 @@ WHERE DiscordChannelId = 768600365602963496";
             var groups = messageTimes.GroupBy(x =>
             {
                 var stamp = x;
-                stamp = stamp.AddHours(-(stamp.Hour % groupByHour));
-                stamp = stamp.AddMinutes(-(stamp.Minute));
-                stamp = stamp.AddMilliseconds(-stamp.Millisecond - 1000 * stamp.Second);
-                return stamp;
-            }).Select(g => new { Key = g.Key, Value = g.Count() }).ToList();
+                stamp.DateTime = stamp.DateTime.AddHours(-(stamp.DateTime.Hour % groupByHour));
+                stamp.DateTime = stamp.DateTime.AddMinutes(-(stamp.DateTime.Minute));
+                stamp.DateTime = stamp.DateTime.AddMilliseconds(-stamp.DateTime.Millisecond - 1000 * stamp.DateTime.Second);
+                stamp.DateTime = stamp.DateTime.AddTicks(-(stamp.DateTime.Ticks % 1000000)); // idk why this here is suddenly broken -> maybe new datetimeoffset?
+                return stamp.DateTime;
+            }).Select(g => new { Key = g.Key, Value = g.ToList() }).ToList();
 
             var keys = groups.Select(x => x.Key).ToList();
-
 
             var parsedInfo = new ParsedMessageInfo()
             {
@@ -394,9 +395,9 @@ WHERE DiscordChannelId = 768600365602963496";
                 foreach (var item in groups)
                 {
                     if (parsedInfo.Info.ContainsKey(item.Key))
-                        parsedInfo.Info[item.Key] += item.Value;
+                        parsedInfo.Info[item.Key] += item.Value.Count;
                     else
-                        parsedInfo.Info.Add(item.Key, item.Value);
+                        parsedInfo.Info.Add(item.Key, item.Value.Count);
                 }
             }
             catch (Exception ex)
@@ -475,7 +476,7 @@ WHERE DiscordChannelId = 768600365602963496";
 
                     padding.Left = 200; // large numbers
 
-                    var labels = DrawingHelper.GetLabels(startTime, endTime, 0, maxY, 6, 10, " msg");
+                    var labels = DrawingHelper.GetLabels(startTime.DateTime, endTime.DateTime, 0, maxY, 6, 10, " msg");
 
                     var gridSize = new GridSize(drawInfo.Bitmap, padding);
 
@@ -486,7 +487,7 @@ WHERE DiscordChannelId = 768600365602963496";
                     var dataPoints = parsedInfo.Info.Where(j => j.Key <= endTime).OrderBy(i => i.Key).ToDictionary(j => j.Key.DateTime, j => j.Value);
 
                     // todo add 2. y Axis on the right
-                    var dataPointList = DrawingHelper.GetPoints(dataPoints, gridSize, true, startTime, endTime, false, maxY);
+                    var dataPointList = DrawingHelper.GetPoints(dataPoints, gridSize, true, startTime.DateTime, endTime.DateTime, false, maxY);
 
                     DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, 6, new SKPaint() { Color = parsedInfo.Color }, "msg in #" + parsedInfo.ChannelName, lineIndex, drawDots); //new Pen(System.Drawing.Color.LightGreen)
                     lineIndex++;
