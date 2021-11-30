@@ -378,14 +378,13 @@ WHERE DiscordChannelId = 768600365602963496";
 
             var keys = groups.Select(x => x.Key).ToList();
 
-            List<ParsedMessageInfo> parsedMessageInfos = new List<ParsedMessageInfo>();
 
             var parsedInfo = new ParsedMessageInfo()
             {
                 ChannelId = 1,
                 Info = new Dictionary<DateTimeOffset, int>(),
                 ChannelName = "eth-place-bots",
-                Color = new SKColor((byte)new Random().Next(0, 255), (byte)new Random().Next(0, 255), (byte)new Random().Next(0, 255))
+                Color = new SKColor(255, 0, 0)
             };
 
             var channels = DatabaseManager.Instance().GetDiscordAllChannels(Context.Guild.Id);
@@ -405,7 +404,6 @@ WHERE DiscordChannelId = 768600365602963496";
 
             }
 
-            parsedMessageInfos.Add(parsedInfo);
 
             Context.Channel.SendMessageAsync($"Total frames {groups.Count()}");
 
@@ -434,16 +432,13 @@ WHERE DiscordChannelId = 768600365602963496";
 
             if (stacked)
             {
-                foreach (var info in parsedMessageInfos)
-                {
-                    var values = info.Info.OrderBy(i => i.Key);
-                    int val = 0;
+                var values = parsedInfo.Info.OrderBy(i => i.Key);
+                int val = 0;
 
-                    foreach (var value in values)
-                    {
-                        val += value.Value;
-                        info.Info[value.Key] = val;
-                    }
+                foreach (var info in values)
+                {
+                    val += info.Value;
+                    parsedInfo.Info[info.Key] = val;
                 }
             }
 
@@ -451,10 +446,10 @@ WHERE DiscordChannelId = 768600365602963496";
             {
                 List<Task> tasks = new List<Task>();
 
-                for (int i = 2; i <= keys.Count; i++)
+                for (int i = 2; i <= parsedInfo.Info.Count; i++)
                 {
                     if (i % 250 == 0)
-                        Context.Channel.SendMessageAsync($"Frame gen {i} out of {keys.Count}");
+                        Context.Channel.SendMessageAsync($"Frame gen {i} out of {parsedInfo.Info.Count}");
 
                     var startTime = keys.Take(i).Min();
                     var endTime = keys.Take(i).Max();
@@ -463,18 +458,17 @@ WHERE DiscordChannelId = 768600365602963496";
 
                     // TODO calculate the rolling info
 
-                    foreach (var item in parsedMessageInfos)
-                    {
-                        foreach (var info in item.Info)
-                        {
-                            // only consider until this key
-                            if (info.Key > endTime)
-                                continue;
 
-                            if (maxY < info.Value)
-                                maxY = info.Value;
-                        }
+                    foreach (var info in parsedInfo.Info)
+                    {
+                        // only consider until this key
+                        if (info.Key > endTime)
+                            continue;
+
+                        if (maxY < info.Value)
+                            maxY = info.Value;
                     }
+
 
                     var drawInfo = DrawingHelper.GetEmptyGraphics();
                     var padding = DrawingHelper.DefaultPadding;
@@ -487,17 +481,16 @@ WHERE DiscordChannelId = 768600365602963496";
 
                     DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, $"Messages count");
                     int lineIndex = 0;
-                    foreach (var item in parsedMessageInfos)
-                    {
-                        // TODO optimize some lines + move to draw helper
-                        var dataPoints = item.Info.Where(j => j.Key <= endTime).OrderBy(i => i.Key).ToDictionary(j => j.Key.DateTime, j => j.Value);
 
-                        // todo add 2. y Axis on the right
-                        var dataPointList = DrawingHelper.GetPoints(dataPoints, gridSize, true, startTime, endTime, false, maxY);
+                    // TODO optimize some lines + move to draw helper
+                    var dataPoints = parsedInfo.Info.Where(j => j.Key <= endTime).OrderBy(i => i.Key).ToDictionary(j => j.Key.DateTime, j => j.Value);
 
-                        DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, 6, new SKPaint() { Color = item.Color }, "msg in #" + item.ChannelName, lineIndex, drawDots); //new Pen(System.Drawing.Color.LightGreen)
-                        lineIndex++;
-                    }
+                    // todo add 2. y Axis on the right
+                    var dataPointList = DrawingHelper.GetPoints(dataPoints, gridSize, true, startTime, endTime, false, maxY);
+
+                    DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, 6, new SKPaint() { Color = parsedInfo.Color }, "msg in #" + parsedInfo.ChannelName, lineIndex, drawDots); //new Pen(System.Drawing.Color.LightGreen)
+                    lineIndex++;
+
 
                     tasks.Add(SaveToDisk(basePath, i, drawInfo.Bitmap, drawInfo.Canvas));
                 }
