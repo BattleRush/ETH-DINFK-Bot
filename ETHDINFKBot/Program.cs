@@ -642,7 +642,7 @@ namespace ETHDINFKBot
 
             var textChannel = guild.GetTextChannel(DiscordHelper.DiscordChannels["spam"]);
             if (textChannel != null)
-                textChannel.SendMessageAsync($"Restarted with Branch: {ThisAssembly.Git.Branch} and Commit: {ThisAssembly.Git.Commit}. Last Uptime was: {CommonHelper.ToReadableString(lastStartUp - DateTime.Now)} Bot client ready. <@{Program.Owner}>");
+                textChannel.SendMessageAsync($"Restarted with Branch: {ThisAssembly.Git.Branch} and Commit: {ThisAssembly.Git.Commit}. Last Uptime was: {CommonHelper.ToReadableString(DateTime.Now - lastStartUp)} Bot client ready. <@{Program.Owner}>");
 
             // Register bot startup time when bot is ready
             DatabaseManager.Instance().AddBotStartUp();
