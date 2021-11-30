@@ -16,6 +16,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Discord.WebSocket;
+using ETHBot.DataLayer.Data.Discord;
+using ImageMagick;
 
 namespace ETHDINFKBot.Modules
 {
@@ -40,132 +42,8 @@ namespace ETHDINFKBot.Modules
     {
         private readonly ILogger _logger = new Logger<TestModule>(Program.Logger);
 
-        [Command("movie", RunMode = RunMode.Async)]
-        public async Task CreateMovie(bool stacked, int groupByHour, int fps, bool drawDots, params ulong[] channelIds)
+        private (string BasePath, string BaseOutputPath) CleanAndCreateFolders()
         {
-            var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
-            {
-                Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
-                return;
-            }
-
-            // Get users that havent pinged the role in the last 72h
-            var sqlQuery = @"
-SELECT 
-    DiscordMessageId,
-    DiscordChannelId
-FROM DiscordMessages
-WHERE DiscordChannelId = 768600365602963496";
-
-            Stopwatch watch = new Stopwatch();
-
-            watch.Start();
-
-            List<MessageInfo> messageTimes = new List<MessageInfo>();
-            using (ETHBotDBContext context = new ETHBotDBContext())
-            {
-                messageTimes = context.DiscordMessages.AsQueryable().Select(i => new MessageInfo() { ChannelId = i.DiscordChannelId, DateTime = SnowflakeUtils.FromSnowflake(i.DiscordMessageId) }).ToList();
-            }
-            watch.Stop();
-
-            Context.Channel.SendMessageAsync($"Retreived data in {watch.ElapsedMilliseconds}ms");
-
-            //var queryResult = await SQLHelper.GetQueryResults(null, sqlQuery, true, 10_000_000, true, true);
-
-            List<MessageInfo> messageInfos = new List<MessageInfo>();
-
-            //foreach (var item in queryResult.Data)
-            //{
-            //    messageInfos.Add(new MessageInfo()
-            //    {
-            //        ChannelId = Convert.ToUInt64(item[1]),
-            //        DateTime = SnowflakeUtils.FromSnowflake(Convert.ToUInt64(item[1]))
-            //    });
-            //}
-
-            var firstDateTime = messageTimes.Min(i => i.DateTime);
-            var lastDateTime = messageTimes.Max(i => i.DateTime);
-
-            double maxFrames = 600;
-
-            int bound = (int)((lastDateTime - firstDateTime).TotalMinutes / maxFrames);
-
-            Context.Channel.SendMessageAsync($"Group by {bound} minutes, Total mins {(lastDateTime - firstDateTime).TotalMinutes}");
-
-            /*
-            var groups = messageTimes.GroupBy(x =>
-            {
-                var stamp = x;
-                stamp = stamp.AddMinutes(-(stamp.DateTime.Minute % bound));
-                stamp = stamp.AddMilliseconds(-stamp.DateTime.Millisecond - 1000 * stamp.DateTime.Second);
-                return stamp;
-            }).Select(g => new { TimeStamp = g.Key, Value = g.Count() }).ToList();
-            */
-
-            // https://stackoverflow.com/questions/47763874/how-to-linq-query-group-by-2-hours-interval
-            var groups = messageTimes.GroupBy(x =>
-            {
-                var stamp = x;
-                stamp.DateTime = stamp.DateTime.AddHours(-(stamp.DateTime.Hour % groupByHour));
-                stamp.DateTime = stamp.DateTime.AddMinutes(-(stamp.DateTime.Minute));
-                stamp.DateTime = stamp.DateTime.AddMilliseconds(-stamp.DateTime.Millisecond - 1000 * stamp.DateTime.Second);
-                return stamp.DateTime;
-            }).Select(g => new { Key = g.Key, Value = g.ToList() }).ToList();
-
-            var keys = groups.Select(x => x.Key).ToList();
-
-            List<ParsedMessageInfo> parsedMessageInfos = new List<ParsedMessageInfo>();
-
-            var channels = DatabaseManager.Instance().GetDiscordAllChannels(Context.Guild.Id);
-
-            try
-            {
-                foreach (var item in groups)
-                {
-                    foreach (var value in item.Value)
-                    {
-                        if (!parsedMessageInfos.Any(i => i.ChannelId == value.ChannelId))
-                        {
-                            var channelDB = channels.SingleOrDefault(i => i.DiscordChannelId == value.ChannelId);
-                            if (channelDB == null)
-                                continue;
-
-                            // ingore this channel
-                            if (channelIds.Length > 0 && !channelIds.Contains(value.ChannelId))
-                                continue;
-
-                            parsedMessageInfos.Add(new ParsedMessageInfo()
-                            {
-                                ChannelId = value.ChannelId,
-                                Info = new Dictionary<DateTimeOffset, int>(),
-                                ChannelName = channelDB.ChannelName,
-                                Color = new SKColor((byte)new Random().Next(0, 255), (byte)new Random().Next(0, 255), (byte)new Random().Next(0, 255))
-                            });
-                        }
-
-                        var channelInfo = parsedMessageInfos.Single(i => i.ChannelId == value.ChannelId);
-                        if (channelInfo.Info.ContainsKey(value.DateTime))
-                            channelInfo.Info[value.DateTime] += 1;
-                        else
-                            channelInfo.Info.Add(value.DateTime, 1);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-
-            }
-
-            Context.Channel.SendMessageAsync($"Total frames {groups.Count()}");
-
-            //int val = 0;
-            //foreach (var group in groups)
-            //{
-            //    val += group.Value;
-            //    dataPointsSpam.Add(group.TimeStamp.DateTime, val);
-            //}
-
             string basePath = Path.Combine(Program.BasePath, "MovieFrames");
             string baseOutputPath = Path.Combine(Program.BasePath, "MovieOutput");
 
@@ -181,49 +59,185 @@ WHERE DiscordChannelId = 768600365602963496";
             if (!Directory.Exists(baseOutputPath))
                 Directory.CreateDirectory(baseOutputPath);
 
+            return (basePath, baseOutputPath);
+        }
 
-            if (stacked)
+        private void StackResults(List<ParsedMessageInfo> parsedMessageInfos)
+        {
+            foreach (var info in parsedMessageInfos)
             {
-                foreach (var info in parsedMessageInfos)
+                var values = info.Info.OrderBy(i => i.Key);
+                int val = 0;
+                foreach (var value in values)
                 {
-                    var values = info.Info.OrderBy(i => i.Key);
-                    int val = 0;
-                    foreach (var value in values)
-                    {
-                        val += value.Value;
-                        info.Info[value.Key] = val;
-                    }
+                    val += value.Value;
+                    info.Info[value.Key] = val;
                 }
             }
+        }
+
+        private int GetMaxValue(List<ParsedMessageInfo> parsedMessageInfos, DateTimeOffset until)
+        {
+            int maxY = 0;
+
+            // TODO calculate the rolling info
+
+            foreach (var item in parsedMessageInfos)
+            {
+                foreach (var info in item.Info)
+                {
+                    // only consider until this key
+                    if (info.Key > until)
+                        continue;
+
+                    if (maxY < info.Value)
+                        maxY = info.Value;
+                }
+            }
+
+            return maxY;
+        }
+
+        private async Task<string> RunFFMpeg(string basePath, string baseOutputPath, int fps)
+        {
+            int random = new Random().Next(1_000_000_000);
+            //GlobalFFOptions.Configure(options => options.BinaryFolder = Program.Settings.FFMpegPath);
+            Xabe.FFmpeg.FFmpeg.SetExecutablesPath(Program.Settings.FFMpegPath);
+
+            var files = Directory.GetFiles(Path.Combine(basePath)).ToList().OrderBy(i => i);
+            string fileName = Path.Combine(baseOutputPath, $"movie_{random}.mp4");
+
+            var conversion = new Conversion();
+            conversion.SetInputFrameRate(fps);
+            conversion.BuildVideoFromImages(files);
+            conversion.SetFrameRate(fps);
+            conversion.SetPixelFormat(PixelFormat.rgb24);
+            conversion.SetOutput(fileName);
+
+            await conversion.Start();
+
+            return fileName;
+        }
+
+        // TODO add channel filtering
+        private List<MessageInfo> GetMessageInfos()
+        {
+            List<MessageInfo> messageTimes = new List<MessageInfo>();
+            using (ETHBotDBContext context = new ETHBotDBContext())
+                messageTimes = context.DiscordMessages.AsQueryable().Select(i => new MessageInfo() { ChannelId = i.DiscordChannelId, DateTime = SnowflakeUtils.FromSnowflake(i.DiscordMessageId) }).ToList();
+
+            return messageTimes;
+        }
+
+
+        private List<ParsedMessageInfo> GetParsedMessageInfos(IEnumerable<IGrouping<DateTimeOffset, MessageInfo>> groups, List<DiscordChannel> channels, ulong[] channelIds)
+        {
+            List<ParsedMessageInfo> parsedMessageInfos = new List<ParsedMessageInfo>();
+
+            foreach (var item in groups)
+            {
+                foreach (var value in item)
+                {
+                    if (!parsedMessageInfos.Any(i => i.ChannelId == value.ChannelId))
+                    {
+                        var channelDB = channels.SingleOrDefault(i => i.DiscordChannelId == value.ChannelId);
+                        if (channelDB == null)
+                            continue;
+
+                        // ingore this channel
+                        if (channelIds.Length > 0 && !channelIds.Contains(value.ChannelId))
+                            continue;
+
+                        parsedMessageInfos.Add(new ParsedMessageInfo()
+                        {
+                            ChannelId = value.ChannelId,
+                            Info = new Dictionary<DateTimeOffset, int>(),
+                            ChannelName = channelDB.ChannelName,
+                            Color = new SKColor((byte)new Random().Next(0, 255), (byte)new Random().Next(0, 255), (byte)new Random().Next(0, 255))
+                        });
+                    }
+
+                    var channelInfo = parsedMessageInfos.Single(i => i.ChannelId == value.ChannelId);
+                    if (channelInfo.Info.ContainsKey(value.DateTime))
+                        channelInfo.Info[value.DateTime] += 1;
+                    else
+                        channelInfo.Info.Add(value.DateTime, 1);
+                }
+            }
+
+
+            return parsedMessageInfos;
+        }
+
+        [Command("movie", RunMode = RunMode.Async)]
+        public async Task CreateMovie(bool stacked, int groupByHour, int fps, bool drawDots, params ulong[] channelIds)
+        {
+            var author = Context.Message.Author;
+            if (author.Id != ETHDINFKBot.Program.Owner)
+            {
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
+
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+
+            var messageTimes = GetMessageInfos();
+
+            watch.Stop();
+
+            await Context.Channel.SendMessageAsync($"Retreived data in {watch.ElapsedMilliseconds}ms");
+
+            List<MessageInfo> messageInfos = new List<MessageInfo>();
+
+
+            /*var firstDateTime = messageTimes.Min(i => i.DateTime);
+            var lastDateTime = messageTimes.Max(i => i.DateTime);*/
+
+            //double maxFrames = 600;
+
+            //int bound = (int)((lastDateTime - firstDateTime).TotalMinutes / maxFrames);
+
+            //await Context.Channel.SendMessageAsync($"Group by {bound} minutes, Total mins {(lastDateTime - firstDateTime).TotalMinutes}");
+
+            // https://stackoverflow.com/questions/47763874/how-to-linq-query-group-by-2-hours-interval
+            var groups = messageTimes.GroupBy(x =>
+            {
+                var stamp = x;
+                stamp.DateTime = stamp.DateTime.AddHours(-(stamp.DateTime.Hour % groupByHour));
+                stamp.DateTime = stamp.DateTime.AddMinutes(-(stamp.DateTime.Minute));
+                stamp.DateTime = stamp.DateTime.AddMilliseconds(-stamp.DateTime.Millisecond - 1000 * stamp.DateTime.Second);
+                return stamp.DateTime;
+            });
+
+            var keys = groups.Select(x => x.Key);
+
+
+            var channels = DatabaseManager.Instance().GetDiscordAllChannels(Context.Guild.Id);
+
+            await Context.Channel.SendMessageAsync($"Total frames {groups.Count()}");
+
+            var parsedMessageInfos = GetParsedMessageInfos(groups, channels, channelIds);
+
+            (string basePath, string baseOutputPath) = CleanAndCreateFolders();
+
+            if (stacked)
+                StackResults(parsedMessageInfos);
 
             try
             {
                 List<Task> tasks = new List<Task>();
 
-                for (int i = 2; i <= keys.Count; i++)
+                for (int i = 2; i <= keys.Count(); i++)
                 {
                     if (i % 250 == 0)
-                        Context.Channel.SendMessageAsync($"Frame gen {i} out of {keys.Count}");
+                        await Context.Channel.SendMessageAsync($"Frame gen {i} out of {keys.Count()}");
 
                     var startTime = keys.Take(i).Min();
                     var endTime = keys.Take(i).Max();
 
-                    int maxY = 0;
-
-                    // TODO calculate the rolling info
-
-                    foreach (var item in parsedMessageInfos)
-                    {
-                        foreach (var info in item.Info)
-                        {
-                            // only consider until this key
-                            if (info.Key > endTime)
-                                continue;
-
-                            if (maxY < info.Value)
-                                maxY = info.Value;
-                        }
-                    }
+                    int maxY = GetMaxValue(parsedMessageInfos, endTime);
 
                     var drawInfo = DrawingHelper.GetEmptyGraphics();
                     var padding = DrawingHelper.DefaultPadding;
@@ -258,26 +272,7 @@ WHERE DiscordChannelId = 768600365602963496";
                 await Context.Channel.SendMessageAsync("Saving finished. Starting FFMpeg");
 
 
-                int random = new Random().Next(1_000_000_000);
-                //GlobalFFOptions.Configure(options => options.BinaryFolder = Program.Settings.FFMpegPath);
-                Xabe.FFmpeg.FFmpeg.SetExecutablesPath(Program.Settings.FFMpegPath);
-
-                var files = Directory.GetFiles(Path.Combine(basePath)).ToList().OrderBy(i => i);
-                string fileName = Path.Combine(baseOutputPath, $"movie_{random}.mp4");
-
-                var conversion = new Conversion();
-                conversion.SetInputFrameRate(fps);
-                conversion.BuildVideoFromImages(files);
-                conversion.SetFrameRate(fps);
-                conversion.SetPixelFormat(PixelFormat.rgb24);
-                conversion.SetOutput(fileName);
-
-                await conversion.Start();
-
-
-                //var imageInfos = Directory.GetFiles(Path.Combine(basePath)).ToList().OrderBy(i => i).Select(i => ImageInfo.FromPath(i)).ToArray();
-                //FFMpeg.JoinImageSequence(fileName, frameRate: 30, imageInfos);
-
+                string fileName = await RunFFMpeg(basePath, baseOutputPath, fps);
                 await Context.Channel.SendFileAsync(fileName);
             }
             catch (Exception ex)
@@ -389,20 +384,7 @@ WHERE DiscordChannelId = 768600365602963496";
             //    dataPointsSpam.Add(group.TimeStamp.DateTime, val);
             //}
 
-            string basePath = Path.Combine(Program.BasePath, "MovieFrames");
-            string baseOutputPath = Path.Combine(Program.BasePath, "MovieOutput");
-
-            // Clean up any remaining files
-            if (Directory.Exists(basePath))
-                Directory.Delete(basePath, true);
-            if (Directory.Exists(baseOutputPath))
-                Directory.Delete(baseOutputPath, true);
-
-
-            if (!Directory.Exists(basePath))
-                Directory.CreateDirectory(basePath);
-            if (!Directory.Exists(baseOutputPath))
-                Directory.CreateDirectory(baseOutputPath);
+            (string basePath, string baseOutputPath) = CleanAndCreateFolders();
 
 
             if (stacked)
@@ -489,6 +471,7 @@ WHERE DiscordChannelId = 768600365602963496";
                 conversion.SetFrameRate(fps);
                 conversion.SetPixelFormat(PixelFormat.rgb24);
                 conversion.SetOutput(fileName);
+                conversion.OnProgress += Conversion_OnProgress;
 
                 await conversion.Start();
 
@@ -503,6 +486,78 @@ WHERE DiscordChannelId = 768600365602963496";
                 _logger.LogError(ex, "Error while creating movie");
                 await Context.Channel.SendMessageAsync(ex.ToString());
             }
+        }
+
+
+        [Command("test", RunMode = RunMode.Async)]
+        public async Task Progress()
+        {
+            (string basePath, string baseOutputPath) = CleanAndCreateFolders();
+
+            SKRect rect = new SKRect(100, 100, 200, 200);
+
+            var arcPaint = new SKPaint()
+            {
+                Color = new SKColor(255, 0, 0)
+            };
+
+            List<Task> tasks = new List<Task>();
+
+            for (int i = 0; i < 180; i++)
+            {
+                var drawInfo = DrawingHelper.GetEmptyGraphics(1000, 500);
+
+                using (SKPath path = new SKPath())
+                {
+                    path.AddArc(rect, 0, i);
+                    drawInfo.Canvas.DrawPath(path, arcPaint);
+
+                    tasks.Add(SaveToDisk(basePath, i, drawInfo.Bitmap, drawInfo.Canvas));
+                }
+            }
+
+            int random = new Random().Next(1_000_000_000);
+
+            var files = Directory.GetFiles(Path.Combine(basePath)).ToList().OrderBy(i => i);
+            string fileName = Path.Combine(baseOutputPath, $"movie_{random}.webm");
+
+            try
+            {
+                using (var collection = new MagickImageCollection())
+                {
+                    int i = 0;
+                    foreach (var file in files)
+                    {
+                        collection.Add(file);
+                        collection[i].AnimationDelay = 10; // in this example delay is 1000ms/1sec
+                                                           //collection[i].Flip();
+                        i++;
+                    }
+
+                    // Optionally reduce colors
+                    var settings = new QuantizeSettings();
+
+                    //settings.Colors = 256;
+                    //collection.Quantize(settings);
+
+                    // Optionally optimize the images (images should have the same size).
+                    //collection.Optimize();
+
+                    // Save gif
+                    collection.Write(fileName, MagickFormat.WebM);
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            await Context.Channel.SendFileAsync(fileName);
+        }
+        private void Conversion_OnProgress(object sender, Xabe.FFmpeg.Events.ConversionProgressEventArgs args)
+        {
+            if (args.Percent % 20 == 0)
+                Context?.Channel?.SendMessageAsync(args.Percent + "% done.");
         }
     }
 }

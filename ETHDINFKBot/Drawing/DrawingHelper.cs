@@ -183,12 +183,12 @@ namespace ETHDINFKBot.Drawing
             int currentValue = minVal;
 
             List<string> yAxisLabels = new List<string>();
-            yAxisLabels.Add(currentValue.ToString());
+            yAxisLabels.Add(currentValue.ToString("N0"));
 
             for (int i = 0; i < rows; i++)
             {
                 currentValue += intervalRow;
-                yAxisLabels.Add(currentValue.ToString() + suffix);
+                yAxisLabels.Add(currentValue.ToString("N0") + suffix);
             }
 
             return (xAxisLabels, yAxisLabels);
