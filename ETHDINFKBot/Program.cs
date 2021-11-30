@@ -961,7 +961,7 @@ namespace ETHDINFKBot
 
             await Task.Delay(TimeSpan.FromSeconds(20));
 
-            CollectFirstDailyPostMessages = false;
+            
 
             // Prevent entries that were created before midnight
             SocketMessage firstMessage = null;
@@ -971,6 +971,9 @@ namespace ETHDINFKBot
                 firstMessage = FirstDailyPostsCandidates.Where(i => i.CreatedAt.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1).Hour != 23).OrderBy(i => i.CreatedAt).FirstOrDefault();
                 await Task.Delay(TimeSpan.FromSeconds(2)); // Check each 5 seconds if a new message arrived
             } while (firstMessage != null);
+
+            // Disable collection of first daily post after one such post has been found
+            CollectFirstDailyPostMessages = false;
 
             var timeNow = SnowflakeUtils.FromSnowflake(firstMessage.Id).AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1); // CEST CONVERSION
 
