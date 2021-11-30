@@ -492,6 +492,13 @@ namespace ETHDINFKBot.Modules
         [Command("test", RunMode = RunMode.Async)]
         public async Task Progress()
         {
+            var author = Context.Message.Author;
+            if (author.Id != ETHDINFKBot.Program.Owner)
+            {
+                Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
             (string basePath, string baseOutputPath) = CleanAndCreateFolders();
 
             SKRect rect = new SKRect(100, 100, 200, 200);

@@ -105,22 +105,6 @@ namespace ETHDINFKBot
             await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
-        // https://stackoverflow.com/a/4423615/3144729
-        // TODO Move into a helper
-        private static string ToReadableString(TimeSpan span)
-        {
-            string formatted = string.Format("{0}{1}{2}{3}",
-                span.Duration().Days > 0 ? string.Format("{0:0} day{1}, ", span.Days, span.Days == 1 ? string.Empty : "s") : string.Empty,
-                span.Duration().Hours > 0 ? string.Format("{0:0} hour{1}, ", span.Hours, span.Hours == 1 ? string.Empty : "s") : string.Empty,
-                span.Duration().Minutes > 0 ? string.Format("{0:0} min{1}, ", span.Minutes, span.Minutes == 1 ? string.Empty : "s") : string.Empty,
-                span.Duration().Seconds > 0 ? string.Format("{0:0} sec{1}", span.Seconds, span.Seconds == 1 ? string.Empty : "s") : string.Empty);
-
-            if (formatted.EndsWith(", ")) formatted = formatted.Substring(0, formatted.Length - 2);
-
-            if (string.IsNullOrEmpty(formatted)) formatted = "0 seconds";
-
-            return formatted;
-        }
 
         // GET CPU USAGE
         // https://medium.com/@jackwild/getting-cpu-usage-in-net-core-7ef825831b8b
@@ -195,7 +179,7 @@ namespace ETHDINFKBot
                 builder.AddField(".NET Version", $"{netCoreVer?.ToString() ?? "N/A"}", true);
                 builder.AddField("Runtime Version", $"{runtimeVer ?? "N/A"}", true);
                 builder.AddField("OS Version", $"{osVersion?.ToString() ?? "N/A"}", true);
-                builder.AddField("Online for", $"{ToReadableString(applicationOnlineTime)}", true);
+                builder.AddField("Online for", $"{CommonHelper.ToReadableString(applicationOnlineTime)}", true);
                 builder.AddField("Processor Count", $"{processorCount.ToString("N0")}", true);
                 builder.AddField("Git Branch", $"{ThisAssembly.Git.Branch}", true);
                 builder.AddField("Git Commit", $"{ThisAssembly.Git.Commit}", true);

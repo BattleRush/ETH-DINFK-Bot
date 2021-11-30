@@ -351,7 +351,6 @@ namespace ETHDINFKBot
 
             DatabaseManager.Instance().SetAllSubredditsStatus();
             LoadChannelSettings();
-            DatabaseManager.Instance().AddBotStartUp(); // register bot startup time
 
             var config = new DiscordSocketConfig
             {
@@ -635,12 +634,18 @@ namespace ETHDINFKBot
 #if DEBUG
             guildId = 774286694794919986;
 #endif
+
+            var lastStartUp = DatabaseManager.Instance().GetLastBotStartUpTime();
+
             //ulong spamChannel = 768600365602963496;
             var guild = Program.Client.GetGuild(guildId);
 
             var textChannel = guild.GetTextChannel(DiscordHelper.DiscordChannels["spam"]);
             if (textChannel != null)
-                textChannel.SendMessageAsync($"Restarted with Branch: {ThisAssembly.Git.Branch} and Commit: {ThisAssembly.Git.Commit}. Bot client ready. <@{Program.Owner}>");
+                textChannel.SendMessageAsync($"Restarted with Branch: {ThisAssembly.Git.Branch} and Commit: {ThisAssembly.Git.Commit}. Last Uptime was: {CommonHelper.ToReadableString(lastStartUp - DateTime.Now)} Bot client ready. <@{Program.Owner}>");
+
+            // Register bot startup time when bot is ready
+            DatabaseManager.Instance().AddBotStartUp();
 
             // list should always be empty
             ChannelPositions = new Dictionary<ulong, int>();
@@ -1104,7 +1109,7 @@ namespace ETHDINFKBot
                 if (msg.Author.IsWebhook)
                 {
                     // Message was send by Webhook
-                    if(msg.Author.Id == 914168809068322827)
+                    if (msg.Author.Id == 914168809068322827)
                     {
                         // BattleRush's Helper Webhook Id
 

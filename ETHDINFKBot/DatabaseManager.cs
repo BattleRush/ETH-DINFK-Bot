@@ -1139,6 +1139,23 @@ namespace ETHDINFKBot
             }
         }
 
+        public DateTime GetLastBotStartUpTime()
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.BotStartUpTimes.Max(i => i.StartUpTime);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+
+            return DateTime.MinValue;
+        }
+
         public void AddPingStatistic(ulong userId, int count, SocketGuildUser sgUser)
         {
             // TODO Prevent duplicates -> DB Constraint
