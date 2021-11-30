@@ -315,11 +315,18 @@ WHERE DiscordChannelId = 768600365602963496";
 
             // Get users that havent pinged the role in the last 72h
             var sqlQuery = @"
-SELECT 
-    DiscordMessageId,
-    DiscordChannelId
-FROM DiscordMessages
-WHERE DiscordChannelId = 768600365602963496";
+    SELECT 
+        HOUR(PlacedDateTime), 
+        DATE(PlacedDateTime), 
+        COUNT(*)
+    FROM 
+        PlaceBoardHistory 
+    GROUP BY 
+        HOUR(PlacedDateTime),
+        DATE(PlacedDateTime)
+    ORDER BY
+        DATE(PlacedDateTime),
+        HOUR(PlacedDateTime)";
 
             Stopwatch watch = new Stopwatch();
 
@@ -327,58 +334,14 @@ WHERE DiscordChannelId = 768600365602963496";
 
 
             List<MessageInfo> messageTimes = new List<MessageInfo>();
-            using (ETHBotDBContext context = new ETHBotDBContext())
-            {
-                messageTimes = context.PlaceBoardHistory.AsQueryable().Select(i => new MessageInfo() { DateTime = new DateTimeOffset(i.PlacedDateTime, TimeSpan.Zero) }).ToList();
-            }
-            watch.Stop();
+
+
+
+            var queryResult = await SQLHelper.GetQueryResults(null, sqlQuery, true, 10_000_000, true, true);
+
 
             Context.Channel.SendMessageAsync($"Retreived data in {watch.ElapsedMilliseconds}ms");
 
-            //var queryResult = await SQLHelper.GetQueryResults(null, sqlQuery, true, 10_000_000, true, true);
-
-            List<MessageInfo> messageInfos = new List<MessageInfo>();
-
-            //foreach (var item in queryResult.Data)
-            //{
-            //    messageInfos.Add(new MessageInfo()
-            //    {
-            //        ChannelId = Convert.ToUInt64(item[1]),
-            //        DateTime = SnowflakeUtils.FromSnowflake(Convert.ToUInt64(item[1]))
-            //    });
-            //}
-
-            var firstDateTime = messageTimes.Min(i => i.DateTime).DateTime;
-            var lastDateTime = messageTimes.Max(i => i.DateTime).DateTime;
-
-            double maxFrames = 600;
-
-            int bound = (int)((lastDateTime - firstDateTime).TotalMinutes / maxFrames);
-
-            Context.Channel.SendMessageAsync($"Group by {bound} minutes, Total mins {(lastDateTime - firstDateTime).TotalMinutes}");
-
-            /*
-            var groups = messageTimes.GroupBy(x =>
-            {
-                var stamp = x;
-                stamp = stamp.AddMinutes(-(stamp.DateTime.Minute % bound));
-                stamp = stamp.AddMilliseconds(-stamp.DateTime.Millisecond - 1000 * stamp.DateTime.Second);
-                return stamp;
-            }).Select(g => new { TimeStamp = g.Key, Value = g.Count() }).ToList();
-            */
-
-            // https://stackoverflow.com/questions/47763874/how-to-linq-query-group-by-2-hours-interval
-            var groups = messageTimes.GroupBy(x =>
-            {
-                var stamp = x;
-                stamp.DateTime = stamp.DateTime.AddHours(-(stamp.DateTime.Hour % groupByHour));
-                stamp.DateTime = stamp.DateTime.AddMinutes(-(stamp.DateTime.Minute));
-                stamp.DateTime = stamp.DateTime.AddMilliseconds(-stamp.DateTime.Millisecond - 1000 * stamp.DateTime.Second);
-                stamp.DateTime = stamp.DateTime.AddTicks(-(stamp.DateTime.Ticks % 1000000)); // idk why this here is suddenly broken -> maybe new datetimeoffset?
-                return stamp.DateTime;
-            }).Select(g => new { Key = g.Key, Value = g.ToList() }).ToList();
-
-            var keys = groups.Select(x => x.Key).ToList();
 
             var parsedInfo = new ParsedMessageInfo()
             {
@@ -388,25 +351,36 @@ WHERE DiscordChannelId = 768600365602963496";
                 Color = new SKColor(255, 0, 0)
             };
 
-            var channels = DatabaseManager.Instance().GetDiscordAllChannels(Context.Guild.Id);
+            var firstDateTime = DateTimeOffset.MaxValue;
+            var lastDateTime = DateTimeOffset.MinValue;
 
-            try
+
+            foreach (var item in queryResult.Data)
             {
-                foreach (var item in groups)
-                {
-                    if (parsedInfo.Info.ContainsKey(item.Key))
-                        parsedInfo.Info[item.Key] += item.Value.Count;
-                    else
-                        parsedInfo.Info.Add(item.Key, item.Value.Count);
-                }
+                int hours = Convert.ToInt32(item[0]);
+                DateTime dateTime = Convert.ToDateTime(item[1]);
+                int count = Convert.ToInt32(item[2]);
+
+                var key = new DateTimeOffset(dateTime).AddHours(hours);
+                parsedInfo.Info.Add(key, count);
+
+                if (firstDateTime > key)
+                    firstDateTime = key;
+                if (lastDateTime < key)
+                    lastDateTime = key;
             }
-            catch (Exception ex)
-            {
-
-            }
 
 
-            Context.Channel.SendMessageAsync($"Total frames {groups.Count()}");
+            double maxFrames = 600;
+
+            int bound = (int)((lastDateTime - firstDateTime).TotalMinutes / maxFrames);
+
+            Context.Channel.SendMessageAsync($"Group by {bound} minutes, Total mins {(lastDateTime - firstDateTime).TotalMinutes}");
+
+
+
+
+            Context.Channel.SendMessageAsync($"Total frames {parsedInfo.Info.Count()}");
 
             //int val = 0;
             //foreach (var group in groups)
@@ -452,8 +426,8 @@ WHERE DiscordChannelId = 768600365602963496";
                     if (i % 250 == 0)
                         Context.Channel.SendMessageAsync($"Frame gen {i} out of {parsedInfo.Info.Count}");
 
-                    var startTime = keys.Take(i).Min();
-                    var endTime = keys.Take(i).Max();
+                    var startTime = parsedInfo.Info.Keys.Take(i).Min();
+                    var endTime = parsedInfo.Info.Keys.Take(i).Max();
 
                     int maxY = 0;
 
