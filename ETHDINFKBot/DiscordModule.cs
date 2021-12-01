@@ -648,6 +648,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         {
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
+
             try
             {
                 DiscordHelper.DiscordUserBirthday(Program.Client, Context.Guild.Id, Context.Message.Channel.Id, false);
@@ -675,7 +676,6 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 // load the user in question
                 if (userId.HasValue)
                     user = Program.Client.GetGuild(Program.BaseGuild).GetUser(userId.Value) as SocketGuildUser;
-
 
                 var pingHistory = DiscordHelper.GetTotalPingHistory(user, 30);
                 var builder = DiscordHelper.GetEmbedForPingHistory(pingHistory, user);
