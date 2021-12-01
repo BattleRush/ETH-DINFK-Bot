@@ -195,7 +195,7 @@ namespace ETHDINFKBot.Helpers
         public static async void DiscordUserBirthday(DiscordSocketClient client, ulong guildId, ulong channelId, bool reactions)
         {
             var spamChannel = client.GetGuild(guildId).GetTextChannel(channelId); // #spam
-
+            spamChannel.SendMessageAsync("test");
             try
             {
                 // TODO reschedule maybe for another time or add manual trigger
