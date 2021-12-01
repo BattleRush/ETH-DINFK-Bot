@@ -958,10 +958,7 @@ namespace ETHDINFKBot
             CollectFirstDailyPostMessages = true;
 
             // Wait for 20 sec (10 before midnight and 10 after)
-
             await Task.Delay(TimeSpan.FromSeconds(20));
-
-            
 
             // Prevent entries that were created before midnight
             SocketMessage firstMessage = null;

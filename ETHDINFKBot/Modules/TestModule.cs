@@ -510,23 +510,72 @@ namespace ETHDINFKBot.Modules
 
             List<Task> tasks = new List<Task>();
 
-            for (int i = 0; i < 180; i++)
+            // draw empty rectabgle
+            int frame = 0;
+
+            // Spawn the border
+            for (int i = 0; i < 10; i++)
             {
-                var drawInfo = DrawingHelper.GetEmptyGraphics(1000, 500);
+                var drawInfo = DrawingHelper.GetEmptyGraphics(505, 200);
 
-                using (SKPath path = new SKPath())
-                {
-                    path.AddArc(rect, 0, i);
-                    drawInfo.Canvas.DrawPath(path, arcPaint);
 
-                    tasks.Add(SaveToDisk(basePath, i, drawInfo.Bitmap, drawInfo.Canvas));
-                }
+                drawInfo.Canvas.DrawRect(70, 25, 365, 100, new SKPaint() { Color = new SKColor(255, 0, 0, (byte)(20 * i + 30)), IsStroke = true, Style = SKPaintStyle.Stroke, StrokeWidth = 4 });
+
+                tasks.Add(SaveToDisk(basePath, frame, drawInfo.Bitmap, drawInfo.Canvas));
+                frame++;
             }
+
+            // Standstill
+            for (int i = 0; i < 5; i++)
+            {
+                var drawInfo = DrawingHelper.GetEmptyGraphics(505, 200);
+
+                drawInfo.Canvas.DrawRect(70, 25, 365, 100, new SKPaint() { Color = new SKColor(255, 0, 0, 255), IsStroke = true, Style = SKPaintStyle.Stroke, StrokeWidth = 4 });
+
+                tasks.Add(SaveToDisk(basePath, frame, drawInfo.Bitmap, drawInfo.Canvas));
+                frame++;
+            }
+
+            int dayOfTheYear = 60;  Math.Min(DateTime.Now.DayOfYear, 365); // dont handle leap years for now TODO
+            for (int i = 0; i < dayOfTheYear + 10; i++)
+            {
+                var drawInfo = DrawingHelper.GetEmptyGraphics(505, 200);
+
+                for (int j = 0; j < Math.Min(i, 10); j++)
+                {
+                    drawInfo.Canvas.DrawRect(70, 23, Math.Min(i-j, dayOfTheYear), 100, new SKPaint() { Color = new SKColor(0, 255, 0, 25), Style = SKPaintStyle.Fill });
+
+                    if(j == i)
+                    {
+                        break;
+                    }
+                }
+
+                // border
+                drawInfo.Canvas.DrawRect(70, 25, 365, 100, new SKPaint() { Color = new SKColor(255, 0, 0, 255), IsStroke = true, Style = SKPaintStyle.Stroke, StrokeWidth = 4 });
+
+                tasks.Add(SaveToDisk(basePath, frame, drawInfo.Bitmap, drawInfo.Canvas));
+                frame++;
+            }
+
+
+            /*            for (int i = 0; i < 180; i++)
+                {
+                    var drawInfo = DrawingHelper.GetEmptyGraphics(500, 500);
+
+                    using (SKPath path = new SKPath())
+                    {
+                        path.AddArc(rect, 0, i);
+                        drawInfo.Canvas.DrawPath(path, arcPaint);
+
+                        tasks.Add(SaveToDisk(basePath, i, drawInfo.Bitmap, drawInfo.Canvas));
+                    }
+                }*/
 
             int random = new Random().Next(1_000_000_000);
 
             var files = Directory.GetFiles(Path.Combine(basePath)).ToList().OrderBy(i => i);
-            string fileName = Path.Combine(baseOutputPath, $"movie_{random}.webm");
+            string fileName = Path.Combine(baseOutputPath, $"movie_{random}.gif");
 
             try
             {
@@ -536,8 +585,12 @@ namespace ETHDINFKBot.Modules
                     foreach (var file in files)
                     {
                         collection.Add(file);
-                        collection[i].AnimationDelay = 10; // in this example delay is 1000ms/1sec
-                                                           //collection[i].Flip();
+                        collection[i].AnimationDelay = 1; // in this example delay is 1000ms/1sec
+
+                        if (i == 0)
+                            collection[i].AnimationIterations = 0;
+
+                        //collection[i].Flip();
                         i++;
                     }
 
@@ -551,7 +604,7 @@ namespace ETHDINFKBot.Modules
                     //collection.Optimize();
 
                     // Save gif
-                    collection.Write(fileName, MagickFormat.WebM);
+                    collection.Write(fileName, MagickFormat.Gif);
                 }
             }
             catch (Exception ex)

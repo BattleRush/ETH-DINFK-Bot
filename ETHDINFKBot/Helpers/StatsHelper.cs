@@ -11,8 +11,7 @@ using System.Threading.Tasks;
 namespace ETHDINFKBot.Helpers
 {
     public static class StatsHelper
-    {
-
+    { 
         public static Stream GetMessageGraph(DateTime from, DateTime to, int groupByMins = 5)
         {
             var dataPoints = DatabaseManager.Instance().GetMessageCountGrouped(from, to, groupByMins);
@@ -45,10 +44,8 @@ namespace ETHDINFKBot.Helpers
             var groupedReactions = reactions.GroupBy(i => i.DiscordEmoteId).ToDictionary(g => g.Key, g => g.Select(i => i.Count).Sum()).OrderByDescending(i => i.Value).Take(top); // sum to also get reaction removed
             var groupedTextEmotes = textEmotes.GroupBy(i => i.DiscordEmoteId).ToDictionary(g => g.Key, g => g.Count()).OrderByDescending(i => i.Value).Take(top);
 
-
             Dictionary<DiscordEmote, int> topReactions = new Dictionary<DiscordEmote, int>();
             Dictionary<DiscordEmote, int> topEmote = new Dictionary<DiscordEmote, int>();
-
 
             foreach (var item in groupedReactions)
             {
@@ -61,8 +58,6 @@ namespace ETHDINFKBot.Helpers
                 var emote = dbManager.GetDiscordEmoteById(item.Key);
                 topEmote.Add(emote, item.Value);
             }
-
-
 
             EmbedBuilder builder = new EmbedBuilder();
 
@@ -78,15 +73,10 @@ namespace ETHDINFKBot.Helpers
             builder.AddField("Top Emote", GetRankingString(topEmote), true);
             builder.AddField("Top Reactions", GetRankingString(topReactions), true);
 
-
             //Context.Channel.SendMessageAsync("", false, builder.Build());
-
-
-
             //return groups.ToDictionary(g => g.TimeStamp, g => g.Value);
 
             return builder;
-
         }
 
         private static string GetRankingString(Dictionary<DiscordEmote, int> emotes)
