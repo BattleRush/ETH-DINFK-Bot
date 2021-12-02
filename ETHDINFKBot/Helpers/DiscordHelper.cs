@@ -231,7 +231,7 @@ namespace ETHDINFKBot.Helpers
                 if (birthdayUsers.Count == 0)
                     await spamChannel.SendMessageAsync("No birthdays today <:sadge:851469686578741298> maybe tomorrow...");
 
-                spamChannel.SendMessageAsync(birthdayUsers.Count.ToString());
+                spamChannel.SendMessageAsync(string.Join(",", birthdayUsers.Select(i => i.DiscordUserId)));
 
                 foreach (var birthdayUser in birthdayUsers)
                 {
