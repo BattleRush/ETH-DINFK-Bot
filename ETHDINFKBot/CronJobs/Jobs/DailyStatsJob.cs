@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Discord.WebSocket;
+using ETHDINFKBot.Helpers;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +12,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 {
     public class DailyStatsJob : CronJobService
     {
-        private readonly ulong GeneralChatId = 747752542741725247; // todo config?
+        private readonly ulong GeneralChatId = DiscordHelper.DiscordChannels["spam"]; // todo config?
         private readonly ILogger<DailyStatsJob> _logger;
         private readonly string Name = "DailyStatsJob";
 
@@ -30,15 +32,30 @@ namespace ETHDINFKBot.CronJobs.Jobs
         {
             _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
             Console.WriteLine("Run DailyStatsJob");
-            foreach (var item in Program.Client.Guilds)
+
+            var guild = Program.Client.GetGuild(Program.BaseGuild);
+            var spamChannel = guild.GetTextChannel(GeneralChatId);
+            if (spamChannel != null)
             {
-                var generalChannel = item.GetTextChannel(GeneralChatId);
-                if (generalChannel != null)
-                {
-                    //generalChannel.SendMessageAsync($"{Name} is running");
-                }
+                var res = GenerateMovieLastDay(Program.BaseGuild, spamChannel).Result;
+                res = GenerateMovieLastWeek(Program.BaseGuild, spamChannel).Result;
             }
+
             return Task.CompletedTask;
+        }
+
+        private async Task<bool> GenerateMovieLastDay(ulong guildId, SocketTextChannel channel)
+        {
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24, 30, -1, 2, true, true, "");
+            await channel.SendFileAsync(fileName, "Message graph for last day");
+            return true;
+        }
+
+        private async Task<bool> GenerateMovieLastWeek(ulong guildId, SocketTextChannel channel)
+        {
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7, 30, -1, 10, true, true, "");
+            await channel.SendFileAsync(fileName, "Message graph for last week");
+            return true;
         }
 
         public override Task StopAsync(CancellationToken cancellationToken)

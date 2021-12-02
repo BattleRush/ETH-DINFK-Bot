@@ -152,7 +152,7 @@ namespace ETHDINFKBot
                        services.AddCronJob<DailyCleanup>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"50 * * * *"; }); // Changed to every hour at 30 mins
 
                        // TODO adjust for summer time in CET/CEST
-                       services.AddCronJob<DailyStatsJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 23 * * *"; });
+                       services.AddCronJob<DailyStatsJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"1 23 * * *"; });
 
                        // TODO adjust for summer time in CET/CEST
                        // TODO Enable for Maria DB
@@ -458,29 +458,21 @@ namespace ETHDINFKBot
             //var textChannel = guild.GetTextChannel(adminBotChannel);
             //textChannel.SendMessageAsync($"Global Channel Position lock has been updated. Reason: Channel {channelName} got {(delete ? "deleted" : "added")}.");
         }
+
         private Task Client_ChannelDestroyed(SocketChannel channel)
         {
-            if (channel is SocketGuildChannel guildChannel)
-            {
-                ulong guildId = Program.BaseGuild;
-
-#if DEBUG
-                guildId = 774286694794919986;
-#endif
-
-                var botSettings = DatabaseManager.Instance().GetBotSettings();
-
-                if (guildChannel.Guild.Id == guildId && botSettings.ChannelOrderLocked)
-                {
-                    ReloadChannelPositionLock(Client.GetGuild(guildId), true, guildChannel.Name);
-                }
-            }
-
+            ReloadLock(true, channel);
             return Task.CompletedTask;
         }
 
         private Task Client_ChannelCreated(SocketChannel channel)
         {
+            ReloadLock(false, channel);
+            return Task.CompletedTask;
+        }
+
+        private void ReloadLock(bool delete, SocketChannel channel)
+        {
             if (channel is SocketGuildChannel guildChannel)
             {
                 ulong guildId = Program.BaseGuild;
@@ -493,11 +485,9 @@ namespace ETHDINFKBot
 
                 if (guildChannel.Guild.Id == guildId && botSettings.ChannelOrderLocked)
                 {
-                    ReloadChannelPositionLock(Client.GetGuild(guildId), false, guildChannel.Name);
+                    ReloadChannelPositionLock(Client.GetGuild(guildId), delete, guildChannel.Name);
                 }
             }
-
-            return Task.CompletedTask;
         }
 
         private Task Client_ChannelUpdated(SocketChannel originalChannel, SocketChannel newChannel)
