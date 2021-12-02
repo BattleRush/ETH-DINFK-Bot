@@ -231,52 +231,33 @@ namespace ETHDINFKBot.Helpers
                 if (birthdayUsers.Count == 0)
                     await spamChannel.SendMessageAsync("No birthdays today <:sadge:851469686578741298> maybe tomorrow...");
 
-                spamChannel.SendMessageAsync(string.Join(", ", birthdayUsers.Select(i => i.DiscordUserId)));
-
                 foreach (var birthdayUser in birthdayUsers)
                 {
-                    //spamChannel.SendMessageAsync(birthdayUser.DiscordUserId + " start");
-
                     var userCreatedAt = SnowflakeUtils.FromSnowflake(birthdayUser.DiscordUserId).AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(DateTime.UtcNow) ? 2 : 1);
 
-                    //spamChannel.SendMessageAsync(birthdayUser.DiscordUserId + " got created at");
                     // - 1 because it starts the "next" year already
                     int age = new DateTime((now.Date - userCreatedAt.Date).Ticks).Year - 1;
 
-
-                    //spamChannel.SendMessageAsync(birthdayUser.DiscordUserId + " calc age");
 
                     // Include Feb 29 kids on non leap years
                     bool isFeb29Kid = userCreatedAt.Date.Day == 29 && userCreatedAt.Date.Month == 2
                         && !DateTime.IsLeapYear(now.Year);
 
-                    //spamChannel.SendMessageAsync(birthdayUser.DiscordUserId + " feb 29 check");
                     EmbedBuilder builder = new EmbedBuilder();
 
                     builder.WithTitle($"{birthdayUser.Nickname ?? birthdayUser.Username} is celebrating their {CommonHelper.DisplayWithSuffix(age)} Discord birthday today.");
                     builder.WithColor(128, 64, 255); // TODO color for Feb 29?
                     builder.WithDescription($"Happy Discord Birthday <:happe:816101506708799528> {(isFeb29Kid ? " (also for you Feb 29 xD)" : "")}");
 
-                    //spamChannel.SendMessageAsync(birthdayUser.DiscordUserId + " embed 1");
-
                     builder.AddField("Created at", userCreatedAt.ToString("F")); // TODO Check timezone stuff
-
-                    //spamChannel.SendMessageAsync(birthdayUser.DiscordUserId + " embed field");
 
                     var byUser = Program.Client.GetUser(birthdayUser.DiscordUserId);
 
-                    //spamChannel.SendMessageAsync(birthdayUser.DiscordUserId + " get user");
-                    if (byUser is null)
-                    {
-                        spamChannel.SendMessageAsync(birthdayUser.DiscordUserId + " by user is null");
-                        continue;
-                    }
+                    if (byUser is not null)
+                        builder.WithAuthor(byUser); // TODO Check User Download for offline users
 
                     builder.WithImageUrl(birthdayUser.AvatarUrl);
-                    builder.WithAuthor(byUser);
                     builder.WithTimestamp(SnowflakeUtils.FromSnowflake(birthdayUser.DiscordUserId)); // has to be in UTC
-
-                    //builder.WithCurrentTimestamp();
 
                     var message = await spamChannel.SendMessageAsync("", false, builder.Build());
 

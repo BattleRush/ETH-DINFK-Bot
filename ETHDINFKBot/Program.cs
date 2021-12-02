@@ -966,7 +966,7 @@ namespace ETHDINFKBot
             do
             {
                 firstMessage = FirstDailyPostsCandidates.Where(i => i.CreatedAt.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1).Hour != 23).OrderBy(i => i.CreatedAt).FirstOrDefault();
-                await Task.Delay(TimeSpan.FromSeconds(2)); // Check each 5 seconds if a new message arrived
+                await Task.Delay(TimeSpan.FromSeconds(2)); // Check each 2 seconds if a new message arrived
             } while (firstMessage == null);
 
             // Disable collection of first daily post after one such post has been found
