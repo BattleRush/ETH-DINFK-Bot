@@ -86,7 +86,7 @@ namespace ETHDINFKBot.Helpers
             Stopwatch watch = new Stopwatch();
 
             watch.Start();
-            var messageInfos = GetMessageInfos();
+            var messageInfos = GetMessageInfos(hoursAmount < 0 ? null : SnowflakeUtils.ToSnowflake(DateTimeOffset.Now.AddHours(hoursAmount * (-1))));
             watch.Stop();
 
             //await Context.Channel.SendMessageAsync($"Retreived data in {watch.ElapsedMilliseconds}ms");
@@ -107,7 +107,7 @@ namespace ETHDINFKBot.Helpers
 
             try
             {
-                await GenerateFrames(keys, parsedMessageInfos, basePath, drawDots); 
+                await GenerateFrames(keys, parsedMessageInfos, basePath, drawDots);
                 string fileName = await RunFFMpeg(basePath, baseOutputPath, fps, filePrefix);
 
                 return fileName;
@@ -163,7 +163,7 @@ namespace ETHDINFKBot.Helpers
             var files = Directory.GetFiles(Path.Combine(basePath)).ToList().OrderBy(i => i);
             string fileName = Path.Combine(baseOutputPath, $"movie_{random}.mp4");
 
-            if(!string.IsNullOrWhiteSpace(filePrefix))
+            if (!string.IsNullOrWhiteSpace(filePrefix))
                 fileName = Path.Combine(baseOutputPath, $"{filePrefix}_{random}.mp4");
 
             var conversion = new Conversion();
