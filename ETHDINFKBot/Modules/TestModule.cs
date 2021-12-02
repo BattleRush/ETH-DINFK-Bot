@@ -120,17 +120,77 @@ namespace ETHDINFKBot.Modules
         }
 
         // TODO add channel filtering
-        private List<MessageInfo> GetMessageInfos()
+        private List<MessageInfo> GetMessageInfos(ulong? fromSnowflakeId = null)
         {
             List<MessageInfo> messageTimes = new List<MessageInfo>();
             using (ETHBotDBContext context = new ETHBotDBContext())
-                messageTimes = context.DiscordMessages.AsQueryable().Select(i => new MessageInfo() { ChannelId = i.DiscordChannelId, DateTime = SnowflakeUtils.FromSnowflake(i.DiscordMessageId) }).ToList();
+                messageTimes = context.DiscordMessages.AsQueryable().Where(i => fromSnowflakeId != null && i.DiscordMessageId > fromSnowflakeId).Select(i => new MessageInfo() { ChannelId = i.DiscordChannelId, DateTime = SnowflakeUtils.FromSnowflake(i.DiscordMessageId) }).ToList();
 
             return messageTimes;
         }
 
+        private async Task<bool> GenerateFrames(IEnumerable<DateTimeOffset> keys, List<ParsedMessageInfo> parsedMessageInfos, string basePath, bool drawDots = true)
+        {
+            List<Task> tasks = new List<Task>();
 
-        private List<ParsedMessageInfo> GetParsedMessageInfos(IEnumerable<IGrouping<DateTimeOffset, MessageInfo>> groups, List<DiscordChannel> channels, ulong[] channelIds)
+            for (int i = 2; i <= keys.Count(); i++)
+            {
+                if (i % 250 == 0)
+                    await Context.Channel.SendMessageAsync($"Frame gen {i} out of {keys.Count()}");
+
+                var startTime = keys.Take(i).Min();
+                var endTime = keys.Take(i).Max();
+
+                int maxY = GetMaxValue(parsedMessageInfos, endTime);
+
+                var drawInfo = DrawingHelper.GetEmptyGraphics();
+                var padding = DrawingHelper.DefaultPadding;
+
+                padding.Left = 150; // large numbers
+                padding.Bottom = 150; // possible for many labels
+
+                var labels = DrawingHelper.GetLabels(startTime.DateTime, endTime.DateTime, 0, maxY, 6, 10, " msg");
+
+                var gridSize = new GridSize(drawInfo.Bitmap, padding);
+
+                DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, $"Messages count");
+
+                int xOffset = 0;
+                int rowIndex = -4; // workaround to use as many label space as possible
+
+                foreach (var item in parsedMessageInfos)
+                {
+                    // TODO optimize some lines + move to draw helper
+                    var dataPoints = item.Info.Where(j => j.Key <= endTime).OrderBy(i => i.Key).ToDictionary(j => j.Key.DateTime, j => j.Value);
+
+                    // todo add 2. y Axis on the right
+                    var dataPointList = DrawingHelper.GetPoints(dataPoints, gridSize, true, startTime.DateTime, endTime.DateTime, false, maxY);
+
+                    var drawLineInfo = DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, new SKPaint() { Color = item.Color }, 6, "msg in #" + item.ChannelName, rowIndex, xOffset, drawDots); //new Pen(System.Drawing.Color.LightGreen)
+
+                    if (drawLineInfo.newRow)
+                    {
+                        rowIndex++;
+                        xOffset = drawLineInfo.usedWidth;
+                    }
+                    else
+                    {
+                        xOffset += drawLineInfo.usedWidth;
+                    }
+
+                }
+
+                tasks.Add(SaveToDisk(basePath, i, drawInfo.Bitmap, drawInfo.Canvas));
+            }
+
+
+            Task.WaitAll(tasks.ToArray());
+
+            return true;
+        }
+
+
+        private List<ParsedMessageInfo> GetParsedMessageInfos(IEnumerable<IGrouping<DateTimeOffset, MessageInfo>> groups, List<DiscordChannel> channels, params ulong[] channelIds)
         {
             List<ParsedMessageInfo> parsedMessageInfos = new List<ParsedMessageInfo>();
 
@@ -170,7 +230,7 @@ namespace ETHDINFKBot.Modules
         }
 
         [Command("movie", RunMode = RunMode.Async)]
-        public async Task CreateMovie(bool stacked, int groupByHour, int fps, bool drawDots, params ulong[] channelIds)
+        public async Task CreateMovie(bool stacked, int groupByHours, int fps, bool drawDots, params ulong[] channelIds)
         {
             var author = Context.Message.Author;
             if (author.Id != ETHDINFKBot.Program.Owner)
@@ -191,28 +251,10 @@ namespace ETHDINFKBot.Modules
 
             List<MessageInfo> messageInfos = new List<MessageInfo>();
 
-
-            /*var firstDateTime = messageTimes.Min(i => i.DateTime);
-            var lastDateTime = messageTimes.Max(i => i.DateTime);*/
-
-            //double maxFrames = 600;
-
-            //int bound = (int)((lastDateTime - firstDateTime).TotalMinutes / maxFrames);
-
-            //await Context.Channel.SendMessageAsync($"Group by {bound} minutes, Total mins {(lastDateTime - firstDateTime).TotalMinutes}");
-
             // https://stackoverflow.com/questions/47763874/how-to-linq-query-group-by-2-hours-interval
-            var groups = messageTimes.GroupBy(x =>
-            {
-                var stamp = x;
-                stamp.DateTime = stamp.DateTime.AddHours(-(stamp.DateTime.Hour % groupByHour));
-                stamp.DateTime = stamp.DateTime.AddMinutes(-(stamp.DateTime.Minute));
-                stamp.DateTime = stamp.DateTime.AddMilliseconds(-stamp.DateTime.Millisecond - 1000 * stamp.DateTime.Second);
-                return stamp.DateTime;
-            });
 
+            var groups = GroupMessageInfoBy(groupByHours, -1, messageInfos);
             var keys = groups.Select(x => x.Key);
-
 
             var channels = DatabaseManager.Instance().GetDiscordAllChannels(Context.Guild.Id);
 
@@ -227,47 +269,99 @@ namespace ETHDINFKBot.Modules
 
             try
             {
-                List<Task> tasks = new List<Task>();
+                await GenerateFrames(keys, parsedMessageInfos, basePath, drawDots);
 
-                for (int i = 2; i <= keys.Count(); i++)
+                await Context.Channel.SendMessageAsync("Saving finished. Starting FFMpeg");
+
+
+                string fileName = await RunFFMpeg(basePath, baseOutputPath, fps);
+                await Context.Channel.SendFileAsync(fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while creating movie");
+                await Context.Channel.SendMessageAsync(ex.ToString());
+            }
+        }
+
+        private IEnumerable<IGrouping<DateTimeOffset, MessageInfo>> GroupMessageInfoBy(int groupByHours, int groupByMins, List<MessageInfo> messageInfos)
+        {
+            if (groupByHours > 0)
+            {
+                // Group by hours
+                return messageInfos.GroupBy(x =>
                 {
-                    if (i % 250 == 0)
-                        await Context.Channel.SendMessageAsync($"Frame gen {i} out of {keys.Count()}");
+                    var stamp = x;
+                    stamp.DateTime = stamp.DateTime.AddHours(-(stamp.DateTime.Hour % groupByHours));
+                    stamp.DateTime = stamp.DateTime.AddMinutes(-(stamp.DateTime.Minute));
+                    stamp.DateTime = stamp.DateTime.AddMilliseconds(-stamp.DateTime.Millisecond - 1000 * stamp.DateTime.Second);
+                    return stamp.DateTime;
+                });
+            }
+            else if (groupByMins > 0)
+            {
+                // Group by mins
+                return messageInfos.GroupBy(x =>
+                {
+                    var stamp = x;
+                    stamp.DateTime = stamp.DateTime.AddMinutes(-(stamp.DateTime.Minute % groupByMins));
+                    stamp.DateTime = stamp.DateTime.AddMilliseconds(-stamp.DateTime.Millisecond - 1000 * stamp.DateTime.Second);
+                    return stamp.DateTime;
+                });
+            }
 
-                    var startTime = keys.Take(i).Min();
-                    var endTime = keys.Take(i).Max();
+            return null; // Invalid input
+        }
 
-                    int maxY = GetMaxValue(parsedMessageInfos, endTime);
+        [Command("movietoday", RunMode = RunMode.Async)]
+        public async Task CreateMovieToday()
+        {
+            bool stacked = true;
+            bool drawDots = true;
+            int fps = 30;
 
-                    var drawInfo = DrawingHelper.GetEmptyGraphics();
-                    var padding = DrawingHelper.DefaultPadding;
+            var author = Context.Message.Author;
+            if (author.Id != ETHDINFKBot.Program.Owner)
+            {
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
 
-                    padding.Left = 200; // large numbers
 
-                    var labels = DrawingHelper.GetLabels(startTime.DateTime, endTime.DateTime, 0, maxY, 6, 10, " msg");
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
 
-                    var gridSize = new GridSize(drawInfo.Bitmap, padding);
+            // only today
+            var messageTimes = GetMessageInfos(SnowflakeUtils.ToSnowflake(new DateTimeOffset(DateTime.Now.Date)));
 
-                    DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, $"Messages count");
-                    int lineIndex = 0;
-                    foreach (var item in parsedMessageInfos)
-                    {
-                        // TODO optimize some lines + move to draw helper
-                        var dataPoints = item.Info.Where(j => j.Key <= endTime).OrderBy(i => i.Key).ToDictionary(j => j.Key.DateTime, j => j.Value);
+            watch.Stop();
 
-                        // todo add 2. y Axis on the right
-                        var dataPointList = DrawingHelper.GetPoints(dataPoints, gridSize, true, startTime.DateTime, endTime.DateTime, false, maxY);
+            await Context.Channel.SendMessageAsync($"Retreived data in {watch.ElapsedMilliseconds}ms");
 
-                        DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, 6, new SKPaint() { Color = item.Color }, "msg in #" + item.ChannelName, lineIndex, drawDots); //new Pen(System.Drawing.Color.LightGreen)
-                        lineIndex++;
-                    }
+            List<MessageInfo> messageInfos = new List<MessageInfo>();
 
-                    tasks.Add(SaveToDisk(basePath, i, drawInfo.Bitmap, drawInfo.Canvas));
-                }
+            // https://stackoverflow.com/questions/47763874/how-to-linq-query-group-by-2-hours-interval
+            // Group by 2 mins
 
-                await Context.Channel.SendMessageAsync("Finished processing, waiting for SaveToDisk");
 
-                Task.WaitAll(tasks.ToArray());
+            var groups = GroupMessageInfoBy(-1, 2, messageInfos);
+            var keys = groups.Select(x => x.Key);
+
+
+            var channels = DatabaseManager.Instance().GetDiscordAllChannels(Context.Guild.Id);
+
+            await Context.Channel.SendMessageAsync($"Total frames {groups.Count()}");
+
+            var parsedMessageInfos = GetParsedMessageInfos(groups, channels);
+
+            (string basePath, string baseOutputPath) = CleanAndCreateFolders();
+
+            if (stacked)
+                StackResults(parsedMessageInfos);
+
+            try
+            {
+                await GenerateFrames(keys, parsedMessageInfos, basePath, drawDots);
 
                 await Context.Channel.SendMessageAsync("Saving finished. Starting FFMpeg");
 
@@ -437,7 +531,6 @@ namespace ETHDINFKBot.Modules
                     var gridSize = new GridSize(drawInfo.Bitmap, padding);
 
                     DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, $"Messages count");
-                    int lineIndex = 0;
 
                     // TODO optimize some lines + move to draw helper
                     var dataPoints = parsedInfo.Info.Where(j => j.Key <= endTime).OrderBy(i => i.Key).ToDictionary(j => j.Key.DateTime, j => j.Value);
@@ -445,9 +538,7 @@ namespace ETHDINFKBot.Modules
                     // todo add 2. y Axis on the right
                     var dataPointList = DrawingHelper.GetPoints(dataPoints, gridSize, true, startTime.DateTime, endTime.DateTime, false, maxY);
 
-                    DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, 6, new SKPaint() { Color = parsedInfo.Color }, "msg in #" + parsedInfo.ChannelName, lineIndex, drawDots); //new Pen(System.Drawing.Color.LightGreen)
-                    lineIndex++;
-
+                    DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, new SKPaint() { Color = parsedInfo.Color }, 6, "msg in #" + parsedInfo.ChannelName, 0, 0, drawDots); //new Pen(System.Drawing.Color.LightGreen)
 
                     tasks.Add(SaveToDisk(basePath, i, drawInfo.Bitmap, drawInfo.Canvas));
                 }
@@ -536,16 +627,16 @@ namespace ETHDINFKBot.Modules
                 frame++;
             }
 
-            int dayOfTheYear = 60;  Math.Min(DateTime.Now.DayOfYear, 365); // dont handle leap years for now TODO
+            int dayOfTheYear = 60; Math.Min(DateTime.Now.DayOfYear, 365); // dont handle leap years for now TODO
             for (int i = 0; i < dayOfTheYear + 10; i++)
             {
                 var drawInfo = DrawingHelper.GetEmptyGraphics(505, 200);
 
                 for (int j = 0; j < Math.Min(i, 10); j++)
                 {
-                    drawInfo.Canvas.DrawRect(70, 23, Math.Min(i-j, dayOfTheYear), 100, new SKPaint() { Color = new SKColor(0, 255, 0, 25), Style = SKPaintStyle.Fill });
+                    drawInfo.Canvas.DrawRect(70, 23, Math.Min(i - j, dayOfTheYear), 100, new SKPaint() { Color = new SKColor(0, 255, 0, 25), Style = SKPaintStyle.Fill });
 
-                    if(j == i)
+                    if (j == i)
                     {
                         break;
                     }

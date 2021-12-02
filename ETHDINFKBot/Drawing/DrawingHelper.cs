@@ -200,7 +200,7 @@ namespace ETHDINFKBot.Drawing
 
             List<SKPoint> dataPoints = new List<SKPoint>();
 
-    
+
 
             // assume the dictionary is ordered
             // todo ensure that just in case
@@ -210,7 +210,7 @@ namespace ETHDINFKBot.Drawing
 
             long totalSec = (long)(lastDateTime - firstDateTime).TotalSeconds; // sec granularity
 
-            if(totalSec == 0) 
+            if (totalSec == 0)
                 return dataPoints;
 
             int minVal = int.MaxValue;
@@ -228,7 +228,7 @@ namespace ETHDINFKBot.Drawing
                 minVal = 0;
 
             // set max value incase its specified
-            if(maxValue > 0)
+            if (maxValue > 0)
                 maxVal = maxValue;
 
             foreach (var item in data)
@@ -278,21 +278,27 @@ namespace ETHDINFKBot.Drawing
             canvas.DrawText(text, new SKPoint(xOffset + labelWidth * index, heigth - yOffset), DefaultTextPaint); // TODO Correct paint?
         }
 
-        public static void DrawLine(SKCanvas canvas, SKBitmap bitmap, List<SKPoint> points, int size = 6, SKPaint paint = null, string text = "", int index = 0, bool drawPoint = false)
+        public static (bool newRow, int usedWidth) DrawLine(SKCanvas canvas, SKBitmap bitmap, List<SKPoint> points, SKPaint paint, int size = 6, string text = "", int labelRow = 0, int labelXOffset = 0, bool drawPoint = false)
         {
+            bool newRow = false;
+
+            if (paint == null)
+                paint = new SKPaint() { Color = WhiteColor };
+
             // Dont fill the rectangles
             paint.Style = SKPaintStyle.Stroke;
 
-            if (paint == null)
+            float usedLabelWidth = paint.MeasureText(text) + 50 /* buffer */;
+
+            if (labelXOffset + usedLabelWidth > bitmap.Width)
             {
-                paint = new SKPaint()
-                {
-                    Color = WhiteColor
-                };
+                labelRow++;
+                labelXOffset = 0;
+                newRow = true;
             }
 
             if (points.Count == 0)
-                return;
+                return (false, -1);
 
             SKPoint prevPoint = points.First();
             foreach (var point in points)
@@ -307,7 +313,6 @@ namespace ETHDINFKBot.Drawing
             // draw Legend
 
             int heigth = bitmap.Height;
-            int labelWidth = 250;
 
             int yOffset = 25; // TODO Make padding depending
             int xOffset = 120;
@@ -316,18 +321,16 @@ namespace ETHDINFKBot.Drawing
 
             var textPaint = MediumTextPaint;
 
+            int yBase = heigth - yOffset - (int)textPaint.TextSize / 2 + labelRow * 20;
+            int xBase = xOffset + labelXOffset;
+
             if (drawPoint)
-            {
-                int x = xOffset - iconDist / 2 + labelWidth * index;
-                int y = heigth - yOffset - (int)textPaint.TextSize / 2;
+                canvas.DrawRect(new SKRect(xBase - size / 2 - iconDist / 2, yBase - size / 2, xBase + size / 2 - iconDist / 2, yBase + size / 2), paint);
 
-                canvas.DrawRect(new SKRect(x - size / 2, y - size / 2, x + size / 2, y + size / 2), paint);
-            }
+            canvas.DrawLine(new SKPoint(xBase - iconDist, yBase), new SKPoint(xBase, yBase), paint);
+            canvas.DrawText(text, new SKPoint(xBase + 5, yBase + size / 2), textPaint); // TODO Correct paint?
 
-            //pen.Width = 2;
-
-            canvas.DrawLine(new SKPoint(xOffset - iconDist + labelWidth * index, heigth - yOffset - textPaint.TextSize / 2), new SKPoint(xOffset + labelWidth * index, heigth - yOffset - textPaint.TextSize / 2), paint);
-            canvas.DrawText(text, new SKPoint(xOffset + labelWidth * index, heigth - yOffset), textPaint); // TODO Correct paint?
+            return (newRow, (int)usedLabelWidth);
         }
 
         public static void DrawGrid(SKCanvas canvas, GridSize gridSize, Padding padding, List<string> xAxis, List<string> yAxis, string title, List<string> secondYAxis = null)

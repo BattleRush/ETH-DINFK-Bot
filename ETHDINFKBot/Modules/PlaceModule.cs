@@ -1241,9 +1241,9 @@ If you violate the server rules your pixels will be removed.
                     DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, $"Place Perf {list.Count} mins", labelsCount.YAxisLabels);
                     // todo add 2. y Axis on the right
 
-                    DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListAvg, 6, new SKPaint() { Color = new SKColor(255, 0, 0) }, "Avg in ms / min", 0, true); //new Pen(System.Drawing.Color.LightGreen)
-                    DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListCount, 6, new SKPaint() { Color = new SKColor(0, 255, 0) }, "Count / min", 1, true); // new Pen(System.Drawing.Color.Yellow)
-                    DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListFailed, 6, new SKPaint() { Color = new SKColor(0, 0, 255) }, "Failed Count / min", 2, true); // new Pen(System.Drawing.Color.DarkOrange)
+                    var info = DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListAvg, new SKPaint() { Color = new SKColor(255, 0, 0) }, 6, "Avg in ms / min", 0, 0, true); //new Pen(System.Drawing.Color.LightGreen)
+                    var info2 = DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListCount, new SKPaint() { Color = new SKColor(0, 255, 0) }, 6, "Count / min", 0, info.usedWidth, true); // new Pen(System.Drawing.Color.Yellow)
+                    var info3 = DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListFailed, new SKPaint() { Color = new SKColor(0, 0, 255) }, 6, "Failed Count / min", 0, info.usedWidth + info2.usedWidth, true); // new Pen(System.Drawing.Color.DarkOrange)
 
                     // TODO add methods to the drawing lib
                     if (listStartUpTimes.Count > 0)
