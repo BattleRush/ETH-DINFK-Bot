@@ -39,7 +39,7 @@ namespace ETHDINFKBot.Modules
 
             try
             {
-                string fileName = await MovieHelper.GenerateMovieForMessages(Context.Guild.Id, -1, fps, groupByHours, -1, stacked, drawDots, channelIds);
+                string fileName = await MovieHelper.GenerateMovieForMessages(Context.Guild.Id, -1, fps, groupByHours, -1, stacked, drawDots, "", channelIds);
                 await Context.Channel.SendFileAsync(fileName);
             }
             catch (Exception ex)
