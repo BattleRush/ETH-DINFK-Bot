@@ -124,7 +124,7 @@ namespace ETHDINFKBot.Modules
         {
             List<MessageInfo> messageTimes = new List<MessageInfo>();
             using (ETHBotDBContext context = new ETHBotDBContext())
-                messageTimes = context.DiscordMessages.AsQueryable().Where(i => fromSnowflakeId != null && i.DiscordMessageId > fromSnowflakeId).Select(i => new MessageInfo() { ChannelId = i.DiscordChannelId, DateTime = SnowflakeUtils.FromSnowflake(i.DiscordMessageId) }).ToList();
+                messageTimes = context.DiscordMessages.AsQueryable().Where(i => fromSnowflakeId  == null || (fromSnowflakeId != null && i.DiscordMessageId > fromSnowflakeId)).Select(i => new MessageInfo() { ChannelId = i.DiscordChannelId, DateTime = SnowflakeUtils.FromSnowflake(i.DiscordMessageId) }).ToList();
 
             return messageTimes;
         }
@@ -332,13 +332,11 @@ namespace ETHDINFKBot.Modules
             watch.Start();
 
             // only today
-            var messageTimes = GetMessageInfos(SnowflakeUtils.ToSnowflake(new DateTimeOffset(DateTime.Now.Date)));
+            var messageInfos = GetMessageInfos(SnowflakeUtils.ToSnowflake(new DateTimeOffset(DateTime.Now.Date)));
 
             watch.Stop();
 
             await Context.Channel.SendMessageAsync($"Retreived data in {watch.ElapsedMilliseconds}ms");
-
-            List<MessageInfo> messageInfos = new List<MessageInfo>();
 
             // https://stackoverflow.com/questions/47763874/how-to-linq-query-group-by-2-hours-interval
             // Group by 2 mins
