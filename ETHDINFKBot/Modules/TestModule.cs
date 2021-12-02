@@ -124,7 +124,7 @@ namespace ETHDINFKBot.Modules
         {
             List<MessageInfo> messageTimes = new List<MessageInfo>();
             using (ETHBotDBContext context = new ETHBotDBContext())
-                messageTimes = context.DiscordMessages.AsQueryable().Where(i => fromSnowflakeId  == null || (fromSnowflakeId != null && i.DiscordMessageId > fromSnowflakeId)).Select(i => new MessageInfo() { ChannelId = i.DiscordChannelId, DateTime = SnowflakeUtils.FromSnowflake(i.DiscordMessageId) }).ToList();
+                messageTimes = context.DiscordMessages.AsQueryable().Where(i => fromSnowflakeId == null || (fromSnowflakeId != null && i.DiscordMessageId > fromSnowflakeId)).Select(i => new MessageInfo() { ChannelId = i.DiscordChannelId, DateTime = SnowflakeUtils.FromSnowflake(i.DiscordMessageId) }).ToList();
 
             return messageTimes;
         }
@@ -146,8 +146,9 @@ namespace ETHDINFKBot.Modules
                 var drawInfo = DrawingHelper.GetEmptyGraphics();
                 var padding = DrawingHelper.DefaultPadding;
 
-                padding.Left = 150; // large numbers
+                padding.Left = 100; // large numbers
                 padding.Bottom = 150; // possible for many labels
+                padding.Right = 150; // add labels for max height
 
                 var labels = DrawingHelper.GetLabels(startTime.DateTime, endTime.DateTime, 0, maxY, 6, 10, " msg");
 
@@ -166,7 +167,12 @@ namespace ETHDINFKBot.Modules
                     // todo add 2. y Axis on the right
                     var dataPointList = DrawingHelper.GetPoints(dataPoints, gridSize, true, startTime.DateTime, endTime.DateTime, false, maxY);
 
-                    var drawLineInfo = DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, new SKPaint() { Color = item.Color }, 6, "msg in #" + item.ChannelName, rowIndex, xOffset, drawDots); //new Pen(System.Drawing.Color.LightGreen)
+                    var highestPoint = -1f;
+
+                    if (dataPoints.Count > 0)
+                        highestPoint = dataPointList.Min(i => i.Y);
+
+                    var drawLineInfo = DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, new SKPaint() { Color = item.Color }, 6, "#" + item.ChannelName, rowIndex, xOffset, drawDots, highestPoint); //new Pen(System.Drawing.Color.LightGreen)
 
                     if (drawLineInfo.newRow)
                     {
@@ -243,13 +249,11 @@ namespace ETHDINFKBot.Modules
             Stopwatch watch = new Stopwatch();
             watch.Start();
 
-            var messageTimes = GetMessageInfos();
+            var messageInfos = GetMessageInfos();
 
             watch.Stop();
 
             await Context.Channel.SendMessageAsync($"Retreived data in {watch.ElapsedMilliseconds}ms");
-
-            List<MessageInfo> messageInfos = new List<MessageInfo>();
 
             // https://stackoverflow.com/questions/47763874/how-to-linq-query-group-by-2-hours-interval
 
@@ -522,7 +526,7 @@ namespace ETHDINFKBot.Modules
                     var drawInfo = DrawingHelper.GetEmptyGraphics();
                     var padding = DrawingHelper.DefaultPadding;
 
-                    padding.Left = 200; // large numbers
+                    padding.Left = 150; // large numbers
 
                     var labels = DrawingHelper.GetLabels(startTime.DateTime, endTime.DateTime, 0, maxY, 6, 10, " msg");
 
@@ -535,8 +539,13 @@ namespace ETHDINFKBot.Modules
 
                     // todo add 2. y Axis on the right
                     var dataPointList = DrawingHelper.GetPoints(dataPoints, gridSize, true, startTime.DateTime, endTime.DateTime, false, maxY);
+                    
+                    var highestPoint = -1f;
 
-                    DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, new SKPaint() { Color = parsedInfo.Color }, 6, "msg in #" + parsedInfo.ChannelName, 0, 0, drawDots); //new Pen(System.Drawing.Color.LightGreen)
+                    if (dataPoints.Count > 0)
+                        highestPoint = dataPointList.Min(i => i.Y);
+
+                    DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, new SKPaint() { Color = parsedInfo.Color }, 6, "#" + parsedInfo.ChannelName, 0, 0, drawDots, highestPoint); //new Pen(System.Drawing.Color.LightGreen)
 
                     tasks.Add(SaveToDisk(basePath, i, drawInfo.Bitmap, drawInfo.Canvas));
                 }

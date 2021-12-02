@@ -278,7 +278,7 @@ namespace ETHDINFKBot.Drawing
             canvas.DrawText(text, new SKPoint(xOffset + labelWidth * index, heigth - yOffset), DefaultTextPaint); // TODO Correct paint?
         }
 
-        public static (bool newRow, int usedWidth) DrawLine(SKCanvas canvas, SKBitmap bitmap, List<SKPoint> points, SKPaint paint, int size = 6, string text = "", int labelRow = 0, int labelXOffset = 0, bool drawPoint = false)
+        public static (bool newRow, int usedWidth) DrawLine(SKCanvas canvas, SKBitmap bitmap, List<SKPoint> points, SKPaint paint, int size = 6, string text = "", int labelRow = 0, int labelXOffset = 0, bool drawPoint = false, float labelYHeight = -1)
         {
             bool newRow = false;
 
@@ -288,9 +288,11 @@ namespace ETHDINFKBot.Drawing
             // Dont fill the rectangles
             paint.Style = SKPaintStyle.Stroke;
 
+            int xOffset = 120; // TODO maybe trough padding
+
             float usedLabelWidth = paint.MeasureText(text) + 70 /* buffer */;
 
-            if (labelXOffset + usedLabelWidth > bitmap.Width)
+            if (xOffset + labelXOffset + usedLabelWidth > bitmap.Width)
             {
                 labelRow++;
                 labelXOffset = 0;
@@ -315,7 +317,7 @@ namespace ETHDINFKBot.Drawing
             int heigth = bitmap.Height;
 
             int yOffset = 25; // TODO Make padding depending
-            int xOffset = 120;
+            
 
             int iconDist = 20;
 
@@ -329,6 +331,14 @@ namespace ETHDINFKBot.Drawing
 
             canvas.DrawLine(new SKPoint(xBase - iconDist, yBase), new SKPoint(xBase, yBase), paint);
             canvas.DrawText(text, new SKPoint(xBase + 5, yBase + size), textPaint); // TODO Correct paint?
+
+            if(labelYHeight > 0)
+            {
+                var specialPaint = textPaint;
+                specialPaint.Color = paint.Color;
+
+                canvas.DrawText(text, new SKPoint(bitmap.Width - 140 /* TODO dynamic trough padding */, labelYHeight), specialPaint); // TODO Correct paint?
+            }
 
             return (newRow, (int)usedLabelWidth);
         }
