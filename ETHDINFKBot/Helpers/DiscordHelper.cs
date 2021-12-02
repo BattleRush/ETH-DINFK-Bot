@@ -247,7 +247,7 @@ namespace ETHDINFKBot.Helpers
 
                     builder.WithTitle($"{birthdayUser.Nickname ?? birthdayUser.Username} is celebrating their {CommonHelper.DisplayWithSuffix(age)} Discord birthday today.");
                     builder.WithColor(128, 64, 255); // TODO color for Feb 29?
-                    builder.WithDescription($"Happy Discord Birthday <@{birthdayUser.DiscordUserId}> <:happe:816101506708799528> {(isFeb29Kid ? " (also for you Feb 29 xD)" : "")}");
+                    builder.WithDescription($"Happy Discord Birthday <@{birthdayUser.DiscordUserId}> <:happe:816101506708799528> {(isFeb29Kid ? " (also for you Feb 29 xD)" : "")}"); // TODO maybe send it in the msg bug edited without a real ping
 
                     builder.AddField("Created at", userCreatedAt.ToString("F")); // TODO Check timezone stuff
 
@@ -260,6 +260,7 @@ namespace ETHDINFKBot.Helpers
                     builder.WithTimestamp(SnowflakeUtils.FromSnowflake(birthdayUser.DiscordUserId)); // has to be in UTC
 
                     var message = await spamChannel.SendMessageAsync("", false, builder.Build());
+                    await message.ModifyAsync(i => i.Content = $"<@{birthdayUser.DiscordUserId}>");
 
                     if (reactions)
                     {
