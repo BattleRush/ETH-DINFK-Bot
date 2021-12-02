@@ -288,7 +288,7 @@ namespace ETHDINFKBot.Drawing
             // Dont fill the rectangles
             paint.Style = SKPaintStyle.Stroke;
 
-            float usedLabelWidth = paint.MeasureText(text) + 50 /* buffer */;
+            float usedLabelWidth = paint.MeasureText(text) + 70 /* buffer */;
 
             if (labelXOffset + usedLabelWidth > bitmap.Width)
             {
@@ -328,7 +328,7 @@ namespace ETHDINFKBot.Drawing
                 canvas.DrawRect(new SKRect(xBase - size / 2 - iconDist / 2, yBase - size / 2, xBase + size / 2 - iconDist / 2, yBase + size / 2), paint);
 
             canvas.DrawLine(new SKPoint(xBase - iconDist, yBase), new SKPoint(xBase, yBase), paint);
-            canvas.DrawText(text, new SKPoint(xBase + 5, yBase + size / 2), textPaint); // TODO Correct paint?
+            canvas.DrawText(text, new SKPoint(xBase + 5, yBase + size), textPaint); // TODO Correct paint?
 
             return (newRow, (int)usedLabelWidth);
         }
