@@ -135,8 +135,8 @@ namespace ETHDINFKBot.Modules
 
             for (int i = 2; i <= keys.Count(); i++)
             {
-                if (i % 250 == 0)
-                    await Context.Channel.SendMessageAsync($"Frame gen {i} out of {keys.Count()}");
+                //if (i % 250 == 0)
+                //    await Context.Channel.SendMessageAsync($"Frame gen {i} out of {keys.Count()}");
 
                 var startTime = keys.Take(i).Min();
                 var endTime = keys.Take(i).Max();
