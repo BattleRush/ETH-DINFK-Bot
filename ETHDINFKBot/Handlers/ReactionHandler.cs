@@ -20,6 +20,7 @@ namespace ETHDINFKBot.Handlers
 
         private SocketGuild SocketGuild;
         private IMessage Message;
+        private SocketMessage SocketMessage;
         private SocketGuildChannel SocketGuildChannel;
         private SocketReaction SocketReaction;
         private SocketGuildUser SocketGuildMessageUser;
@@ -38,6 +39,7 @@ namespace ETHDINFKBot.Handlers
             Message = message;
             if (Message != null)
             {
+                SocketMessage = message as SocketMessage;
                 SocketReaction = socketReaction;
                 SocketGuildMessageUser = message.Author as SocketGuildUser;
                 SocketGuildReactionUser = socketReaction.User.Value as SocketGuildUser; // TODO make sure user is never null
@@ -142,12 +144,14 @@ namespace ETHDINFKBot.Handlers
         {
             if (reactionEmote.Id == DiscordEmotes["savethis"] && !SocketGuildReactionUser.IsBot)
             {
+                DiscordHelper.SaveMessage(SocketTextChannel, SocketGuildReactionUser, SocketMessage, false);
+
                 // Save the post link
 
                 /*          var user = DatabaseManager.GetDiscordUserById(arg1.Value.Author.Id); // Verify the user is created but should actually be available by this poitn
                 var saveBy = DatabaseManager.GetDiscordUserById(arg3.User.Value.Id); // Verify the user is created but should actually be available by this poitn
                 */
-
+                /*
                 if (DatabaseManager.IsSaveMessage(Message.Id, SocketGuildReactionUser.Id))
                 {
                     // dont allow double saves
@@ -201,9 +205,12 @@ namespace ETHDINFKBot.Handlers
                     msg = await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
                         $"{item.Url} {Environment.NewLine}" +
                         $"Direct link: [{SocketGuild.Name}/{SocketGuildChannel.Name}/by {authorUsername}] <{link}>");
-                }
+                }*/
+
+
 
                 // Only temp until the function is disabled
+                /*
                 msg = await SocketGuildReactionUser.SendMessageAsync(@$"⚠⚠⚠ **IMPORTANT ⚠⚠⚠
 Please use the new method to save messages. 
 Save via reactions will be disabled in the near future. 
@@ -256,7 +263,7 @@ https://cdn.discordapp.com/attachments/843957532380889098/914184155342995456/unk
                     var saveMessage = await SocketTextChannel.SendMessageAsync("", false, builder.Build());
 
                     DiscordHelper.DeleteMessage(saveMessage, TimeSpan.FromSeconds(45));
-                }
+                }*/
             }
         }
 

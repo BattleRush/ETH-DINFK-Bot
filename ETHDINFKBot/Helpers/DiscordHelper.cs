@@ -41,6 +41,54 @@ namespace ETHDINFKBot.Helpers
             return roleId;
         }
 
+        public static async Task<bool> SaveMessage(SocketTextChannel socketTextChannel, SocketGuildUser user, SocketMessage socketMessage, bool byCommand)
+        {
+            var dmManager = DatabaseManager.Instance();
+
+            if (dmManager.IsSaveMessage(socketMessage.Id, user.Id))
+            {
+                // dont allow double saves
+                return false;
+            }
+
+            string authorUsername = user.Username; // nickname?
+
+            var link = $"https://discord.com/channels/{socketTextChannel.Guild.Id}/{socketTextChannel.Id}/{socketMessage.Id}";
+
+            // TODO create common place for button ids
+            var builderComponent = new ComponentBuilder().WithButton("Delete Message", "delete-saved-message-id", ButtonStyle.Danger);
+
+            EmbedBuilder builder = new EmbedBuilder();
+
+            builder.WithTitle($"Saved message from {authorUsername}");
+            builder.WithColor(0, 128, 255);
+            builder.WithDescription(socketMessage.Content);
+
+            builder.AddField("Guild", socketTextChannel.Guild.Name, true);
+            builder.AddField("Channel", socketTextChannel.Name, true);
+            builder.AddField("User", socketMessage?.Author?.Username ?? "N/A", true);
+            builder.AddField("DirectLink", $"[Link to the message]({link})");
+
+            builder.WithAuthor(user);
+            builder.WithCurrentTimestamp();
+
+
+            var message = await user.SendMessageAsync("", false, builder.Build(), null, null, builderComponent.Build(), socketMessage.Embeds.ToArray());
+            foreach (var item in socketMessage.Attachments)
+            {
+                await user.SendMessageAsync(item.Url, false, null, null, null, builderComponent.Build());
+            }
+
+            dmManager.SaveMessage(socketMessage.Id, socketMessage?.Author?.Id ?? user.Id, user.Id, link, socketMessage.Content, byCommand, message.Id);
+
+            if (!byCommand)
+            {
+                // TODO give hint to use the new way
+            }
+
+            return true;
+        }
+
         public static List<PingHistory> GetTotalPingHistory(SocketGuildUser user, int limit = 30)
         {
             var dbManager = DatabaseManager.Instance();

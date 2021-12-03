@@ -86,7 +86,7 @@ ORDER BY MAX(PH.DiscordMessageId)";
                         var guildUser = guild.GetUser(userId);
                         if (guildUser == null)
                             continue;
-
+                        
                         if (guildUser.Roles.Any(i => i.Id == pingHellRoleId))
                         {
                             // remove the role from user
