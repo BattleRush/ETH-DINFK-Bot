@@ -93,6 +93,28 @@ namespace ETHDINFKBot.Modules
             }
         }
 
+        [Command("movieemote", RunMode = RunMode.Async)]
+        public async Task CreateMovieEmote()
+        {
+            var author = Context.Message.Author;
+            if (author.Id != ETHDINFKBot.Program.Owner)
+            {
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
+            try
+            {
+                string fileName = await MovieHelper.GenerateMovieForEmotes(Context.Guild.Id);
+                await Context.Channel.SendFileAsync(fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while creating movie");
+                await Context.Channel.SendMessageAsync(ex.ToString());
+            }
+        }
+
 
 
         [Command("movieplace", RunMode = RunMode.Async)]
@@ -125,7 +147,7 @@ namespace ETHDINFKBot.Modules
             watch.Start();
 
 
-            List<MessageInfo> messageTimes = new List<MessageInfo>();
+            List<GraphEntryInfo> messageTimes = new List<GraphEntryInfo>();
 
 
 
@@ -135,7 +157,7 @@ namespace ETHDINFKBot.Modules
             Context.Channel.SendMessageAsync($"Retreived data in {watch.ElapsedMilliseconds}ms");
 
 
-            var parsedInfo = new ParsedMessageInfo()
+            var parsedInfo = new ParsedGraphInfo()
             {
                 ChannelId = 1,
                 Info = new Dictionary<DateTimeOffset, int>(),
@@ -243,7 +265,7 @@ namespace ETHDINFKBot.Modules
 
                     var highestPoint = -1f;
 
-                    if (dataPoints.Count > 0)
+                    if (dataPoints.Count() > 0)
                         highestPoint = dataPointList.Min(i => i.Y);
 
                     DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, new SKPaint() { Color = parsedInfo.Color }, 6, "#" + parsedInfo.ChannelName, 0, 0, drawDots, highestPoint); //new Pen(System.Drawing.Color.LightGreen)

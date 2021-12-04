@@ -278,7 +278,7 @@ namespace ETHDINFKBot.Drawing
             canvas.DrawText(text, new SKPoint(xOffset + labelWidth * index, heigth - yOffset), DefaultTextPaint); // TODO Correct paint?
         }
 
-        public static (bool newRow, int usedWidth) DrawLine(SKCanvas canvas, SKBitmap bitmap, List<SKPoint> points, SKPaint paint, int size = 6, string text = "", int labelRow = 0, int labelXOffset = 0, bool drawPoint = false, float labelYHeight = -1)
+        public static (bool newRow, int usedWidth) DrawLine(SKCanvas canvas, SKBitmap bitmap, List<SKPoint> points, SKPaint paint, int size = 6, string text = "", int labelRow = 0, int labelXOffset = 0, bool drawPoint = false, float labelYHeight = -1, SKBitmap bitmapIcon = null)
         {
             bool newRow = false;
 
@@ -338,6 +338,7 @@ namespace ETHDINFKBot.Drawing
                 specialPaint.Color = paint.Color;
 
                 canvas.DrawText(text, new SKPoint(bitmap.Width - 140 /* TODO dynamic trough padding */, labelYHeight), specialPaint); // TODO Correct paint?
+                canvas.DrawBitmap(bitmapIcon, new SKPoint(bitmap.Width - 140 /* TODO dynamic trough padding */, labelYHeight));
             }
 
             return (newRow, (int)usedLabelWidth);

@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace ETHDINFKBot.Classes
 {
-    public class MessageInfo
+    public class GraphEntryInfo
     {
-        public ulong ChannelId { get; set; }
+        public ulong KeyId { get; set; }
         public DateTimeOffset DateTime { get; set; }
     }
 }
