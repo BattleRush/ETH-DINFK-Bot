@@ -64,6 +64,7 @@ namespace ETHDINFKBot.Helpers
                     stamp.DateTime = stamp.DateTime.AddHours(-(stamp.DateTime.Hour % groupByHours));
                     stamp.DateTime = stamp.DateTime.AddMinutes(-(stamp.DateTime.Minute));
                     stamp.DateTime = stamp.DateTime.AddMilliseconds(-stamp.DateTime.Millisecond - 1000 * stamp.DateTime.Second);
+                    stamp.DateTime = stamp.DateTime.AddTicks(-(stamp.DateTime.Ticks % 100_000)); // TODO Do properly
                     return stamp.DateTime;
                 });
             }
@@ -75,6 +76,7 @@ namespace ETHDINFKBot.Helpers
                     var stamp = x;
                     stamp.DateTime = stamp.DateTime.AddMinutes(-(stamp.DateTime.Minute % groupByMins));
                     stamp.DateTime = stamp.DateTime.AddMilliseconds(-stamp.DateTime.Millisecond - 1000 * stamp.DateTime.Second);
+                    stamp.DateTime = stamp.DateTime.AddTicks(-(stamp.DateTime.Ticks % 100_000)); // TODO Do properly
                     return stamp.DateTime;
                 });
             }

@@ -41,6 +41,7 @@ namespace ETHDINFKBot.Helpers
             return roleId;
         }
 
+        // TODO Handle  Unhandled exception. Discord.Net.HttpException: The server responded with error 50007: Cannot send messages to this user
         public static async Task<bool> SaveMessage(SocketTextChannel socketTextChannel, SocketGuildUser user, SocketMessage socketMessage, bool byCommand)
         {
             var dmManager = DatabaseManager.Instance();
