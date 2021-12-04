@@ -94,7 +94,7 @@ namespace ETHDINFKBot.Modules
         }
 
         [Command("movieemote", RunMode = RunMode.Async)]
-        public async Task CreateMovieEmote()
+        public async Task CreateMovieEmote(int days, int groupByHours)
         {
             var author = Context.Message.Author;
             if (author.Id != ETHDINFKBot.Program.Owner)
@@ -105,7 +105,29 @@ namespace ETHDINFKBot.Modules
 
             try
             {
-                string fileName = await MovieHelper.GenerateMovieForEmotes(Context.Guild.Id);
+                string fileName = await MovieHelper.GenerateMovieForEmotes(Context.Guild.Id, days, groupByHours);
+                await Context.Channel.SendFileAsync(fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while creating movie");
+                await Context.Channel.SendMessageAsync(ex.ToString());
+            }
+        }
+
+        [Command("movieuser", RunMode = RunMode.Async)]
+        public async Task CreateMovieUsers()
+        {
+            var author = Context.Message.Author;
+            if (author.Id != ETHDINFKBot.Program.Owner)
+            {
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
+            try
+            {
+                string fileName = await MovieHelper.GenerateMovieForUsers(Context.Guild.Id, 24 * 7 * 30, 30, 6, -1, true, true, "");
                 await Context.Channel.SendFileAsync(fileName);
             }
             catch (Exception ex)

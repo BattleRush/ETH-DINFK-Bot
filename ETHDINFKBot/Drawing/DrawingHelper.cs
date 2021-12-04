@@ -338,7 +338,9 @@ namespace ETHDINFKBot.Drawing
                 specialPaint.Color = paint.Color;
 
                 canvas.DrawText(text, new SKPoint(bitmap.Width - 140 /* TODO dynamic trough padding */, labelYHeight), specialPaint); // TODO Correct paint?
-                canvas.DrawBitmap(bitmapIcon, new SKPoint(bitmap.Width - 140 /* TODO dynamic trough padding */, labelYHeight));
+                
+                if(bitmapIcon != null)
+                    canvas.DrawBitmap(bitmapIcon, new SKPoint(bitmap.Width - 140 /* TODO dynamic trough padding */, labelYHeight));
             }
 
             return (newRow, (int)usedLabelWidth);

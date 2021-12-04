@@ -1728,7 +1728,7 @@ namespace ETHDINFKBot
                 try
                 {
                     var savedMessage = context.SavedMessages.SingleOrDefault(i => i.DMDiscordMessageId == messageId);
-                    if(savedMessage != null)
+                    if (savedMessage != null)
                     {
                         savedMessage.DeletedFromDM = true;
                         context.SaveChanges();

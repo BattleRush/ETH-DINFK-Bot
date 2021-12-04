@@ -84,7 +84,7 @@ namespace ETHDINFKBot.Helpers
             return null; // Invalid input
         }
 
-        public static async Task<string> GenerateMovieForEmotes(ulong guildId)
+        public static async Task<string> GenerateMovieForEmotes(ulong guildId, int days, int groupByHours)
         {
             var emotes = Program.Client.GetGuild(guildId).Emotes;
 
@@ -93,7 +93,7 @@ namespace ETHDINFKBot.Helpers
 
             var dbManager = DatabaseManager.Instance();
 
-            var emoteHistoryList = dbManager.GetEmoteHistoryUsage(DateTime.Now.AddDays(-7), DateTime.Now);
+            var emoteHistoryList = dbManager.GetEmoteHistoryUsage(DateTime.Now.AddDays(-days), DateTime.Now);
 
             var reactions = emoteHistoryList.Where(i => i.IsReaction);
             var textEmotes = emoteHistoryList.Where(i => !i.IsReaction);
@@ -112,7 +112,7 @@ namespace ETHDINFKBot.Helpers
                     continue;
             }*/
 
-            var groups = GroupGraphEntryInfoBy(1, -1, reactions2);
+            var groups = GroupGraphEntryInfoBy(groupByHours, -1, reactions2);
             var keys = groups.Select(x => x.Key);
 
             var parsedMessageInfos = GetEmoteParsedMessageInfos(groups, emotes);
@@ -126,6 +126,48 @@ namespace ETHDINFKBot.Helpers
             {
                 await GenerateFrames(keys, parsedMessageInfos, basePath, true);
                 string fileName = await RunFFMpeg(basePath, baseOutputPath, 30);
+
+                return fileName;
+            }
+            catch (Exception ex)
+            {
+                //_logger.LogError(ex, "Error while creating movie");
+                return null;
+            }
+        }
+
+        public static async Task<string> GenerateMovieForUsers(ulong guildId, int hoursAmount = -1, int fps = 30, int groupByHours = 24, int groupByMinutes = -1, bool stacked = true, bool drawDots = true, string filePrefix = "", params ulong[] channelIds)
+        {
+            Stopwatch watch = new Stopwatch();
+
+            watch.Start();
+            var messageInfos = GetUserMessageInfos(hoursAmount < 0 ? null : SnowflakeUtils.ToSnowflake(DateTimeOffset.Now.AddHours(hoursAmount * (-1))));
+            watch.Stop();
+
+            var userIdsOfTopPosters = messageInfos.GroupBy(i => i.KeyId).OrderByDescending(i => i.Count()).Take(50).Select(i => i.Key);
+
+            //await Context.Channel.SendMessageAsync($"Retreived data in {watch.ElapsedMilliseconds}ms");
+
+            var groups = GroupGraphEntryInfoBy(groupByHours, groupByMinutes, messageInfos);
+            var keys = groups.Select(x => x.Key);
+
+            var users = DatabaseManager.Instance().GetDiscordUsers();
+
+            users = users.Where(i => userIdsOfTopPosters.Contains(i.DiscordUserId)).ToList();
+
+            //await Context.Channel.SendMessageAsync($"Total frames {groups.Count()}");
+
+            var parsedMessageInfos = GetUserParsedMessageInfos(groups, users);
+
+            (string basePath, string baseOutputPath) = CleanAndCreateMovieFolders();
+
+            if (stacked)
+                StackResults(parsedMessageInfos);
+
+            try
+            {
+                await GenerateFrames(keys, parsedMessageInfos, basePath, drawDots);
+                string fileName = await RunFFMpeg(basePath, baseOutputPath, fps, filePrefix);
 
                 return fileName;
             }
@@ -246,6 +288,18 @@ namespace ETHDINFKBot.Helpers
             return messageTimes;
         }
 
+        private static List<GraphEntryInfo> GetUserMessageInfos(ulong? fromSnowflakeId = null)
+        {
+            List<GraphEntryInfo> messageTimes = new List<GraphEntryInfo>();
+            using (ETHBotDBContext context = new ETHBotDBContext())
+                messageTimes = context.DiscordMessages.AsQueryable()
+                    .Where(i => fromSnowflakeId == null || (fromSnowflakeId != null && i.DiscordMessageId > fromSnowflakeId))
+                    .Select(i => new GraphEntryInfo() { KeyId = i.DiscordUserId, DateTime = SnowflakeUtils.FromSnowflake(i.DiscordMessageId) })
+                    .ToList();
+
+            return messageTimes;
+        }
+
         private static async Task<bool> GenerateFrames(IEnumerable<DateTimeOffset> keys, List<ParsedGraphInfo> parsedMessageInfos, string basePath, bool drawDots = true)
         {
             List<Task> tasks = new List<Task>();
@@ -351,6 +405,41 @@ namespace ETHDINFKBot.Helpers
             return parsedMessageInfos;
         }
 
+        private static List<ParsedGraphInfo> GetUserParsedMessageInfos(IEnumerable<IGrouping<DateTimeOffset, GraphEntryInfo>> groups, List<DiscordUser> users)
+        {
+            List<ParsedGraphInfo> parsedMessageInfos = new List<ParsedGraphInfo>();
+
+            foreach (var item in groups)
+            {
+                foreach (var value in item)
+                {
+                    if (!parsedMessageInfos.Any(i => i.DiscordUserId == value.KeyId))
+                    {
+                        var userDB = users.SingleOrDefault(i => i.DiscordUserId == value.KeyId);
+                        if (userDB == null)
+                            continue;
+
+                        parsedMessageInfos.Add(new ParsedGraphInfo()
+                        {
+                            DiscordUserId = value.KeyId,
+                            Info = new Dictionary<DateTimeOffset, int>(),
+                            DiscordUsername = userDB.Username,
+                            Color = new SKColor((byte)new Random().Next(0, 255), (byte)new Random().Next(0, 255), (byte)new Random().Next(0, 255)),
+                            Image = DownloadBitmap(userDB.AvatarUrl)
+                        });
+                    }
+
+                    var userInfo = parsedMessageInfos.Single(i => i.DiscordUserId == value.KeyId);
+                    if (userInfo.Info.ContainsKey(value.DateTime))
+                        userInfo.Info[value.DateTime] += 1;
+                    else
+                        userInfo.Info.Add(value.DateTime, 1);
+                }
+            }
+
+            return parsedMessageInfos;
+        }
+
         private static List<ParsedGraphInfo> GetEmoteParsedMessageInfos(IEnumerable<IGrouping<DateTimeOffset, GraphEntryInfo>> groups, IReadOnlyCollection<GuildEmote> emotes)
         {
             List<ParsedGraphInfo> parsedMessageInfos = new List<ParsedGraphInfo>();
@@ -388,6 +477,9 @@ namespace ETHDINFKBot.Helpers
 
         private static SKBitmap DownloadBitmap(string url)
         {
+            if (string.IsNullOrEmpty(url))
+                return null;
+
             HttpWebResponse response = null;
             var request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = "HEAD";
