@@ -539,12 +539,13 @@ namespace ETHDINFKBot.Modules
 
 
                 var channels = guild.Channels;
+                var categories = guild.CategoryChannels;
 
                 var sortedDict = from entry in Program.ChannelPositions orderby entry.Position ascending select entry;
 
                 List<string> header = new List<string>()
                         {
-                            "Discord Position / Cache Position",
+                            "Discord / Cache Position",
                             "Category Name",
                             "Channel Name"
                         };
@@ -552,36 +553,40 @@ namespace ETHDINFKBot.Modules
 
                 List<List<string>> data = new List<List<string>>();
 
-                foreach (var categoryGrouped in Program.ChannelPositions.GroupBy(i => i.CategoryId))
+                List<TableRowInfo> tableRowInfos = new List<TableRowInfo>();
+
+                foreach (var category in categories.OrderBy(i => i.Position))
                 {
-                    var firstChannelInfo = categoryGrouped.First(); // should always have alteast one
+                    var categoryInfos = Program.ChannelPositions.Where(i => i.CategoryId == category.Id);
 
-                    var categoryInfo = new List<string>();
-
-                    categoryInfo.Add("-----------");
-                    categoryInfo.Add(firstChannelInfo.CategoryName);
-                    categoryInfo.Add("");
+                    var categoryInfo = new List<string>() { category.Position + " / --", category.Name , ""};
                     data.Add(categoryInfo);
 
+                    var cells = new List<TableCellInfo>() {
+                        new TableCellInfo() { ColumnId = 0, FontColor = new SkiaSharp.SKColor(255, 125, 0) },
+                        new TableCellInfo() { ColumnId = 1, FontColor = new SkiaSharp.SKColor(255, 125, 0) }
+                    };
+
+                    tableRowInfos.Add(new TableRowInfo()
+                    {
+                        RowId = data.Count - 1,
+                        Cells = cells
+                    });
+
                     // One category
-                    foreach (var channelInfo in categoryGrouped.OrderBy(i => i.Position))
+                    foreach (var channelInfo in categoryInfos.OrderBy(i => i.Position))
                     {
                         var channel = channels.SingleOrDefault(i => i.Id == channelInfo.ChannelId);
                         if (channel == null)
                             continue;
 
-                        var currentRecord = new List<string>();
-
-                        currentRecord.Add(channel.Position.ToString() + " / " + channelInfo.Position.ToString());
+                        var currentRecord = new List<string>() { channel.Position.ToString() + " / " + channelInfo.Position.ToString(), "", channelInfo.ChannelName.ToString() };
                         //currentRecord.Add(Regex.Replace(channel.Name, @"[^\u0000-\u007F]+", string.Empty)); // replace non asci cars
-                        currentRecord.Add("");
-                        currentRecord.Add(channelInfo.ChannelName.ToString());
-
                         data.Add(currentRecord);
                     }
                 }
 
-                var drawTable = new DrawTable(header, data, "", null);
+                var drawTable = new DrawTable(header, data, "", tableRowInfos, 1000);
 
                 var stream = await drawTable.GetImage();
                 if (stream == null)

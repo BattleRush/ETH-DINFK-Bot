@@ -21,12 +21,14 @@ namespace ETHDINFKBot.Drawing
         private List<List<string>> Data;
         private string AdditionalString;
         private List<TableRowInfo> TableRowInfo;
-        public DrawTable(List<string> header, List<List<string>> data, string additionalString, List<TableRowInfo> tableRowInfo)
+        private int Width;
+        public DrawTable(List<string> header, List<List<string>> data, string additionalString, List<TableRowInfo> tableRowInfo, int width = 1920)
         {
             Header = header;
             Data = data;
             AdditionalString = additionalString;
             TableRowInfo = tableRowInfo;
+            Width = width;
         }
 
         public async Task<Stream> GetImage()
@@ -201,7 +203,7 @@ namespace ETHDINFKBot.Drawing
             watchDraw.Start();
 
             // todo make dynamic 
-            int width = 1920;
+            int width = Width;
             int height = 10000;
 
             SKBitmap bitmap = new SKBitmap(width, height); // TODO insert into constructor
@@ -294,7 +296,7 @@ namespace ETHDINFKBot.Drawing
             //var size = Graphics.MeasureCharacterRanges("", drawFont2, DestinationRectangle, null);
             //Graphics.DrawString($"{(int)((maxValue / yNum) * i)}", drawFont2, b, new Point(40, 10 + ySize - (ySize / yNum) * i));
 
-            bitmap = DrawingHelper.CropImage(bitmap, new SKRect(0, 0, 1920, currentHeight + padding * 3));
+            bitmap = DrawingHelper.CropImage(bitmap, new SKRect(0, 0, Width, currentHeight + padding * 3));
 
             var stream = CommonHelper.GetStream(bitmap);
             bitmap.Dispose();
