@@ -36,6 +36,7 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Discord.Net;
+using ETHDINFKBot.Classes;
 
 namespace ETHDINFKBot
 {
@@ -107,7 +108,7 @@ namespace ETHDINFKBot
 
 
         // Used for restoring channel ordering (TODO Maybe move that info into the DB?)
-        public static Dictionary<ulong, int> ChannelPositions = new Dictionary<ulong, int>();
+        public static List<ChannelOrderInfo> ChannelPositions = new List<ChannelOrderInfo>();
 
 
 
@@ -448,12 +449,13 @@ namespace ETHDINFKBot
 #if DEBUG
             adminBotChannel = 774286694794919989;
 #endif
-            // Clear positions
-            ChannelPositions = new Dictionary<ulong, int>();
+            // list should always be empty
+            ChannelPositions = new List<ChannelOrderInfo>();
 
-            // Reload orders
-            foreach (var item in guild.Channels)
-                ChannelPositions.Add(item.Id, item.Position);
+            // Any channels outside of categories considered?
+            foreach (var category in guild.CategoryChannels)
+                foreach (var channel in category.Channels)
+                    ChannelPositions.Add(new ChannelOrderInfo() { ChannelId = channel.Id, ChannelName = channel.Name, CategoryId = category.Id, CategoryName = category.Name, Position = channel.Position });
 
             //var textChannel = guild.GetTextChannel(adminBotChannel);
             //textChannel.SendMessageAsync($"Global Channel Position lock has been updated. Reason: Channel {channelName} got {(delete ? "deleted" : "added")}.");
@@ -490,28 +492,115 @@ namespace ETHDINFKBot
             }
         }
 
-        private Task Client_ChannelUpdated(SocketChannel originalChannel, SocketChannel newChannel)
+        private static bool Reordering = false;
+        private static DateTime LastReorderTrigger = DateTime.MinValue;
+        List<string> ChannelMoveDetections = new List<string>();
+        private async Task<bool> EnforceChannelPositions(ulong guildId, ulong textChannelId)
         {
-            if (originalChannel is SocketGuildChannel originalGuildChannel
-                && newChannel is SocketGuildChannel newGuildChannel)
+            if (LastReorderTrigger > DateTime.Now.AddSeconds(-5))
+                return false; // last reorder happened less than 5 sec ago skip
+
+            LastReorderTrigger = DateTime.Now;
+
+            // Wait 1 second to receive all new orders
+            await Task.Delay(TimeSpan.FromSeconds(5));
+
+            Reordering = true;
+
+            var categoryChannels = Client.GetGuild(guildId).CategoryChannels;
+            var guild = Program.Client.GetGuild(guildId);
+            var textChannel = guild.GetTextChannel(textChannelId);
+
+            if (ChannelMoveDetections.Count > 0)
             {
-                ulong guildId = Program.BaseGuild;
-                ulong adminBotChannel = 747768907992924192;
+                // TODO Detect 2k chars -> page
+                string infoMove = $"**Move detected**{Environment.NewLine}" + string.Join(Environment.NewLine, ChannelMoveDetections);
+                await textChannel.SendMessageAsync(infoMove.Substring(0, Math.Min(1970, infoMove.Length)));
 
-#if DEBUG
-                guildId = 774286694794919986;
-                adminBotChannel = 774286694794919989;
-#endif
+                ChannelMoveDetections = new List<string>();
+            }
 
-                // only for 1 specific server
-                if (originalGuildChannel.Guild.Id != guildId)
-                    return Task.CompletedTask;
+            bool updated = false;
 
-                if (originalGuildChannel.Position != newGuildChannel.Position)
+            string info = $"**New channel order applied**{Environment.NewLine}";
+
+            try
+            {
+
+                foreach (var categoryChannel in categoryChannels.OrderBy(i => i.Position))
                 {
-                    // ORDER CHANGED
+                    // We need to enforce this order
+                    var channelInfos = ChannelPositions.Where(i => i.CategoryId == categoryChannel.Id).OrderBy(i => i.Position).ToArray();
+                    var channels = categoryChannel.Channels.OrderBy(i => i.Position);
 
-                    // Detect if the order is correct
+                    // we enforce for 
+                    bool anyChange = false;
+
+                    int lastChannelPosition = 0;
+
+                    info += $"    Enforced order for {categoryChannel.Name}{Environment.NewLine}";
+
+                    for (int i = 0; i < channelInfos.Count(); i++)
+                    {
+                        if(channels.Count() != channelInfos.Length)
+                        {
+                            await textChannel.SendMessageAsync($"**Someone really fatfingered this time. It looks like some channel moved categories. I wont fix this. Check the FIRST Move detected entry. This is likely the offender** {Environment.NewLine}" +
+                                $"Come on, why do you make my life that difficult <:pepegun:851456702973083728>");
+
+                            Reordering = false;
+                            return false;
+                        }
+
+                        var currentChannelInfo = channelInfos[i];
+                        var channel = channels.ElementAt(i);
+
+                        if (currentChannelInfo.ChannelId == channel.Id && !anyChange)
+                        {
+                            // The order is fine -> Ignore the id because Discord will screw with us no matter what
+                            lastChannelPosition = channel.Position;
+                            continue;
+                        }
+                        else
+                        {
+                            // Either the channel is now what we expected or the some channel before got wrong order -> enforce for all remaining channels the positions
+                            anyChange = true;
+                            updated = true;
+                            lastChannelPosition++;
+
+                            channel = channels.SingleOrDefault(i => i.Id == currentChannelInfo.ChannelId);
+                            if (channel != null)
+                            {
+                                info += $"        {channel.Name} from position {channel.Position} to {lastChannelPosition}{Environment.NewLine}";
+                                await channel.ModifyAsync(c => c.Position = lastChannelPosition);
+                            }
+                            else
+                            {
+                                // TODO error?
+                            }
+                        }
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            // TODO make sure its not over 2k chars -> Paging
+            if (updated)
+                await textChannel.SendMessageAsync(info.Substring(0, Math.Min(2000, info.Length)));
+
+            Reordering = false;
+
+            return false;
+
+            /*
+             * 
+             *                     
+             *                     
+             *                     
+             * // Detect if the order is correct
                     if (ChannelPositions.ContainsKey(newGuildChannel.Id)
                         && ChannelPositions[newGuildChannel.Id] != newGuildChannel.Position)
                     {
@@ -532,6 +621,38 @@ namespace ETHDINFKBot
                             textChannel.SendMessageAsync($"Reordered {newGuildChannel.Name} from Position {originalGuildChannel.Position} to {newGuildChannel.Position}");
                         }
                     }
+
+            */
+        }
+
+        private Task Client_ChannelUpdated(SocketChannel originalChannel, SocketChannel newChannel)
+        {
+            if (originalChannel is SocketGuildChannel originalGuildChannel
+                && newChannel is SocketGuildChannel newGuildChannel)
+            {
+                ulong guildId = Program.BaseGuild;
+                ulong adminBotChannel = 747768907992924192;
+
+#if DEBUG
+                guildId = 774286694794919986;
+                adminBotChannel = 774286694794919989;
+#endif
+
+                // only for 1 specific server
+                if (originalGuildChannel.Guild.Id != guildId)
+                    return Task.CompletedTask;
+
+                if (originalGuildChannel.Position != newGuildChannel.Position)
+                {
+                    // ORDER CHANGED
+                    var guild = Program.Client.GetGuild(guildId);
+
+                    var textChannel = guild.GetTextChannel(adminBotChannel);
+
+                    EnforceChannelPositions(guildId, adminBotChannel);
+
+                    if (!Reordering)
+                        ChannelMoveDetections.Add($"    Detected {newGuildChannel.Name} move from Position {originalGuildChannel.Position} to {newGuildChannel.Position}");
                 }
             }
 
@@ -638,10 +759,12 @@ namespace ETHDINFKBot
             DatabaseManager.Instance().AddBotStartUp();
 
             // list should always be empty
-            ChannelPositions = new Dictionary<ulong, int>();
+            ChannelPositions = new List<ChannelOrderInfo>();
 
-            foreach (var item in guild.Channels)
-                ChannelPositions.Add(item.Id, item.Position);
+            // Any channels outside of categories considered?
+            foreach (var category in guild.CategoryChannels)
+                foreach (var channel in category.Channels)
+                    ChannelPositions.Add(new ChannelOrderInfo() { ChannelId = channel.Id, ChannelName = channel.Name, CategoryId = category.Id, CategoryName = category.Name, Position = channel.Position });
 
             return Task.CompletedTask;
 

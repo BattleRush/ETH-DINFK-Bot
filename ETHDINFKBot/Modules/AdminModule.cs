@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using ETHBot.DataLayer;
 using ETHBot.DataLayer.Data.Enums;
+using ETHDINFKBot.Classes;
 using ETHDINFKBot.CronJobs;
 using ETHDINFKBot.CronJobs.Jobs;
 using ETHDINFKBot.Drawing;
@@ -527,6 +528,7 @@ namespace ETHDINFKBot.Modules
             [RequireUserPermission(GuildPermission.ManageChannels)]
             public async Task GetLockInfo()
             {
+                // TODO Category infos
                 ulong guildId = Program.BaseGuild;
 
 #if DEBUG
@@ -538,33 +540,45 @@ namespace ETHDINFKBot.Modules
 
                 var channels = guild.Channels;
 
-                var sortedDict = from entry in Program.ChannelPositions orderby entry.Value ascending select entry;
+                var sortedDict = from entry in Program.ChannelPositions orderby entry.Position ascending select entry;
 
                 List<string> header = new List<string>()
                         {
-                            "Order",
-                            "Channel Name",
-                            "Id"
+                            "Discord Position / Cache Position",
+                            "Category Name",
+                            "Channel Name"
                         };
 
 
                 List<List<string>> data = new List<List<string>>();
 
-                foreach (var item in sortedDict)
+                foreach (var categoryGrouped in Program.ChannelPositions.GroupBy(i => i.CategoryId))
                 {
-                    var channel = channels.SingleOrDefault(i => i.Id == item.Key);
-                    if (channel == null)
-                        continue;
+                    var firstChannelInfo = categoryGrouped.First(); // should always have alteast one
 
-                    var currentRecord = new List<string>();
+                    var categoryInfo = new List<string>();
 
-                    currentRecord.Add(item.Value.ToString());
-                    currentRecord.Add(Regex.Replace(channel.Name, @"[^\u0000-\u007F]+", string.Empty));
-                    currentRecord.Add(item.Key.ToString());
+                    categoryInfo.Add("-----------");
+                    categoryInfo.Add(firstChannelInfo.CategoryName);
+                    categoryInfo.Add("");
+                    data.Add(categoryInfo);
 
+                    // One category
+                    foreach (var channelInfo in categoryGrouped.OrderBy(i => i.Position))
+                    {
+                        var channel = channels.SingleOrDefault(i => i.Id == channelInfo.ChannelId);
+                        if (channel == null)
+                            continue;
 
-                    data.Add(currentRecord);
+                        var currentRecord = new List<string>();
 
+                        currentRecord.Add(channel.Position.ToString() + " / " + channelInfo.Position.ToString());
+                        //currentRecord.Add(Regex.Replace(channel.Name, @"[^\u0000-\u007F]+", string.Empty)); // replace non asci cars
+                        currentRecord.Add("");
+                        currentRecord.Add(channelInfo.ChannelName.ToString());
+
+                        data.Add(currentRecord);
+                    }
                 }
 
                 var drawTable = new DrawTable(header, data, "", null);
@@ -600,11 +614,14 @@ namespace ETHDINFKBot.Modules
 
                     var guild = Program.Client.GetGuild(guildId);
 
-                    Program.ChannelPositions = new Dictionary<ulong, int>();
+                    // list should always be empty
+                    Program.ChannelPositions = new List<ChannelOrderInfo>();
 
-                    // refresh the current order
-                    foreach (var item in guild.Channels)
-                        Program.ChannelPositions.Add(item.Id, item.Position);
+
+                    // Any channels outside of categories considered?
+                    foreach (var category in guild.CategoryChannels)
+                        foreach (var channel in category.Channels)
+                            Program.ChannelPositions.Add(new ChannelOrderInfo() { ChannelId = channel.Id, ChannelName = channel.Name, CategoryId = category.Id, CategoryName = category.Name, Position = channel.Position });
 
 
                     Context.Message.Channel.SendMessageAsync($"Saved ordering for: {Program.ChannelPositions.Count}");

@@ -115,6 +115,7 @@ namespace ETHDINFKBot.Modules
             }
         }
 
+        // TODO add params
         [Command("movieuser", RunMode = RunMode.Async)]
         public async Task CreateMovieUsers()
         {
