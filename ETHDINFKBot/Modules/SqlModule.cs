@@ -129,12 +129,6 @@ WHERE
             [Command("help")]
             public async Task SqlStatsHelp()
             {
-                string prefix = ".";
-
-#if DEBUG
-                prefix = "dev.";
-#endif
-
                 EmbedBuilder builder = new EmbedBuilder();
 
                 builder.WithTitle($"{Program.Client.CurrentUser.Username} SQL Stats Help");
@@ -143,10 +137,10 @@ WHERE
 
                 builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
                 builder.WithCurrentTimestamp();
-                builder.AddField($"{prefix}sql stats help", "This message :)");
-                builder.AddField($"{prefix}sql stats user", "User Stats");
-                builder.AddField($"{prefix}sql stats index", "Index Stats");
-                builder.AddField($"{prefix}sql stats table", "Table Stats");
+                builder.AddField($"{Program.CurrentPrefix}sql stats help", "This message :)");
+                builder.AddField($"{Program.CurrentPrefix}sql stats user", "User Stats");
+                builder.AddField($"{Program.CurrentPrefix}sql stats index", "Index Stats");
+                builder.AddField($"{Program.CurrentPrefix}sql stats table", "Table Stats");
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
