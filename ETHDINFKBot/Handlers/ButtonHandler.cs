@@ -65,11 +65,12 @@ namespace ETHDINFKBot.Handlers
                     return false; // disable prev button on page 0
 
                 var emoteResult = DiscordHelper.SearchEmote(searchTerm, socketGuildChannel.Guild.Id, page, false); // TODO pass debug info aswell
+                string desc = $"Available({page * emoteResult.PageSize}-{Math.Min((page + 1) * emoteResult.PageSize, emoteResult.TotalEmotesFound)}/{emoteResult.TotalEmotesFound}) '{searchTerm}' {Environment.NewLine}**To use the emotes (Usage .<name>)**";
 
                 EmbedBuilder builder = new EmbedBuilder()
                 {
                     ImageUrl = emoteResult.Url,
-                    Description = embed.Description,
+                    Description = desc,
                     Color = Color.DarkRed,
                     Title = "Image full size",
                     Footer = new EmbedFooterBuilder()
@@ -82,18 +83,18 @@ namespace ETHDINFKBot.Handlers
                 };
                 builder.WithAuthor(SocketUserMessage.Author);
 
-                foreach (var item in emoteResult.Fields)
-                    builder.AddField(item.Key, item.Value);
-
+                //foreach (var item in emoteResult.Fields)
+                //    builder.AddField(item.Key, item.Value);
 
                 // TODO create common place for button ids
                 var builderComponent = new ComponentBuilder()
                     .WithButton("Prev <", "emote-get-prev-page", ButtonStyle.Danger, null, null, page == 0)
-                    .WithButton("> Next", "emote-get-next-page", ButtonStyle.Success, null, null, page != 0);
+                    .WithButton("> Next", "emote-get-next-page", ButtonStyle.Success, null, null, false); // TODO detect max page
 
                 // TODO in one call?
                 await SocketUserMessage.ModifyAsync(i => i.Embed = builder.Build());
                 await SocketUserMessage.ModifyAsync(i => i.Components = builderComponent.Build());
+                await SocketUserMessage.ModifyAsync(i => i.Content = emoteResult.textBlock);
             }
 
             return true;

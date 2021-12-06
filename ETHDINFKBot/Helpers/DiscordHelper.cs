@@ -331,11 +331,13 @@ namespace ETHDINFKBot.Helpers
         }
 
 
-        public static (Dictionary<string, string> Fields, string Url, int TotalEmotesFound, int PageSize) SearchEmote(string search, ulong guildId, int page = 0, bool debug = false)
+        public static (Dictionary<string, string> Fields, string textBlock, string Url, int TotalEmotesFound, int PageSize) SearchEmote(string search, ulong guildId, int page = 0, bool debug = false)
         {
             // Setting?
             int rowMax = 5;
             int columnMax = 10;
+
+            string emoteText = "";
 
             Dictionary<string, string> fields = new Dictionary<string, string>();
 
@@ -386,6 +388,8 @@ namespace ETHDINFKBot.Helpers
             int countEmotes = 0;
             int row = 0;
 
+            emoteText = "```css" + Environment.NewLine + "[0] ";
+
             foreach (var emoji in emotes)
             {
                 string emoteString = $"{Program.CurrentPrefix}{emoji.EmoteName} ";
@@ -398,12 +402,14 @@ namespace ETHDINFKBot.Helpers
 
 
                 text += emoteString;
+                emoteText += emoteString;
 
                 countEmotes++;
 
                 if (countEmotes >= columnMax)
                 {
                     fields.Add($"[{row}]", "```css" + Environment.NewLine + text + "```");
+                    emoteText += Environment.NewLine + $"[{row}] ";
 
                     row++;
                     text = "";
@@ -411,8 +417,10 @@ namespace ETHDINFKBot.Helpers
                     countEmotes = 0;
                 }
             }
+            emoteText = emoteText.Substring(0, Math.Min(emoteText.Length, 1990));
+            emoteText += "```";
 
-            return (fields, $"https://cdn.battlerush.dev/{fileName}", total, pageSize);
+            return (fields, emoteText, $"https://cdn.battlerush.dev/{fileName}", total, pageSize);
         }
 
         // TODO alot of rework to do

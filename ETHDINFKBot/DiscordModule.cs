@@ -653,22 +653,22 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             };
             builder.WithAuthor(Context.User);
 
-            foreach (var item in emoteResult.Fields)
-                builder.AddField(item.Key, item.Value);
+            //foreach (var item in emoteResult.Fields)
+            //    builder.AddField(item.Key, item.Value);
 
             try
             {
                 // TODO create common place for button ids
                 var builderComponent = new ComponentBuilder()
                     .WithButton("Prev <", "emote-get-prev-page", ButtonStyle.Danger, null, null, page == 0)
-                    .WithButton("> Next", "emote-get-next-page", ButtonStyle.Success, null, null, page != 0); // TODO properly calc max page
+                    .WithButton("> Next", "emote-get-next-page", ButtonStyle.Success, null, null, false); // TODO properly calc max page
                     //.WithButton("Row 1", "emote-get-row-1", ButtonStyle.Secondary, null, null, false, 1)
                     //.WithButton("Row 2", "emote-get-row-2", ButtonStyle.Secondary, null, null, false, 1)
                     //.WithButton("Row 3", "emote-get-row-3", ButtonStyle.Secondary, null, null, false, 1)
                     //.WithButton("Row 4", "emote-get-row-4", ButtonStyle.Secondary, null, null, false, 1)
                     //.WithButton("Row 5", "emote-get-row-5", ButtonStyle.Secondary, null, null, false, 1);
 
-                var msg2 = await Context.Channel.SendMessageAsync("", false, builder.Build(), null, null, null, builderComponent.Build());
+                var msg2 = await Context.Channel.SendMessageAsync(emoteResult.textBlock, false, builder.Build(), null, null, null, builderComponent.Build());
             }
             catch (Exception ex)
             {
