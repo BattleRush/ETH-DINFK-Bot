@@ -701,7 +701,7 @@ namespace ETHDINFKBot
             ulong guildId = 774286694794919986;
 
 #if !DEBUG
-            guildId = Program.BaseGuild;
+            guildId = Program.ApplicationSetting.BaseGuild;
 #endif
             // Let's build a guild command! We're going to need a guild so lets just put that in a variable.
             var guild = Client.GetGuild(guildId);
