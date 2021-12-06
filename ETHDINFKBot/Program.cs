@@ -424,7 +424,8 @@ namespace ETHDINFKBot
         private async Task Client_ButtonExecuted(SocketMessageComponent arg)
         {
             ButtonHandler buttonHandler = new ButtonHandler(arg);
-            arg.RespondAsync("Button success: " + buttonHandler.Run().Result.ToString());
+            var result = await buttonHandler.Run();
+            arg.DeferAsync(true);
         }
 
         public async Task MessageCommandHandler(SocketMessageCommand arg)
