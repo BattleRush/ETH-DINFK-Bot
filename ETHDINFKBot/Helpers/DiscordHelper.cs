@@ -334,7 +334,7 @@ namespace ETHDINFKBot.Helpers
         public static (Dictionary<string, string> Fields, string Url, int TotalEmotesFound, int PageSize) SearchEmote(string search, ulong guildId, int page = 0, bool debug = false)
         {
             // Setting?
-            int rowMax = 10;
+            int rowMax = 5;
             int columnMax = 10;
 
             Dictionary<string, string> fields = new Dictionary<string, string>();
