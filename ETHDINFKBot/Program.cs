@@ -652,7 +652,7 @@ namespace ETHDINFKBot
                     EnforceChannelPositions(guildId, adminBotChannel);
 
                     if (!Reordering)
-                        ChannelMoveDetections.Add($"    Detected {newGuildChannel.Name} move from Position {originalGuildChannel.Position} to {newGuildChannel.Position}");
+                        ChannelMoveDetections.Add($"    {newGuildChannel.Name} move from position {originalGuildChannel.Position} to {newGuildChannel.Position}");
                 }
             }
 
@@ -725,7 +725,7 @@ namespace ETHDINFKBot
                     //guildMessageCommand2.Build()
                 });
             }
-            catch (ApplicationCommandException exception)
+            catch (HttpException exception)
             {
                 // If our command was invalid, we should catch an ApplicationCommandException. This exception contains the path of the error as well as the error message. You can serialize the Error field in the exception to get a visual of where your error is.
                 var json = JsonConvert.SerializeObject(exception, Formatting.Indented);

@@ -20,7 +20,6 @@ namespace ETHDINFKBot.Handlers
 
         private SocketGuild SocketGuild;
         private IMessage Message;
-        private SocketMessage SocketMessage;
         private SocketGuildChannel SocketGuildChannel;
         private SocketReaction SocketReaction;
         private SocketGuildUser SocketGuildMessageUser;
@@ -39,7 +38,6 @@ namespace ETHDINFKBot.Handlers
             Message = message;
             if (Message != null)
             {
-                SocketMessage = message as SocketMessage;
                 SocketReaction = socketReaction;
                 SocketGuildMessageUser = message.Author as SocketGuildUser;
                 SocketGuildReactionUser = socketReaction.User.Value as SocketGuildUser; // TODO make sure user is never null
@@ -144,7 +142,7 @@ namespace ETHDINFKBot.Handlers
         {
             if (reactionEmote.Id == DiscordEmotes["savethis"] && !SocketGuildReactionUser.IsBot)
             {
-                DiscordHelper.SaveMessage(SocketTextChannel, SocketGuildReactionUser, SocketMessage, false);
+                DiscordHelper.SaveMessage(SocketTextChannel, SocketGuildReactionUser, Message, false);
 
                 // Save the post link
 
