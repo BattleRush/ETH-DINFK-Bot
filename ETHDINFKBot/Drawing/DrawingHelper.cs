@@ -1,4 +1,6 @@
-﻿using SkiaSharp;
+﻿using Discord;
+using ETHBot.DataLayer.Data.Discord;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;

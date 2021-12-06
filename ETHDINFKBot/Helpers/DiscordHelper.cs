@@ -1,8 +1,12 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using ETHBot.DataLayer.Data.Discord;
+using ETHDINFKBot.Drawing;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -244,7 +248,7 @@ namespace ETHDINFKBot.Helpers
         public static async void DiscordUserBirthday(DiscordSocketClient client, ulong guildId, ulong channelId, bool reactions)
         {
             var spamChannel = client.GetGuild(guildId).GetTextChannel(channelId); // #spam
-            
+
             try
             {
                 // TODO reschedule maybe for another time or add manual trigger
@@ -325,5 +329,207 @@ namespace ETHDINFKBot.Helpers
                 spamChannel.SendMessageAsync(ex.ToString()); // Send error message for today command
             }
         }
+
+
+        public static (Dictionary<string, string> Fields, string Url, int TotalEmotesFound, int PageSize) SearchEmote(string search, ulong guildId, int page = 0, bool debug = false)
+        {
+            // Setting?
+            int rowMax = 10;
+            int columnMax = 10;
+
+            Dictionary<string, string> fields = new Dictionary<string, string>();
+
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+
+            var emotes = DatabaseManager.Instance().GetEmotes(search); // TODO dont dowload the emote data before its further filtered
+            var guildEmotes = Program.Client.GetGuild(guildId).Emotes.ToList();
+
+            int total = emotes.Count;
+            int pageSize = rowMax * columnMax;
+
+
+            Dictionary<string, int> dupes = new Dictionary<string, int>();
+
+            string sep = "-";
+
+            foreach (var emote in emotes)
+            {
+                int offset = 0;
+
+                // we found a dupe
+                if (dupes.ContainsKey(emote.EmoteName.ToLower()))
+                    offset = dupes[emote.EmoteName.ToLower()] += 1;
+
+                else
+                    dupes.Add(emote.EmoteName.ToLower(), 1);
+
+                if (debug)
+                    emote.EmoteName = emote.DiscordEmoteId.ToString();
+                else if (offset > 0)
+                    emote.EmoteName += $"{sep}{offset}";
+            }
+
+            emotes = emotes.Skip(page * pageSize).Take(pageSize).ToList();
+
+
+            string fileName = $"emote_{search}_{new Random().Next(int.MaxValue)}.png";
+
+            var emoteDrawing = DrawPreviewImage(emotes, guildEmotes);
+
+            DrawingHelper.SaveToDisk(Path.Combine(Program.ApplicationSetting.CDNPath, fileName), emoteDrawing.Bitmap);
+
+            watch.Stop();
+
+            string text = "";
+
+            int countEmotes = 0;
+            int row = 0;
+
+            foreach (var emoji in emotes)
+            {
+                string emoteString = $"{Program.CurrentPrefix}{emoji.EmoteName} ";
+
+                if (emoji.Animated)
+                    emoteString = $"[{emoji.EmoteName}] ";
+
+                if (guildEmotes.Any(i => i.Id == emoji.DiscordEmoteId))
+                    emoteString = $"({emoji.EmoteName}) ";
+
+
+                text += emoteString;
+
+                countEmotes++;
+
+                if (countEmotes >= columnMax)
+                {
+                    fields.Add($"[{row}]", "```css" + Environment.NewLine + text + "```");
+
+                    row++;
+                    text = "";
+
+                    countEmotes = 0;
+                }
+            }
+
+            return (fields, $"https://cdn.battlerush.dev/{fileName}", total, pageSize);
+        }
+
+        // TODO alot of rework to do
+        // TODO dynamic image sizes
+        // TODO support 100+
+        // TODO gifs -> video?
+        public static (SKBitmap Bitmap, SKCanvas Canvas) DrawPreviewImage(List<DiscordEmote> emojis, List<GuildEmote> guildEmotes)
+        {
+            int page = 10;
+
+            int padding = 50;
+            int paddingY = 55;
+
+            int imgSize = 48;
+            int blockSize = imgSize + 35;
+
+            int yOffsetFixForImage = 2;
+
+            int width = Math.Min(emojis.Count, 10) * blockSize + padding;
+            int height = (int)(Math.Ceiling(emojis.Count / 10d) * blockSize + paddingY - 5);
+
+            width = Math.Max(width + 25, 350); // because of the title
+
+
+            SKBitmap bitmap = new(width, height); // TODO insert into constructor
+            SKCanvas canvas = new(bitmap);
+
+            canvas.Clear(DrawingHelper.DiscordBackgroundColor);
+
+            //Font drawFont = new Font("Arial", 10, FontStyle.Bold);
+            //Font drawFontTitle = new Font("Arial", 12, FontStyle.Bold);
+            //Font drawFontIndex = new Font("Arial", 16, FontStyle.Bold);
+
+            //Brush brush = new SolidBrush(Color.White);
+            //Brush brushNormal = new SolidBrush(Color.LightSkyBlue);
+            //Brush brushGif = new SolidBrush(Color.Coral);
+            //Brush brushEmote = new SolidBrush(Color.Gold);
+
+            var normalEmotePaint = new SKPaint()
+            {
+                Color = new SKColor(255, 255, 255),
+                Typeface = DrawingHelper.Typeface_Arial,
+                TextSize = 13
+            };
+
+            var gifEmotePaint = new SKPaint()
+            {
+                Color = new SKColor(248, 131, 121),// Coral
+                Typeface = DrawingHelper.Typeface_Arial,
+                TextSize = 13
+            };
+
+            var serverEmotePaint = new SKPaint()
+            {
+                Color = new SKColor(255, 215, 0), // Gold
+                Typeface = DrawingHelper.Typeface_Arial,
+                TextSize = 13
+            };
+
+            canvas.DrawText($"Normal emote", new SKPoint(10, 15), normalEmotePaint);
+            canvas.DrawText($"Gif emote", new SKPoint(125, 15), gifEmotePaint);
+            canvas.DrawText($"Server emote", new SKPoint(210, 15), serverEmotePaint);
+
+            //Pen p = new Pen(brush);
+
+            // TODO make it more robust and cleaner
+            for (int i = 0; i < page; i++)
+            {
+                canvas.DrawText($"[{i}]", new SKPoint(10, i * blockSize + paddingY + 12), new SKPaint() { Color = new SKColor(255, 255, 255), Typeface = DrawingHelper.Typeface_Arial, TextSize = 20 });
+
+                for (int j = 0; j < page; j++)
+                {
+                    if (emojis.Count <= i * j)
+                        break;
+
+                    try
+                    {
+                        var emote = emojis[i * page + j];
+
+                        SKBitmap emoteBitmap;
+                        using (var ms = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
+                        {
+                            emoteBitmap = SKBitmap.Decode(ms);
+                        }
+
+                        SKPaint paint = normalEmotePaint;
+
+                        if (emote.Animated)
+                            paint = gifEmotePaint;
+
+                        // this server contains this emote
+                        if (guildEmotes.Any(i => i.Id == emote.DiscordEmoteId))
+                            paint = serverEmotePaint;
+
+                        int x = j * blockSize + padding;
+                        int y = i * blockSize + paddingY + yOffsetFixForImage;
+
+                        canvas.DrawBitmap(emoteBitmap, new SKRect(x, y, x + imgSize, y + imgSize));
+                        canvas.DrawText($"{emote.EmoteName}", new SKPoint(x - 1, i * blockSize + j % 2 * (imgSize + 15) + paddingY), paint);
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+                }
+
+                canvas.DrawLine(new SKPoint(0, i * blockSize + paddingY - 15), new SKPoint(width, i * blockSize + paddingY - 15), DrawingHelper.DefaultDrawing);
+            }
+
+            //var stream = CommonHelper.GetStream(bitmap);
+
+            //bitmap.Dispose();
+            //canvas.Dispose();
+
+            return (bitmap, canvas);
+        }
+
+
     }
 }

@@ -130,7 +130,7 @@ namespace ETHDINFKBot
             {
                 var currentProcessCpuUsage = GetCpuUsageForProcess();
                 var proc = Process.GetCurrentProcess();
- 
+
                 var currentAssembly = Assembly.GetExecutingAssembly();
                 var assembly = Assembly.GetExecutingAssembly();
                 var version = assembly.GetName().Version;
@@ -512,120 +512,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             Context.Channel.SendMessageAsync(req.ImageUrl, false);
         }*/
 
-        // TODO alot of rework to do
-        // TODO dynamic image sizes
-        // TODO support 100+
-        // TODO gifs -> video?
-        private (SKBitmap Bitmap, SKCanvas Canvas) DrawPreviewImage(List<DiscordEmote> emojis, List<GuildEmote> guildEmotes)
-        {
-            int page = 10;
-
-            int padding = 50;
-            int paddingY = 55;
-
-            int imgSize = 48;
-            int blockSize = imgSize + 35;
-
-            int yOffsetFixForImage = 2;
-
-            int width = Math.Min(emojis.Count, 10) * blockSize + padding;
-            int height = (int)(Math.Ceiling(emojis.Count / 10d) * blockSize + paddingY - 5);
-
-            width = Math.Max(width + 25, 350); // because of the title
-
-
-            SKBitmap bitmap = new(width, height); // TODO insert into constructor
-            SKCanvas canvas = new(bitmap);
-
-            canvas.Clear(DrawingHelper.DiscordBackgroundColor);
-
-            //Font drawFont = new Font("Arial", 10, FontStyle.Bold);
-            //Font drawFontTitle = new Font("Arial", 12, FontStyle.Bold);
-            //Font drawFontIndex = new Font("Arial", 16, FontStyle.Bold);
-
-            //Brush brush = new SolidBrush(Color.White);
-            //Brush brushNormal = new SolidBrush(Color.LightSkyBlue);
-            //Brush brushGif = new SolidBrush(Color.Coral);
-            //Brush brushEmote = new SolidBrush(Color.Gold);
-
-            var normalEmotePaint = new SKPaint()
-            {
-                Color = new SKColor(255, 255, 255),
-                Typeface = DrawingHelper.Typeface_Arial,
-                TextSize = 13
-            };
-
-            var gifEmotePaint = new SKPaint()
-            {
-                Color = new SKColor(248, 131, 121),// Coral
-                Typeface = DrawingHelper.Typeface_Arial,
-                TextSize = 13
-            };
-
-            var serverEmotePaint = new SKPaint()
-            {
-                Color = new SKColor(255, 215, 0), // Gold
-                Typeface = DrawingHelper.Typeface_Arial,
-                TextSize = 13
-            };
-
-            canvas.DrawText($"Normal emote", new SKPoint(10, 15), normalEmotePaint);
-            canvas.DrawText($"Gif emote", new SKPoint(125, 15), gifEmotePaint);
-            canvas.DrawText($"Server emote", new SKPoint(210, 15), serverEmotePaint);
-
-            //Pen p = new Pen(brush);
-
-            // TODO make it more robust and cleaner
-            for (int i = 0; i < page; i++)
-            {
-                canvas.DrawText($"[{i}]", new SKPoint(10, i * blockSize + paddingY + 12), new SKPaint() { Color = new SKColor(255, 255, 255), Typeface = DrawingHelper.Typeface_Arial, TextSize = 20 });
-
-                for (int j = 0; j < page; j++)
-                {
-                    if (emojis.Count <= i * j)
-                        break;
-
-                    try
-                    {
-                        var emote = emojis[i * page + j];
-
-                        SKBitmap emoteBitmap;
-                        using (var ms = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
-                        {
-                            emoteBitmap = SKBitmap.Decode(ms);
-                        }
-
-                        SKPaint paint = normalEmotePaint;
-
-                        if (emote.Animated)
-                            paint = gifEmotePaint;
-
-                        // this server contains this emote
-                        if (guildEmotes.Any(i => i.Id == emote.DiscordEmoteId))
-                            paint = serverEmotePaint;
-
-                        int x = j * blockSize + padding;
-                        int y = i * blockSize + paddingY + yOffsetFixForImage;
-
-                        canvas.DrawBitmap(emoteBitmap, new SKRect(x, y, x + imgSize, y + imgSize));
-                        canvas.DrawText($"{emote.EmoteName}", new SKPoint(x - 1, i * blockSize + j % 2 * (imgSize + 15) + paddingY), paint);
-                    }
-                    catch (Exception ex)
-                    {
-
-                    }
-                }
-
-                canvas.DrawLine(new SKPoint(0, i * blockSize + paddingY - 15), new SKPoint(width, i * blockSize + paddingY - 15), DrawingHelper.DefaultDrawing);
-            }
-
-            //var stream = CommonHelper.GetStream(bitmap);
-
-            //bitmap.Dispose();
-            //canvas.Dispose();
-
-            return (bitmap, canvas);
-        }
+      
 
         [Command("react")]
         public async Task ReactEmote(ulong messageid, string emoteName)
@@ -741,153 +628,52 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 return;
             }
 
-            var emotes = DatabaseManager.GetEmotes(search); // TODO dont dowload the emote data before its further filtered
 
-            int count = 0;
+            var emoteResult = DiscordHelper.SearchEmote(search, Context.Guild.Id, page, debug);
 
-            if (count > 0)
-            {
-                await Context.Channel.SendMessageAsync($"Downloaded {count} emote(s)", false);
-            }
-
-            List<GuildEmote> guildEmotes = new List<GuildEmote>();
-
-            if (Context.Channel is SocketGuildChannel guildChannel)
-                guildEmotes = guildChannel.Guild.Emotes.ToList();
-
-            int total = emotes.Count;
-            // limit to 100
-
-            int rowMax = debug ? 8 : 10; // since it will reach the char count
-            int columnMax = 10;
-            int pageSize = rowMax * columnMax;
-
-
-            string nextPageInfo = "";
-
-            if (total > (page + 1) * pageSize)
-            {
-                nextPageInfo = $" or .emote {search} {page + 1} for next page";
-            }
-
-
-            Dictionary<string, int> dupes = new Dictionary<string, int>();
-
-            string sep = "-";
-
-            foreach (var emote in emotes)
-            {
-                int offset = 0;
-
-                if (dupes.ContainsKey(emote.EmoteName.ToLower()))
-                {
-                    // we found a dupe
-                    offset = dupes[emote.EmoteName.ToLower()] += 1;
-                }
-                else
-                {
-                    dupes.Add(emote.EmoteName.ToLower(), 1);
-                }
-
-                if (debug)
-                {
-                    emote.EmoteName = emote.DiscordEmoteId.ToString();
-                }
-                else
-                {
-                    if (offset > 0)
-                    {
-                        emote.EmoteName += $"{sep}{offset}";
-                    }
-                }
-            }
-
-            emotes = emotes.Skip(page * pageSize).Take(pageSize).ToList();
-
-            // TODO make it look nice
-            string text = $"**Available({page * pageSize}-{Math.Min((page + 1) * pageSize, total)}/{total}) '{search}' emojis to use (Usage .<name>){nextPageInfo}**" + Environment.NewLine;
-
-            int countEmotes = 0;
-            int row = 0;
-
-            text += "```css" + Environment.NewLine;
-
-            text += "[0] ";
-
-
-
-            foreach (var emoji in emotes)
-            {
-                string emoteString = $"{Program.CurrentPrefix}{emoji.EmoteName} ";
-
-                if (emoji.Animated)
-                    emoteString = $"[{emoji.EmoteName}] ";
-
-                if (guildEmotes.Any(i => i.Id == emoji.DiscordEmoteId))
-                    emoteString = $"({emoji.EmoteName}) ";
-
-
-                text += emoteString;
-
-                countEmotes++;
-
-                if (countEmotes >= columnMax)
-                {
-                    row++;
-                    text += Environment.NewLine;
-
-                    if (row < rowMax)
-                    {
-                        text += $"[{row}] ";
-                    }
-                    countEmotes = 0;
-                }
-
-                /*          if (text.Length > 1950)
-                {
-                    await Context.Channel.SendMessageAsync(text, false);
-                    text = "";
-                }*/
-            }
-
-            text += "```";
-
-            //await Context.Channel.SendMessageAsync(, false);
-
-
-
-            string fileName = $"emote_{search}_{new Random().Next(int.MaxValue)}.png";
-            
-
-
-            var emoteDrawing = DrawPreviewImage(emotes, guildEmotes);
-
-
-            DrawingHelper.SaveToDisk(Path.Combine(Program.ApplicationSetting.CDNPath, fileName), emoteDrawing.Bitmap);
-
-            if (text.Length > 1990)
-            {
-                text = text.Substring(0, 1990);
-            }
             watch.Stop();
             //var msg = await Context.Channel.SendFileAsync(stream, $"emote_{search}.png", text + $"Time: {watch.ElapsedMilliseconds} ms");
 
+            string desc = $"**Available({page * emoteResult.PageSize}-{Math.Min((page + 1) * emoteResult.PageSize, emoteResult.TotalEmotesFound)}/{emoteResult.TotalEmotesFound}) '{search}' emojis to use (Usage .<name>)**" + Environment.NewLine;
+       
 
             EmbedBuilder builder = new EmbedBuilder()
             {
-                ImageUrl = $"https://cdn.battlerush.dev/{fileName}",
-                Description = text,
+                ImageUrl = emoteResult.Url,
+                Description = desc,
                 Color = Color.DarkRed,
-                Title = "title",
-                //Footer = "footer text",
-                ThumbnailUrl = "https://cdn.battlerush.dev/bot_xmas.png", 
+                Title = "Image full size",
+                Footer = new EmbedFooterBuilder()
+                {
+                    Text = search + " Page: " + page
+                },
+                ThumbnailUrl = "https://cdn.battlerush.dev/bot_xmas.png",
                 Timestamp = DateTimeOffset.Now,
-                Url = $"https://cdn.battlerush.dev/{fileName}",
+                Url = emoteResult.Url,
             };
             builder.WithAuthor(Context.User);
 
-            var msg2 = await Context.Channel.SendMessageAsync("", false, builder.Build());
+            foreach (var item in emoteResult.Fields)
+                builder.AddField(item.Key, item.Value);
 
+            try
+            {
+                // TODO create common place for button ids
+                var builderComponent = new ComponentBuilder()
+                    .WithButton("Prev <", "emote-get-prev-page", ButtonStyle.Danger, null, null, page == 0)
+                    .WithButton("> Next", "emote-get-next-page", ButtonStyle.Success, null, null, page != 0); // TODO properly calc max page
+                    //.WithButton("Row 1", "emote-get-row-1", ButtonStyle.Secondary, null, null, false, 1)
+                    //.WithButton("Row 2", "emote-get-row-2", ButtonStyle.Secondary, null, null, false, 1)
+                    //.WithButton("Row 3", "emote-get-row-3", ButtonStyle.Secondary, null, null, false, 1)
+                    //.WithButton("Row 4", "emote-get-row-4", ButtonStyle.Secondary, null, null, false, 1)
+                    //.WithButton("Row 5", "emote-get-row-5", ButtonStyle.Secondary, null, null, false, 1);
+
+                var msg2 = await Context.Channel.SendMessageAsync("", false, builder.Build(), null, null, null, builderComponent.Build());
+            }
+            catch (Exception ex)
+            {
+
+            }
 
             //msg.ModifyAsync(i => i.Attachments.)
         }

@@ -31,10 +31,18 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
         private async void CleanUpOldMessages(SocketTextChannel channel, TimeSpan toDeleteOlderThan)
         {
-            DateTime oneWeekAgo = DateTime.Now.Add(toDeleteOlderThan);
-            ulong oneWeekAgoSnowflake = SnowflakeUtils.ToSnowflake(oneWeekAgo);
-            var oldMessages = await channel.GetMessagesAsync(oneWeekAgoSnowflake, Direction.Before, 100/*100 should be enought for a while*/).FlattenAsync();
-            await channel.DeleteMessagesAsync(oldMessages);
+            try
+            {
+                DateTime oneWeekAgo = DateTime.Now.Add(toDeleteOlderThan);
+                ulong oneWeekAgoSnowflake = SnowflakeUtils.ToSnowflake(oneWeekAgo);
+                var oldMessages = await channel.GetMessagesAsync(oneWeekAgoSnowflake, Direction.Before, 100/*100 should be enought for a while*/).FlattenAsync();
+                await channel.DeleteMessagesAsync(oldMessages);
+
+            }
+            catch (Exception ex)
+            {
+                // TODO log
+            }
 
             //var messageDelete = await channel.SendMessageAsync($"Deleting {oldMessages.Count()} messages"); // enable when this message is correct
             //Task.Delay(TimeSpan.FromMinutes(5));
@@ -86,7 +94,7 @@ ORDER BY MAX(PH.DiscordMessageId)";
                         var guildUser = guild.GetUser(userId);
                         if (guildUser == null)
                             continue;
-                        
+
                         if (guildUser.Roles.Any(i => i.Id == pingHellRoleId))
                         {
                             // remove the role from user
