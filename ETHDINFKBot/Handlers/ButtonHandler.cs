@@ -95,7 +95,6 @@ namespace ETHDINFKBot.Handlers
             }
 
             return true;
-
         }
     }
 }
