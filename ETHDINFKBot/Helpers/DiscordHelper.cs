@@ -409,9 +409,12 @@ namespace ETHDINFKBot.Helpers
                 if (countEmotes >= columnMax)
                 {
                     fields.Add($"[{row}]", "```css" + Environment.NewLine + text + "```");
-                    emoteText += Environment.NewLine + $"[{row}] ";
 
                     row++;
+
+                    if(row < rowMax)
+                        emoteText += Environment.NewLine + $"[{row}] ";
+
                     text = "";
 
                     countEmotes = 0;
