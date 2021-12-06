@@ -99,10 +99,10 @@ namespace ETHDINFKBot.Helpers
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
 
-                if (author?.Id == Program.Owner)
+                if (author?.Id == Program.ApplicationSetting.Owner)
                     fullUser = true;
 
-                string connectionString = fullUser ? Program.FULL_MariaDBReadOnlyConnectionString : Program.MariaDBReadOnlyConnectionString;
+                string connectionString = fullUser ? Program.ApplicationSetting.ConnectionStringsSetting.ConnectionString_Full : Program.ApplicationSetting.ConnectionStringsSetting.ConnectionString_ReadOnly;
 
                 using (var connection = new MySqlConnection(connectionString))
                 {

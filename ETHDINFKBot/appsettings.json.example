@@ -16,6 +16,7 @@
 
   "CertFilePath": "",
   "FFMpegPath": "",
+  "CDNPath": "",
 
   "BasePath": "",
   "Reddit": {

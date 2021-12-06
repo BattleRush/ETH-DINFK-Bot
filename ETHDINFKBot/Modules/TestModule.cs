@@ -31,7 +31,7 @@ namespace ETHDINFKBot.Modules
         public async Task CreateMovie(bool stacked, int groupByHours, int fps, bool drawDots, params ulong[] channelIds)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
@@ -53,7 +53,7 @@ namespace ETHDINFKBot.Modules
         public async Task CreateMovieToday()
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
@@ -75,7 +75,7 @@ namespace ETHDINFKBot.Modules
         public async Task CreateMovieLastWeek()
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
@@ -97,7 +97,7 @@ namespace ETHDINFKBot.Modules
         public async Task CreateMovieEmote(int days, int groupByHours)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
@@ -120,7 +120,7 @@ namespace ETHDINFKBot.Modules
         public async Task CreateMovieUsers()
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
@@ -144,7 +144,7 @@ namespace ETHDINFKBot.Modules
         public async Task CreateMoviePlace(bool stacked, int groupByHour, int fps, bool drawDots)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
@@ -304,7 +304,7 @@ namespace ETHDINFKBot.Modules
 
                 int random = new Random().Next(1_000_000_000);
                 //GlobalFFOptions.Configure(options => options.BinaryFolder = Program.Settings.FFMpegPath);
-                Xabe.FFmpeg.FFmpeg.SetExecutablesPath(Program.Settings.FFMpegPath);
+                Xabe.FFmpeg.FFmpeg.SetExecutablesPath(Program.ApplicationSetting.FFMpegPath);
 
                 var files = Directory.GetFiles(Path.Combine(basePath)).ToList().OrderBy(i => i);
                 string fileName = Path.Combine(baseOutputPath, $"movie_{random}.mp4");
@@ -337,7 +337,7 @@ namespace ETHDINFKBot.Modules
         public async Task Progress()
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;

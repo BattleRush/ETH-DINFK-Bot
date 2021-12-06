@@ -60,7 +60,7 @@ namespace ETHDINFKBot.Modules
         {
             return; // disable again
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
@@ -112,7 +112,7 @@ namespace ETHDINFKBot.Modules
         public async Task AdminHelp()
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
@@ -143,7 +143,7 @@ namespace ETHDINFKBot.Modules
         public async Task AdminKill()
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
@@ -165,7 +165,7 @@ namespace ETHDINFKBot.Modules
         public async Task ManualCronJob(string cronJobName)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
@@ -229,7 +229,7 @@ namespace ETHDINFKBot.Modules
         public async Task BlockEmote(ulong emoteId, bool blockStatus)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
@@ -258,7 +258,7 @@ namespace ETHDINFKBot.Modules
         public async Task EmoteDump()
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
@@ -268,7 +268,7 @@ namespace ETHDINFKBot.Modules
 
             await Context.Channel.SendMessageAsync($"Successfully retreived {allEmotes.Count} emotes", false);
 
-            var emotesPath = Path.Combine(Program.BasePath, "Emotes");
+            var emotesPath = Path.Combine(Program.ApplicationSetting.BasePath, "Emotes");
             var archivePath = Path.Combine(emotesPath, "Archive");
 
             try
@@ -388,7 +388,7 @@ namespace ETHDINFKBot.Modules
             {
                 var author = Context.Message.Author;
                 var guildUser = Context.Message.Author as SocketGuildUser;
-                if (author.Id != ETHDINFKBot.Program.Owner || guildUser.GuildPermissions.ManageChannels)
+                if (author.Id != ETHDINFKBot.Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels)
                 {
                     await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -449,7 +449,7 @@ namespace ETHDINFKBot.Modules
             public async Task DeleteRantType(int typeId)
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -464,7 +464,7 @@ namespace ETHDINFKBot.Modules
             public async Task DeleteRantMessage(int typeId)
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -484,7 +484,7 @@ namespace ETHDINFKBot.Modules
             {
                 var author = Context.Message.Author;
                 var guildUser = Context.Message.Author as SocketGuildUser;
-                if (!(author.Id == ETHDINFKBot.Program.Owner || guildUser.GuildPermissions.ManageChannels))
+                if (!(author.Id == Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels))
                 {
                     await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -529,7 +529,7 @@ namespace ETHDINFKBot.Modules
             public async Task GetLockInfo()
             {
                 // TODO Category infos
-                ulong guildId = Program.BaseGuild;
+                ulong guildId = Program.ApplicationSetting.BaseGuild;
 
 #if DEBUG
                 guildId = 774286694794919986;
@@ -611,7 +611,7 @@ namespace ETHDINFKBot.Modules
                 if (botSettings.ChannelOrderLocked)
                 {
                     // TODO Setting
-                    ulong guildId = Program.BaseGuild;
+                    ulong guildId = Program.ApplicationSetting.BaseGuild;
 
 #if DEBUG
                     guildId = 774286694794919986;
@@ -644,7 +644,7 @@ namespace ETHDINFKBot.Modules
                 watch.Start();
                 // new column preloaded
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -752,7 +752,7 @@ namespace ETHDINFKBot.Modules
             {
                 var guildUser = Context.Message.Author as SocketGuildUser;
                 var author = Context.Message.Author;
-                if (!(author.Id == ETHDINFKBot.Program.Owner || guildUser.GuildPermissions.ManageChannels))
+                if (!(author.Id == Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels))
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -942,7 +942,7 @@ namespace ETHDINFKBot.Modules
             public async Task SetChannelInfoAsync(int flag, ulong? channelId = null)
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -970,7 +970,7 @@ namespace ETHDINFKBot.Modules
             {
                 return; // this one is a bit too risky xD
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -993,7 +993,7 @@ namespace ETHDINFKBot.Modules
             public async Task GetChannelInfoFlagsAsync()
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -1027,7 +1027,7 @@ namespace ETHDINFKBot.Modules
             public async Task PlaceAdminHelp()
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -1052,7 +1052,7 @@ namespace ETHDINFKBot.Modules
             public async Task VerifyPlaceUser(SocketUser user, bool verified)
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -1071,7 +1071,7 @@ namespace ETHDINFKBot.Modules
             public async Task RedditAdminHelp()
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -1098,7 +1098,7 @@ namespace ETHDINFKBot.Modules
             public async Task CheckStatusAsync()
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -1112,7 +1112,7 @@ namespace ETHDINFKBot.Modules
                 subredditName = subredditName.ToLower();
 
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("Ping the owner and he will add it for you", false);
                     return;
@@ -1127,7 +1127,7 @@ namespace ETHDINFKBot.Modules
                 subredditName = subredditName.ToLower();
 
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -1142,7 +1142,7 @@ namespace ETHDINFKBot.Modules
             public async Task StartScraperAsync(string subredditName)
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -1201,7 +1201,7 @@ namespace ETHDINFKBot.Modules
 
             private async void AddSubreddit(string subredditName)
             {
-                var reddit = new RedditClient(Program.RedditAppId, Program.RedditRefreshToken, Program.RedditAppSecret);
+                var reddit = new RedditClient(Program.ApplicationSetting.RedditSetting.AppId, Program.ApplicationSetting.RedditSetting.RefreshToken, Program.ApplicationSetting.RedditSetting.AppSecret);
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
                     SubredditManager subManager = new SubredditManager(subredditName, reddit, context);

@@ -182,7 +182,7 @@ namespace ETHDINFKBot.Helpers
         public static async Task ScrapReddit(string subredditName, ISocketMessageChannel channel)
         {
             DatabaseManager.Instance().SetSubredditScaperStatus(subredditName, true);
-            var reddit = new RedditClient(Program.RedditAppId, Program.RedditRefreshToken, Program.RedditAppSecret);
+            var reddit = new RedditClient(Program.ApplicationSetting.RedditSetting.AppId, Program.ApplicationSetting.RedditSetting.RefreshToken, Program.ApplicationSetting.RedditSetting.AppSecret);
 
             using (var context = new ETHBotDBContext())
             {
@@ -243,7 +243,7 @@ namespace ETHDINFKBot.Helpers
 
                             if (manager.IsImage())
                             {
-                                var imageInfos = manager.DownloadImage(Path.Combine(Program.BasePath, "Reddit")); // TODO send path in contructor
+                                var imageInfos = manager.DownloadImage(Path.Combine(Program.ApplicationSetting.BasePath, "Reddit")); // TODO send path in contructor
 
                                 context.RedditImages.AddRange(imageInfos);
                                 context.SaveChanges();

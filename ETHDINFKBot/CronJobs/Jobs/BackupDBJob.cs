@@ -60,9 +60,9 @@ namespace ETHDINFKBot.CronJobs.Jobs
             Console.WriteLine("Run BACKUP");
             //textChannel.SendMessageAsync("Starting DB Backup");
 
-            var dbBackupPath = Path.Combine(Program.BasePath, "Database", "Backup", $"ETHBot_Job_{DateTime.Now.ToString("yyyyMMdd_HHmmss")}.db");
+            //var dbBackupPath = Path.Combine(Program.ApplicationSetting.BasePath, "Database", "Backup", $"ETHBot_Job_{DateTime.Now.ToString("yyyyMMdd_HHmmss")}.db");
 
-            BackupDB(Program.ConnectionString, $"Data Source={dbBackupPath}"); // todo get these 2 from settings and create 2. connection string dynamic
+            //BackupDB(Program.ConnectionString, $"Data Source={dbBackupPath}"); // todo get these 2 from settings and create 2. connection string dynamic
 
             // TODO check if we can delete any older backups
 

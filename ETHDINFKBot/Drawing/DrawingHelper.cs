@@ -1,6 +1,7 @@
 ﻿using SkiaSharp;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace ETHDINFKBot.Drawing
@@ -317,7 +318,7 @@ namespace ETHDINFKBot.Drawing
             int heigth = bitmap.Height;
 
             int yOffset = 25; // TODO Make padding depending
-            
+
 
             int iconDist = 20;
 
@@ -332,14 +333,14 @@ namespace ETHDINFKBot.Drawing
             canvas.DrawLine(new SKPoint(xBase - iconDist, yBase), new SKPoint(xBase, yBase), paint);
             canvas.DrawText(text, new SKPoint(xBase + 5, yBase + size), textPaint); // TODO Correct paint?
 
-            if(labelYHeight > 0)
+            if (labelYHeight > 0)
             {
                 var specialPaint = textPaint;
                 specialPaint.Color = paint.Color;
 
                 canvas.DrawText(text, new SKPoint(bitmap.Width - 140 /* TODO dynamic trough padding */, labelYHeight), specialPaint); // TODO Correct paint?
-                
-                if(bitmapIcon != null)
+
+                if (bitmapIcon != null)
                     canvas.DrawBitmap(bitmapIcon, new SKPoint(bitmap.Width - 140 /* TODO dynamic trough padding */, labelYHeight));
             }
 
@@ -398,6 +399,16 @@ namespace ETHDINFKBot.Drawing
             }
 
             return croppedBitmap;
+        }
+
+        public static async void SaveToDisk(string fileName, SKBitmap bitmap)
+        {
+            using (var data = bitmap.Encode(SKEncodedImageFormat.Png, 80))
+            {
+                // save the data to a stream
+                using (var stream = File.OpenWrite(fileName))
+                    data.SaveTo(stream);
+            }
         }
 
         /* USE THIS TO ENFORCE THE SAME STYLE FOR ALL IMAGES*/

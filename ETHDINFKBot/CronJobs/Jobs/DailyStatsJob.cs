@@ -33,12 +33,12 @@ namespace ETHDINFKBot.CronJobs.Jobs
             _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
             Console.WriteLine("Run DailyStatsJob");
 
-            var guild = Program.Client.GetGuild(Program.BaseGuild);
+            var guild = Program.Client.GetGuild(Program.ApplicationSetting.BaseGuild);
             var spamChannel = guild.GetTextChannel(GeneralChatId);
             if (spamChannel != null)
             {
-                var res = GenerateMovieLastDay(Program.BaseGuild, spamChannel).Result;
-                res = GenerateMovieLastWeek(Program.BaseGuild, spamChannel).Result;
+                var res = GenerateMovieLastDay(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                res = GenerateMovieLastWeek(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
             }
 
             return Task.CompletedTask;

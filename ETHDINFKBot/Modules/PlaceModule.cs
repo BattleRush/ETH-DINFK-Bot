@@ -353,7 +353,7 @@ If you violate the server rules your pixels will be removed.
 
             //builder.WithThumbnailUrl("https://avatars0.githubusercontent.com/u/11750584");
 
-            var ownerUser = Program.Client.GetUser(Program.Owner);
+            var ownerUser = Program.Client.GetUser(Program.ApplicationSetting.Owner);
 
             // TODO move admin commands to the admin module
             builder.AddField("Admin ONLY", $"```{prefix}place lock <true|false>" + Environment.NewLine +
@@ -386,7 +386,7 @@ If you violate the server rules your pixels will be removed.
         public async Task LockPlace(bool lockPlace)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 Context.Channel.SendMessageAsync("You aren't allowed to run this command.", false);
                 return;
@@ -408,7 +408,7 @@ If you violate the server rules your pixels will be removed.
         public async Task RemovePixels(ulong discordUserId, int x, int y, int xSize, int ySize, int mins = 1440)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 Context.Channel.SendMessageAsync("You really tought you could run this huh?", false);
                 return;
@@ -643,7 +643,7 @@ If you violate the server rules your pixels will be removed.
         public async Task GenerateTimelapse(params SocketUser[] users)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 Context.Channel.SendMessageAsync("You aren't allowed to run this command || Yes this is because someone likes to spam db heavy commands ||", false);
                 return;
@@ -656,7 +656,7 @@ If you violate the server rules your pixels will be removed.
         public async Task GenerateTimelapse(int x, int y, int size, params SocketUser[] users)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner && size > 250)
+            if (author.Id != Program.ApplicationSetting.Owner && size > 250)
             {
                 Context.Channel.SendMessageAsync("You aren't allowed to run this command for size > 250", false);
                 return;
@@ -668,7 +668,7 @@ If you violate the server rules your pixels will be removed.
         public async Task GenerateTimelapse(int x, int y, int size)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner && size > 250)
+            if (author.Id != Program.ApplicationSetting.Owner && size > 250)
             {
                 Context.Channel.SendMessageAsync("You aren't allowed to run this command for size > 250", false);
                 return;
@@ -681,7 +681,7 @@ If you violate the server rules your pixels will be removed.
         public async Task GenerateTimelapse()
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 Context.Channel.SendMessageAsync("You aren't allowed to run this command || Yes this is because someone likes to spam db heavy commands ||", false);
                 return;
@@ -940,7 +940,7 @@ If you violate the server rules your pixels will be removed.
             try
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner && forceReload)
+                if (author.Id != Program.ApplicationSetting.Owner && forceReload)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command || Yes this is because someone likes to spam db heavy commands ||", false);
                     return;
@@ -1373,13 +1373,13 @@ If you violate the server rules your pixels will be removed.
             watch.Start();
 
             // todo config
-            ulong guildId = Program.BaseGuild;
+            ulong guildId = Program.ApplicationSetting.BaseGuild;
             ulong spamChannel = 768600365602963496;
 
             var guild = Program.Client.GetGuild(guildId);
             var textChannel = guild.GetTextChannel(spamChannel);
 
-            var chunkFolder = Path.Combine(Program.BasePath, "TimelapseChunks");
+            var chunkFolder = Path.Combine(Program.ApplicationSetting.BasePath, "TimelapseChunks");
 
             if (!Directory.Exists(chunkFolder))
                 Directory.CreateDirectory(chunkFolder);

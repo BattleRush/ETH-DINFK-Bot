@@ -1100,7 +1100,7 @@ namespace ETHDINFKBot
 
                 var sqlSelect = $@"SELECT COUNT(*) FROM DiscordEmotes";
 
-                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionString))
+                using (var connection = new MySqlConnection(Program.ApplicationSetting.ConnectionStringsSetting.ConnectionString_ReadOnly))
                 {
                     using (var command = new MySqlCommand(sqlSelect, connection))
                     {
@@ -1548,7 +1548,7 @@ namespace ETHDINFKBot
             var emojiDate = SnowflakeUtils.FromSnowflake(emote.DiscordEmoteId);
 
             string additionalFolder = $"{emojiDate.Year}-{emojiDate.Month:00}";
-            string path = Path.Combine(Program.BasePath, "Emotes", additionalFolder);
+            string path = Path.Combine(Program.ApplicationSetting.BasePath, "Emotes", additionalFolder);
 
             if (!Directory.Exists(path))
             {

@@ -40,7 +40,7 @@ namespace ETHDINFKBot.Modules
 
                 var queryResult = await SQLHelper.GetQueryResults(Context, $@"
 SELECT table_name FROM information_schema.tables
-WHERE table_schema = '{Program.MariaDBDBName}' 
+WHERE table_schema = '{Program.ApplicationSetting.MariaDBName}' 
 ORDER BY table_name DESC;", true, 50);
 
                 EmbedBuilder builder = new EmbedBuilder();
@@ -78,7 +78,7 @@ DB Stats Help: '{prefix}sql stats help'");
                     if (largeTables.Contains(tableName))
                         query = $@"SELECT AUTO_INCREMENT
 FROM   information_schema.TABLES
-WHERE  TABLE_SCHEMA = '{Program.MariaDBDBName}' and TABLE_NAME = '{tableName}'";
+WHERE  TABLE_SCHEMA = '{Program.ApplicationSetting.MariaDBName}' and TABLE_NAME = '{tableName}'";
 
                     var rowCountInfo = await SQLHelper.GetQueryResults(Context, query, true, 1);
 
@@ -90,7 +90,7 @@ WHERE  TABLE_SCHEMA = '{Program.MariaDBDBName}' and TABLE_NAME = '{tableName}'";
 FROM
   information_schema.TABLES
 WHERE
-  TABLE_SCHEMA = '{Program.MariaDBDBName}' and TABLE_NAME = '{tableName}'";
+  TABLE_SCHEMA = '{Program.ApplicationSetting.MariaDBName}' and TABLE_NAME = '{tableName}'";
 
                     var tableSize = await SQLHelper.GetQueryResults(Context, tableSizeQuery, true, 1);
                     var sizeInBytesStr = tableSize.Data.FirstOrDefault()?.FirstOrDefault();
@@ -168,9 +168,9 @@ WHERE
 
                 foreach (var row in queryResult.Data)
                 {
-                    if (row[0] == Program.MariaDBFullUserName)
+                    if (row[0] == Program.ApplicationSetting.MariaDBFullUserName)
                         row[0] = "FULL USER";
-                    if (row[0] == Program.MariaDBReadOnlyUserName)
+                    if (row[0] == Program.ApplicationSetting.MariaDBReadOnlyUserName)
                         row[0] = "READ-ONLY USER";
                 }
 
@@ -432,7 +432,7 @@ WHERE
 
                 var queryResult = await SQLHelper.GetQueryResults(Context, $@"
 SELECT table_name FROM information_schema.tables
-WHERE table_schema = '{Program.MariaDBDBName ?? "ETHBot"}' 
+WHERE table_schema = '{Program.ApplicationSetting.MariaDBName ?? "ETHBot"}' 
 ORDER BY table_name DESC;", true, 50);
 
                 // Add tables incase they arent in the list above for their correct order
@@ -471,7 +471,7 @@ ORDER BY table_name DESC;", true, 50);
                     {
                         using (var command = context.Database.GetDbConnection().CreateCommand())
                         {
-                            command.CommandText = $"SHOW COLUMNS FROM {item} FROM {Program.MariaDBDBName ?? "ETHBot"}";
+                            command.CommandText = $"SHOW COLUMNS FROM {item} FROM {Program.ApplicationSetting.MariaDBName ?? "ETHBot"}";
                             context.Database.OpenConnection();
                             if (item == "EmojiStatistics")
                             {
@@ -492,7 +492,7 @@ ORDER BY table_name DESC;", true, 50);
   from information_schema.table_constraints fk
   join information_schema.key_column_usage c
     on c.constraint_name = fk.constraint_name
-  where fk.constraint_type = 'FOREIGN KEY' AND c.TABLE_SCHEMA = '{Program.MariaDBDBName ?? "ETHBot"}' AND c.table_name = '{item}'; ";
+  where fk.constraint_type = 'FOREIGN KEY' AND c.TABLE_SCHEMA = '{Program.ApplicationSetting.MariaDBName ?? "ETHBot"}' AND c.table_name = '{item}'; ";
                             context.Database.OpenConnection();
 
                             ForeignKeyInfos.Add(GetForeignKeyInfo(command, item));
@@ -560,7 +560,7 @@ ORDER BY table_name DESC;", true, 50);
         private bool AllowedToRun(BotPermissionType type)
         {
             var channelSettings = DatabaseManager.Instance().GetChannelSetting(Context.Message.Channel.Id);
-            if (Context.Message.Author.Id != Program.Owner
+            if (Context.Message.Author.Id != Program.ApplicationSetting.Owner
                 && !((BotPermissionType)channelSettings?.ChannelPermissionFlags).HasFlag(type))
             {
 #if DEBUG
@@ -581,7 +581,7 @@ ORDER BY table_name DESC;", true, 50);
                 return;
 
             await Context.Channel.SendMessageAsync("<:pepegun:747783377716904008>", false);
-            await Context.Channel.SendMessageAsync($"<@!{Program.Owner}> someone tried to kill me with: {query.Substring(0, Math.Min(query.Length, 1500))}", false);
+            await Context.Channel.SendMessageAsync($"<@!{Program.ApplicationSetting.Owner}> someone tried to kill me with: {query.Substring(0, Math.Min(query.Length, 1500))}", false);
             if (query.Length > 1500)
                 await Context.Channel.SendMessageAsync($"{query.Substring(1500, query.Length - 1500)}", false);
             //connect.Close();
@@ -598,7 +598,7 @@ ORDER BY table_name DESC;", true, 50);
 
         private bool ForbiddenQuery(string commandSql, ulong authorId)
         {
-            if (CommonHelper.ContainsForbiddenQuery(commandSql) && authorId != ETHDINFKBot.Program.Owner)
+            if (CommonHelper.ContainsForbiddenQuery(commandSql) && authorId != Program.ApplicationSetting.Owner)
             {
                 Context.Channel.SendMessageAsync("Dont you dare to think you will be allowed to use this command https://tenor.com/view/you-shall-not-pass-lord-of-the-ring-gif-5234772", false);
                 return true;

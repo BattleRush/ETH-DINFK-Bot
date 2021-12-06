@@ -59,7 +59,7 @@ namespace ETHDINFKBot
             //NekoClient.LogType = LogType.None;
 
             var channelSettings = DatabaseManager.GetChannelSetting(Context.Message.Channel.Id);
-            if (Context.Message.Author.Id != Program.Owner
+            if (Context.Message.Author.Id != Program.ApplicationSetting.Owner
                 && !((BotPermissionType)channelSettings?.ChannelPermissionFlags).HasFlag(type))
             {
 #if DEBUG
@@ -97,7 +97,7 @@ namespace ETHDINFKBot
 
             //builder.WithThumbnailUrl("https://avatars0.githubusercontent.com/u/11750584");
 
-            var ownerUser = Program.Client.GetUser(Program.Owner);
+            var ownerUser = Program.Client.GetUser(Program.ApplicationSetting.Owner);
             builder.WithThumbnailUrl(ownerUser.GetAvatarUrl());
             builder.WithAuthor(ownerUser);
             builder.WithCurrentTimestamp();
@@ -516,7 +516,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         // TODO dynamic image sizes
         // TODO support 100+
         // TODO gifs -> video?
-        private Stream DrawPreviewImage(List<DiscordEmote> emojis, List<GuildEmote> guildEmotes)
+        private (SKBitmap Bitmap, SKCanvas Canvas) DrawPreviewImage(List<DiscordEmote> emojis, List<GuildEmote> guildEmotes)
         {
             int page = 10;
 
@@ -619,12 +619,12 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 canvas.DrawLine(new SKPoint(0, i * blockSize + paddingY - 15), new SKPoint(width, i * blockSize + paddingY - 15), DrawingHelper.DefaultDrawing);
             }
 
-            var stream = CommonHelper.GetStream(bitmap);
+            //var stream = CommonHelper.GetStream(bitmap);
 
-            bitmap.Dispose();
-            canvas.Dispose();
+            //bitmap.Dispose();
+            //canvas.Dispose();
 
-            return stream;
+            return (bitmap, canvas);
         }
 
         [Command("react")]
@@ -675,7 +675,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                 // load the user in question
                 if (userId.HasValue)
-                    user = Program.Client.GetGuild(Program.BaseGuild).GetUser(userId.Value) as SocketGuildUser;
+                    user = Program.Client.GetGuild(Program.ApplicationSetting.BaseGuild).GetUser(userId.Value) as SocketGuildUser;
 
                 var pingHistory = DiscordHelper.GetTotalPingHistory(user, 30);
                 var builder = DiscordHelper.GetEmbedForPingHistory(pingHistory, user);
@@ -735,7 +735,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             var author = Context.Message.Author;
 
-            if (search.Length < 2 && author.Id != Program.Owner)
+            if (search.Length < 2 && author.Id != Program.ApplicationSetting.Owner)
             {
                 await Context.Channel.SendMessageAsync($"Search term needs to be atleast 2 characters long", false); // to prevent from db overload
                 return;
@@ -856,14 +856,40 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
 
 
-            var stream = DrawPreviewImage(emotes, guildEmotes);
+            string fileName = $"emote_{search}_{new Random().Next(int.MaxValue)}.png";
+            
+
+
+            var emoteDrawing = DrawPreviewImage(emotes, guildEmotes);
+
+
+            DrawingHelper.SaveToDisk(Path.Combine(Program.ApplicationSetting.CDNPath, fileName), emoteDrawing.Bitmap);
 
             if (text.Length > 1990)
             {
                 text = text.Substring(0, 1990);
             }
             watch.Stop();
-            var msg = await Context.Channel.SendFileAsync(stream, $"emote_{search}.png", text + $"Time: {watch.ElapsedMilliseconds} ms");
+            //var msg = await Context.Channel.SendFileAsync(stream, $"emote_{search}.png", text + $"Time: {watch.ElapsedMilliseconds} ms");
+
+
+            EmbedBuilder builder = new EmbedBuilder()
+            {
+                ImageUrl = $"https://cdn.battlerush.dev/{fileName}",
+                Description = text,
+                Color = Color.DarkRed,
+                Title = "title",
+                //Footer = "footer text",
+                ThumbnailUrl = "https://cdn.battlerush.dev/bot_xmas.png", 
+                Timestamp = DateTimeOffset.Now,
+                Url = $"https://cdn.battlerush.dev/{fileName}",
+            };
+            builder.WithAuthor(Context.User);
+
+            var msg2 = await Context.Channel.SendMessageAsync("", false, builder.Build());
+
+
+            //msg.ModifyAsync(i => i.Attachments.)
         }
 
         //[Command("study", RunMode = RunMode.Async)]
@@ -949,7 +975,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         public async Task Latex([Remainder] string input)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
@@ -1139,7 +1165,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != ETHDINFKBot.Program.ApplicationSetting.Owner)
             {
                 //Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 //return
@@ -1410,7 +1436,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         public async Task Say(string message, int amount)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 //Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
@@ -1432,13 +1458,13 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         public async Task Purge(int count, bool fromBot = false)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 //Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
             }
 
-            ulong fromUserToDelete = fromBot ? 774276700557148170 : ETHDINFKBot.Program.Owner;
+            ulong fromUserToDelete = fromBot ? 774276700557148170 : Program.ApplicationSetting.Owner;
 
             if (fromBot)
             {
@@ -1454,7 +1480,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         public async Task Nuke(int count, bool tts = false)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 return;
             }
@@ -2339,12 +2365,12 @@ ORDER BY RANDOM() LIMIT 1
         public async Task GenerateCloud()
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 return;
             }
 
-            var txtFile = Path.Combine(Program.BasePath, "Database", "MessagesText.txt");
+            var txtFile = Path.Combine(Program.ApplicationSetting.BasePath, "Database", "MessagesText.txt");
 
             File.WriteAllText(txtFile, ""); // reset file
 

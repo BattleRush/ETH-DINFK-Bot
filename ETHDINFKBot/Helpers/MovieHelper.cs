@@ -20,8 +20,8 @@ namespace ETHDINFKBot.Helpers
     {
         public static (string BasePath, string BaseOutputPath) CleanAndCreateMovieFolders()
         {
-            string basePath = Path.Combine(Program.BasePath, "MovieFrames");
-            string baseOutputPath = Path.Combine(Program.BasePath, "MovieOutput");
+            string basePath = Path.Combine(Program.ApplicationSetting.BasePath, "MovieFrames");
+            string baseOutputPath = Path.Combine(Program.ApplicationSetting.BasePath, "MovieOutput");
 
             // Clean up any remaining files
             if (Directory.Exists(basePath))
@@ -255,7 +255,7 @@ namespace ETHDINFKBot.Helpers
         {
             int random = new Random().Next(1_000);
             //GlobalFFOptions.Configure(options => options.BinaryFolder = Program.Settings.FFMpegPath);
-            Xabe.FFmpeg.FFmpeg.SetExecutablesPath(Program.Settings.FFMpegPath);
+            Xabe.FFmpeg.FFmpeg.SetExecutablesPath(Program.ApplicationSetting.FFMpegPath);
 
             var files = Directory.GetFiles(Path.Combine(basePath)).ToList().OrderBy(i => i);
             string fileName = Path.Combine(baseOutputPath, $"movie_{random}.mp4");

@@ -53,39 +53,17 @@ namespace ETHDINFKBot
         }
     }
 
-    public class Settings
-    {
-        public string FFMpegPath { get; set; }
-    }
-
     class Program
     {
-        public static Settings Settings = new Settings();
         public static DiscordSocketClient Client;
         private CommandService Commands;
 
         private IServiceProvider services;
         private static IConfiguration Configuration;
-        private static string DiscordToken { get; set; }
-        public static ulong Owner { get; set; }
+
         public static long TotalEmotes { get; set; }
 
-        // TODO one object and somewhere else but im lazy
-        public static string RedditAppId { get; set; }
-        public static string RedditRefreshToken { get; set; }
-        public static string RedditAppSecret { get; set; }
-        public static string BasePath { get; set; }
-        public static string ConnectionString { get; set; }
-        public static string MariaDBFullUserName { get; set; }
-        public static string MariaDBReadOnlyUserName { get; set; }
-        public static string MariaDBReadOnlyConnectionString { get; set; }
-        public static string MariaDBDBName { get; set; }
-        public static ulong BaseGuild { get; set; }
-
         public static string CurrentPrefix { get; set; }
-
-        // TODO maybe compiler warning -> but longterm settings need to be moved from here
-        public static string FULL_MariaDBReadOnlyConnectionString { get; set; }
 
         // TODO Move settings to an object
         public static bool TempDisableIncomming { get; set; }
@@ -111,13 +89,13 @@ namespace ETHDINFKBot
         public static List<ChannelOrderInfo> ChannelPositions = new List<ChannelOrderInfo>();
 
 
-
-
         private DatabaseManager DatabaseManager = DatabaseManager.Instance();
         private LogManager LogManager = new LogManager(DatabaseManager.Instance());
 
         public static BotSetting BotSetting;
         public static IHost Host;
+
+        public static ApplicationSetting ApplicationSetting;
 
         static void Main(string[] args)
         {
@@ -191,30 +169,56 @@ namespace ETHDINFKBot
                   .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                   .Build();
 
-                DiscordToken = Configuration["DiscordToken"];
-                Owner = Convert.ToUInt64(Configuration["Owner"]);
-                BaseGuild = Convert.ToUInt64(Configuration["BaseGuild"]);
+                ApplicationSetting = new ApplicationSetting()
+                {
+                    DiscordToken = Configuration["DiscordToken"],
+                    Owner = Convert.ToUInt64(Configuration["Owner"]),
+                    BaseGuild = Convert.ToUInt64(Configuration["BaseGuild"]),
 
-                BasePath = Configuration["BasePath"];
-                ConnectionString = Configuration["ConnectionString"];
+                    BasePath = Configuration["BasePath"],
+
+                    // TODO Fix app setting name for these 3
+                    MariaDBFullUserName = Configuration["MariaDB_FullUserName"],
+                    MariaDBReadOnlyUserName = Configuration["MariaDB_ReadOnlyUserName"],
+                    MariaDBName = Configuration["MariaDB_DBName"],
+
+                    ConnectionStringsSetting = new ConnectionStringsSetting()
+                    {
+                        ConnectionString_Full = Configuration.GetConnectionString("ConnectionString_Full").ToString(),
+                        ConnectionString_ReadOnly = Configuration.GetConnectionString("ConnectionString_ReadOnly").ToString()
+                    },
+                    CDNPath = Configuration["CDNPath"],
+                    CertFilePath = Configuration["CertFilePath"],
+                    FFMpegPath = Configuration["FFMpegPath"],
+
+                    RedditSetting = new RedditSetting()
+                    {
+                        AppId = Configuration["Reddit:AppId"],
+                        RefreshToken = Configuration["Reddit:RefreshToken"],
+                        AppSecret = Configuration["Reddit:AppSecret"],
+                    }
+                };
+
+
+
+                //;
+
                 // TODO Update for new connection strings and dev/prod
 
-                MariaDBReadOnlyConnectionString = Configuration.GetConnectionString("ConnectionString_ReadOnly").ToString();
-                FULL_MariaDBReadOnlyConnectionString = Configuration.GetConnectionString("ConnectionString_Full").ToString();
+                //MariaDBReadOnlyConnectionString = ;
+                //FULL_MariaDBReadOnlyConnectionString = ;
 
-                MariaDBFullUserName = Configuration["MariaDB_FullUserName"];
-                MariaDBReadOnlyUserName = Configuration["MariaDB_ReadOnlyUserName"];
-                MariaDBDBName = Configuration["MariaDB_DBName"];
 
-                RedditAppId = Configuration["Reddit:AppId"];
-                RedditRefreshToken = Configuration["Reddit:RefreshToken"];
-                RedditAppSecret = Configuration["Reddit:AppSecret"];
 
-                Settings.FFMpegPath = Configuration["FFMpegPath"];
+                //RedditAppId = Configuration["Reddit:AppId"];
+                //RedditRefreshToken = Configuration["Reddit:RefreshToken"];
+                //RedditAppSecret = Configuration["Reddit:AppSecret"];
+
+                //Settings.FFMpegPath = Configuration["FFMpegPath"];
 
                 //BackupDBOnStartup();
 
-                new Program().MainAsync(DiscordToken).GetAwaiter().GetResult();
+                new Program().MainAsync(ApplicationSetting.DiscordToken).GetAwaiter().GetResult();
             }
             catch (BadImageFormatException bife)
             {
@@ -232,10 +236,10 @@ namespace ETHDINFKBot
 
         public static void BackupDBOnStartup()
         {
-            var path = Path.Combine(BasePath, "Database", "ETHBot.db");
+            var path = Path.Combine(ApplicationSetting.BasePath, "Database", "ETHBot.db");
             if (File.Exists(path))
             {
-                var backupPath = Path.Combine(BasePath, "Database", "Backup");
+                var backupPath = Path.Combine(ApplicationSetting.BasePath, "Database", "Backup");
                 if (Directory.Exists(backupPath))
                 {
                     // check if the oldest backup is newer than x h then dont backup
@@ -253,7 +257,7 @@ namespace ETHDINFKBot
                         return;
                 }
 
-                var path2 = Path.Combine(BasePath, "Database", "Backup", $"ETHBot_{DateTime.Now:yyyyMMdd_HHmmss}.db");
+                var path2 = Path.Combine(ApplicationSetting.BasePath, "Database", "Backup", $"ETHBot_{DateTime.Now:yyyyMMdd_HHmmss}.db");
                 File.Copy(path, path2);
             }
         }
@@ -477,7 +481,7 @@ namespace ETHDINFKBot
         {
             if (channel is SocketGuildChannel guildChannel)
             {
-                ulong guildId = Program.BaseGuild;
+                ulong guildId = Program.ApplicationSetting.BaseGuild;
 
 #if DEBUG
                 guildId = 774286694794919986;
@@ -542,7 +546,7 @@ namespace ETHDINFKBot
 
                     for (int i = 0; i < channelInfos.Count(); i++)
                     {
-                        if(channels.Count() != channelInfos.Length)
+                        if (channels.Count() != channelInfos.Length)
                         {
                             await textChannel.SendMessageAsync($"**Someone really fatfingered this time. It looks like some channel moved categories. I wont fix this. Check the FIRST Move detected entry. This is likely the offender** {Environment.NewLine}" +
                                 $"Come on, why do you make my life that difficult <:pepegun:851456702973083728>");
@@ -630,7 +634,7 @@ namespace ETHDINFKBot
             if (originalChannel is SocketGuildChannel originalGuildChannel
                 && newChannel is SocketGuildChannel newGuildChannel)
             {
-                ulong guildId = Program.BaseGuild;
+                ulong guildId = Program.ApplicationSetting.BaseGuild;
                 ulong adminBotChannel = 747768907992924192;
 
 #if DEBUG
@@ -741,7 +745,7 @@ namespace ETHDINFKBot
         {
             SetUpApplicationCommands();
 
-            ulong guildId = Program.BaseGuild; // TODO Update
+            ulong guildId = Program.ApplicationSetting.BaseGuild; // TODO Update
 #if DEBUG
             guildId = 774286694794919986;
 #endif
@@ -753,7 +757,7 @@ namespace ETHDINFKBot
 
             var textChannel = guild.GetTextChannel(DiscordHelper.DiscordChannels["spam"]);
             if (textChannel != null)
-                textChannel.SendMessageAsync($"Restarted with Branch: {ThisAssembly.Git.Branch} and Commit: {ThisAssembly.Git.Commit}. Last Uptime was: {CommonHelper.ToReadableString(DateTime.Now - lastStartUp)} Bot client ready. <@{Program.Owner}>");
+                textChannel.SendMessageAsync($"Restarted with Branch: {ThisAssembly.Git.Branch} and Commit: {ThisAssembly.Git.Commit}. Last Uptime was: {CommonHelper.ToReadableString(DateTime.Now - lastStartUp)} Bot client ready. <@{Program.ApplicationSetting.Owner}>");
 
             // Register bot startup time when bot is ready
             DatabaseManager.Instance().AddBotStartUp();
@@ -1168,7 +1172,7 @@ namespace ETHDINFKBot
 
             FirstDailyPostsCandidates = new List<SocketMessage>(); // Reset
 
-            DiscordHelper.DiscordUserBirthday(Client, Program.BaseGuild, 768600365602963496, true); // on first daily post trigger birthday messages -> TODO maybe move to a cron job
+            DiscordHelper.DiscordUserBirthday(Client, Program.ApplicationSetting.BaseGuild, 768600365602963496, true); // on first daily post trigger birthday messages -> TODO maybe move to a cron job
         }
 
         public async Task HandleCommandAsync(SocketMessage m)
@@ -1373,7 +1377,7 @@ namespace ETHDINFKBot
             if (!msg.HasStringPrefix(CurrentPrefix, ref argPos))
                 return;
 
-            if (!m.Author.IsBot && m.Author.Id != Owner)
+            if (!m.Author.IsBot && m.Author.Id != ApplicationSetting.Owner)
             {
                 if (SpamCache.ContainsKey(m.Author.Id))
                 {

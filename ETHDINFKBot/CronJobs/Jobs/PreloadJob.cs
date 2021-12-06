@@ -182,7 +182,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
             foreach (var item in Program.Client.Guilds)
             {
-                if (item.Id != Program.BaseGuild)
+                if (item.Id != Program.ApplicationSetting.BaseGuild)
                     continue; // only sync eth dinfk for now
 
                 foreach (var botChannelSetting in botChannelSettings)
