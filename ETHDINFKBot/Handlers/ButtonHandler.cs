@@ -91,10 +91,7 @@ namespace ETHDINFKBot.Handlers
                     .WithButton("Prev <", "emote-get-prev-page", ButtonStyle.Danger, null, null, page == 0)
                     .WithButton("> Next", "emote-get-next-page", ButtonStyle.Success, null, null, false); // TODO detect max page
 
-                // TODO in one call?
-                await SocketUserMessage.ModifyAsync(i => i.Embed = builder.Build());
-                await SocketUserMessage.ModifyAsync(i => i.Components = builderComponent.Build());
-                await SocketUserMessage.ModifyAsync(i => i.Content = emoteResult.textBlock);
+                await SocketUserMessage.ModifyAsync(i => { i.Embed = builder.Build(); i.Content = emoteResult.textBlock; i.Components = builderComponent.Build(); });
             }
 
             return true;
