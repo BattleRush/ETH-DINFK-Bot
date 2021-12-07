@@ -1023,7 +1023,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         public async Task Rant(string type = null, [Remainder] string content = "")
         {
             // TODO perm check but for now open everwhere
-            Context.Channel.SendMessageAsync("Ask <@675445762900885515> or <@276462585690193921> or <@124603627833786370> why its disabled. Also ill fix it in the evening.")
+            Context.Channel.SendMessageAsync("Ask <@675445762900885515> or <@276462585690193921> or <@124603627833786370> why its disabled. Also ill fix it in the evening.");
             return;
             if (type == null)
             {
