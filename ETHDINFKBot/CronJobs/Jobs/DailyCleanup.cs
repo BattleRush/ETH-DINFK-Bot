@@ -49,6 +49,11 @@ namespace ETHDINFKBot.CronJobs.Jobs
             //messageDelete.DeleteAsync();
         }
 
+        public async void CleanupCDN()
+        {
+
+        }
+
         public async void RemovePingHell()
         {
             var guild = Program.Client.GetGuild(747752542741725244);
