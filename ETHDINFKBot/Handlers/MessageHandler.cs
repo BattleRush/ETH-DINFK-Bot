@@ -40,7 +40,7 @@ namespace ETHDINFKBot.Handlers
             SocketMessage = socketMessage;
 
             // verify what to do when these 2 cant be cast
-            SocketGuildUser = socketMessage.Author as SocketGuildUser;   
+            SocketGuildUser = socketMessage.Author as SocketGuildUser;
             SocketTextChannel = socketMessage.Channel as SocketTextChannel;
             SocketCategoryChannel = SocketTextChannel.Category as SocketCategoryChannel;
             SocketThreadChannel = socketMessage.Channel as SocketThreadChannel;
@@ -86,7 +86,6 @@ namespace ETHDINFKBot.Handlers
 
             return true; // kinda useless
         }
-
 
         private async Task<bool> CreateDiscordServerDBEntry()
         {
@@ -253,7 +252,7 @@ namespace ETHDINFKBot.Handlers
                     DiscordThreadId = SocketThreadChannel?.Id
                 }, true);
 
-                if(SocketMessage.Reference != null && newDiscordMessageEntryCreated)
+                if (SocketMessage.Reference != null && newDiscordMessageEntryCreated)
                 {
                     // This message is a reply to some message -> Create PingHistory
                     // TODO if the reply contains a ping then we create a double entry
@@ -278,15 +277,17 @@ namespace ETHDINFKBot.Handlers
 
         private async void Autoreact()
         {
-            // For now disable for threads
-            if (SocketThreadChannel != null)
-                return;
-
-            // Bot has permission to react in this channel
-            if (ChannelSettings != null && ((BotPermissionType)ChannelSettings?.ChannelPermissionFlags).HasFlag(BotPermissionType.React))
+            try
             {
-                // this that reaction
-                List<ulong> upvoteChannels = new List<ulong>()
+                // For now disable for threads
+                if (SocketThreadChannel != null)
+                    return;
+
+                // Bot has permission to react in this channel
+                if (ChannelSettings != null && ((BotPermissionType)ChannelSettings?.ChannelPermissionFlags).HasFlag(BotPermissionType.React))
+                {
+                    // this that reaction
+                    List<ulong> upvoteChannels = new List<ulong>()
                 {
                     DiscordChannels["pullrequest"],
                     DiscordChannels["serversuggestions"],
@@ -294,33 +295,38 @@ namespace ETHDINFKBot.Handlers
                     DiscordChannels["ethmemes"]
                 };
 
-                if (upvoteChannels.Contains(SocketGuildChannel.Id))
-                {
-                    await SocketMessage.AddReactionAsync(Emote.Parse($"<:this:{DiscordEmotes["this"]}>"));
-                    await SocketMessage.AddReactionAsync(Emote.Parse($"<:that:{DiscordEmotes["that"]}>"));
-                }
+                    if (upvoteChannels.Contains(SocketGuildChannel.Id))
+                    {
+                        await SocketMessage.AddReactionAsync(Emote.Parse($"<:this:{DiscordEmotes["this"]}>"));
+                        await SocketMessage.AddReactionAsync(Emote.Parse($"<:that:{DiscordEmotes["that"]}>"));
+                    }
 
-                // this that reaction
-                List<ulong> pikaChannels = new List<ulong>()
+                    // this that reaction
+                    List<ulong> pikaChannels = new List<ulong>()
                 {
                     DiscordChannels["pullrequest"]
                 };
 
-                if (pikaChannels.Contains(SocketGuildChannel.Id))
-                {
-                    await SocketMessage.AddReactionAsync(Emote.Parse($"<:pikashrugA:{DiscordEmotes["pikashrugA"]}>"));
-                }
+                    if (pikaChannels.Contains(SocketGuildChannel.Id))
+                    {
+                        await SocketMessage.AddReactionAsync(Emote.Parse($"<:pikashrugA:{DiscordEmotes["pikashrugA"]}>"));
+                    }
 
-                // awww reaction
-                List<ulong> awwChannels = new List<ulong>()
+                    // awww reaction
+                    List<ulong> awwChannels = new List<ulong>()
                 {
                     DiscordChannels["serotonin"]
                 };
 
-                if (awwChannels.Contains(SocketGuildChannel.Id) && SocketMessage.Attachments.Count > 0)
-                {
-                    await SocketMessage.AddReactionAsync(Emote.Parse($"<:awww:{DiscordEmotes["awww"]}>"));
+                    if (awwChannels.Contains(SocketGuildChannel.Id) && SocketMessage.Attachments.Count > 0)
+                    {
+                        await SocketMessage.AddReactionAsync(Emote.Parse($"<:awww:{DiscordEmotes["awww"]}>"));
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                // If the message is quickly deleted an exception will be thrown -> Ignore
             }
         }
 
