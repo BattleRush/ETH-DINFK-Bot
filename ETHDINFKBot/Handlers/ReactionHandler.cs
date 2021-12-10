@@ -318,17 +318,21 @@ https://cdn.discordapp.com/attachments/843957532380889098/914184155342995456/unk
 
                             builder.WithTitle($"{SocketGuildMessageUser.Username} has a suggestion");
                             builder.WithColor(0, 0, 255);
-                            
+
+                            if (SocketGuildMessageUser != null)
+                                builder.WithAuthor(SocketGuildMessageUser);
+
                             //add first attachement as thumbnail (if attachment is not picture, height == null) 
-                            if(Message.Attachments != null && Message.Attachments.FirstOrDefault()?.Height != null)
+                            if (Message.Attachments != null && Message.Attachments.FirstOrDefault()?.Height != null)
                             {
                                 builder.WithThumbnailUrl(Message.Attachments.First().Url);
+                                builder.WithImageUrl(Message.Attachments.First().Url);
                             }
-                            
+
                             builder.WithCurrentTimestamp();
                             //if no content, add content
                             builder.AddField("Suggestion", (Message.Content.Length > 0 ? Message.Content : "No content provided."));
-                            builder.AddField("Up/Downvotes", "<:this:"+ DiscordEmotes["this"]+ "> " + upvoteCount.Value.ReactionCount + " / <:that:"+ DiscordEmotes["that"]+ "> " + downvoteCount.Value.ReactionCount);
+                            builder.AddField("Up/Downvotes", "<:this:" + DiscordEmotes["this"] + "> " + upvoteCount.Value.ReactionCount + " / <:that:" + DiscordEmotes["that"] + "> " + downvoteCount.Value.ReactionCount);
                             var link = $"https://discord.com/channels/{SocketGuild.Id}/{SocketGuildChannel.Id}/{Message.Id}";
 
                             builder.AddField("Link", $"[Message]({link})");
