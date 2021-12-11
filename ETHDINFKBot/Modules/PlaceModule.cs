@@ -1354,7 +1354,9 @@ If you violate the server rules your pixels will be removed.
 
             //OldPixelCountMod = totalPixelsPlaced % 100_000;
 
-            Program.Client.SetGameAsync($"{totalPixelsPlaced:N0} pixels", null, ActivityType.Watching);
+            if (DateTime.Now.Minute % 5 == 0) // Only all 5 mins
+                Program.Client.SetGameAsync($"{totalPixelsPlaced:N0} pixels", null, ActivityType.Watching);
+            
             RefreshBoard(10);
 
             if (DateTime.Now.Minute % 60 == 0 || PlaceDiscordUsers.Count == 0)
