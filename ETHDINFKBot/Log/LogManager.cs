@@ -128,8 +128,8 @@ namespace ETHDINFKBot.Log
                 if (Program.TotalEmotes != emoteCount)
                 {
                     Program.TotalEmotes = emoteCount;
-                    // place pixels is now tracked
-                    //await Program.Client.SetGameAsync($"{Program.TotalEmotes} emotes", null, ActivityType.Watching);
+                    // place pixels is now tracked all 5 mins
+                    await Program.Client.SetGameAsync($"{Program.TotalEmotes} emotes", null, ActivityType.Watching);
                 }
 
                 /*
