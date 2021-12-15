@@ -218,16 +218,16 @@ namespace ETHDINFKBot.Log
                         if(role.Key == 895231323034222593)
                         {
                             // If the user doesnt have the Ping Hell role assign the role to it
-
                             ulong pingHellRole = 895231323034222593;
 
-                            if (!guildUser.RoleIds.Contains(pingHellRole))
+                            var user = await message.Channel.GetUserAsync(guildUser.Id) as SocketGuildUser; // Download the user -> to refresh the cache
+
+                            if (!guildUser.RoleIds.Contains(pingHellRole) || (user != null && !user.Roles.Any(i => i.Id == pingHellRole)))
                             {
                                 var rolePingHell = guildUser.Guild.Roles.FirstOrDefault(x => x.Id == pingHellRole);
 
                                 await guildUser.AddRoleAsync(rolePingHell);
-
-                                message.Channel.SendMessageAsync($"<@{authorId}> welcome to PingHell!");
+                                await message.Channel.SendMessageAsync($"<@{authorId}> welcome to PingHell!");
                             }
                         }
                     }
