@@ -38,7 +38,8 @@ namespace ETHDINFKBot.Modules
 
             builder.AddField($"{Program.CurrentPrefix}emote help", $"This page");
             builder.AddField($"{Program.CurrentPrefix}emote set <emote_id> <name>", $"Set favourite emote with the <emote_id> and <name>. To see the emote_id use {Program.CurrentPrefix}emote fav <search>");
-            builder.AddField($"{Program.CurrentPrefix}emote fav[ourite]", $"See your own favourite emotes");
+            builder.AddField($"{Program.CurrentPrefix}emote search <name>", $"Search for emotes");
+            builder.AddField($"{Program.CurrentPrefix}emote fav {Environment.NewLine}{Program.CurrentPrefix}emote favourite", $"See your own favourite emotes");
             builder.AddField($"{Program.CurrentPrefix}emote fav <name> {Environment.NewLine}{Program.CurrentPrefix}emote favourite <name>", $"Seach for emotes you want to favourite");
 
             await Context.Channel.SendMessageAsync("", false, builder.Build());
@@ -65,7 +66,7 @@ namespace ETHDINFKBot.Modules
             {
                 // EMOTE IS ALREADY MAPPED
 
-                Context.Message.ReplyAsync("Emote is already in your favourites");
+                Context.Message.ReplyAsync("Emote is already in your favourites"); // -> UPDATE
 
                 return;
             }
@@ -74,7 +75,7 @@ namespace ETHDINFKBot.Modules
             {
                 // THIS USER MAPPED THE NAME ALREADY FOR AN EMOTE
 
-                Context.Message.ReplyAsync("You reserved this name for some other emote already.");
+                Context.Message.ReplyAsync("You reserved this name for some other emote already."); // -> DELETE FIRST THEN CREATE NEW
                 return;
             }
 
