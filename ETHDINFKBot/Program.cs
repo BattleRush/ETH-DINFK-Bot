@@ -97,6 +97,8 @@ namespace ETHDINFKBot
 
         public static ApplicationSetting ApplicationSetting;
 
+        public static List<string> CommandNames { get; set; }
+
         static void Main(string[] args)
         {
             CurrentPrefix = ".";
@@ -408,11 +410,23 @@ namespace ETHDINFKBot
             await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), services);
 
 
-            /*if (DatabaseManager.GetDiscordServerById(747752542741725244) == null)
+            CommandNames = new List<string>();
+
+            List<string> buildCommandString(ModuleInfo module)
             {
-                // in ready event we should start the migration
-                TempDisableIncomming = true;
-            }*/
+                List<string> returnInfo = new List<string>();
+
+                foreach (var command in module.Commands)
+                    returnInfo.Add(command.Aliases.First());
+
+                foreach (var subModule in module.Submodules)
+                    returnInfo.AddRange(buildCommandString(subModule));
+
+                return returnInfo;
+            };
+
+            foreach (var module in Commands.Modules.Where(i => !i.IsSubmodule))
+                CommandNames.AddRange(buildCommandString(module));
 
             PlaceMultipixelHandler multipixelHandler = new PlaceMultipixelHandler();
             multipixelHandler.MultiPixelProcess();
@@ -1216,9 +1230,6 @@ namespace ETHDINFKBot
                 return;
             }
 
-            // check if the emote is a command -> block
-            List<CommandInfo> commandList = Commands.Commands.ToList();
-
             // ignore this channel -> high msg volume
             if (msg.Channel.Id != 819966095070330950)
             {
@@ -1253,9 +1264,17 @@ namespace ETHDINFKBot
 
                 var channelSettings = CommonHelper.GetChannelSettingByChannelId(channelId).Setting;
 
-                MessageHandler msgHandler = new MessageHandler(msg, commandList, channelSettings);
-                await msgHandler.Run();
 
+                try
+                {
+                    MessageHandler msgHandler = new MessageHandler(msg, CommandNames, channelSettings);
+                    await msgHandler.Run();
+
+                }
+                catch (Exception ex)
+                {
+                    // TODO LOG ERROR
+                }
 
                 //if (!m.Author.IsBot && !commandList.Any(i => i.Name.ToLower() == msg.Content.ToLower().Replace(".", "")) && await TryToParseEmoji(msg))
                 //    return; // emoji was found and we can exit here

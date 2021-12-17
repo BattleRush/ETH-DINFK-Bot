@@ -55,9 +55,6 @@ namespace ETHDINFKBot
 
         private bool AllowedToRun(BotPermissionType type)
         {
-            // since this is always calles works for now as workaround
-            //NekoClient.LogType = LogType.None;
-
             var channelSettings = DatabaseManager.GetChannelSetting(Context.Message.Channel.Id);
             if (Context.Message.Author.Id != Program.ApplicationSetting.Owner
                 && !((BotPermissionType)channelSettings?.ChannelPermissionFlags).HasFlag(type))
@@ -607,76 +604,13 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
         // TODO duplicate finder -> fingerprint
         // TODO better selection
-        [Command("emote")]
-        public async Task EmojiInfo(string search, int page = 0, bool debug = false)
-        {
-            if (AllowedToRun(BotPermissionType.EnableType2Commands))
-                return;
+        //[Command("emote")]
+        //public async Task EmojiInfo(string search, int page = 0, bool debug = false)
+        //{
+          
 
-            //await Context.Channel.SendMessageAsync($"Disabled dev", false); // to prevent from db overload
-            //return;
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-            if (AllowedToRun(BotPermissionType.EnableType2Commands))
-                return;
-
-            var author = Context.Message.Author;
-
-            if (search.Length < 2 && author.Id != Program.ApplicationSetting.Owner)
-            {
-                await Context.Channel.SendMessageAsync($"Search term needs to be atleast 2 characters long", false); // to prevent from db overload
-                return;
-            }
-
-
-            var emoteResult = DiscordHelper.SearchEmote(search, Context.Guild.Id, page, debug);
-
-            watch.Stop();
-            //var msg = await Context.Channel.SendFileAsync(stream, $"emote_{search}.png", text + $"Time: {watch.ElapsedMilliseconds} ms");
-
-            string desc = $"**Available({page * emoteResult.PageSize}-{Math.Min((page + 1) * emoteResult.PageSize, emoteResult.TotalEmotesFound)}/{emoteResult.TotalEmotesFound}) '{search}' emojis to use (Usage .<name>)**" + Environment.NewLine;
-       
-
-            EmbedBuilder builder = new EmbedBuilder()
-            {
-                ImageUrl = emoteResult.Url,
-                Description = desc,
-                Color = Color.DarkRed,
-                Title = "Image full size",
-                Footer = new EmbedFooterBuilder()
-                {
-                    Text = search + " Page: " + page
-                },
-                ThumbnailUrl = "https://cdn.battlerush.dev/bot_xmas.png",
-                Timestamp = DateTimeOffset.Now,
-                Url = emoteResult.Url,
-            };
-            builder.WithAuthor(Context.User);
-
-            //foreach (var item in emoteResult.Fields)
-            //    builder.AddField(item.Key, item.Value);
-
-            try
-            {
-                // TODO create common place for button ids
-                var builderComponent = new ComponentBuilder()
-                    .WithButton("Prev <", "emote-get-prev-page", ButtonStyle.Danger, null, null, page == 0)
-                    .WithButton("> Next", "emote-get-next-page", ButtonStyle.Success, null, null, false); // TODO properly calc max page
-                    //.WithButton("Row 1", "emote-get-row-1", ButtonStyle.Secondary, null, null, false, 1)
-                    //.WithButton("Row 2", "emote-get-row-2", ButtonStyle.Secondary, null, null, false, 1)
-                    //.WithButton("Row 3", "emote-get-row-3", ButtonStyle.Secondary, null, null, false, 1)
-                    //.WithButton("Row 4", "emote-get-row-4", ButtonStyle.Secondary, null, null, false, 1)
-                    //.WithButton("Row 5", "emote-get-row-5", ButtonStyle.Secondary, null, null, false, 1);
-
-                var msg2 = await Context.Channel.SendMessageAsync(emoteResult.textBlock, false, builder.Build(), null, null, null, builderComponent.Build());
-            }
-            catch (Exception ex)
-            {
-
-            }
-
-            //msg.ModifyAsync(i => i.Attachments.)
-        }
+        //    //msg.ModifyAsync(i => i.Attachments.)
+        //}
 
         //[Command("study", RunMode = RunMode.Async)]
         //public async Task Study(ulong confirmId = 0)

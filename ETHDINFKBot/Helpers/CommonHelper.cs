@@ -2,6 +2,7 @@
 using ETHBot.DataLayer;
 using ETHBot.DataLayer.Data;
 using ETHBot.DataLayer.Data.Discord;
+using ETHBot.DataLayer.Data.Enums;
 using ETHDINFKBot.Drawing;
 using Reddit;
 using Reddit.Controllers;
@@ -76,6 +77,13 @@ namespace ETHDINFKBot.Helpers
 
             return formatted;
         }
+
+        public static bool AllowedToRun(BotPermissionType type, ulong channelId, ulong authorId)
+        {
+            var channelSettings = DatabaseManager.Instance().GetChannelSetting(channelId);
+            return authorId == Program.ApplicationSetting.Owner || ((BotPermissionType)channelSettings?.ChannelPermissionFlags).HasFlag(type);
+        }
+
         public static (BotChannelSetting Setting, bool Inherit) GetChannelSettingByChannelId(ulong channelId, bool recursive = true)
         {
             var channelInfo = DatabaseManager.Instance().GetDiscordChannel(channelId);

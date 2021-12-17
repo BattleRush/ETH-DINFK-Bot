@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
+using Discord.Rest;
 using Discord.Webhook;
 using Discord.WebSocket;
 using ETHBot.DataLayer.Data;
@@ -34,9 +35,9 @@ namespace ETHDINFKBot.Handlers
 
         private DatabaseManager DatabaseManager;
         private BotChannelSetting ChannelSettings;
-        private List<CommandInfo> CommandInfos;
+        private List<string> CommandInfos;
 
-        public MessageHandler(SocketUserMessage socketMessage, List<CommandInfo> commandList, BotChannelSetting channelSettings = null)
+        public MessageHandler(SocketUserMessage socketMessage, List<string> commandList, BotChannelSetting channelSettings = null)
         {
             SocketMessage = socketMessage;
 
@@ -336,7 +337,7 @@ namespace ETHDINFKBot.Handlers
             if (SocketGuildChannel != null)
             {
                 // this emote cant be send because its occupied by a command
-                if (CommandInfos.Any(i => i.Name.ToLower() == SocketMessage.Content.ToLower().Replace(".", "")))
+                if (CommandInfos.Any(i => i.ToLower() == SocketMessage.Content.ToLower().Replace(Program.CurrentPrefix, "")))
                     return;
 
                 if (SocketMessage.Content.StartsWith(Program.CurrentPrefix))
@@ -347,52 +348,70 @@ namespace ETHDINFKBot.Handlers
 
                     if (name.Contains('-'))
                     {
-                        string indexString = name.Substring(name.IndexOf('-') + 1, name.Length - name.IndexOf('-') - 1);
-
-                        int.TryParse(indexString, out index);
-
+                        int.TryParse(name.Substring(name.IndexOf('-') + 1, name.Length - name.IndexOf('-') - 1), out index);
                         name = name.Substring(0, name.IndexOf('-')); // take only the emote name
                     }
 
-                    var emotes = DatabaseManager.GetEmotesByDirectName(name);
+                    var favEmote = DatabaseManager.EmoteDatabaseManager.GetFavouriteEmote(SocketGuildUser.Id, name);
                     DiscordEmote emote = null;
 
-                    if (index < 1)
+
+                    if (favEmote != null)
                     {
-                        emote = emotes?.FirstOrDefault();
+                        // Load the emote info
+                        emote = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(favEmote.DiscordEmoteId);
                     }
                     else
                     {
-                        emote = emotes?.Skip(index - 1)?.FirstOrDefault();
+                        var emotes = DatabaseManager.EmoteDatabaseManager.GetEmotesByDirectName(name);
 
-                        // prevent null ref error
-                        if (emote == null)
-                            return;
+                        if (index < 1)
+                        {
+                            emote = emotes?.FirstOrDefault();
+                        }
+                        else
+                        {
+                            emote = emotes?.Skip(index - 1)?.FirstOrDefault();
 
-                        emote.EmoteName += $"-{index}";
+                            // prevent null ref error
+                            if (emote == null)
+                                return;
+
+                            emote.EmoteName += $"-{index}";
+                        }
                     }
 
                     if (emote != null)
                     {
-
-                        var channelWebhooks = await SocketTextChannel.GetWebhooksAsync();
-
-                        var webhook = channelWebhooks.SingleOrDefault(i => i.Name == "BattleRush's Helper"); // TODO Do over ApplicationId
-
-                        if (webhook == null)
+                        RestWebhook webhook = null;
+                        DiscordWebhookClient webhookClient = null;
+                        try
                         {
-                            // Config name
-                            await SocketTextChannel.CreateWebhookAsync("BattleRush's Helper");
+                            var channelWebhooks = await SocketTextChannel.GetWebhooksAsync();
+                            webhook = channelWebhooks.SingleOrDefault(i => i.Name == "BattleRush's Helper"); // TODO Do over ApplicationId
 
-                            channelWebhooks = await SocketTextChannel.GetWebhooksAsync();
+                            if (webhook == null)
+                            {
+                                FileStream file = new FileStream(Path.Combine("Images", "BRH_Logo.png"), FileMode.Open);
+
+                                // Config name
+                                await SocketTextChannel.CreateWebhookAsync("BattleRush's Helper", file);
+
+                                channelWebhooks = await SocketTextChannel.GetWebhooksAsync();
+                            }
+
+                            webhook = channelWebhooks.SingleOrDefault(i => i.Name == "BattleRush's Helper"); // TODO Do over ApplicationId
+                            webhookClient = new DiscordWebhookClient(webhook.Id, webhook.Token);
                         }
-
-                        webhook = channelWebhooks.SingleOrDefault(i => i.Name == "BattleRush's Helper"); // TODO Do over ApplicationId
+                        catch (Exception ex)
+                        {
+                            // likeky no webhook perms -> skip
+                        }
 
                         await SocketMessage.DeleteAsync();
 
                         // TODO Keep relevant webhook infos in cache
-                        DiscordWebhookClient webhookClient = new DiscordWebhookClient(webhook.Id, webhook.Token);
+                         
 
                         string avatarUrl = SocketGuildUser.GetGuildAvatarUrl();
                         if (avatarUrl == null)
@@ -404,50 +423,52 @@ namespace ETHDINFKBot.Handlers
 
                             // we can post the emote as it will be rendered out
                             //await SocketTextChannel.SendMessageAsync(emoteString);
-
-                            await webhookClient.SendMessageAsync(emoteString, false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
+                            if (webhookClient != null)
+                                await webhookClient.SendMessageAsync(emoteString, false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
+                            else 
+                                await SocketMessage.Channel.SendMessageAsync(emoteString, false, null, null, null, new MessageReference(SocketMessage.ReferencedMessage?.Id));
                         }
                         else
                         {
+                            FileAttachment fileAttachment = new FileAttachment()
+                            {
+                                Description = name,
+                                FileName = emote.LocalPath                                
+                            };
+
                             // TODO store resized images in db for faster reuse
                             // TODO use images from filesystem -> no web call
                             if (emote.Animated)
                             {
                                 // TODO gif resize
                                 //await SocketTextChannel.SendMessageAsync(emote.Url);
-                                try
-                                {
-                                    await webhookClient.SendFileAsync(emote.LocalPath, $"{emote.EmoteName}.gif", false, null,
-                                        SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
-                                }
-                                catch (Exception ex) { }
+
+                                //await webhookClient.SendFileAsync(fileAttachment, "", false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
+                                if (webhookClient != null)
+                                    await webhookClient.SendFileAsync(emote.LocalPath, "", false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
+                                else 
+                                    await SocketMessage.Channel.SendFileAsync(emote.LocalPath, "", false, null, null, false, null, new MessageReference(SocketMessage.ReferencedMessage?.Id));
                             }
                             else
                             {
-                                try
-                                {
-                                    /*
-                                    SKBitmap bmp;
-                                    using (var ms = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
-                                    {
-                                        bmp = SKBitmap.Decode(ms);
-                                    }
-                                    var resImage = CommonHelper.ResizeImage(bmp, Math.Min(bmp.Height, 48));
-                                    var stream = CommonHelper.GetStream(resImage);
-                                    */
+                                
+                                SKBitmap bmp;
+                                using (var ms = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
+                                    bmp = SKBitmap.Decode(ms);
 
-                                    await webhookClient.SendFileAsync(emote.LocalPath, "", false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
+                                var resImage = CommonHelper.ResizeImage(bmp, Math.Min(bmp.Height, 48));
+                                var stream = CommonHelper.GetStream(resImage);
 
-                                    //await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.png", "", false, null, null, false, null, new MessageReference(SocketMessage.ReferencedMessage?.Id));
-                                }
-                                catch (Exception ex)
-                                {
-                                    await SocketMessage.Channel.SendMessageAsync(ex.ToString());
-                                }
+                                if (webhookClient != null)
+                                    await webhookClient.SendFileAsync(stream, $"{emote.EmoteName}.png", "", false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
+                                else
+                                    await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.png", "", false, null, null, false, null, new MessageReference(SocketMessage.ReferencedMessage?.Id));
                             }
                         }
 
-                        //await SocketMessage.Channel.SendMessageAsync($"({Program.CurrentPrefix}{emote.EmoteName}) by <@{SocketGuildUser.Id}>");
+                        // In case the webhook could not be created
+                        if(webhookClient == null)
+                            await SocketMessage.Channel.SendMessageAsync($"({Program.CurrentPrefix}{emote.EmoteName}) by <@{SocketGuildUser.Id}>");
                     }
                 }
             }

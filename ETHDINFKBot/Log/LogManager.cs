@@ -42,7 +42,7 @@ namespace ETHDINFKBot.Log
                     LocalPath = null
                 };
 
-                DatabaseManager.ProcessDiscordEmote(discordEmote, discordMessageId, 1, true, user, false);
+                DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(discordEmote, discordMessageId, 1, true, user, false);
                 //Program.GlobalStats.EmojiInfoUsage.Single(i => i.EmojiId == emote.Id).UsedAsReaction++;
             }
             catch (Exception ex)
@@ -65,7 +65,7 @@ namespace ETHDINFKBot.Log
                 LocalPath = null
             };
 
-            DatabaseManager.ProcessDiscordEmote(discordEmote, discordMessageId, -1, true, user, false);
+            DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(discordEmote, discordMessageId, -1, true, user, false);
         }
 
         public async Task ProcessEmojisAndPings(IReadOnlyCollection<ITag> tags, ulong authorId, SocketMessage message, SocketGuildUser fromUser, bool isPreload = false)
@@ -120,11 +120,11 @@ namespace ETHDINFKBot.Log
                         }
                     }
 
-                    DatabaseManager.ProcessDiscordEmote(stat, message.Id, emote.Value, false, fromUser, isPreload);
+                    DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(stat, message.Id, emote.Value, false, fromUser, isPreload);
                 }
 
                 // TODO dont hammer the db after each call (check if any new emotes have been added
-                long emoteCount = DatabaseManager.Instance().TotalEmoteCount();
+                long emoteCount = DatabaseManager.EmoteDatabaseManager.TotalEmoteCount();
                 if (Program.TotalEmotes != emoteCount)
                 {
                     Program.TotalEmotes = emoteCount;

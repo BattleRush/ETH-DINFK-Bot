@@ -36,7 +36,7 @@ namespace ETHDINFKBot.Helpers
         {
             var dbManager = DatabaseManager.Instance();
 
-            var emoteHistoryList = dbManager.GetEmoteHistoryUsage(from, to);
+            var emoteHistoryList = DatabaseManager.EmoteDatabaseManager.GetEmoteHistoryUsage(from, to);
 
             var reactions = emoteHistoryList.Where(i => i.IsReaction);
             var textEmotes = emoteHistoryList.Where(i => !i.IsReaction);
@@ -49,13 +49,13 @@ namespace ETHDINFKBot.Helpers
 
             foreach (var item in groupedReactions)
             {
-                var emote = dbManager.GetDiscordEmoteById(item.Key);
+                var emote = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(item.Key);
                 topReactions.Add(emote, item.Value);
             }
 
             foreach (var item in groupedTextEmotes)
             {
-                var emote = dbManager.GetDiscordEmoteById(item.Key);
+                var emote = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(item.Key);
                 topEmote.Add(emote, item.Value);
             }
 

@@ -70,6 +70,9 @@
     <None Update="Images\BattleRush.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Images\BRH_Logo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Images\DINFK.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

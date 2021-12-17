@@ -235,8 +235,8 @@ namespace ETHDINFKBot.Modules
                 return;
             }
 
-            var emoteInfo = DatabaseManager.Instance().GetDiscordEmoteById(emoteId);
-            bool success = DatabaseManager.Instance().SetEmoteBlockStatus(emoteId, blockStatus);
+            var emoteInfo = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(emoteId);
+            bool success = DatabaseManager.EmoteDatabaseManager.SetEmoteBlockStatus(emoteId, blockStatus);
 
             if (success)
             {
@@ -264,7 +264,7 @@ namespace ETHDINFKBot.Modules
                 return;
             }
 
-            var allEmotes = DatabaseManager.Instance().GetEmotes().OrderBy(i => i.DiscordEmoteId).ToList(); // sort it to ensure they are chronologically in there
+            var allEmotes = DatabaseManager.EmoteDatabaseManager.GetEmotes().OrderBy(i => i.DiscordEmoteId).ToList(); // sort it to ensure they are chronologically in there
 
             await Context.Channel.SendMessageAsync($"Successfully retreived {allEmotes.Count} emotes", false);
 

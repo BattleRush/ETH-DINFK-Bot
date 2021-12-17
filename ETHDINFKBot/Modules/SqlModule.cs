@@ -293,24 +293,23 @@ WHERE
                         {
 
                             string genetalType = "null";
-                            string type = reader.GetString(1);
-                            if (type.Contains("("))
-                                type = type.Substring(0, type.IndexOf('('));
-
-                            type = type.ToLower();
+                            string type = reader.GetString(1).ToLower();
 
                             switch (type)
                             {
-                                case "tinyint": // TODO SmallInt 1 is bool
-                                case "int":
-                                case "bigint":
-                                case "smallint":
+                                case "tinyint(1)":
+                                    genetalType = "bool";
+                                    break;
+                                case string int_1 when int_1.StartsWith("tinyint"):
+                                case string int_2 when int_2.StartsWith("int"):
+                                case string int_3 when int_3.StartsWith("bigint"):
                                     genetalType = "int";
                                     break;
-                                case "varchar":
+                                case string string_1 when string_1.StartsWith("varchar"):
+                                case string string_2 when string_2.StartsWith("longtext"):
                                     genetalType = "string";
                                     break;
-                                case "datetime":
+                                case string dateTime when dateTime.StartsWith("datetime"):
                                     genetalType = "datetime";
                                     break;
                                 default:

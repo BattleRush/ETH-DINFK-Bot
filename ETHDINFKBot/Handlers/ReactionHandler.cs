@@ -120,7 +120,7 @@ namespace ETHDINFKBot.Handlers
                     LocalPath = null
                 };
 
-                DatabaseManager.ProcessDiscordEmote(discordEmote, Message.Id, AddedReaction ? 1 : -1, true, SocketGuildReactionUser, false);
+                DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(discordEmote, Message.Id, AddedReaction ? 1 : -1, true, SocketGuildReactionUser, false);
                 //Program.GlobalStats.EmojiInfoUsage.Single(i => i.EmojiId == emote.Id).UsedAsReaction++;
             }
             catch (Exception ex)

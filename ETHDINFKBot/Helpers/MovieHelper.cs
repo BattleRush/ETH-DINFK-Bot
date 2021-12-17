@@ -93,7 +93,7 @@ namespace ETHDINFKBot.Helpers
 
             var dbManager = DatabaseManager.Instance();
 
-            var emoteHistoryList = dbManager.GetEmoteHistoryUsage(DateTime.Now.AddDays(-days), DateTime.Now);
+            var emoteHistoryList = DatabaseManager.EmoteDatabaseManager.GetEmoteHistoryUsage(DateTime.Now.AddDays(-days), DateTime.Now);
 
             var reactions = emoteHistoryList.Where(i => i.IsReaction);
             var textEmotes = emoteHistoryList.Where(i => !i.IsReaction);

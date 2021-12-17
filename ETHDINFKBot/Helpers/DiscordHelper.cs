@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using ETHBot.DataLayer.Data.Discord;
+using ETHDINFKBot.Data;
 using ETHDINFKBot.Drawing;
 using SkiaSharp;
 using System;
@@ -331,24 +332,20 @@ namespace ETHDINFKBot.Helpers
         }
 
 
-        public static (Dictionary<string, string> Fields, string textBlock, string Url, int TotalEmotesFound, int PageSize) SearchEmote(string search, ulong guildId, int page = 0, bool debug = false)
+        public static (Dictionary<ulong, string> EmoteList, string textBlock, string Url, int TotalEmotesFound, int PageSize) SearchEmote(string search, ulong guildId, int page = 0, bool debug = false, int rows = 5, int columns = 10)
         {
-            // Setting?
-            int rowMax = 5;
-            int columnMax = 10;
-
             string emoteText = "";
 
-            Dictionary<string, string> fields = new Dictionary<string, string>();
+            Dictionary<ulong, string> emoteList = new Dictionary<ulong, string>();
 
             Stopwatch watch = new Stopwatch();
             watch.Start();
 
-            var emotes = DatabaseManager.Instance().GetEmotes(search); // TODO dont dowload the emote data before its further filtered
+            var emotes = EmoteDBManager.Instance().GetEmotes(search); // TODO dont dowload the emote data before its further filtered
             var guildEmotes = Program.Client.GetGuild(guildId).Emotes.ToList();
 
             int total = emotes.Count;
-            int pageSize = rowMax * columnMax;
+            int pageSize = rows * columns;
 
 
             Dictionary<string, int> dupes = new Dictionary<string, int>();
@@ -377,45 +374,48 @@ namespace ETHDINFKBot.Helpers
 
             string fileName = $"emote_{search}_{new Random().Next(int.MaxValue)}.png";
 
-            var emoteDrawing = DrawPreviewImage(emotes, guildEmotes);
+            var emoteDrawing = DrawPreviewImage(emotes, guildEmotes, rows, columns);
 
             DrawingHelper.SaveToDisk(Path.Combine(Program.ApplicationSetting.CDNPath, fileName), emoteDrawing.Bitmap);
 
             watch.Stop();
 
-            string text = "";
+            //string text = "";
 
             int countEmotes = 0;
             int row = 0;
 
             emoteText = "```css" + Environment.NewLine + "[0] ";
 
-            foreach (var emoji in emotes)
+            foreach (var emote in emotes)
             {
-                string emoteString = $"{Program.CurrentPrefix}{emoji.EmoteName} ";
+                string emoteString = $"{Program.CurrentPrefix}{emote.EmoteName} ";
 
-                if (emoji.Animated)
-                    emoteString = $"[{emoji.EmoteName}] ";
+                if (emote.Animated)
+                    emoteString = $"[{emote.EmoteName}] ";
 
-                if (guildEmotes.Any(i => i.Id == emoji.DiscordEmoteId))
-                    emoteString = $"({emoji.EmoteName}) ";
+                if (guildEmotes.Any(i => i.Id == emote.DiscordEmoteId))
+                    emoteString = $"({emote.EmoteName}) ";
 
 
-                text += emoteString;
+                //text += emoteString;
                 emoteText += emoteString;
+                emoteList.Add(emote.DiscordEmoteId, emote.EmoteName);
 
                 countEmotes++;
 
-                if (countEmotes >= columnMax)
+                if (countEmotes >= columns)
                 {
-                    fields.Add($"[{row}]", "```css" + Environment.NewLine + text + "```");
+                    //fields.Add($"[{row}]", "```css" + Environment.NewLine + text + "```");
 
                     row++;
 
-                    if(row < rowMax)
+                    if (row < rows)
                         emoteText += Environment.NewLine + $"[{row}] ";
+                    else
+                        break;
 
-                    text = "";
+                    //text = "";
 
                     countEmotes = 0;
                 }
@@ -423,17 +423,15 @@ namespace ETHDINFKBot.Helpers
             emoteText = emoteText.Substring(0, Math.Min(emoteText.Length, 1990));
             emoteText += "```";
 
-            return (fields, emoteText, $"https://cdn.battlerush.dev/{fileName}", total, pageSize);
+            return (emoteList, emoteText, $"https://cdn.battlerush.dev/{fileName}", total, pageSize);
         }
 
         // TODO alot of rework to do
         // TODO dynamic image sizes
         // TODO support 100+
         // TODO gifs -> video?
-        public static (SKBitmap Bitmap, SKCanvas Canvas) DrawPreviewImage(List<DiscordEmote> emojis, List<GuildEmote> guildEmotes)
+        public static (SKBitmap Bitmap, SKCanvas Canvas) DrawPreviewImage(List<DiscordEmote> emojis, List<GuildEmote> guildEmotes, int rows = 10, int columns = 10)
         {
-            int page = 10;
-
             int padding = 50;
             int paddingY = 55;
 
@@ -442,8 +440,8 @@ namespace ETHDINFKBot.Helpers
 
             int yOffsetFixForImage = 2;
 
-            int width = Math.Min(emojis.Count, 10) * blockSize + padding;
-            int height = (int)(Math.Ceiling(emojis.Count / 10d) * blockSize + paddingY - 5);
+            int width = Math.Min(emojis.Count, columns) * blockSize + padding;
+            int height = (int)(Math.Ceiling(emojis.Count / (double)columns) * blockSize + paddingY - 5);
 
             width = Math.Max(width + 25, 350); // because of the title
 
@@ -490,18 +488,18 @@ namespace ETHDINFKBot.Helpers
             //Pen p = new Pen(brush);
 
             // TODO make it more robust and cleaner
-            for (int i = 0; i < page; i++)
+            for (int i = 0; i < rows; i++)
             {
                 canvas.DrawText($"[{i}]", new SKPoint(10, i * blockSize + paddingY + 12), new SKPaint() { Color = new SKColor(255, 255, 255), Typeface = DrawingHelper.Typeface_Arial, TextSize = 20 });
 
-                for (int j = 0; j < page; j++)
+                for (int j = 0; j < columns; j++)
                 {
                     if (emojis.Count <= i * j)
                         break;
 
                     try
                     {
-                        var emote = emojis[i * page + j];
+                        var emote = emojis[i * columns + j];
 
                         SKBitmap emoteBitmap;
                         using (var ms = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))

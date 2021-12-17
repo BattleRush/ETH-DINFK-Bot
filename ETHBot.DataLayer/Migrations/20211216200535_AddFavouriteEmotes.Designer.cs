@@ -3,6 +3,7 @@ using System;
 using ETHBot.DataLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ETHBot.DataLayer.Migrations
 {
     [DbContext(typeof(ETHBotDBContext))]
-    partial class ETHBotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20211216200535_AddFavouriteEmotes")]
+    partial class AddFavouriteEmotes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -617,9 +619,6 @@ namespace ETHBot.DataLayer.Migrations
 
                     b.HasKey("DiscordEmoteId", "DiscordUserId");
 
-                    b.HasIndex("DiscordEmoteId")
-                        .IsUnique();
-
                     b.HasIndex("DiscordUserId");
 
                     b.ToTable("FavouriteDiscordEmotes");
@@ -1165,8 +1164,8 @@ namespace ETHBot.DataLayer.Migrations
             modelBuilder.Entity("ETHBot.DataLayer.Data.Fun.FavouriteDiscordEmote", b =>
                 {
                     b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordEmote", "DiscordEmote")
-                        .WithOne()
-                        .HasForeignKey("ETHBot.DataLayer.Data.Fun.FavouriteDiscordEmote", "DiscordEmoteId")
+                        .WithMany()
+                        .HasForeignKey("DiscordEmoteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
