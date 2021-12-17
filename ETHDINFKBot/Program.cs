@@ -396,7 +396,7 @@ namespace ETHDINFKBot
             await Client.SetGameAsync($"DEV MODE");
 #else
             //await Client.SetGameAsync($"with a neko");
-            TotalEmotes = DatabaseManager.Instance().TotalEmoteCount();
+            TotalEmotes = DatabaseManager.EmoteDatabaseManager.TotalEmoteCount();
             await Client.SetGameAsync($"{TotalEmotes} emotes", null, ActivityType.Watching);
 #endif
 
