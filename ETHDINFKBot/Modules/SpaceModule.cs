@@ -135,7 +135,7 @@ namespace ETHDINFKBot.Modules
                 builder.AddField($"Altitude", $"{currentFlightData?.altitudeKm:N0} km", true);
                 var firstLink = currentDeployment.relatedLinks.FirstOrDefault();
                 if (firstLink != null)
-                    builder.AddField($"More Info", $"[{firstLink.name}]({(firstLink.url.StartsWith("https://") ? firstLink.name : "https://www.jwst.nasa.gov/" + firstLink.name)})", false);
+                    builder.AddField($"More Info", $"[{firstLink.name}]({(firstLink.url.StartsWith("https://") ? firstLink.url : "https://www.jwst.nasa.gov/" + firstLink.url)})", false);
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
