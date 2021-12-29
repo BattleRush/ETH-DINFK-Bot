@@ -49,7 +49,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
         private JWSTDeploymentInfos GetJWSTDeployments()
         {
-            var json = File.ReadAllText(Path.Combine(Environment.CurrentDirectory, "Data", "JWSTDeployments.json"));
+            var json = File.ReadAllText(Path.Combine(Program.ApplicationSetting.BasePath, "Data", "JWSTDeployments.json"));
             return JsonConvert.DeserializeObject<JWSTDeploymentInfos>(json);
         }
         private async void JWSTTask()
@@ -57,7 +57,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
             var guild = Program.Client.GetGuild(GuildId);
             var textChannel = guild.GetTextChannel(ChannelId);
 
-            var lastDeploymentIndex = File.ReadAllText(Path.Combine(Environment.CurrentDirectory, "Data", "CurrentJWSTIndex.txt"));
+            var lastDeploymentIndex = File.ReadAllText(Path.Combine(Program.ApplicationSetting.BasePath, "Data", "CurrentJWSTIndex.txt"));
 
             int index = Convert.ToInt32(lastDeploymentIndex);
 
@@ -85,7 +85,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                 await textChannel.SendMessageAsync("", false, builder.Build());
 
-                File.WriteAllText(Path.Combine(Environment.CurrentDirectory, "Data", "CurrentJWSTIndex.txt"), currentStatus.currentDeployTableIndex.ToString());
+                File.WriteAllText(Path.Combine(Program.ApplicationSetting.BasePath, "Data", "CurrentJWSTIndex.txt"), currentStatus.currentDeployTableIndex.ToString());
             }
         }
 

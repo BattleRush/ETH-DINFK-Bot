@@ -58,7 +58,7 @@ namespace ETHDINFKBot.Modules
 
             private JWSTDeploymentInfos GetJWSTDeployments()
             {
-                var json = File.ReadAllText(Path.Combine(Environment.CurrentDirectory, "Data", "JWSTDeployments.json"));
+                var json = File.ReadAllText(Path.Combine(Program.ApplicationSetting.BasePath, "Data", "JWSTDeployments.json"));
                 return JsonConvert.DeserializeObject<JWSTDeploymentInfos>(json);
             }
 
