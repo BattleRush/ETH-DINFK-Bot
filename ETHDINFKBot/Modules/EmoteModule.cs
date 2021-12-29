@@ -136,85 +136,92 @@ namespace ETHDINFKBot.Modules
         [Alias("fav")]
         public async Task EmoteFavourite(string search)
         {
-            int rows = 4;
-            int columns = 5;
-
-            if (!CommonHelper.AllowedToRun(BotPermissionType.EnableType2Commands, Context.Message.Channel.Id, Context.Message.Author.Id))
-                return;
-
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-
-            var author = Context.Message.Author;
-
-            if (search.Length < 2 && author.Id != Program.ApplicationSetting.Owner)
+            try
             {
-                await Context.Channel.SendMessageAsync($"Search term needs to be atleast 2 characters long", false); // to prevent from db overload
-                return;
-            }
+                int rows = 4;
+                int columns = 5;
 
-            var emoteResult = DiscordHelper.SearchEmote(search, Context.Guild.Id, 0, false, rows, columns);
+                if (!CommonHelper.AllowedToRun(BotPermissionType.EnableType2Commands, Context.Message.Channel.Id, Context.Message.Author.Id))
+                    return;
 
+                Stopwatch watch = new Stopwatch();
+                watch.Start();
 
-            watch.Stop();
+                var author = Context.Message.Author;
 
-            int page = 0;
-
-            string desc = $"**Available({page * emoteResult.PageSize}-{Math.Min((page + 1) * emoteResult.PageSize, emoteResult.TotalEmotesFound)}/{emoteResult.TotalEmotesFound}) '{search}' emojis to use (Usage .<name>)**" + Environment.NewLine;
-
-
-            EmbedBuilder builder = new EmbedBuilder()
-            {
-                ImageUrl = emoteResult.Url,
-                Description = desc,
-                Color = Color.DarkRed,
-                Title = "Image full size",
-                Footer = new EmbedFooterBuilder()
+                if (search.Length < 2 && author.Id != Program.ApplicationSetting.Owner)
                 {
-                    Text = search + " Page: " + page
-                },
-                ThumbnailUrl = "https://cdn.battlerush.dev/bot_xmas.png",
-                Timestamp = DateTimeOffset.Now,
-                Url = emoteResult.Url,
-            };
-            builder.WithAuthor(Context.User);
-
-            //foreach (var item in emoteResult.Fields)
-            //    builder.AddField(item.Key, item.Value);
-
-
-            // TODO create common place for button ids
-            var builderComponent = new ComponentBuilder();
-            //.WithButton("Prev <", "emote-get-prev-page", ButtonStyle.Danger, null, null, true)
-            //.WithButton("> Next", "emote-get-next-page", ButtonStyle.Success, null, null, true); // TODO properly calc max page
-            //.WithButton("Row 1", "emote-get-row-1", ButtonStyle.Secondary, null, null, false, 1)
-            //.WithButton("Row 2", "emote-get-row-2", ButtonStyle.Secondary, null, null, false, 1)
-            //.WithButton("Row 3", "emote-get-row-3", ButtonStyle.Secondary, null, null, false, 1)
-            //.WithButton("Row 4", "emote-get-row-4", ButtonStyle.Secondary, null, null, false, 1)
-            //.WithButton("Row 5", "emote-get-row-5", ButtonStyle.Secondary, null, null, false, 1);
-
-            int row = 0;
-            int col = 0;
-            foreach (var emote in emoteResult.EmoteList)
-            {
-                builderComponent.WithButton(emote.Value, $"emote-fav-{emote.Key}", ButtonStyle.Primary, Emote.Parse($"<:{emote.Value}:{emote.Key}>"), null, false, row);
-                col++;
-
-                if (col == columns)
-                {
-                    row++;
-                    col = 0;
+                    await Context.Channel.SendMessageAsync($"Search term needs to be atleast 2 characters long", false); // to prevent from db overload
+                    return;
                 }
+
+                var emoteResult = DiscordHelper.SearchEmote(search, Context.Guild.Id, 0, false, rows, columns);
+
+
+                watch.Stop();
+
+                int page = 0;
+
+                string desc = $"**Available({page * emoteResult.PageSize}-{Math.Min((page + 1) * emoteResult.PageSize, emoteResult.TotalEmotesFound)}/{emoteResult.TotalEmotesFound}) '{search}' emojis to use (Usage .<name>)**" + Environment.NewLine;
+
+
+                EmbedBuilder builder = new EmbedBuilder()
+                {
+                    ImageUrl = emoteResult.Url,
+                    Description = desc,
+                    Color = Color.DarkRed,
+                    Title = "Image full size",
+                    Footer = new EmbedFooterBuilder()
+                    {
+                        Text = search + " Page: " + page
+                    },
+                    ThumbnailUrl = "https://cdn.battlerush.dev/bot_xmas.png",
+                    Timestamp = DateTimeOffset.Now,
+                    Url = emoteResult.Url,
+                };
+                builder.WithAuthor(Context.User);
+
+                //foreach (var item in emoteResult.Fields)
+                //    builder.AddField(item.Key, item.Value);
+
+
+                // TODO create common place for button ids
+                var builderComponent = new ComponentBuilder();
+                //.WithButton("Prev <", "emote-get-prev-page", ButtonStyle.Danger, null, null, true)
+                //.WithButton("> Next", "emote-get-next-page", ButtonStyle.Success, null, null, true); // TODO properly calc max page
+                //.WithButton("Row 1", "emote-get-row-1", ButtonStyle.Secondary, null, null, false, 1)
+                //.WithButton("Row 2", "emote-get-row-2", ButtonStyle.Secondary, null, null, false, 1)
+                //.WithButton("Row 3", "emote-get-row-3", ButtonStyle.Secondary, null, null, false, 1)
+                //.WithButton("Row 4", "emote-get-row-4", ButtonStyle.Secondary, null, null, false, 1)
+                //.WithButton("Row 5", "emote-get-row-5", ButtonStyle.Secondary, null, null, false, 1);
+
+                int row = 0;
+                int col = 0;
+                foreach (var emote in emoteResult.EmoteList)
+                {
+                    builderComponent.WithButton(emote.Value, $"emote-fav-{emote.Key}", ButtonStyle.Primary, Emote.Parse($"<:{emote.Value}:{emote.Key}>"), null, false, row);
+                    col++;
+
+                    if (col == columns)
+                    {
+                        row++;
+                        col = 0;
+                    }
+                }
+
+                // Start fresh row for paging
+                if (col > 0)
+                    row++;
+
+                builderComponent.WithButton("Prev <", "emote-fav-get-prev-page", ButtonStyle.Danger, null, null, page == 0, row);
+                builderComponent.WithButton("> Next", "emote-fav-get-next-page", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound, row);
+
+                var msg2 = await Context.Channel.SendMessageAsync("", false, builder.Build(), null, null, null, builderComponent.Build());
             }
-
-            // Start fresh row for paging
-            if (col > 0)
-                row++;
-
-            builderComponent.WithButton("Prev <", "emote-fav-get-prev-page", ButtonStyle.Danger, null, null, page == 0, row);
-            builderComponent.WithButton("> Next", "emote-fav-get-next-page", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound, row);
-
-            var msg2 = await Context.Channel.SendMessageAsync("", false, builder.Build(), null, null, null, builderComponent.Build());
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.ToString(), false);
+            }
         }
 
 
