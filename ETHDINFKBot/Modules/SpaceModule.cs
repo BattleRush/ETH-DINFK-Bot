@@ -80,6 +80,9 @@ namespace ETHDINFKBot.Modules
 
                     var dateInfo = DateTime.ParseExact(curInfo.timeStampUtc, "yyyy/MM/dd-HH:mm:ss.fff", CultureInfo.InvariantCulture);
 
+                    // Fix broken data info -> shift by 7 days
+                    dateInfo = dateInfo.AddDays(7);
+
                     if (DateTime.UtcNow.AddHours(-1) < dateInfo)
                     {
                         // current flight data
@@ -107,7 +110,7 @@ namespace ETHDINFKBot.Modules
 
                 builder.WithTitle($"JWST Current Info: {currentDeployment.title}");
 
-                builder.WithDescription($@"**{currentDeployment.subtitle}** {Environment.NewLine} {currentDeployment.details.Substring(0, currentDeployment.details.IndexOf("<"))}");
+                builder.WithDescription($@"**{currentDeployment.subtitle}**{Environment.NewLine}{currentDeployment.nominalEventTime}{Environment.NewLine}{currentDeployment.details.Substring(0, currentDeployment.details.IndexOf("<"))}");
 
                 builder.WithColor(255, 215, 0);
                 builder.WithThumbnailUrl("https://www.jwst.nasa.gov/content/webbLaunch/assets/images/branding/logo/logoOnly-0.5x.png");
@@ -126,9 +129,13 @@ namespace ETHDINFKBot.Modules
 
                 builder.AddField($"Mission time", $"{currentFlightData?.elapsedDays:0.00} days", true);
                 builder.AddField($"Velocity", $"{currentFlightData?.velocityKmSec:0.000} km/s", true);
-                builder.AddField($"Altitude", $"{currentFlightData?.altitudeKm:N0} km", true);
 
                 builder.AddField($"Sensor info", $"[Temperature Sensor location image](https://www.jwst.nasa.gov/content/webbLaunch/assets/images/extra/webbTempLocationsGradient1.0-500px.jpg)", false);
+               
+                builder.AddField($"Altitude", $"{currentFlightData?.altitudeKm:N0} km", true);
+                var firstLink = currentDeployment.relatedLinks.FirstOrDefault();
+                if (firstLink != null)
+                    builder.AddField($"More Info", $"[{firstLink.name}]({(firstLink.url.StartsWith("https://") ? firstLink.name : "https://www.jwst.nasa.gov/" + firstLink.name)})", false);
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
             }

@@ -71,6 +71,9 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                 var dateInfo = DateTime.ParseExact(curInfo.timeStampUtc, "yyyy/MM/dd-HH:mm:ss.fff", CultureInfo.InvariantCulture);
 
+                // Fix broken data info -> shift by 7 days
+                dateInfo = dateInfo.AddDays(7);
+
                 if (DateTime.UtcNow.AddHours(-1) < dateInfo)
                 {
                     // current flight data
@@ -131,6 +134,10 @@ namespace ETHDINFKBot.CronJobs.Jobs
                 builder.AddField($"Altitude", $"{currentFlightData?.altitudeKm:N0} km", true);
 
                 builder.AddField($"Sensor info", $"[Temperature Sensor location image](https://www.jwst.nasa.gov/content/webbLaunch/assets/images/extra/webbTempLocationsGradient1.0-500px.jpg)", false);
+
+                var firstLink = currentDeployment.relatedLinks.FirstOrDefault();
+                if(firstLink != null)
+                    builder.AddField($"More Info", $"[{firstLink.name}]({(firstLink.url.StartsWith("https://") ? firstLink.name : "https://www.jwst.nasa.gov/" + firstLink.name)})", false);
 
                 await textChannel.SendMessageAsync("", false, builder.Build());
 
