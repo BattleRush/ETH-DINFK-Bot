@@ -93,14 +93,17 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
             var currentStatus = GetJWSTStatus().currentState;
             if (currentStatus.currentDeployTableIndex > index)
-            {
+            {                
+                // Increase index by 1
+                index++;
+
                 // New state
                 var deploymentInfo = GetJWSTDeployments();
 
                 var flightData = GetJWSTFlightData();
                 var currentFlightData = GetCurrentFlightInfo(flightData);
 
-                var currentDeployment = deploymentInfo.info[currentStatus.currentDeployTableIndex];
+                var currentDeployment = deploymentInfo.info[index];
 
                 EmbedBuilder builder = new();
 
@@ -132,7 +135,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                 await textChannel.SendMessageAsync("", false, builder.Build());
 
                 // Limit to 1 change per index at once
-                File.WriteAllText(Path.Combine(Program.ApplicationSetting.BasePath, "Data", "CurrentJWSTIndex.txt"), (index++).ToString());
+                File.WriteAllText(Path.Combine(Program.ApplicationSetting.BasePath, "Data", "CurrentJWSTIndex.txt"), index.ToString());
             }
         }
 
