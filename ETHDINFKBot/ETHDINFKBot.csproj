@@ -68,7 +68,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Data\CurrentJWSTIndex.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Data\JWSTDeployments.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
