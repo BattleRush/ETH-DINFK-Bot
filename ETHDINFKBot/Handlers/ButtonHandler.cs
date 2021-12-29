@@ -142,8 +142,13 @@ namespace ETHDINFKBot.Handlers
             {
                 string footerText = embed.Footer.Value.Text;
 
-                string searchTerm = footerText.Substring(0, footerText.IndexOf("Page:") - 1);
-                int page = Convert.ToInt32(footerText.Substring(footerText.IndexOf("Page:") + 6)); // Tryparse?
+
+                var footerTextParts = footerText.Split(',');
+
+                string searchTerm = footerTextParts[0];
+
+                int page = Convert.ToInt32(footerTextParts[1].Substring(footerTextParts[1].IndexOf(":") + 1).Trim()); 
+                debug = Convert.ToBoolean(footerTextParts[2].Substring(footerTextParts[2].IndexOf(":") + 1).Trim()); 
 
                 page += dir;
                 var socketGuildChannel = SocketUserMessage.Channel as SocketGuildChannel; // can only be requested in guild channels anyway

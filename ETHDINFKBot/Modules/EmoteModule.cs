@@ -220,13 +220,14 @@ namespace ETHDINFKBot.Modules
             }
             catch (Exception ex)
             {
+                // Some emotes may no lonver be valid -> db entry to invalidate the emote
                 await Context.Channel.SendMessageAsync(ex.ToString(), false);
             }
         }
 
 
         [Command("search")]
-        public async Task EmoteSearch(string search)
+        public async Task EmoteSearch(string search, bool debug = false)
         {
             if (!CommonHelper.AllowedToRun(BotPermissionType.EnableType2Commands, Context.Message.Channel.Id, Context.Message.Author.Id))
                 return;
@@ -243,7 +244,7 @@ namespace ETHDINFKBot.Modules
             }
 
 
-            var emoteResult = DiscordHelper.SearchEmote(search, Context.Guild.Id);
+            var emoteResult = DiscordHelper.SearchEmote(search, Context.Guild.Id, 0, debug);
 
             watch.Stop();
 
@@ -260,7 +261,7 @@ namespace ETHDINFKBot.Modules
                 Title = "Image full size",
                 Footer = new EmbedFooterBuilder()
                 {
-                    Text = search + " Page: " + page
+                    Text = $"{search}, Page: {page}, Debug: {debug}"
                 },
                 ThumbnailUrl = "https://cdn.battlerush.dev/bot_xmas.png",
                 Timestamp = DateTimeOffset.Now,
