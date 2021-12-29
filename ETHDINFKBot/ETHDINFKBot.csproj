@@ -73,6 +73,9 @@
     <None Update="Data\JWSTDeployments.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Data\JWSTFlightData.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Images\BattleRush.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

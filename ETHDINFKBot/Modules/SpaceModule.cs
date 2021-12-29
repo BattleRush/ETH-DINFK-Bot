@@ -6,6 +6,7 @@ using ETHDINFKBot.Helpers;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -62,6 +63,33 @@ namespace ETHDINFKBot.Modules
                 return JsonConvert.DeserializeObject<JWSTDeploymentInfos>(json);
             }
 
+            private JWSTFlightData GetJWSTFlightData()
+            {
+                var json = File.ReadAllText(Path.Combine(Program.ApplicationSetting.BasePath, "Data", "JWSTFlightData.json"));
+                return JsonConvert.DeserializeObject<JWSTFlightData>(json);
+            }
+
+            private JWSTFlightDataInfo GetCurrentFlightInfo(JWSTFlightData data)
+            {
+                var cultureInfo = new CultureInfo("en-US");
+                for (int i = 0; i < data.info.Length; i++)
+                {
+                    var curInfo = data.info[i];
+                    if (curInfo.timeStampUtc == null)
+                        continue;
+
+                    var dateInfo = DateTime.ParseExact(curInfo.timeStampUtc, "yyyy/MM/dd-HH:mm:ss.fff", CultureInfo.InvariantCulture);
+
+                    if (DateTime.UtcNow.AddHours(-1) < dateInfo)
+                    {
+                        // current flight data
+                        return curInfo;
+                    }
+                }
+
+                return null;
+            }
+
             [Command("status")]
             public async Task JWSTInfo()
             {
@@ -69,6 +97,9 @@ namespace ETHDINFKBot.Modules
 
                 var currentStatus = GetJWSTStatus().currentState;
                 var deploymentInfo = GetJWSTDeployments();
+
+                var flightData = GetJWSTFlightData();
+                var currentFlightData = GetCurrentFlightInfo(flightData);
 
                 var currentDeployment = deploymentInfo.info[currentStatus.currentDeployTableIndex];
 
@@ -79,12 +110,25 @@ namespace ETHDINFKBot.Modules
                 builder.WithDescription($@"**{currentDeployment.subtitle}** {Environment.NewLine} {currentDeployment.details.Substring(0, currentDeployment.details.IndexOf("<"))}");
 
                 builder.WithColor(255, 215, 0);
-                builder.WithThumbnailUrl("https://webb.nasa.gov/" + currentDeployment.thumbnailUrl);
+                builder.WithThumbnailUrl("https://www.jwst.nasa.gov/content/webbLaunch/assets/images/branding/logo/logoOnly-0.5x.png");
                 builder.WithImageUrl("https://webb.nasa.gov/" + currentDeployment.stateImageUrl);
                 builder.WithCurrentTimestamp();
 
-                builder.AddField($"Temp Warm side", $"{currentStatus.tempWarmSide1C}/{currentStatus.tempWarmSide2C}", true);
-                builder.AddField($"Temp Cool side", $"{currentStatus.tempCoolSide1C}/{currentStatus.tempCoolSide2C}", true);
+                decimal hotTemp1C = Convert.ToDecimal(currentStatus.tempWarmSide1C, new CultureInfo("en-US"));
+                decimal hotTemp2C = Convert.ToDecimal(currentStatus.tempWarmSide2C, new CultureInfo("en-US"));
+                decimal coldTemp1C = Convert.ToDecimal(currentStatus.tempCoolSide1C, new CultureInfo("en-US"));
+                decimal coldTemp2C = Convert.ToDecimal(currentStatus.tempCoolSide2C, new CultureInfo("en-US"));
+
+                builder.AddField($"Sunshield UPS Average Temperature (hot)", $"{hotTemp1C:0.00} °C", false);
+                builder.AddField($"Spacecraft Equipment Panel Average Temperature (hot)", $"{hotTemp2C:0.00} °C", false);
+                builder.AddField($"Primary Mirror Average Temperature (cold)", $"{coldTemp1C:0.00} °C  / {(coldTemp1C + 273.15m):0.00} K", false);
+                builder.AddField($"Instrument Radiator Temperature (cold)", $"{coldTemp2C:0.00} °C / {(coldTemp2C + 273.15m):0.00} K", false);
+
+                builder.AddField($"Mission time", $"{currentFlightData?.elapsedDays:0.00} days", true);
+                builder.AddField($"Velocity", $"{currentFlightData?.velocityKmSec:0.000} km/s", true);
+                builder.AddField($"Altitude", $"{currentFlightData?.altitudeKm:N0} km", true);
+
+                builder.AddField($"Sensor info", $"[Temperature Sensor location image](https://www.jwst.nasa.gov/content/webbLaunch/assets/images/extra/webbTempLocationsGradient1.0-500px.jpg)", false);
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
