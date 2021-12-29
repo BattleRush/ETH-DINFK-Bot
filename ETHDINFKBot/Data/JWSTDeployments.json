@@ -1,0 +1,2592 @@
+{
+  "info": [
+    {
+      "eventId": "000",
+      "title": "Waiting for Launch",
+      "subtitle": "Webb is on the Launch Pad!",
+      "nominalEventTime": "",
+      "details": "<p>Webb is in Kourou French Guiana at the ESA Launch Facility. Webb has been placed on the Ariane 5 rocket in the tightly packed configuration shown and encapuslated in the nose fairing. For launch, Webb is rolled out to the launch pad and the countdown begins.</p> <p> On its ~1000000 mile journey to L2, Webb will 'unfold' going through a number of deployments to reach its operational configuration. </p>  <p>This interactive shows the major deployment steps for Webb. Once Webb is flying this page will open to the most recently completed deployment step.</p><p style='color:#ca3'>NOTE that the order, location, timing, and duration of deployments may change, this page shows the default (nominal) order.</p> <p> If you have any issues with the page, hit CNTL (apple: CMD) F5 (or CNTL SHIFT R) which should clear them. </p><p>Photos: <a href='https://www.flickr.com/photos/nasawebbtelescope/albums/72157720000770033' target='_webbFlickr'>Launch Site</a><br>Latest images of Webb in Kourou French Guiana at the ESA Launch Facility.</p><p>Video: <a href='https://www.youtube.com/watch?v=uUAvXYW5bmI' target='_deployVid'>29 Days on the Edge</a><br>The story of Webb's pioneering design and engineering that support the deployment and mission of the largest, most powerful and complex telescope ever launched into space.</p>  ",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/100.png",
+      "stateImageUrlPrevious": "",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/100-1.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "001",
+      "title": "Liftoff!",
+      "subtitle": "Webb is on its way...GO WEBB!",
+      "nominalEventTime": "",
+      "details": "<p>The Ariane 5 launch vehicle provides thrust for roughly 26 minutes after liftoff from French Guiana. The first stages fire, consumes their fuel, cut off and separate.  Finally the  'upper' stage fires, giving Webb it's final push up and away from Earth's gravity and onto a trajectory toward its L2 orbit.  The upper stage engine completes its burn, cuts-off, and separates.  Webb is released from the Ariane 5 and is flying on its own in a fully stowed state. </p><p> <span style='color:#ca3'>NOTE:</span> speed and distance data becomes available on the <a target='_whereIsWebb' href='/content/webbLaunch/whereIsWebb.html' >Where Is Webb?</a> page after upper stage separation. Temperature data becomes available 1-2 days after launch.</p>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/101.png",
+      "stateImageUrlPrevious": "",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/101.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "053",
+      "title": "Upper Stage Separation",
+      "subtitle": "",
+      "nominalEventTime": "Launch + 27 minutes",
+      "details": "<p>The Ariane 5 launch vehicle provides thrust for roughly 26 minutes after liftoff from French Guiana. Moments after upper (second) stage engine cut-off, Webb is released from the Ariane 5 and is flying on its own in a fully stowed state.</p><p> <span style='color:#ca3'>NOTE:</span> speed and distance data becomes available on the<a target='_whereIsWebb' href='/content/webbLaunch/whereIsWebb.html' >Where Is Webb?</a>page after upper stage separation. Temperature data becomes available 1-2days after launch.</p> <p>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a></p>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/102.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/102.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "056",
+      "title": "Solar Array",
+      "subtitle": "Webb's solar array is released and deployed.",
+      "nominalEventTime": "Launch + 33 minutes ",
+      "details": "After shedding its fairing and booster rocket, the first two deployments are  'automatic,' meaning they happen without the ground giving commands.   Once the solar panel is deployed, the telescope will go off of battery power and start generating its own power. <br><br>Video: <a href='https://svs.gsfc.nasa.gov/vis/a020000/a020300/a020339/WEBB_Solar_Array_Deployment_4k_30fps_h264.mp4' target='_deployVid'>This Deployment Step</a><br><br>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/103.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/103.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Solar Array Test Feature Story",
+          "url": "https://www.nasa.gov/feature/goddard/2020/nasa-s-webb-powerhouse-solar-array-reconnects-to-the-telescope",
+          "description": "This feature contains a video of the solar array being tested.",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "082",
+      "title": "MCC1a",
+      "subtitle": "Mid Course Correction Burn 1a",
+      "nominalEventTime": "Launch + 12.5 hours ",
+      "details": "<p>This burn fine-tunes Webb's trajectory after launch. The duration of the burn will depend on Ariane 5 launcher performance.</p> <p>The James Webb Space Telescope is launched on a direct path to an orbit around the second Sun-Earth Lagrange Point (L2), but it needs to make its own mid-course thrust correction maneuvers to get there. This is by design, because if Webb gets too much thrust from the Ariane rocket, it can’t turn around to thrust back toward Earth because that would directly expose its telescope optics and structure to the Sun, overheating them and aborting the science mission before it can even begin. Therefore, Webb gets an intentional slight under-burn from the Ariane and uses its own small thrusters and on-board propellant to make up the difference.</p> <p>There will be three mid-course correction (MCC) maneuvers: MCC-1a, MCC-1b, and MCC-2. The first burn, MCC-1a, is the most important and the only other time-critical operation aside from solar array deployment during Webb’s commissioning period. </p>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/104.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/104.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "087",
+      "title": "Gimbaled Antenna Assembly",
+      "subtitle": "",
+      "nominalEventTime": "Launch + 1 day",
+      "details": "The Gimbaled Antenna Assembly (GAA) holds Webb's high rate antenna. It is rotated to its parked position pointed back to the Earth.  This is an 'automatic' deployment as well as the solar panel which preceded it. All other deployments will be controlled by commands from the ground. <br><br>Video: <a href='https://svs.gsfc.nasa.gov/vis/a020000/a020300/a020339/WEBB_HGA_4k_30fps_h264.mp4' target='_deployVid' >This Deployment Step</a><br><br>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/105.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/105.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "093",
+      "title": "MCC1b ",
+      "subtitle": "Mid Course Correction Burn 1b",
+      "nominalEventTime": "Launch + 2 days",
+      "details": "<p>This burn fine-tunes Webb's trajectory after launch. The duration of the burn will depend on Ariane 5 launcher performance. </p> <p>There are three mid-course correction (MCC) maneuvers: MCC-1a, MCC-1b, and MCC-2. This is the second. The first burn, MCC-1a, is the most important and the only other time-critical operation aside from solar array deployment during Webb’s commissioning period.</p> <p>The second, MCC-1b, is a shorter burn performed before the sunshield deployment is scheduled to start. The final maneuver, MCC-2, performed 29 days after launch, is designed to insert Webb into the optimum orbit around L2.</p>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/106.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/106.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "098",
+      "title": "Forward Sunshield Pallet",
+      "subtitle": "The Forward Unitized Pallet Structure (UPS).<br>This step begins the Sunshield deployment phase.",
+      "nominalEventTime": "Launch + 3 days",
+      "details": "The UPS supports and carries the five folded sunshield membranes.  Prior to this, the spacecraft is maneuvered to provide warmer temperatures on the forward UPS and various heaters are activitated to warm key deployment components.  Key release devices are activated.  Various electronics and software are configured prior to support the UPS motions, which are driven by a motor.   This step represents the start of the Sunshield deployment phase and the start of all major deployments.  <br><br>Video: <a href='https://svs.gsfc.nasa.gov/vis/a020000/a020300/a020339/WEBB_fwdPallet_4k_30fps_h264.mp4' target='_deployVid' >This Deployment Step</a><br><br>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a><br><br>Read More: <a target='_readMore' href='/content/observatory/sunshield.html'>About Webb's Sunshield</a>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/107.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/107.png",
+      "moreDetails": "<p>To protect the telescope from external sources of light and heat (like the Sun, Earth, and Moon) as well as from heat emitted by the observatory itself, Webb has a 5-layer, tennis court-sized sunshield that acts like a parasol providing shade. [Actual dimensions: 21.197 m x 14.162 m (69.5 ft x 46.5 ft)].</p> <p> This sunshield will always be between the Sun/Earth/Moon and the telescope. It's able to be positioned this way because JWST will be orbiting the Sun 1.5 million kilometers away from (but approximately in line with) the Earth.</p> Read all about it on our sunshield page (see related links).",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "UPS and DTA Deployment Testing Feature",
+          "url": "https://svs.gsfc.nasa.gov/13785",
+          "description": "Watch a feature on deployment testing of the UPS.",
+          "target": "_new"
+        },
+        {
+          "name": "All About the Sunshield",
+          "url": "https://www.jwst.nasa.gov/content/observatory/sunshield.html",
+          "description": "To protect the telescope from external sources of light and heat (like the Sun, Earth, and Moon) as well as from heat emitted by the observatory itself, Webb has a 5-layer, tennis court-sized sunshield that acts like a parasol providing shade. Read all about it on our sunshield page.",
+          "target": ""
+        },
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "100",
+      "title": "Aft Sunshield Pallet ",
+      "subtitle": "The Aft Unitized Pallet Structure (UPS)",
+      "nominalEventTime": "Launch + 3 days",
+      "details": "The UPS supports and carries the five folded sunshield membranes. Prior to this, the spacecraft will have been maneuvered to provide warmer temperatures on the forward UPS and various heaters have been activitated to warm key deployment components.  Key release devices have been activated.  Various electronics and software have also been configured prior to support the UPS motions, which are driven by a motor.  <br><br>Video: <a href='https://svs.gsfc.nasa.gov/vis/a020000/a020300/a020339/WEBB_aftPallet_4k_30fps_h264.mp4' target='_deployVid' >This Deployment Step</a><br><br>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a><br><br>Read More: <a target='_readMore' href='/content/observatory/sunshield.html'>About Webb's Sunshield</a>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/108.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/108.png",
+      "moreDetails": "<p>To protect the telescope from external sources of light and heat (like the Sun, Earth, and Moon) as well as from heat emitted by the observatory itself, Webb has a 5-layer, tennis court-sized sunshield that acts like a parasol providing shade. [Actual dimensions: 21.197 m x 14.162 m (69.5 ft x 46.5 ft)].</p> <p> This sunshield will always be between the Sun/Earth/Moon and the telescope. It's able to be positioned this way because JWST will be orbiting the Sun 1.5 million kilometers away from (but approximately in line with) the Earth.</p> Read all about it on our sunshield page (see related links).",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "UPS and DTA Deployment Testing Feature",
+          "url": "https://svs.gsfc.nasa.gov/13785",
+          "description": "Watch a feature on deployment testing of the UPS.",
+          "target": "_new"
+        },
+        {
+          "name": "All About the Sunshield",
+          "url": "https://www.jwst.nasa.gov/content/observatory/sunshield.html",
+          "description": "To protect the telescope from external sources of light and heat (like the Sun, Earth, and Moon) as well as from heat emitted by the observatory itself, Webb has a 5-layer, tennis court-sized sunshield that acts like a parasol providing shade. Read all about it on our sunshield page.",
+          "target": ""
+        },
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "103",
+      "title": "DTA Deployment",
+      "subtitle": "Deployable Tower Assembly (DTA)",
+      "nominalEventTime": "Launch + 4 days",
+      "details": "The Deployable Tower Assembly (DTA) is deployed.  The tower will extend about 2 meters.  This movement/distance  provides needed separation between the spacecraft and telescope to allow for better thermal isolation and to allow room for the sunshield membranes to unfold. Prior to this, several release devices will have been activated, and various heaters, software, and electronics have been configured to support deployments. This deployment motion is driven by a motor.  <br><br>Video: <a href='https://svs.gsfc.nasa.gov/vis/a020000/a020300/a020339/WEBB_Tower_4k_30fps_h264.mp4' target='_deployVid' >This Deployment Step</a><br><br>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/109.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/109.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Deployable Tower Assembly-DTA Testing Feature",
+          "url": "https://svs.gsfc.nasa.gov/13785",
+          "description": "Watch a feature on deployment testing of the Deployable Tower Assembly.",
+          "target": "_new"
+        },
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "105",
+      "title": "Aft Momentum Flap",
+      "subtitle": "",
+      "nominalEventTime": "Launch + 5 days",
+      "details": "The Aft Momentum Flap is used to help offset some of the solar pressure that impinges on the large sunshield. Use of the momentum flap helps to minimize fuel usage during the mission. After releasing hold-down devices, a spring drives the rotation of the aft flap to its final position. <br><br>Video: <a href='https://svs.gsfc.nasa.gov/vis/a020000/a020300/a020339/WEBB_mFlap_4k_30fps_h264.mp4' target='_deployVid'>this Deployment Step</a><br><br>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/110.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/110.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "106",
+      "title": "Sunshield Covers Release",
+      "subtitle": "",
+      "nominalEventTime": "Launch + 5 days",
+      "details": "This operation releases and rolls up the protective membrane cover. The sunshield release cover has been protecting the membranes during ground and launch activities.    Release devices are electrically activated to release the covers. <br><br>Video: <a href='https://svs.gsfc.nasa.gov/vis/a020000/a020300/a020339/WEBB_allCovers_4k_30fps_h264.mp4' target='_deployVid'>this Deployment Step</a><br><br>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a><br><br>Read More: <a target='_readMore' href='/content/observatory/sunshield.html'>About Webb's Sunshield</a>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/111.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/111.png",
+      "moreDetails": "<p>To protect the telescope from external sources of light and heat (like the Sun, Earth, and Moon) as well as from heat emitted by the observatory itself, Webb has a 5-layer, tennis court-sized sunshield that acts like a parasol providing shade. [Actual dimensions: 21.197 m x 14.162 m (69.5 ft x 46.5 ft)].</p> <p> This sunshield will always be between the Sun/Earth/Moon and the telescope. It's able to be positioned this way because JWST will be orbiting the Sun 1.5 million kilometers away from (but approximately in line with) the Earth.</p> Read all about it on our sunshield page (see related links).",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "109",
+      "title": "Sunshield PORT Mid-Boom",
+      "subtitle": "The Left/Port (+J2) Sunshield Boom Deployment",
+      "nominalEventTime": "Launch + 6 days",
+      "details": "The Port +J2 Mid-boom deployment steps include the completion of the sunshield cover roll up, the deployments team then extends the +J2 mid-boom along with the +J2 side of the five membranes.   This operation is a motor-driven deployment.  <br><br>Video: <a href='https://svs.gsfc.nasa.gov/vis/a020000/a020300/a020339/WEBB_JmBoom2_4k_30fps_h264.mp4' target='_deployVid'>This Deployment Step</a><br><br>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a><br><br>Read More: <a target='_readMore' href='/content/observatory/sunshield.html'>About Webb's Sunshield</a>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/112.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/112.png",
+      "moreDetails": "<p>To protect the telescope from external sources of light and heat (like the Sun, Earth, and Moon) as well as from heat emitted by the observatory itself, Webb has a 5-layer, tennis court-sized sunshield that acts like a parasol providing shade. [Actual dimensions: 21.197 m x 14.162 m (69.5 ft x 46.5 ft)].</p> <p> This sunshield will always be between the Sun/Earth/Moon and the telescope. It's able to be positioned this way because JWST will be orbiting the Sun 1.5 million kilometers away from (but approximately in line with) the Earth.</p> Read all about it on our sunshield page (see related links).",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "111",
+      "title": "Sunshield STARBOARD Mid-Boom",
+      "subtitle": "The Right/Starboard (-J2) Sunshield Boom Deployment",
+      "nominalEventTime": "Launch + 6 days",
+      "details": "The Starboard (-J2) Mid-boom deployment steps include the completion of the sunshield cover roll up, the  deployments team then extends the -J2 mid-boom along with the -J2 side of the five sunshield membranes.   This operation is a motor driven deployment.   <br><br>Video: <a href='https://svs.gsfc.nasa.gov/vis/a020000/a020300/a020339/WEBB_JmBoom2_4k_30fps_h264.mp4' target='_deployVid'>This Deployment Step</a><br><br>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a><br><br>Read More: <a target='_readMore' href='/content/observatory/sunshield.html'>About Webb's Sunshield</a>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/113.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/113.png",
+      "moreDetails": "<p>To protect the telescope from external sources of light and heat (like the Sun, Earth, and Moon) as well as from heat emitted by the observatory itself, Webb has a 5-layer, tennis court-sized sunshield that acts like a parasol providing shade. [Actual dimensions: 21.197 m x 14.162 m (69.5 ft x 46.5 ft)].</p> <p> This sunshield will always be between the Sun/Earth/Moon and the telescope. It's able to be positioned this way because JWST will be orbiting the Sun 1.5 million kilometers away from (but approximately in line with) the Earth.</p> Read all about it on our sunshield page (see related links).",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "114",
+      "title": "Sunshield Layer Tensioning",
+      "subtitle": "",
+      "nominalEventTime": "Launch + 7 days",
+      "details": "<p>This operation is a multi-step two-day activity which completes the final membrane releases, as well as tensioning the five layers of the sunshield.</p> <p>After initial sunshield deployments of the forward and aft UPS (which carry the fully folded sunshield), followed by  the port and starboard mid-booms (which support and initially unfold all 5 layers of the sunshield together), each  layer is successively tensioned. </p>  <br><br>Video: <a href='https://svs.gsfc.nasa.gov/vis/a020000/a020300/a020339/WEBB_SS1_4k_30fps_h264.mp4' target='_deployVid'>this Deployment Step</a><br><br>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a><br><br>Read More: <a target='_readMore' href='/content/observatory/sunshield.html'>About Webb's Sunshield</a> ",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/114.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/114.png",
+      "moreDetails": "<p>To protect the telescope from external sources of light and heat (like the Sun, Earth, and Moon) as well as from heat emitted by the observatory itself, Webb has a 5-layer, tennis court-sized sunshield that acts like a parasol providing shade. [Actual dimensions: 21.197 m x 14.162 m (69.5 ft x 46.5 ft)].</p> <p> This sunshield will always be between the Sun/Earth/Moon and the telescope. It's able to be positioned this way because JWST will be orbiting the Sun 1.5 million kilometers away from (but approximately in line with) the Earth.</p> Read all about it on our sunshield page (see related links).",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "124",
+      "title": "Sunshield Tensioning Complete",
+      "subtitle": "The Sunshield is Fully Deployed!",
+      "nominalEventTime": "Launch + 8 days",
+      "details": "<p>Tensioning of layer 1 (the hottest layer, closest to the sun) through layer 5 is complete which puts the sunshield in its fully deployed state. </p> <p> Temperatures on the Sun/hot side of the sunshield will reach a maximum of approximately 383K or approximately 230 degrees F and on the cold mirror/instruments side of the sunshield, a minimum of approximately 36K or around -394 degrees F. Due to the engineering of the sunshield, this incredible transition takes place across a distance of approximately six feet. </p><br>Video: <a href='https://svs.gsfc.nasa.gov/vis/a020000/a020300/a020339/WEBB_SS1_4k_30fps_h264.mp4' target='_deployVid'>this Deployment Step</a><br><br>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a><br><br>Read More: <a target='_readMore' href='/content/observatory/sunshield.html'>About Webb's Sunshield</a>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/115.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/115.png",
+      "moreDetails": "<p>To protect the telescope from external sources of light and heat (like the Sun, Earth, and Moon) as well as from heat emitted by the observatory itself, Webb has a 5-layer, tennis court-sized sunshield that acts like a parasol providing shade. [Actual dimensions: 21.197 m x 14.162 m (69.5 ft x 46.5 ft)].</p> <p> This sunshield will always be between the Sun/Earth/Moon and the telescope. It's able to be positioned this way because JWST will be orbiting the Sun 1.5 million kilometers away from (but approximately in line with) the Earth.</p> Read all about it on our sunshield page (see related links).",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "127",
+      "title": "Secondary Mirror Deployment",
+      "subtitle": "This step begins the Secondary Mirror deployment phase.",
+      "nominalEventTime": "Launch + 10 days",
+      "details": "The Secondary Mirror Support Structure (SMSS) is moved into its operational position. Webb's secondary mirror is at the end of this structure. As it is deployed, its long booms will swing the secondary mirror out in front of the primary mirror. The secondary mirror plays an important role in reflecting the light from the primary mirror to where the instruments sit, behind the primary mirror. <br><br>Video: <a href='https://svs.gsfc.nasa.gov/vis/a020000/a020300/a020339/WEBB_SMA_1_4k_30fps_h264.mp4' target='_deployVid'>Secondary Mirror Deployment</a><br><br>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a><br><br>Read More: <a target='_readMore' href='/content/observatory/ote/mirrors/index.html'>About Webb's Mirrors</a>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/116.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/116.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Testing of the SMSS",
+          "url": "https://www.nasa.gov/feature/goddard/2019/critical-deployment-of-nasa-webb-s-secondary-mirror-a-success",
+          "description": "Read a feature on the testing of the SMSS.",
+          "target": ""
+        },
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "128",
+      "title": "Secondary Mirror Deployment",
+      "subtitle": "Complete - the Secondary Mirror is fully deployed and latched.",
+      "nominalEventTime": "Launch + 10 days",
+      "details": "Webb's secondary mirror is at the end of the Secondary Mirror Support Structure (SMSS). As it is deployed, its long booms will swing the secondary mirror out in front of the primary mirror. The secondary mirror plays an important role in reflecting the light from the primary mirror to where the instruments sit, behind the primary mirror. <br><br>Video: <a href='https://svs.gsfc.nasa.gov/vis/a020000/a020300/a020339/WEBB_SMA_1_4k_30fps_h264.mp4' target='_deployVid'>Secondary Mirror Deployment</a><br><br>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a><br><br>Read More: <a target='_readMore' href='/content/observatory/ote/mirrors/index.html'>About Webb's Mirrors</a>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/117.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/117.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Testing of the SMSS",
+          "url": "https://www.nasa.gov/feature/goddard/2019/critical-deployment-of-nasa-webb-s-secondary-mirror-a-success",
+          "description": "Read a feature on the testing of the SMSS.",
+          "target": ""
+        },
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "129",
+      "title": "Aft Deployed Instrument Radiator",
+      "subtitle": "Aft Deployed Instrument Radiator (ADIR)",
+      "nominalEventTime": "Launch + 11 days",
+      "details": "This activity releases the last of four launch locks that holds the Aft Deployed Instrument Radiator (ADIR) in its launch configuration. Releasing the last device allows springs to drive the ADIR into its final deployed position. The first three launch locks were released just after launch to prevent any unwanted strain in the system as the ADIR and telescope cools.   <br><br>Video: <a href='https://svs.gsfc.nasa.gov/vis/a020000/a020300/a020339/WEBB_Aft_Radiator_Deployment_h264.mp4' target='_deployVid'>this Deployment Step</a><br><br>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a> ",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/118.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/118.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "130",
+      "title": "Port Primary Mirror Wing",
+      "subtitle": "This step begins the Primary Mirror deployment phase.",
+      "nominalEventTime": "Launch + 12 days",
+      "details": "The deployments team begins planning and operations for the deployment of the left/port (+V2) primary mirror wing. This operation deploys and latches the +V2 wing of the primary mirror. Each wing holds three of the 18 mirror segments. This is a motor-driven deployment.<br><br>Video: <a href='https://svs.gsfc.nasa.gov/vis/a020000/a020300/a020339/WEBB_PMA_midShot_4k_30fps_h264.mp4' target='_deployVid'>Primary Mirror Deployment</a><br><br>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a><br><br>Read More: <a target='_readMore' href='/content/observatory/ote/mirrors/index.html'>About Webb's Mirrors</a> ",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/119.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/119.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Primary Mirror Wing Deployments Testing",
+          "url": "https://www.nasa.gov/feature/goddard/2020/nasa-s-james-webb-space-telescope-full-mirror-deployment-a-success",
+          "description": "View a feature about testing the primary mirror wing deployments",
+          "target": ""
+        },
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "131",
+      "title": "Port Primary Mirror Wing ",
+      "subtitle": "Complete - the Port Primary Mirror Wing is deployed and latched.",
+      "nominalEventTime": "Launch + 12 days",
+      "details": "The left/port (+V2) wing of the primary mirror is fully deployed and latched. Each wing holds three of the 18 mirror segments. This is a motor-driven deployment. <br><br>Video: <a href='https://svs.gsfc.nasa.gov/vis/a020000/a020300/a020339/WEBB_PMA_midShot_4k_30fps_h264.mp4' target='_deployVid'>Primary Mirror Deployment</a><br><br>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a><br><br>Read More: <a target='_readMore' href='/content/observatory/ote/mirrors/index.html'>About Webb's Mirrors</a>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/120.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/120.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Primary Mirror Wing Deployments Testing",
+          "url": "https://www.nasa.gov/feature/goddard/2020/nasa-s-james-webb-space-telescope-full-mirror-deployment-a-success",
+          "description": "View a feature about testing the primary mirror wing deployments",
+          "target": ""
+        },
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "132",
+      "title": "Starboard Primary Mirror Wing",
+      "subtitle": "Begin deployment of the Starboard Primary Mirror Wing.",
+      "nominalEventTime": "Launch + 13 days",
+      "details": "The deployments team begins planning and operations to deploy the right/starboard (-V2)  wing of the primary mirror. Each wing holds 3 of the 18 mirror segments.  This is a motor driven deployment. <br><br>Video: <a href='https://svs.gsfc.nasa.gov/vis/a020000/a020300/a020339/WEBB_PMA_midShot_4k_30fps_h264.mp4' target='_deployVid'>Primary Mirror Deployment</a><br><br>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a><br><br>Read More: <a target='_readMore' href='/content/observatory/ote/mirrors/index.html'>About Webb's Mirrors</a>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/121.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/121.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "138",
+      "title": "Starboard Primary Mirror Wing ",
+      "subtitle": "Complete - Deployment of the Starboard Primary Mirror Wing.",
+      "nominalEventTime": "Launch + 13 days",
+      "details": "The right/starboard (-V2) wing of the primary mirror is fully deployed and latched. Each wing holds 3 of the 18 mirror segments.  This is a motor driven deployment. <br><br>Video: <a href='https://svs.gsfc.nasa.gov/vis/a020000/a020300/a020339/WEBB_PMA_midShot_4k_30fps_h264.mp4' target='_deployVid'>Primary Mirror Deployment</a><br><br>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a><br><br>Read More: <a target='_readMore' href='/content/observatory/ote/mirrors/index.html'>About Webb's Mirrors</a>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/122.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/122.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Primary Mirror Wing Deployments Testing",
+          "url": "https://www.nasa.gov/feature/goddard/2020/nasa-s-james-webb-space-telescope-full-mirror-deployment-a-success",
+          "description": "View a feature about testing the primary mirror wing deployments",
+          "target": ""
+        },
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "138-c",
+      "title": "WEBB IS FULLY DEPLOYED!",
+      "subtitle": "",
+      "nominalEventTime": "Launch + 13 days",
+      "details": "It will continue to travel to the second Lagrange point (L2) for another two weeks, at which point it will enter a large orbit around the L2 point.  The following five months will be used to cool the telescope to operating temperature, fine-tune the mirror alignment, and calibrate the instruments. <br><br>Video: <a href='https://svs.gsfc.nasa.gov/vis/a020000/a020300/a020339/WEBB_PMA_midShot_4k_30fps_h264.mp4' target='_deployVid'>Primary Mirror Deployment</a><br><br>Video: <a href='https://www.youtube.com/watch?v=RzGLKQ7_KZQ' target='_deployVid'>Full Deployment</a>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/123.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/123.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "139",
+      "title": "Individual Mirror Segment Movements",
+      "subtitle": "",
+      "nominalEventTime": "Launch + 15-24 days",
+      "details": "<p>This operation is a multi-day multi-step activity to activate and move each of its 18 primary mirror segments (which are adjustable) out of their launch configuration. </p> <p>The primary mirror segments and secondary mirror are moved by six actuators that are attached to the back of each mirror piece. The primary mirror segments also have an additional actuator at its center that adjusts its curvature. The telescope's tertiary mirror remains stationary. </p> <p> Read More:<a target='_readMore' href='/content/observatory/ote/mirrors/index.html#1c'>About Webb's adjustable mirrors.</a> </p> <p> Read More:<a target='_readMore' href='/content/observatory/ote/mirrors/index.html#8'>How 18 mirrors see as one.</a> </p> <p> Read More:<a target='_readMore' href='/content/about/innovations/wavefront.html'>Mirror Alignment Technology Spinoffs.</a> </p>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/124.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/124.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Mirror Segment Alignment",
+          "url": "https://www.nasa.gov/feature/goddard/2017/aligning-the-primary-mirror-segments-of-nasa-s-james-webb-space-telescope-with-light",
+          "description": "View a feature about how the mirror segments will be aligned.",
+          "target": ""
+        },
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "140",
+      "title": "Individual Mirror Segment Movements ",
+      "subtitle": "Completed",
+      "nominalEventTime": "Launch + 15-24 days",
+      "details": "<p>This completes the multi-day multi-step activity to activate and move each of its 18 primary mirror segments (which are adjustable) out of their launch configuration. </p> <p>The primary mirror segments and secondary mirror are moved by six actuators that are attached to the back of each mirror piece. The primary mirror segments also have an additional actuator at its center that adjusts its curvature. The telescope's tertiary mirror remains stationary. </p><p> Read More:<a target='_readMore' href='/content/observatory/ote/mirrors/index.html#1c'>About Webb's adjustable mirrors.</a> </p> <p> Read More:<a target='_readMore' href='/content/observatory/ote/mirrors/index.html#8'>How 18 mirrors see as one.</a> </p><p> Read More:<a target='_readMore' href='/content/about/innovations/wavefront.html'>Mirror Alignment Technology Spinoffs.</a> </p>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/125.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/125.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Mirror Segment Alignment",
+          "url": "https://www.nasa.gov/feature/goddard/2017/aligning-the-primary-mirror-segments-of-nasa-s-james-webb-space-telescope-with-light",
+          "description": "View a feature about how the mirror segments will be aligned.",
+          "target": ""
+        },
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch.",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's orbit.",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "142",
+      "title": "L2 Insertion Burn",
+      "subtitle": "Mid Course Correction Burn (MCC2) - Begins L2 Insertion",
+      "nominalEventTime": "Launch + 29 days",
+      "details": "<p>A series of activites to plan and execute MCC2 - the insertion burn for Webb's L2 orbit.  MCC2 corrects any residual trajectory errors and adjusts the final L2 orbit. </p><p>The James Webb Space Telescope is launched on a direct path to an orbit around the second SunEarth Lagrange Point (L2), but it needs to make its own mid-course thrust correction maneuvers to get there. This is by design, because if Webb gets too much thrust from the Ariane rocket, it can’t turn around to thrust back toward Earth because that would directly expose its telescope optics and structure to the Sun, overheating them and aborting the science mission before it can even begin. Therefore, Webb gets an intentional slight under-burn from the Ariane and uses its own small thrusters and on-board propellant to make up the difference.</p> <p>There are three mid-course correction (MCC) maneuvers: MCC-1a, MCC-1b, and MCC-2. This final burn, MCC-2, which inserts Webb into its L2 halo orbit.</p>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/126.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/126.png",
+      "moreDetails": "",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's Orbit",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 0,
+      "approxDuration": 0,
+      "approxSpeedMph": 0
+    },
+    {
+      "eventId": "143-c",
+      "title": "WEBB IS ORBITING L2",
+      "subtitle": "Orbit Insertion Complete. <br>Webb is Orbiting L2 in a HALO Orbit.",
+      "nominalEventTime": "Launch + 29.5 days",
+      "details": "<p>Webb is now orbiting L2. Telescope deployment is complete. Ongoing cooldown and instrument turn-on continue. The telescope and scientific instruments started to cool rapidly in the shade of the sunshield once it was deployed, but it will take several weeks for them to cool all the way down and reach stable temperatures. This cooldown will be carefully controlled with strategically-placed electric heater strips. The remaining five months of commissioning will be all about aligning the optics and calibrating the scientific instruments. </p><p> Read More:<a href='/content/about/orbit.html'>About Webb's orbit.</a></p><p> Read More:<a target='_readMore' href='/content/about/innovations/'>All of Webb's Technology Spinoffs. </p>",
+      "thumbnailUrl": "/content/webbLaunch/assets/images/deployment/thumbnails/127.png",
+      "stateImageUrl": "/content/webbLaunch/assets/images/deployment/1000pxWide/127.png",
+      "moreDetails": "In the fifth and sixth months of commissioning: Calibration and completion of commissioning. We will meticulously calibrate all of the scientific instruments’ many modes of operation while observing representative targets, and we will demonstrate the ability to track “moving” targets, which are nearby objects like asteroids, comets, moons, and planets in our own solar system. We will make “Early Release Observations,” to be revealed right after commissioning is over, that will showcase the capabilities of the observatory. <strong>After six months: Webb will begin its science mission and start to conduct routine science operations.</strong> <p> ",
+      "relatedImages": [
+        {
+          "name": "imageName1",
+          "url": "/ImagesContent/ariane5Launch-9-29-2017-VA239_2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane4.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName2",
+          "url": "/images/ariane2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName4",
+          "url": "/images/l2.2.jpg",
+          "description": "This is the description. Could be minimal html"
+        },
+        {
+          "name": "imageName5",
+          "url": "/images2/sunshieldhotcold.jpg",
+          "description": "This is the description. Could be minimal html"
+        }
+      ],
+      "relatedVideos": [
+        {
+          "name": "ALL ABOUT Webb Telescope",
+          "url": "https://www.youtube.com/embed/YF22Ba-xrk8",
+          "description": "Webb Quick Start:  the basics you need to know about Webb"
+        },
+        {
+          "name": "Full Deployment",
+          "url": "https://www.youtube.com/embed/bTxLAGchWnA?rel=0&amp;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "This video goes from launch to a fully deployed Webb Space Telescope."
+        },
+        {
+          "name": "Webb Lifting Off",
+          "url": "/content/webbLaunch/assets/video/RocketOnlyCruising.mp4",
+          "description": "Webb leaves the ESA launch pad in French Guiana for L2."
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "https://www.youtube.com/embed/6cUe4oMk69E?rel=0&amp;loop=1&amp;playlist=6cUe4oMk69E;enablejsapi=1&amp;html5=1&amp;origin=https://jwst.nasa.gov",
+          "description": "Webb's orbit around the sun at L2. Credit: GSFC"
+        }
+      ],
+      "relatedLinks": [
+        {
+          "name": "Webb's Launch",
+          "url": "/content/about/launch.html",
+          "description": "All about Webb's Launch.",
+          "target": ""
+        },
+        {
+          "name": "Webb's Orbit",
+          "url": "/content/about/orbit.html",
+          "description": "All about Webb's orbit.",
+          "target": ""
+        },
+        {
+          "name": "Webb Observatory",
+          "url": "/content/observatory/",
+          "description": "Learn about all of the subsystems of the Webb Observatory",
+          "target": ""
+        },
+        {
+          "name": "Ariane Launch Vehicle",
+          "url": "https://www.esa.int/Enabling_Support/Space_Transportation/Ariane",
+          "description": "Learn about the Ariane Launch capability that ESA supplies the Webb Mission.",
+          "target": "_new"
+        }
+      ],
+      "approxStartTimeRelToLaunch": "dd:hh:mm",
+      "approxEndTimeRelToLaunch": "dd:hh:mm",
+      "approxDistanceFromEarthMiles": 1000000,
+      "approxDuration": 10000,
+      "approxSpeedMph": 14000
+    }
+  ]
+}

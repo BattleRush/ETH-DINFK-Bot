@@ -67,6 +67,12 @@
     <None Update="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Data\CurrentJWSTIndex.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Data\JWSTDeployments.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Images\BattleRush.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -69,6 +69,7 @@ namespace ETHDINFKBot.Handlers
 
         private async Task<bool> FavEmoteGetPage(int dir, int rows = 4, int columns = 5, bool debug = false)
         {
+
             var embed = SocketUserMessage.Embeds.FirstOrDefault();
 
             if (embed.Footer.HasValue)
@@ -105,28 +106,35 @@ namespace ETHDINFKBot.Handlers
 
                 var builderComponent = new ComponentBuilder();
 
-                int row = 0;
-                int col = 0;
-                foreach (var emote in emoteResult.EmoteList)
+                try
                 {
-                    builderComponent.WithButton(emote.Value, $"emote-fav-{emote.Key}", ButtonStyle.Primary, Emote.Parse($"<:{emote.Value}:{emote.Key}>"), null, false, row);
-                    col++;
-
-                    if (col == columns)
+                    int row = 0;
+                    int col = 0;
+                    foreach (var emote in emoteResult.EmoteList)
                     {
-                        row++;
-                        col = 0;
+                        builderComponent.WithButton(emote.Value, $"emote-fav-{emote.Key}", ButtonStyle.Primary, Emote.Parse($"<:{emote.Value}:{emote.Key}>"), null, false, row);
+                        col++;
+
+                        if (col == columns)
+                        {
+                            row++;
+                            col = 0;
+                        }
                     }
+
+                    // Start fresh row for paging
+                    if (col > 0)
+                        row++;
+
+                    builderComponent.WithButton("Prev <", "emote-fav-get-prev-page", ButtonStyle.Danger, null, null, page == 0, row);
+                    builderComponent.WithButton("> Next", "emote-fav-get-next-page", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound, row);
+
+                    await SocketUserMessage.ModifyAsync(i => { i.Embed = builder.Build(); i.Components = builderComponent.Build(); });
                 }
-
-                // Start fresh row for paging
-                if (col > 0)
-                    row++;
-
-                builderComponent.WithButton("Prev <", "emote-fav-get-prev-page", ButtonStyle.Danger, null, null, page == 0, row);
-                builderComponent.WithButton("> Next", "emote-fav-get-next-page", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound, row);
-
-                await SocketUserMessage.ModifyAsync(i => { i.Embed = builder.Build(); i.Components = builderComponent.Build(); });
+                catch (Exception ex)
+                {
+                   // TODO go trough emote errors -> invalidate -> let user retry
+                }
             }
 
             return true;
@@ -147,8 +155,8 @@ namespace ETHDINFKBot.Handlers
 
                 string searchTerm = footerTextParts[0];
 
-                int page = Convert.ToInt32(footerTextParts[1].Substring(footerTextParts[1].IndexOf(":") + 1).Trim()); 
-                debug = Convert.ToBoolean(footerTextParts[2].Substring(footerTextParts[2].IndexOf(":") + 1).Trim()); 
+                int page = Convert.ToInt32(footerTextParts[1].Substring(footerTextParts[1].IndexOf(":") + 1).Trim());
+                debug = Convert.ToBoolean(footerTextParts[2].Substring(footerTextParts[2].IndexOf(":") + 1).Trim());
 
                 page += dir;
                 var socketGuildChannel = SocketUserMessage.Channel as SocketGuildChannel; // can only be requested in guild channels anyway
