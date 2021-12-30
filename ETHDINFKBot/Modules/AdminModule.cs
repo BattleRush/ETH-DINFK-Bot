@@ -1228,13 +1228,6 @@ namespace ETHDINFKBot.Modules
             [Command("help")]
             public async Task KeyValuePairAdminHelp()
             {
-                var author = Context.Message.Author;
-                if (author.Id != Program.ApplicationSetting.Owner)
-                {
-                    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
-                    return;
-                }
-
                 EmbedBuilder builder = new EmbedBuilder();
 
                 builder.WithTitle("KeyValuePair Admin Help (Admin only)");
@@ -1251,7 +1244,7 @@ namespace ETHDINFKBot.Modules
                 builder.AddField("admin keyval list", "Lists all current KeyValuePairs stored in the DB");
                 builder.AddField("admin keyval supported", "Lists supported types (IConvertible)");
 
-                Context.Channel.SendMessageAsync("", false, builder.Build());
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
 
             [Command("get")]
@@ -1264,6 +1257,13 @@ namespace ETHDINFKBot.Modules
             [Command("add")]
             public async Task AddKeyValuePair(string key, string value, string type)
             {
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
                 if (!SupportedTypes.Contains(type))
                 {
                     await Context.Channel.SendMessageAsync($"{type} is not supported");
@@ -1284,6 +1284,13 @@ namespace ETHDINFKBot.Modules
             [Command("update")]
             public async Task UpdateKeyValuePair(string key, string value, string type = null)
             {
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
                 if (!SupportedTypes.Contains(type))
                 {
                     await Context.Channel.SendMessageAsync($"{type} is not supported");
@@ -1304,6 +1311,13 @@ namespace ETHDINFKBot.Modules
             [Command("delete")]
             public async Task DeleteKeyValuePair(string key)
             {
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
                 try
                 {
                     DBManager.Delete(key);
