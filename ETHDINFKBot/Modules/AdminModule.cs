@@ -6,6 +6,7 @@ using ETHBot.DataLayer.Data.Enums;
 using ETHDINFKBot.Classes;
 using ETHDINFKBot.CronJobs;
 using ETHDINFKBot.CronJobs.Jobs;
+using ETHDINFKBot.Data;
 using ETHDINFKBot.Drawing;
 //using ETHDINFKBot.Drawing;
 using ETHDINFKBot.Helpers;
@@ -132,6 +133,7 @@ namespace ETHDINFKBot.Modules
             builder.AddField("admin reddit help", "Help for reddit command");
             builder.AddField("admin rant help", "Help for rant command");
             builder.AddField("admin place help", "Help for place command");
+            builder.AddField("admin keyval help", "Help for KeyValue DB Management");
             builder.AddField("admin kill", "Do I really need to explain this one");
             builder.AddField("admin cronjob <name>", "Manually start a CronJob");
             builder.AddField("admin blockemote <id> <block>", "Block an emote from being selectable");
@@ -559,7 +561,7 @@ namespace ETHDINFKBot.Modules
                 {
                     var categoryInfos = Program.ChannelPositions.Where(i => i.CategoryId == category.Id);
 
-                    var categoryInfo = new List<string>() { category.Position + " / --", category.Name , ""};
+                    var categoryInfo = new List<string>() { category.Position + " / --", category.Name, "" };
                     data.Add(categoryInfo);
 
                     var cells = new List<TableCellInfo>() {
@@ -1213,6 +1215,121 @@ namespace ETHDINFKBot.Modules
             // TODO cleanup this mess
 
 
+        }
+
+
+        [Group("keyval")]
+        public class KeyValuePairAdminModule : ModuleBase<SocketCommandContext>
+        {
+            List<string> SupportedTypes = new List<string>() { "Boolean", "Byte", "Char", "DateTime", "DBNull", "Decimal,", "Double", "Enum", "Int16", "Int32", "Int64", "SByte", "Single", "String", "UInt16", "UInt32", "UInt64" };
+
+            private static KeyValueDBManager DBManager = DatabaseManager.KeyValueManager;
+
+            [Command("help")]
+            public async Task KeyValuePairAdminHelp()
+            {
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                EmbedBuilder builder = new EmbedBuilder();
+
+                builder.WithTitle("KeyValuePair Admin Help (Admin only)");
+
+                builder.WithColor(0, 0, 255);
+
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
+                builder.WithCurrentTimestamp();
+                builder.AddField("admin keyval help", "This message :)");
+                builder.AddField("admin keyval get <key>", "Get a specific KeyValuePair by Key");
+                builder.AddField("admin keyval add <key> <value> <type>", "Add new KeyValuePair");
+                builder.AddField("admin keyval update <key> <value> <type>", "Update existing KeyValuePair (Creates one if the key doesn't exist)");
+                builder.AddField("admin keyval delete <key>", "Deletes the KeyValuePair");
+                builder.AddField("admin keyval list", "Lists all current KeyValuePairs stored in the DB");
+                builder.AddField("admin keyval supported", "Lists supported types (IConvertible)");
+
+                Context.Channel.SendMessageAsync("", false, builder.Build());
+            }
+
+            [Command("get")]
+            public async Task GetKeyValuePair(string key)
+            {
+                var result = DBManager.Get(key);
+                await Context.Channel.SendMessageAsync($"Key: {key} has the value: {result.Value} with type: {result.Type}");
+            }
+
+            [Command("add")]
+            public async Task AddKeyValuePair(string key, string value, string type)
+            {
+                if (!SupportedTypes.Contains(type))
+                {
+                    await Context.Channel.SendMessageAsync($"{type} is not supported");
+                    return;
+                }
+
+                try
+                {
+                    var result = DBManager.Add(key, value, type);
+                    await Context.Channel.SendMessageAsync($"Added new key: {key} with value: {value} of type {type}");
+                }
+                catch (Exception ex)
+                {
+                    await Context.Channel.SendMessageAsync(ex.Message);
+                }
+            }
+
+            [Command("update")]
+            public async Task UpdateKeyValuePair(string key, string value, string type = null)
+            {
+                if (!SupportedTypes.Contains(type))
+                {
+                    await Context.Channel.SendMessageAsync($"{type} is not supported");
+                    return;
+                }
+
+                try
+                {
+                    var result = DBManager.Update(key, value, type);
+                    await Context.Channel.SendMessageAsync($"Updated key: {key} with value: {value} of type {type}");
+                }
+                catch (Exception ex)
+                {
+                    await Context.Channel.SendMessageAsync(ex.Message);
+                }
+            }
+
+            [Command("delete")]
+            public async Task DeleteKeyValuePair(string key)
+            {
+                try
+                {
+                    DBManager.Delete(key);
+                    await Context.Channel.SendMessageAsync($"Deleted key: {key}");
+                }
+                catch (Exception ex)
+                {
+                    await Context.Channel.SendMessageAsync(ex.Message);
+                }
+            }
+
+            [Command("list")]
+            public async Task ListKeyValuePairs()
+            {
+                var allStoredKeyValuePairs = DBManager.GetAll();
+
+                // TODO better way for future when many keys are stored
+                foreach (var item in allStoredKeyValuePairs)
+                    await Context.Channel.SendMessageAsync($"{item.Key}:{item.Value}");
+            }
+
+            [Command("supported")]
+            public async Task ListSupportedTypes()
+            {
+                await Context.Channel.SendMessageAsync(string.Join(", ", SupportedTypes));
+            }
         }
     }
 }

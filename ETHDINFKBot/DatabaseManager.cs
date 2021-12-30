@@ -22,6 +22,7 @@ namespace ETHDINFKBot
     public class DatabaseManager
     {
         public static EmoteDBManager EmoteDatabaseManager = EmoteDBManager.Instance();
+        public static KeyValueDBManager KeyValueManager = KeyValueDBManager.Instance();
 
         // TODO Move all methods to Data/
         private static DatabaseManager _instance;

@@ -93,6 +93,7 @@ namespace ETHBot.DataLayer
         public DbSet<FavouriteDiscordEmote> FavouriteDiscordEmotes { get; set; }
 
         public DbSet<BotStartUpTime> BotStartUpTimes { get; set; }
+        public DbSet<StoredKeyValuePair> StoredKeyValuePairs { get; set; }
 
         /*
 

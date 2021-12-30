@@ -84,17 +84,25 @@ namespace ETHDINFKBot.CronJobs.Jobs
             return null;
         }
 
-
         private async void JWSTTask()
         {
+
+            var keyValueDBManager = DatabaseManager.KeyValueManager;
+
             var guild = Program.Client.GetGuild(GuildId);
             var textChannel = guild.GetTextChannel(ChannelId);
 
-            var lastDeploymentIndex = File.ReadAllText(Path.Combine(Program.ApplicationSetting.BasePath, "Data", "CurrentJWSTIndex.txt"));
+            if (!keyValueDBManager.Contains("JWSTCurrentIndex"))
+                return;
+            else
+                keyValueDBManager.Add("JWSTCurrentIndex", 10); // One time -> To be deleted
 
-            int index = Convert.ToInt32(lastDeploymentIndex);
+            int index = keyValueDBManager.Get<int>("JWSTCurrentIndex");
 
             var currentStatus = GetJWSTStatus().currentState;
+
+            // TODO alot of duplicate code from SpaceModule
+
             if (currentStatus.currentDeployTableIndex > index)
             {                
                 // Increase index by 1
@@ -112,7 +120,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                 builder.WithTitle($"JWST Next Deployment Stage: {currentDeployment.title}");
 
-                builder.WithDescription($@"**{currentDeployment.subtitle}** {Environment.NewLine} {currentDeployment.details.Substring(0, currentDeployment.details.IndexOf("<"))}");
+                builder.WithDescription($@"**{currentDeployment.subtitle}**{Environment.NewLine}{currentDeployment.nominalEventTime}{Environment.NewLine}{currentDeployment.details.Substring(0, currentDeployment.details.IndexOf("<"))}");
 
                 builder.WithColor(255, 215, 0);
                 builder.WithThumbnailUrl("https://www.jwst.nasa.gov/content/webbLaunch/assets/images/branding/logo/logoOnly-0.5x.png");
@@ -137,12 +145,11 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                 var firstLink = currentDeployment.relatedLinks.FirstOrDefault();
                 if(firstLink != null)
-                    builder.AddField($"More Info", $"[{firstLink.name}]({(firstLink.url.StartsWith("https://") ? firstLink.url : "https://www.jwst.nasa.gov/" + firstLink.url)})", false);
+                    builder.AddField($"More Info", $"[{firstLink.name}]({(firstLink.url.StartsWith("https://") ? firstLink.url : "https://www.jwst.nasa.gov" + firstLink.url)})", false);
 
                 await textChannel.SendMessageAsync("", false, builder.Build());
 
-                // Limit to 1 change per index at once
-                File.WriteAllText(Path.Combine(Program.ApplicationSetting.BasePath, "Data", "CurrentJWSTIndex.txt"), index.ToString());
+                keyValueDBManager.Update("JWSTCurrentIndex", index);
             }
         }
 
