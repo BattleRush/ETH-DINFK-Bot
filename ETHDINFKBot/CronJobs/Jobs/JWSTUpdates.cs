@@ -86,15 +86,12 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
         private async void JWSTTask()
         {
-
             var keyValueDBManager = DatabaseManager.KeyValueManager;
 
             var guild = Program.Client.GetGuild(GuildId);
             var textChannel = guild.GetTextChannel(ChannelId);
 
             if (!keyValueDBManager.Contains("JWSTCurrentIndex"))
-                return;
-            else
                 keyValueDBManager.Add("JWSTCurrentIndex", 10); // One time -> To be deleted
 
             int index = keyValueDBManager.Get<int>("JWSTCurrentIndex");
