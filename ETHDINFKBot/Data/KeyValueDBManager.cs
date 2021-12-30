@@ -179,7 +179,7 @@ namespace ETHDINFKBot.Data
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.StoredKeyValuePairs;
+                    return context.StoredKeyValuePairs.ToList();
                 }
             }
             catch (Exception ex)

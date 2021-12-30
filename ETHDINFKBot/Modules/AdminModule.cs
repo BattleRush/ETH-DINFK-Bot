@@ -1251,7 +1251,7 @@ namespace ETHDINFKBot.Modules
             public async Task GetKeyValuePair(string key)
             {
                 var result = DBManager.Get(key);
-                await Context.Channel.SendMessageAsync($"Key: {key} has the value: {result.Value} with type: {result.Type}");
+                await Context.Channel.SendMessageAsync($"Key: **{key}** has the value: **{result.Value}** with type: **{result.Type}**");
             }
 
             [Command("add")]
@@ -1266,14 +1266,14 @@ namespace ETHDINFKBot.Modules
 
                 if (!SupportedTypes.Contains(type))
                 {
-                    await Context.Channel.SendMessageAsync($"{type} is not supported");
+                    await Context.Channel.SendMessageAsync($"**{type}** is not supported");
                     return;
                 }
 
                 try
                 {
                     var result = DBManager.Add(key, value, type);
-                    await Context.Channel.SendMessageAsync($"Added new key: {key} with value: {value} of type {type}");
+                    await Context.Channel.SendMessageAsync($"Added new key: **{key}** with value: **{value}** of type **{type}**");
                 }
                 catch (Exception ex)
                 {
@@ -1293,14 +1293,14 @@ namespace ETHDINFKBot.Modules
 
                 if (!SupportedTypes.Contains(type))
                 {
-                    await Context.Channel.SendMessageAsync($"{type} is not supported");
+                    await Context.Channel.SendMessageAsync($"**{type}** is not supported");
                     return;
                 }
 
                 try
                 {
                     var result = DBManager.Update(key, value, type);
-                    await Context.Channel.SendMessageAsync($"Updated key: {key} with value: {value} of type {type}");
+                    await Context.Channel.SendMessageAsync($"Updated key: **{key}** with value: **{value}** of type **{type}**");
                 }
                 catch (Exception ex)
                 {
@@ -1321,7 +1321,7 @@ namespace ETHDINFKBot.Modules
                 try
                 {
                     DBManager.Delete(key);
-                    await Context.Channel.SendMessageAsync($"Deleted key: {key}");
+                    await Context.Channel.SendMessageAsync($"Deleted key: **{key}**");
                 }
                 catch (Exception ex)
                 {

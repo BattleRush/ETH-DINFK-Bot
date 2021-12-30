@@ -110,7 +110,7 @@ namespace ETHDINFKBot.Modules
 
                 builder.WithTitle($"JWST Current Info: {currentDeployment.title}");
 
-                builder.WithDescription($@"**{currentDeployment.subtitle}**{Environment.NewLine}{currentDeployment.nominalEventTime}{Environment.NewLine}{currentDeployment.details.Substring(0, currentDeployment.details.IndexOf("<"))}");
+                builder.WithDescription($@"**{currentDeployment.subtitle}** {Environment.NewLine}{currentDeployment.nominalEventTime} {Environment.NewLine}{currentDeployment.details.Substring(0, currentDeployment.details.IndexOf("<"))}");
 
                 builder.WithColor(255, 215, 0);
                 builder.WithThumbnailUrl("https://www.jwst.nasa.gov/content/webbLaunch/assets/images/branding/logo/logoOnly-0.5x.png");
