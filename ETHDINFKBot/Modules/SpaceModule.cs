@@ -122,9 +122,9 @@ namespace ETHDINFKBot.Modules
                 decimal coldTemp1C = Convert.ToDecimal(currentStatus.tempCoolSide1C, new CultureInfo("en-US"));
                 decimal coldTemp2C = Convert.ToDecimal(currentStatus.tempCoolSide2C, new CultureInfo("en-US"));
 
-                builder.AddField($"Sunshield UPS Average Temperature (hot)", $"{hotTemp1C:0.00} °C", false);
-                builder.AddField($"Spacecraft Equipment Panel Average Temperature (hot)", $"{hotTemp2C:0.00} °C", false);
-                builder.AddField($"Primary Mirror Average Temperature (cold)", $"{coldTemp1C:0.00} °C  / {(coldTemp1C + 273.15m):0.00} K", false);
+                builder.AddField($"Sunshield UPS Avg. Temp (hot)", $"{hotTemp1C:0.00} °C", false);
+                builder.AddField($"Spacecraft Equipment Panel Avg. Temp (hot)", $"{hotTemp2C:0.00} °C", false);
+                builder.AddField($"Primary Mirror Avg. Temp (cold)", $"{coldTemp1C:0.00} °C  / {(coldTemp1C + 273.15m):0.00} K", false);
                 builder.AddField($"Instrument Radiator Temperature (cold)", $"{coldTemp2C:0.00} °C / {(coldTemp2C + 273.15m):0.00} K", false);
 
                 builder.AddField($"Mission time", $"{currentFlightData?.elapsedDays:0.00} days", true);
