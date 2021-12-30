@@ -1335,8 +1335,21 @@ namespace ETHDINFKBot.Modules
                 var allStoredKeyValuePairs = DBManager.GetAll();
 
                 // TODO better way for future when many keys are stored
+
+                string text = "";
                 foreach (var item in allStoredKeyValuePairs)
-                    await Context.Channel.SendMessageAsync($"{item.Key}:{item.Value}");
+                {
+                    var line = $"{item.Key}:{item.Value}";
+                    if(text.Length + line.Length > 1975)
+                    {
+                        await Context.Channel.SendMessageAsync(text);
+                        text = "";
+                    }
+
+                    text += line + Environment.NewLine;
+                }
+
+                await Context.Channel.SendMessageAsync(text);
             }
 
             [Command("supported")]
