@@ -1131,7 +1131,7 @@ namespace ETHDINFKBot
 
             EmbedBuilder builder = new EmbedBuilder();
 
-            builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST POSTER TODAY");
+            builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST POSTER {((timeNow.Day == 1 && timeNow.Month == 1) ? $"OF {timeNow.Year}" : "TODAY")}");
             builder.WithColor(0, 0, 255);
             builder.WithDescription($"This is the {CommonHelper.DisplayWithSuffix(firstPoster.FirstDailyPostCount + 1)} time you are the first poster of the day. With {(timeNow - timeNow.Date).TotalMilliseconds.ToString("N0")}ms from midnight.");
 

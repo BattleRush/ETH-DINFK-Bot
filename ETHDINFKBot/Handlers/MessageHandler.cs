@@ -392,7 +392,7 @@ namespace ETHDINFKBot.Handlers
 
                             if (webhook == null)
                             {
-                                FileStream file = new FileStream(Path.Combine("Images", "BRH_Logo.png"), FileMode.Open);
+                                FileStream file = new FileStream(Path.Combine(Program.ApplicationSetting.BasePath, "Images", "BRH_Logo.png"), FileMode.Open);
 
                                 // Config name
                                 await SocketTextChannel.CreateWebhookAsync("BattleRush's Helper", file);
@@ -430,11 +430,7 @@ namespace ETHDINFKBot.Handlers
                         }
                         else
                         {
-                            FileAttachment fileAttachment = new FileAttachment()
-                            {
-                                Description = name,
-                                FileName = emote.LocalPath                                
-                            };
+                            FileAttachment fileAttachment = new FileAttachment(emote.LocalPath, null, name, false);
 
                             // TODO store resized images in db for faster reuse
                             // TODO use images from filesystem -> no web call
@@ -443,9 +439,10 @@ namespace ETHDINFKBot.Handlers
                                 // TODO gif resize
                                 //await SocketTextChannel.SendMessageAsync(emote.Url);
 
-                                //await webhookClient.SendFileAsync(fileAttachment, "", false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
+                                //
                                 if (webhookClient != null)
-                                    await webhookClient.SendFileAsync(emote.LocalPath, "", false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
+                                    //await webhookClient.SendFileAsync(emote.LocalPath, "", false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
+                                    await webhookClient.SendFileAsync(fileAttachment, "", false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
                                 else 
                                     await SocketMessage.Channel.SendFileAsync(emote.LocalPath, "", false, null, null, false, null, new MessageReference(SocketMessage.ReferencedMessage?.Id));
                             }
@@ -459,8 +456,11 @@ namespace ETHDINFKBot.Handlers
                                 var resImage = CommonHelper.ResizeImage(bmp, Math.Min(bmp.Height, 48));
                                 var stream = CommonHelper.GetStream(resImage);
 
+                                fileAttachment = new FileAttachment(stream, $"{emote.EmoteName}.png", name, false);
+
                                 if (webhookClient != null)
-                                    await webhookClient.SendFileAsync(stream, $"{emote.EmoteName}.png", "", false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
+                                    //await webhookClient.SendFileAsync(stream, $"{emote.EmoteName}.png", "", false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
+                                    await webhookClient.SendFileAsync(fileAttachment, "", false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
                                 else
                                     await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.png", "", false, null, null, false, null, new MessageReference(SocketMessage.ReferencedMessage?.Id));
                             }
