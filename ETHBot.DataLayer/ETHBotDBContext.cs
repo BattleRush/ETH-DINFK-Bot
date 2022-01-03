@@ -130,8 +130,6 @@ namespace ETHBot.DataLayer
 
             // Prevent PlaceUser table to have 2 discord users
             modelBuilder.Entity<PlaceDiscordUser>().HasIndex(c => c.DiscordUserId).IsUnique();
-
-            modelBuilder.Entity<FavouriteDiscordEmote>().HasOne(q => q.DiscordEmote).WithOne().IsRequired();
         }
     }
 }
