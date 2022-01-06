@@ -366,7 +366,8 @@ namespace ETHDINFKBot
             var config = new DiscordSocketConfig
             {
                 MessageCacheSize = 250,
-                AlwaysDownloadUsers = true
+                AlwaysDownloadUsers = true,
+                GatewayIntents = GatewayIntents.All
             };
 
             Client = new DiscordSocketClient(config);

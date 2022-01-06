@@ -243,7 +243,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.AddField("Reddit", $"```{prefix}r[p] <subreddit>|all```", true);
             builder.AddField("Rant", $"```{prefix}rant [ types | (<type> <message>) ]```", true);
             builder.AddField("SQL", $"```{prefix}sql (table info) | (query[d] <query>)```", true);
-            builder.AddField("Emote", $"```{prefix}emote <search_string> [<page>] | {prefix}<emote_name>```");
+            builder.AddField("Emote Help for more info", $"```{prefix}emote help```");
             builder.AddField("React (only this server emotes)", $"```{prefix}react <message_id> <emote_name>```", true);
             builder.AddField("Space Min: 1 Max: 5", $"```{prefix}space [<amount>]```", true);
             builder.AddField("Space (for more commands)", $"```{prefix}space help```", true);
@@ -603,12 +603,18 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         }
 
 
+        [Command("emote")]
+        public async Task EmojiInfo(string search)
+        {
+            await Context.Channel.SendMessageAsync($"This command has been moved. \"{Program.CurrentPrefix}emote help\" for more info", false);
+        }
+
         // TODO duplicate finder -> fingerprint
         // TODO better selection
         //[Command("emote")]
         //public async Task EmojiInfo(string search, int page = 0, bool debug = false)
         //{
-          
+
 
         //    //msg.ModifyAsync(i => i.Attachments.)
         //}
