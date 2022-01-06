@@ -14,10 +14,12 @@ using System.Threading.Tasks;
 
 namespace ETHDINFKBot.Modules
 {
+    // TODO Remove Priority once the main emote command is gone in DiscordModule
+
     [Group("emote")]
     public class EmoteModule : ModuleBase<SocketCommandContext>
     {
-        [Command("help")]
+        [Command("help"), Priority(1)]
         public async Task EmoteHelp()
         {
             if (!CommonHelper.AllowedToRun(BotPermissionType.EnableType2Commands, Context.Message.Channel.Id, Context.Message.Author.Id))
@@ -45,7 +47,7 @@ namespace ETHDINFKBot.Modules
             await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
-        [Command("set")]
+        [Command("set"), Priority(1)]
         public async Task SetEmoteFavourite(ulong emoteId, string name)
         {
             var discordEmote = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(emoteId);
@@ -94,7 +96,7 @@ namespace ETHDINFKBot.Modules
             await Context.Message.ReplyAsync($"Successfully added {name} as a new favourite emote. You can call the emote with {Program.CurrentPrefix}{name}");
         }
 
-        [Command("favourite")]
+        [Command("favourite"), Priority(1)]
         [Alias("fav")]
         public async Task ViewFavouriteEmotes()
         {
@@ -132,7 +134,7 @@ namespace ETHDINFKBot.Modules
             var msg2 = await Context.Channel.SendMessageAsync("", false, builder.Build(), null, null, null, null);
         }
 
-        [Command("favourite")]
+        [Command("favourite"), Priority(1)]
         [Alias("fav")]
         public async Task EmoteFavourite(string search)
         {
@@ -226,7 +228,7 @@ namespace ETHDINFKBot.Modules
         }
 
 
-        [Command("search")]
+        [Command("search"), Priority(1)]
         public async Task EmoteSearch(string search, bool debug = false)
         {
             if (!CommonHelper.AllowedToRun(BotPermissionType.EnableType2Commands, Context.Message.Channel.Id, Context.Message.Author.Id))
