@@ -603,7 +603,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         }
 
         // Temp
-        [Command("emote"), Priority(1000)]
+        [Command("emote"), Priority(1)]
         public async Task EmojiInfo(string search)
         {
             await Context.Channel.SendMessageAsync($"This command has been moved. \"{Program.CurrentPrefix}emote help\" for more info", false);
