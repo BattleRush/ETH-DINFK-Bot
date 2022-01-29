@@ -385,7 +385,7 @@ namespace ETHDINFKBot
             Client.ChannelDestroyed += Client_ChannelDestroyed;
 
             Client.Log += Client_Log;
-
+            
             // For message commands
             Client.MessageCommandExecuted += MessageCommandHandler;
 

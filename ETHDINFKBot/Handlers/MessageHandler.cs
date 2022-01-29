@@ -79,6 +79,7 @@ namespace ETHDINFKBot.Handlers
             //AdministratorBait();
             EmoteDetection();
             Autoreact();
+            LiveInBestCanton();
 
             // Log to DB
             await CreateDiscordServerDBEntry();
@@ -471,6 +472,49 @@ namespace ETHDINFKBot.Handlers
                             await SocketMessage.Channel.SendMessageAsync($"({Program.CurrentPrefix}{emote.EmoteName}) by <@{SocketGuildUser.Id}>");
                     }
                 }
+            }
+        }
+
+        private async void LiveInBestCanton()
+        {
+            try
+            {
+                if (SocketMessage.Content.ToLower() == "I live in the best Canton of Switzerland".ToLower() && !SocketGuildUser.IsBot)
+                {
+                    ulong bestCantonRoleId = 937025006997737485; // TODO const
+                    var bestCantonRole = SocketGuild.Roles.FirstOrDefault(i => i.Id == bestCantonRoleId);
+
+                    // check if the user has the role -> if not then assign
+                    if (!SocketGuildUser.Roles.Any(i => i.Id == bestCantonRoleId))
+                    {
+                        // remove the role from user
+                        await SocketGuildUser.RemoveRoleAsync(bestCantonRole);
+
+                        // send in spam that they are free
+                        await SocketTextChannel.SendMessageAsync($"<@{SocketGuildUser.Id}> declared he does indeed live in the best Canton of Switzerland.");
+                    }
+                }
+
+
+                if (SocketMessage.Content.ToLower() == "I dont live in the best Canton of Switzerland".ToLower() && !SocketGuildUser.IsBot)
+                {
+                    // check if the user has the role -> if yes then remove
+                    ulong bestCantonRoleId = 937025006997737485; // TODO const
+                    var bestCantonRole = SocketGuild.Roles.FirstOrDefault(i => i.Id == bestCantonRoleId);
+
+                    if (SocketGuildUser.Roles.Any(i => i.Id == bestCantonRoleId))
+                    {
+                        // remove the role from user
+                        await SocketGuildUser.RemoveRoleAsync(bestCantonRole);
+
+                        // send in spam that they are free
+                        await SocketTextChannel.SendMessageAsync($"<@{SocketGuildUser.Id}> declared he doesn't live in the best Canton of Switzerland.");
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+
             }
         }
 

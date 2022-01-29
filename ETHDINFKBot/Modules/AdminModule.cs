@@ -60,64 +60,65 @@ namespace ETHDINFKBot.Modules
         public async Task Test()
         {
             return; // disable again
-            var author = Context.Message.Author;
-            if (author.Id != Program.ApplicationSetting.Owner)
-            {
-                Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
-                return;
-            }
-            try
-            {
-                var allUsers = await Context.Guild.GetUsersAsync().FlattenAsync();
-                Context.Channel.SendMessageAsync("users " + allUsers.Count().ToString(), false);
+            //var author = Context.Message.Author;
+            //if (author.Id != Program.ApplicationSetting.Owner)
+            //{
+            //    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+            //    return;
+            //}
+            //try
+            //{
+            //    var allUsers = await Context.Guild.GetUsersAsync().FlattenAsync();
+            //    Context.Channel.SendMessageAsync("users " + allUsers.Count().ToString(), false);
 
-                Random r = new Random();
+            //    Random r = new Random();
 
-                var jsonString = File.ReadAllText("");
+            //    var jsonString = File.ReadAllText("");
 
-                var jsonUsers = JsonConvert.DeserializeObject<Class1[]>(jsonString).ToList();
+            //    var jsonUsers = JsonConvert.DeserializeObject<Class1[]>(jsonString).ToList();
 
-                Context.Channel.SendMessageAsync("json " + jsonUsers.Count.ToString(), false);
+            //    Context.Channel.SendMessageAsync("json " + jsonUsers.Count.ToString(), false);
 
 
-                foreach (SocketGuildUser user in allUsers)
-                {
-                    var targerUser = jsonUsers.SingleOrDefault(i => i.id == user.Id);
+            //    foreach (SocketGuildUser user in allUsers)
+            //    {
+            //        var targerUser = jsonUsers.SingleOrDefault(i => i.id == user.Id);
 
-                    if (targerUser == null || targerUser.nick == user.Nickname)
-                        continue;
+            //        if (targerUser == null || targerUser.nick == user.Nickname)
+            //            continue;
 
-                    try
-                    {
-                        await user.ModifyAsync(i =>
-                        {
-                            i.Nickname = targerUser.nick;
-                        });
+            //        try
+            //        {
+            //            await user.ModifyAsync(i =>
+            //            {
+            //                i.Nickname = targerUser.nick;
+            //            });
 
-                        await Context.Channel.SendMessageAsync("Fixing " + user.Username, false);
+            //            await Context.Channel.SendMessageAsync("Fixing " + user.Username, false);
 
-                    }
-                    catch (Exception ex)
-                    {
-                        await Context.Channel.SendMessageAsync(ex.Message + " on " + user.Username, false);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                await Context.Channel.SendMessageAsync(ex.Message, false);
-            }
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            await Context.Channel.SendMessageAsync(ex.Message + " on " + user.Username, false);
+            //        }
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    await Context.Channel.SendMessageAsync(ex.Message, false);
+            //}
         }
 
+        [RequireOwner]
         [Command("help")]
         public async Task AdminHelp()
         {
-            var author = Context.Message.Author;
-            if (author.Id != Program.ApplicationSetting.Owner)
-            {
-                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
-                return;
-            }
+            //var author = Context.Message.Author;
+            //if (author.Id != Program.ApplicationSetting.Owner)
+            //{
+            //    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+            //    return;
+            //}
 
             EmbedBuilder builder = new EmbedBuilder();
 
