@@ -487,11 +487,11 @@ namespace ETHDINFKBot.Handlers
                     // check if the user has the role -> if not then assign
                     if (!SocketGuildUser.Roles.Any(i => i.Id == bestCantonRoleId))
                     {
-                        // remove the role from user
+                        // add role to user
                         await SocketGuildUser.AddRoleAsync(bestCantonRole);
 
                         // send in spam that they are free
-                        await SocketTextChannel.SendMessageAsync($"<@{SocketGuildUser.Id}> declared he does indeed live in the best Canton of Switzerland.");
+                        await SocketTextChannel.SendMessageAsync($"<@{SocketGuildUser.Id}> declared that they indeed live in the best Canton of Switzerland.");
                     }
                 }
 
@@ -508,7 +508,7 @@ namespace ETHDINFKBot.Handlers
                         await SocketGuildUser.RemoveRoleAsync(bestCantonRole);
 
                         // send in spam that they are free
-                        await SocketTextChannel.SendMessageAsync($"<@{SocketGuildUser.Id}> declared he doesn't live in the best Canton of Switzerland.");
+                        await SocketTextChannel.SendMessageAsync($"<@{SocketGuildUser.Id}> declared they don't live in the best Canton of Switzerland.");
                     }
                 }
             }
