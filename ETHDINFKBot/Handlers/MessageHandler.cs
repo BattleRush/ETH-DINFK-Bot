@@ -488,7 +488,7 @@ namespace ETHDINFKBot.Handlers
                     if (!SocketGuildUser.Roles.Any(i => i.Id == bestCantonRoleId))
                     {
                         // remove the role from user
-                        await SocketGuildUser.RemoveRoleAsync(bestCantonRole);
+                        await SocketGuildUser.AddRoleAsync(bestCantonRole);
 
                         // send in spam that they are free
                         await SocketTextChannel.SendMessageAsync($"<@{SocketGuildUser.Id}> declared he does indeed live in the best Canton of Switzerland.");
