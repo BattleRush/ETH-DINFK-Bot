@@ -450,12 +450,14 @@ namespace ETHDINFKBot
 
         private Task Client_ModalSubmitted(SocketModal arg)
         {
-            throw new NotImplementedException();
+            return Task.CompletedTask;
+            //throw new NotImplementedException();
         }
 
         private Task Client_SlashCommandExecuted(SocketSlashCommand arg)
         {
-            throw new NotImplementedException();
+            return Task.CompletedTask;
+            //throw new NotImplementedException();
         }
 
         private async Task Client_ButtonExecuted(SocketMessageComponent arg)
@@ -1272,7 +1274,7 @@ namespace ETHDINFKBot
                 if (msg.Author.IsWebhook)
                 {
                     // Message was send by Webhook
-                    if (msg.Author.Id == 914168809068322827)
+                    if (msg.Author.Id == 941068482567602206)
                     {
                         // BattleRush's Helper Webhook Id
 

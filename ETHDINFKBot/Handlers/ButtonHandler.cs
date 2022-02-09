@@ -57,13 +57,13 @@ namespace ETHDINFKBot.Handlers
 .WithCustomId($"emote-fav-model")
 .AddTextInput($"Define a name for {emote.EmoteName} emote", emote.DiscordEmoteId.ToString(), placeholder: emote.EmoteName);
 
-            await SocketMessageComponent.RespondWithModalAsync(mb.Build());
+            //await SocketMessageComponent.RespondWithModalAsync(mb.Build());
 
-            //await SocketMessageComponent.FollowupAsync($"Selected emote: {emote.EmoteName}");
-            //await SocketMessageComponent.Channel.SendMessageAsync(emote.Url);
+            await SocketMessageComponent.FollowupAsync($"Selected emote: {emote.EmoteName}");
+            await SocketMessageComponent.Channel.SendMessageAsync(emote.Url);
 
             // TODO Implement trough modal
-            //await SocketMessageComponent.Channel.SendMessageAsync($"Enter prefered name for the emote above: {Environment.NewLine} ``{Program.CurrentPrefix}emote set {id} EMOTE_NAME``");
+            await SocketMessageComponent.Channel.SendMessageAsync($"Enter prefered name for the emote above: {Environment.NewLine} ``{Program.CurrentPrefix}emote set {id} EMOTE_NAME``");
 
             return true;
         }
