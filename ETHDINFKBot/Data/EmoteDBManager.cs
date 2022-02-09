@@ -311,7 +311,7 @@ namespace ETHDINFKBot.Data
 
 
         // TODO change for new emote table
-        public async long ProcessDiscordEmote(DiscordEmote emote, ulong? discordMessageId, int count, bool isReaction, SocketGuildUser user, bool isPreload)
+        public async Task<long> ProcessDiscordEmote(DiscordEmote emote, ulong? discordMessageId, int count, bool isReaction, SocketGuildUser user, bool isPreload)
         {
             Stopwatch watch = new Stopwatch();
             long elapsed = -1;
