@@ -125,7 +125,7 @@ namespace ETHDINFKBot.Log
                     //    }
                     //}
 
-                    long elapsedDownload = DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(stat, message.Id, emote.Value, false, fromUser, isPreload);
+                    long elapsedDownload = await DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(stat, message.Id, emote.Value, false, fromUser, isPreload);
 
                     stopwatch2.Stop();
                     messages += $"{stopwatch2.ElapsedMilliseconds} ms (Emote process) {tag.Value.Name} - Download: {elapsedDownload} ms" + Environment.NewLine;
