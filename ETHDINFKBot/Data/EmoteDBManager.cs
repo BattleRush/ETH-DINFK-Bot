@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using MySqlConnector;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -310,8 +311,10 @@ namespace ETHDINFKBot.Data
 
 
         // TODO change for new emote table
-        public async void ProcessDiscordEmote(DiscordEmote emote, ulong? discordMessageId, int count, bool isReaction, SocketGuildUser user, bool isPreload)
+        public async long ProcessDiscordEmote(DiscordEmote emote, ulong? discordMessageId, int count, bool isReaction, SocketGuildUser user, bool isPreload)
         {
+            Stopwatch watch = new Stopwatch();
+            long elapsed = -1;
             try
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
@@ -319,6 +322,7 @@ namespace ETHDINFKBot.Data
                     var dbEmoji = GetDiscordEmoteById(emote.DiscordEmoteId);
                     if (dbEmoji == null)
                     {
+                        watch.Start();
                         using (var webClient = new WebClient())
                         {
                             byte[] bytes = webClient.DownloadData(emote.Url);
@@ -327,6 +331,8 @@ namespace ETHDINFKBot.Data
                             context.DiscordEmotes.Add(emote);
                         }
                         context.SaveChanges();
+                        watch.Stop();
+                        elapsed = watch.ElapsedMilliseconds;
                     }
 
 
@@ -386,8 +392,10 @@ namespace ETHDINFKBot.Data
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                return;
+                
             }
+
+            return elapsed;
 
             //return GetEmojiStatisticById(emote.DiscordEmoteId);
         }

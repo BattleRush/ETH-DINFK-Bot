@@ -125,10 +125,10 @@ namespace ETHDINFKBot.Log
                     //    }
                     //}
 
-                    DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(stat, message.Id, emote.Value, false, fromUser, isPreload);
+                    long elapsedDownload = DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(stat, message.Id, emote.Value, false, fromUser, isPreload);
 
                     stopwatch2.Stop();
-                    messages += $"{ stopwatch2.ElapsedMilliseconds} ms (emote process)" + Environment.NewLine;
+                    messages += $"{stopwatch2.ElapsedMilliseconds} ms (Emote process) {tag.Value.Name} - Download: {elapsedDownload} ms" + Environment.NewLine;
                 }
 
                 if (message.Author.Id == 155419933998579713 && message.Tags.Count > 5)
@@ -136,7 +136,7 @@ namespace ETHDINFKBot.Log
 
                 stopwatch.Stop();
                 if (message.Author.Id == 155419933998579713 && message.Tags.Count > 5)
-                    message.Channel.SendMessageAsync($"{stopwatch.ElapsedMilliseconds} ms (inner loop)");
+                    message.Channel.SendMessageAsync($"{stopwatch.ElapsedMilliseconds} ms (Inner loop)");
 
                 // TODO dont hammer the db after each call (check if any new emotes have been added
                 long emoteCount = DatabaseManager.EmoteDatabaseManager.TotalEmoteCount();
