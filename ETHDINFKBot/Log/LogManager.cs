@@ -91,7 +91,7 @@ namespace ETHDINFKBot.Log
                 }
 
                 var guildUser = (fromUser as IGuildUser);
-
+                string messages = "";
                 foreach (var emote in listOfEmotes)
                 {
                     Stopwatch stopwatch2 = Stopwatch.StartNew();
@@ -113,7 +113,7 @@ namespace ETHDINFKBot.Log
                     /*cavebob stuff outdated*/
                     //if (emote.Value == 10 && tag.Value?.Id == 747783377146347590)
                     //{
-                       
+
                     //    ulong caveBobGang = 824425544333656104;
 
                     //    if (!guildUser.RoleIds.Contains(caveBobGang))
@@ -128,9 +128,11 @@ namespace ETHDINFKBot.Log
                     DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(stat, message.Id, emote.Value, false, fromUser, isPreload);
 
                     stopwatch2.Stop();
-                    if (message.Author.Id == 155419933998579713 && message.Tags.Count > 5)
-                        message.Channel.SendMessageAsync($"{stopwatch2.ElapsedMilliseconds} ms (emote process)");
+                    messages += $"{ stopwatch2.ElapsedMilliseconds} ms (emote process)" + Environment.NewLine;
                 }
+
+                if (message.Author.Id == 155419933998579713 && message.Tags.Count > 5)
+                    message.Channel.SendMessageAsync(messages);
 
                 stopwatch.Stop();
                 if (message.Author.Id == 155419933998579713 && message.Tags.Count > 5)
@@ -228,7 +230,7 @@ namespace ETHDINFKBot.Log
 
 
                         // Ping Hell
-                        if(role.Key == 895231323034222593)
+                        if (role.Key == 895231323034222593)
                         {
                             // If the user doesnt have the Ping Hell role assign the role to it
                             ulong pingHellRole = 895231323034222593;
