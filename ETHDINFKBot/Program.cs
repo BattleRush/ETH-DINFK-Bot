@@ -37,6 +37,7 @@ using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Discord.Net;
 using ETHDINFKBot.Classes;
+using Discord.Interactions;
 
 namespace ETHDINFKBot
 {
@@ -98,7 +99,7 @@ namespace ETHDINFKBot
         public static ApplicationSetting ApplicationSetting;
 
         public static List<string> CommandNames { get; set; }
-
+        private static ServiceProvider Services;
         static void Main(string[] args)
         {
             CurrentPrefix = ".";
@@ -393,6 +394,10 @@ namespace ETHDINFKBot
             Client.UserCommandExecuted += UserCommandHandler;
 
             Client.ButtonExecuted += Client_ButtonExecuted;
+            Client.SlashCommandExecuted += Client_SlashCommandExecuted;
+            Client.ModalSubmitted += Client_ModalSubmitted;
+
+
 
             await Client.LoginAsync(TokenType.Bot, token);
             await Client.StartAsync();
@@ -405,19 +410,22 @@ namespace ETHDINFKBot
             await Client.SetGameAsync($"{TotalEmotes} emotes", null, ActivityType.Watching);
 #endif
 
-            services = new ServiceCollection()
+            Services = new ServiceCollection()
                 .AddSingleton(Client)
                 //.AddSingleton<InteractiveService>()
+                .AddSingleton<DiscordSocketClient>()
+                .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
                 .BuildServiceProvider();
 
+       
 
             Commands = new CommandService();
-            await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), services);
+            await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), Services);
 
 
             CommandNames = new List<string>();
 
-            List<string> buildCommandString(ModuleInfo module)
+            List<string> buildCommandString(Discord.Commands.ModuleInfo module)
             {
                 List<string> returnInfo = new List<string>();
 
@@ -438,6 +446,16 @@ namespace ETHDINFKBot
 
             // Block this task until the program is closed.
             await Task.Delay(-1);
+        }
+
+        private Task Client_ModalSubmitted(SocketModal arg)
+        {
+            throw new NotImplementedException();
+        }
+
+        private Task Client_SlashCommandExecuted(SocketSlashCommand arg)
+        {
+            throw new NotImplementedException();
         }
 
         private async Task Client_ButtonExecuted(SocketMessageComponent arg)
@@ -696,7 +714,7 @@ namespace ETHDINFKBot
                 }
             }
 #if DEBUG
-            Console.Write("Discord log: " + arg.Message);
+            Console.WriteLine("Discord log: " + arg.Message);
 #else
             if (arg.Severity == LogSeverity.Error || arg.Severity == LogSeverity.Critical)
                 Console.Write("Discord log: " + arg.Message);
@@ -757,6 +775,17 @@ namespace ETHDINFKBot
                 // You can send this error somewhere or just print it to the console, for this example we're just going to print it.
                 Console.WriteLine(json);
             }
+
+            var commands = Services.GetRequiredService<InteractionService>();
+            try
+            {
+                //var t = await commands.RegisterCommandsToGuildAsync(747752542741725244, true);
+            }
+            catch (Exception ex)
+            {
+
+            }
+
         }
 
 
@@ -1375,7 +1404,11 @@ namespace ETHDINFKBot
 
                 try
                 {
+                    Stopwatch stopwatch = Stopwatch.StartNew();
                     await LogManager.ProcessEmojisAndPings(m.Tags, m.Author.Id, m, (SocketGuildUser)m.Author);
+                    stopwatch.Stop();
+                    if(m.Author.Id == 155419933998579713 && m.Tags.Count > 5)
+                        m.Channel.SendMessageAsync($"{stopwatch.ElapsedMilliseconds} ms");
                 }
                 catch (Exception ex)
                 {

@@ -241,7 +241,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.AddField("Search", $"```{prefix}google|duck <search term>```", true);
             //builder.AddField("Images", $"```{prefix}neko[avatar] {prefix}fox {prefix}waifu {prefix}baka {prefix}smug {prefix}holo {prefix}avatar {prefix}wallpaper```");
             builder.AddField("Reddit", $"```{prefix}r[p] <subreddit>|all```", true);
-            builder.AddField("Rant", $"```{prefix}rant [ types | (<type> <message>) ]```", true);
+            builder.AddField("Rant", $"```{prefix}rant [ types | new) ]```", true);
             builder.AddField("SQL", $"```{prefix}sql (table info) | (query[d] <query>)```", true);
             builder.AddField("Emote Help for more info", $"```{prefix}emote help```");
             builder.AddField("React (only this server emotes)", $"```{prefix}react <message_id> <emote_name>```", true);
@@ -965,6 +965,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         {
             // TODO perm check but for now open everwhere
             //Context.Channel.SendMessageAsync("Ask <@675445762900885515> or <@276462585690193921> or <@124603627833786370> why its disabled. Also ill fix it in the evening.");
+
+
 
             if (type == null)
             {

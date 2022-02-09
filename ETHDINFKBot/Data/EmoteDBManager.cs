@@ -322,11 +322,8 @@ namespace ETHDINFKBot.Data
                         using (var webClient = new WebClient())
                         {
                             byte[] bytes = webClient.DownloadData(emote.Url);
-
                             string filePath = MoveEmoteToDisk(emote, bytes);
-
                             emote.LocalPath = filePath;
-
                             context.DiscordEmotes.Add(emote);
                         }
                         context.SaveChanges();
