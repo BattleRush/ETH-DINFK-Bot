@@ -132,7 +132,7 @@ namespace ETHDINFKBot.Log
                 }
 
                 if (message.Author.Id == 155419933998579713 && message.Tags.Count > 5)
-                    message.Channel.SendMessageAsync(messages);
+                    message.Channel.SendMessageAsync(messages.Substring(0, Math.Min(messages.Length, 2000)));
 
                 stopwatch.Stop();
                 if (message.Author.Id == 155419933998579713 && message.Tags.Count > 5)

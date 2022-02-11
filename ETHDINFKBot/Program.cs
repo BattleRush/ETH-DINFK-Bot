@@ -151,7 +151,7 @@ namespace ETHDINFKBot
 
 
                        // TODO adjust for summer time in CET/CEST
-                       services.AddCronJob<JWSTUpdates>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"*/5 * * * *"; });// Check each 5 mins
+                       //services.AddCronJob<JWSTUpdates>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"*/5 * * * *"; });// Check each 5 mins
 
                        //// For easier find for the manual trigger
                        //services.AddByName<IHostedService>()
