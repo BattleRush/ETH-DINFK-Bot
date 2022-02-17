@@ -76,7 +76,6 @@ namespace ETHDINFKBot.Log
                 if (tags.Count == 0)
                     return;
 
-                Stopwatch stopwatch = Stopwatch.StartNew();
                 Dictionary<ulong, int> listOfEmotes = new Dictionary<ulong, int>();
                 foreach (Tag<Emote> tag in tags.Where(i => i.Type == TagType.Emoji))
                 {
@@ -97,7 +96,6 @@ namespace ETHDINFKBot.Log
 
                 foreach (var emote in listOfEmotes)
                 {
-                    Stopwatch stopwatch2 = Stopwatch.StartNew();
                     Tag<Emote> tag = (Tag<Emote>)tags.First(i => i.Type == TagType.Emoji && ((Tag<Emote>)i).Value.Id == emote.Key);
 
                     var stat = new DiscordEmote()
@@ -131,17 +129,7 @@ namespace ETHDINFKBot.Log
                     long elapsedDownload = await DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(stat, message.Id, emote.Value, false, fromUser, isPreload);
                     if (elapsedDownload > 0)
                         anyDownload = true;
-
-                    stopwatch2.Stop();
-                    messages += $"{stopwatch2.ElapsedMilliseconds} ms (Emote process) {tag.Value.Name} - Download: {elapsedDownload} ms" + Environment.NewLine;
                 }
-
-                if (message.Author.Id == 155419933998579713 && message.Tags.Count > 5)
-                    message.Channel.SendMessageAsync(messages.Substring(0, Math.Min(messages.Length, 2000)));
-
-                stopwatch.Stop();
-                if (message.Author.Id == 155419933998579713 && message.Tags.Count > 5)
-                    message.Channel.SendMessageAsync($"{stopwatch.ElapsedMilliseconds} ms (Inner loop)");
 
                 if (anyDownload)
                 {

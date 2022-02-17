@@ -1406,11 +1406,7 @@ namespace ETHDINFKBot
 
                 try
                 {
-                    Stopwatch stopwatch = Stopwatch.StartNew();
                     await LogManager.ProcessEmojisAndPings(m.Tags, m.Author.Id, m, (SocketGuildUser)m.Author);
-                    stopwatch.Stop();
-                    if(m.Author.Id == 155419933998579713 && m.Tags.Count > 5)
-                        m.Channel.SendMessageAsync($"{stopwatch.ElapsedMilliseconds} ms");
                 }
                 catch (Exception ex)
                 {

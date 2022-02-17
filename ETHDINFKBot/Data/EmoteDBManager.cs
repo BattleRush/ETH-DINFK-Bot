@@ -126,13 +126,13 @@ namespace ETHDINFKBot.Data
                 //    return context.DiscordEmotes.Count();
                 //}
 
-                var sqlSelect = $@"SELECT COUNT(*) FROM DiscordEmotes";
+                var sqlSelect = $@"SELECT COUNT(*) FROM DiscordEmotes WHERE DiscordEmoteId > 0;";
 
                 using (var connection = new MySqlConnection(Program.ApplicationSetting.ConnectionStringsSetting.ConnectionString_ReadOnly))
                 {
                     using (var command = new MySqlCommand(sqlSelect, connection))
                     {
-                        command.CommandTimeout = 5;
+                        command.CommandTimeout = 1;
                         connection.Open();
 
                         return (long)command.ExecuteScalar();
