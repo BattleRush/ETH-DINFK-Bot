@@ -92,6 +92,9 @@ namespace ETHDINFKBot.Log
 
                 var guildUser = (fromUser as IGuildUser);
                 string messages = "";
+
+                bool anyDownload = false;
+
                 foreach (var emote in listOfEmotes)
                 {
                     Stopwatch stopwatch2 = Stopwatch.StartNew();
@@ -126,6 +129,8 @@ namespace ETHDINFKBot.Log
                     //}
 
                     long elapsedDownload = await DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(stat, message.Id, emote.Value, false, fromUser, isPreload);
+                    if (elapsedDownload > 0)
+                        anyDownload = true;
 
                     stopwatch2.Stop();
                     messages += $"{stopwatch2.ElapsedMilliseconds} ms (Emote process) {tag.Value.Name} - Download: {elapsedDownload} ms" + Environment.NewLine;
@@ -138,13 +143,22 @@ namespace ETHDINFKBot.Log
                 if (message.Author.Id == 155419933998579713 && message.Tags.Count > 5)
                     message.Channel.SendMessageAsync($"{stopwatch.ElapsedMilliseconds} ms (Inner loop)");
 
-                // TODO dont hammer the db after each call (check if any new emotes have been added
-                long emoteCount = DatabaseManager.EmoteDatabaseManager.TotalEmoteCount();
-                if (Program.TotalEmotes != emoteCount)
+                if (anyDownload)
                 {
-                    Program.TotalEmotes = emoteCount;
-                    // place pixels is now tracked all 5 mins
-                    await Program.Client.SetGameAsync($"{Program.TotalEmotes} emotes", null, ActivityType.Watching);
+                    Stopwatch stopwatch3 = Stopwatch.StartNew();
+                    // TODO dont hammer the db after each call (check if any new emotes have been added
+                    long emoteCount = DatabaseManager.EmoteDatabaseManager.TotalEmoteCount();
+                    if (Program.TotalEmotes != emoteCount)
+                    {
+                        Program.TotalEmotes = emoteCount;
+                        // place pixels is now tracked all 5 mins
+                        await Program.Client.SetGameAsync($"{Program.TotalEmotes} emotes", null, ActivityType.Watching);
+                    }
+
+                    stopwatch3.Stop();
+
+                    if (message.Author.Id == 155419933998579713 && message.Tags.Count > 5)
+                        message.Channel.SendMessageAsync($"{stopwatch.ElapsedMilliseconds} ms Emote count)");
                 }
 
                 /*
