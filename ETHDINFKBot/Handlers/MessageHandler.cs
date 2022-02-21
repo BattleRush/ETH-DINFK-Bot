@@ -406,7 +406,7 @@ namespace ETHDINFKBot.Handlers
                             if (SocketThreadChannel == null)
                                 webhookClient = new DiscordWebhookClient(webhook.Id, webhook.Token);
                             else
-                                webhookClient = new DiscordWebhookClient($"https://discord.com/api/webhooks/{webhook.Id}/{webhook.Token}?{thread_id}={SocketThreadChannel.Id}");
+                                webhookClient = new DiscordWebhookClient($"https://discord.com/api/webhooks/{webhook.Id}/{webhook.Token}?thread_id={SocketThreadChannel.Id}");
 
                         }
                         catch (Exception ex)
