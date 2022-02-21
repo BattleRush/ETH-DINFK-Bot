@@ -402,7 +402,12 @@ namespace ETHDINFKBot.Handlers
                             }
 
                             webhook = channelWebhooks.SingleOrDefault(i => i.Name == "BattleRush's Helper"); // TODO Do over ApplicationId
-                            webhookClient = new DiscordWebhookClient(webhook.Id, webhook.Token);
+
+                            if (SocketThreadChannel == null)
+                                webhookClient = new DiscordWebhookClient(webhook.Id, webhook.Token);
+                            else
+                                webhookClient = new DiscordWebhookClient($"https://discord.com/api/webhooks/{webhook.Id}/{webhook.Token}?{thread_id}={SocketThreadChannel.Id}");
+
                         }
                         catch (Exception ex)
                         {
