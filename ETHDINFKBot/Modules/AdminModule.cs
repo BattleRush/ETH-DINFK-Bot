@@ -611,7 +611,7 @@ namespace ETHDINFKBot.Modules
 
                 var keyValueDBManager = DatabaseManager.KeyValueManager;
 
-                var isLockEnabled = keyValueDBManager.Add<bool>("LockChannelPositions", lockChannels);
+                var isLockEnabled = keyValueDBManager.Update<bool>("LockChannelPositions", lockChannels);
 
                 await Context.Message.Channel.SendMessageAsync($"Set Global Postion Lock to: {isLockEnabled}");
 
