@@ -276,7 +276,7 @@ namespace ETHDINFKBot
                     // temp workaround
                     if (settings != null)
                     {
-                        settings.ChannelOrderLocked = botSetting.ChannelOrderLocked;
+                        //settings.ChannelOrderLocked = botSetting.ChannelOrderLocked;
                         settings.PlacePixelIdLastChunked = botSetting.PlacePixelIdLastChunked;
                         settings.PlaceLastChunkId = botSetting.PlaceLastChunkId;
                     }

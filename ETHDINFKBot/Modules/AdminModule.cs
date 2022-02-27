@@ -605,13 +605,17 @@ namespace ETHDINFKBot.Modules
             {
                 // allow for people that can manage channels to lock the ordering
 
-                var botSettings = DatabaseManager.Instance().GetBotSettings();
-                botSettings.ChannelOrderLocked = lockChannels;
-                botSettings = DatabaseManager.Instance().SetBotSettings(botSettings);
+                //var botSettings = DatabaseManager.Instance().GetBotSettings();
+                //botSettings.ChannelOrderLocked = lockChannels;
+                //botSettings = DatabaseManager.Instance().SetBotSettings(botSettings);
 
-                await Context.Message.Channel.SendMessageAsync($"Set Global Postion Lock to: {botSettings.ChannelOrderLocked}");
+                var keyValueDBManager = DatabaseManager.KeyValueManager;
 
-                if (botSettings.ChannelOrderLocked)
+                var isLockEnabled = keyValueDBManager.Add<bool>("LockChannelPositions", lockChannels);
+
+                await Context.Message.Channel.SendMessageAsync($"Set Global Postion Lock to: {isLockEnabled}");
+
+                if (isLockEnabled)
                 {
                     // TODO Setting
                     ulong guildId = Program.ApplicationSetting.BaseGuild;
@@ -766,7 +770,10 @@ namespace ETHDINFKBot.Modules
                     if (!all)
                     {
                         var channelInfo = DatabaseManager.Instance().GetChannelSetting(guildChannel.Id);
-                        var botSettings = DatabaseManager.Instance().GetBotSettings();
+                        //var botSettings = DatabaseManager.Instance().GetBotSettings();
+                        var keyValueDBManager = DatabaseManager.KeyValueManager;
+
+                        var isLockEnabled = keyValueDBManager.Get<bool>("LockChannelPositions");
 
                         if (channelInfo == null)
                         {
@@ -776,8 +783,7 @@ namespace ETHDINFKBot.Modules
 
                         EmbedBuilder builder = new EmbedBuilder();
                         builder.WithTitle($"Channel Info for {guildChannel.Name}");
-                        builder.WithDescription($"Global Channel position lock active: {botSettings.ChannelOrderLocked} for " +
-                            $"{(botSettings.ChannelOrderLocked ? Program.ChannelPositions.Count : -1)} channels");
+                        builder.WithDescription($"Global Channel position lock active: {isLockEnabled} for {(isLockEnabled ? Program.ChannelPositions.Count : -1)} channels");
                         builder.WithColor(255, 0, 0);
                         builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
 

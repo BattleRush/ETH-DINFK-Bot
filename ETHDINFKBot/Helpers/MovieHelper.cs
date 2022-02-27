@@ -84,6 +84,26 @@ namespace ETHDINFKBot.Helpers
             return null; // Invalid input
         }
 
+        private static IEnumerable<DateTimeOffset> FillMissingEntries(IEnumerable<DateTimeOffset> keys, TimeSpan timeSpan)
+        {
+            //dev.test movieemote 100 24
+            var currentTime = keys.Min();
+            var endTime = keys.Max();
+
+            while (true)
+            {
+                currentTime = currentTime.Add(timeSpan);
+                if (keys.Contains(currentTime))
+                    continue;
+                if (currentTime > endTime)
+                    break;
+
+                keys = keys.Append(currentTime);
+            }
+
+            return keys.OrderBy(i => i); // Ensure order
+        }
+
         public static async Task<string> GenerateMovieForEmotes(ulong guildId, int days, int groupByHours)
         {
             var emotes = Program.Client.GetGuild(guildId).Emotes;
@@ -114,6 +134,7 @@ namespace ETHDINFKBot.Helpers
 
             var groups = GroupGraphEntryInfoBy(groupByHours, -1, reactions2);
             var keys = groups.Select(x => x.Key);
+            keys = FillMissingEntries(keys, new TimeSpan(groupByHours, 0, 0));
 
             var parsedMessageInfos = GetEmoteParsedMessageInfos(groups, emotes);
 
@@ -150,6 +171,8 @@ namespace ETHDINFKBot.Helpers
 
             var groups = GroupGraphEntryInfoBy(groupByHours, groupByMinutes, messageInfos);
             var keys = groups.Select(x => x.Key);
+
+            keys = FillMissingEntries(keys, new TimeSpan(Math.Max(groupByHours, 0), Math.Max(groupByMinutes, 0), 0));
 
             var users = DatabaseManager.Instance().GetDiscordUsers();
 
@@ -190,6 +213,7 @@ namespace ETHDINFKBot.Helpers
 
             var groups = GroupGraphEntryInfoBy(groupByHours, groupByMinutes, messageInfos);
             var keys = groups.Select(x => x.Key);
+            keys = FillMissingEntries(keys, new TimeSpan(Math.Max(groupByHours, 0), Math.Max(groupByMinutes, 0), 0));
 
             var channels = DatabaseManager.Instance().GetDiscordAllChannels(guildId);
 
@@ -266,6 +290,7 @@ namespace ETHDINFKBot.Helpers
             var conversion = new Conversion();
             conversion.SetInputFrameRate(fps);
             conversion.BuildVideoFromImages(files);
+            conversion.SetOutputFormat(Xabe.FFmpeg.Format.webm); // Wider rage support
             conversion.SetFrameRate(fps);
             conversion.SetPixelFormat(PixelFormat.rgb24);
             conversion.SetOutput(fileName);

@@ -386,7 +386,7 @@ namespace ETHDINFKBot
             Client.ChannelDestroyed += Client_ChannelDestroyed;
 
             Client.Log += Client_Log;
-            
+
             // For message commands
             Client.MessageCommandExecuted += MessageCommandHandler;
 
@@ -417,7 +417,7 @@ namespace ETHDINFKBot
                 .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
                 .BuildServiceProvider();
 
-       
+
 
             Commands = new CommandService();
             await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), Services);
@@ -519,6 +519,9 @@ namespace ETHDINFKBot
 
         private void ReloadLock(bool delete, SocketChannel channel)
         {
+            var keyValueDBManager = DatabaseManager.KeyValueManager;
+            var isLockEnabled = keyValueDBManager.Get<bool>("LockChannelPositions");
+
             if (channel is SocketGuildChannel guildChannel)
             {
                 ulong guildId = Program.ApplicationSetting.BaseGuild;
@@ -529,7 +532,7 @@ namespace ETHDINFKBot
 
                 var botSettings = DatabaseManager.Instance().GetBotSettings();
 
-                if (guildChannel.Guild.Id == guildId && botSettings.ChannelOrderLocked)
+                if (guildChannel.Guild.Id == guildId && isLockEnabled)
                 {
                     ReloadChannelPositionLock(Client.GetGuild(guildId), delete, guildChannel.Name);
                 }
@@ -590,6 +593,15 @@ namespace ETHDINFKBot
                         {
                             await textChannel.SendMessageAsync($"**Someone really fatfingered this time. It looks like some channel moved categories. I wont fix this. Check the FIRST Move detected entry. This is likely the offender** {Environment.NewLine}" +
                                 $"Come on, why do you make my life that difficult <:pepegun:851456702973083728>");
+
+                            var missingChannels = channelInfos.Where(i => !channels.Any(j => j.Id == i.ChannelId));
+                            var additionalChannels = channels.Where(i => !channelInfos.Any(j => j.ChannelId == i.Id));
+
+                            if (missingChannels.Count() > 0)
+                                await textChannel.SendMessageAsync($"**Missing** channels for category {categoryChannel.Name}: {string.Join(", ", missingChannels.Select(i => i.ChannelName))}");
+
+                            if (additionalChannels.Count() > 0)
+                                await textChannel.SendMessageAsync($"**Additional** channels for category {categoryChannel.Name}: {string.Join(", ", additionalChannels.Select(i => i.Name))}");
 
                             Reordering = false;
                             return false;
@@ -671,6 +683,12 @@ namespace ETHDINFKBot
 
         private Task Client_ChannelUpdated(SocketChannel originalChannel, SocketChannel newChannel)
         {
+            var keyValueDBManager = DatabaseManager.KeyValueManager;
+            var isLockEnabled = keyValueDBManager.Get<bool>("LockChannelPositions");
+
+            if (!isLockEnabled)
+                return Task.CompletedTask;
+
             if (originalChannel is SocketGuildChannel originalGuildChannel
                 && newChannel is SocketGuildChannel newGuildChannel)
             {
