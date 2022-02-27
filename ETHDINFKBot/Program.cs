@@ -583,7 +583,7 @@ namespace ETHDINFKBot
                     // we enforce for 
                     bool anyChange = false;
 
-                    int lastChannelPosition = 0;
+                    int lastChannelPosition = categoryChannel.Position; // Default from the position the category is at
 
                     info += $"    Enforced order for {categoryChannel.Name}{Environment.NewLine}";
 
@@ -598,10 +598,10 @@ namespace ETHDINFKBot
                             var additionalChannels = channels.Where(i => !channelInfos.Any(j => j.ChannelId == i.Id));
 
                             if (missingChannels.Count() > 0)
-                                await textChannel.SendMessageAsync($"**Missing** channels for category {categoryChannel.Name}: {string.Join(", ", missingChannels.Select(i => i.ChannelName))}");
+                                await textChannel.SendMessageAsync($"**Missing** channels for category <#{categoryChannel.Id}>: {string.Join(", ", missingChannels.Select(i => "<#" + i.ChannelId + ">"))}");
 
                             if (additionalChannels.Count() > 0)
-                                await textChannel.SendMessageAsync($"**Additional** channels for category {categoryChannel.Name}: {string.Join(", ", additionalChannels.Select(i => i.Name))}");
+                                await textChannel.SendMessageAsync($"**Additional** channels for category <#{categoryChannel.Id}>: {string.Join(", ", additionalChannels.Select(i => "<#" + i.Id + ">"))}");
 
                             Reordering = false;
                             return false;

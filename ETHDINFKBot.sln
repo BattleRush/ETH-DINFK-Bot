@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ETHBot.DataLayer", "ETHBot.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsocketTestServer", "WebsocketTestServer\WebsocketTestServer.csproj", "{2A2B5AFD-8A32-4A70-B1FB-0AA9C19B1C7D}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ETHBot.API", "ETHBot.API\ETHBot.API.csproj", "{B1D07121-011E-4D76-B3B6-DEAF286DCDE9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{2A2B5AFD-8A32-4A70-B1FB-0AA9C19B1C7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A2B5AFD-8A32-4A70-B1FB-0AA9C19B1C7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2A2B5AFD-8A32-4A70-B1FB-0AA9C19B1C7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1D07121-011E-4D76-B3B6-DEAF286DCDE9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1D07121-011E-4D76-B3B6-DEAF286DCDE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1D07121-011E-4D76-B3B6-DEAF286DCDE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1D07121-011E-4D76-B3B6-DEAF286DCDE9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
