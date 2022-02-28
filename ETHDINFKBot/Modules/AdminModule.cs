@@ -3,12 +3,18 @@ using Discord.Commands;
 using Discord.WebSocket;
 using ETHBot.DataLayer;
 using ETHBot.DataLayer.Data.Enums;
+using ETHDINFKBot.Classes;
+using ETHDINFKBot.CronJobs;
+using ETHDINFKBot.CronJobs.Jobs;
+using ETHDINFKBot.Data;
 using ETHDINFKBot.Drawing;
 //using ETHDINFKBot.Drawing;
 using ETHDINFKBot.Helpers;
 using ETHDINFKBot.Log;
+using ETHDINFKBot.Struct;
 using ICSharpCode.SharpZipLib.GZip;
 using ICSharpCode.SharpZipLib.Tar;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Reddit;
 using Reddit.Controllers;
@@ -18,8 +24,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ETHDINFKBot.Modules
@@ -52,64 +60,65 @@ namespace ETHDINFKBot.Modules
         public async Task Test()
         {
             return; // disable again
-            var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
-            {
-                Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
-                return;
-            }
-            try
-            {
-                var allUsers = await Context.Guild.GetUsersAsync().FlattenAsync();
-                Context.Channel.SendMessageAsync("users " + allUsers.Count().ToString(), false);
+            //var author = Context.Message.Author;
+            //if (author.Id != Program.ApplicationSetting.Owner)
+            //{
+            //    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+            //    return;
+            //}
+            //try
+            //{
+            //    var allUsers = await Context.Guild.GetUsersAsync().FlattenAsync();
+            //    Context.Channel.SendMessageAsync("users " + allUsers.Count().ToString(), false);
 
-                Random r = new Random();
+            //    Random r = new Random();
 
-                var jsonString = File.ReadAllText("");
+            //    var jsonString = File.ReadAllText("");
 
-                var jsonUsers = JsonConvert.DeserializeObject<Class1[]>(jsonString).ToList();
+            //    var jsonUsers = JsonConvert.DeserializeObject<Class1[]>(jsonString).ToList();
 
-                Context.Channel.SendMessageAsync("json " + jsonUsers.Count.ToString(), false);
+            //    Context.Channel.SendMessageAsync("json " + jsonUsers.Count.ToString(), false);
 
 
-                foreach (SocketGuildUser user in allUsers)
-                {
-                    var targerUser = jsonUsers.SingleOrDefault(i => i.id == user.Id);
+            //    foreach (SocketGuildUser user in allUsers)
+            //    {
+            //        var targerUser = jsonUsers.SingleOrDefault(i => i.id == user.Id);
 
-                    if (targerUser == null || targerUser.nick == user.Nickname)
-                        continue;
+            //        if (targerUser == null || targerUser.nick == user.Nickname)
+            //            continue;
 
-                    try
-                    {
-                        await user.ModifyAsync(i =>
-                        {
-                            i.Nickname = targerUser.nick;
-                        });
+            //        try
+            //        {
+            //            await user.ModifyAsync(i =>
+            //            {
+            //                i.Nickname = targerUser.nick;
+            //            });
 
-                        await Context.Channel.SendMessageAsync("Fixing " + user.Username, false);
+            //            await Context.Channel.SendMessageAsync("Fixing " + user.Username, false);
 
-                    }
-                    catch (Exception ex)
-                    {
-                        await Context.Channel.SendMessageAsync(ex.Message + " on " + user.Username, false);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                await Context.Channel.SendMessageAsync(ex.Message, false);
-            }
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            await Context.Channel.SendMessageAsync(ex.Message + " on " + user.Username, false);
+            //        }
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    await Context.Channel.SendMessageAsync(ex.Message, false);
+            //}
         }
 
+        [RequireOwner]
         [Command("help")]
         public async Task AdminHelp()
         {
-            var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
-            {
-                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
-                return;
-            }
+            //var author = Context.Message.Author;
+            //if (author.Id != Program.ApplicationSetting.Owner)
+            //{
+            //    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+            //    return;
+            //}
 
             EmbedBuilder builder = new EmbedBuilder();
 
@@ -125,7 +134,9 @@ namespace ETHDINFKBot.Modules
             builder.AddField("admin reddit help", "Help for reddit command");
             builder.AddField("admin rant help", "Help for rant command");
             builder.AddField("admin place help", "Help for place command");
+            builder.AddField("admin keyval help", "Help for KeyValue DB Management");
             builder.AddField("admin kill", "Do I really need to explain this one");
+            builder.AddField("admin cronjob <name>", "Manually start a CronJob");
             builder.AddField("admin blockemote <id> <block>", "Block an emote from being selectable");
 
             await Context.Channel.SendMessageAsync("", false, builder.Build());
@@ -135,7 +146,7 @@ namespace ETHDINFKBot.Modules
         public async Task AdminKill()
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
@@ -145,18 +156,90 @@ namespace ETHDINFKBot.Modules
             Process.GetCurrentProcess().Kill();
         }
 
-        [Command("blockemote")]
-        public async Task BlockEmote(ulong emoteId, bool blockStatus)
+        private Type[] GetTypesInNamespace(Assembly assembly, string nameSpace)
+        {
+            return
+              assembly.GetTypes()
+                      .Where(t => string.Equals(t.Namespace, nameSpace, StringComparison.Ordinal))
+                      .ToArray();
+        }
+
+        [Command("cronjob")]
+        public async Task ManualCronJob(string cronJobName)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
             }
 
-            var emoteInfo = DatabaseManager.Instance().GetDiscordEmoteById(emoteId);
-            bool success = DatabaseManager.Instance().SetEmoteBlockStatus(emoteId, blockStatus);
+            // TODO find a way to call them dynamically
+
+            /*
+            string baseNamespaceCronJobs = "ETHDINFKBot.CronJobs.Jobs";
+            Type[] typelist = GetTypesInNamespace(Assembly.GetExecutingAssembly(), baseNamespaceCronJobs);
+
+            Type type = Type.GetType(baseNamespaceCronJobs + "." + "DailyCleanup"); //target type
+
+            MethodInfo info = type.GetMethod("StartAsync");
+
+            CancellationTokenSource cts = new CancellationTokenSource();
+            CancellationToken token = cts.Token;
+            try
+            {
+                if (info.IsStatic)
+                    info.Invoke(null, new object[] { token });
+                else
+                    info.Invoke(type, new object[] { token });
+            }
+            catch (Exception ex)
+            {
+
+            }*/
+            try
+            {
+                CancellationTokenSource cts = new CancellationTokenSource();
+                CancellationToken token = cts.Token;
+                switch (cronJobName)
+                {
+                    case "DailyCleanup":
+                        var config = new ScheduleConfig<DailyCleanup>();
+                        config.TimeZoneInfo = TimeZoneInfo.Local;
+                        config.CronExpression = "* * * * *";
+
+                        var logger = Program.Logger.CreateLogger<DailyCleanup>();
+
+                        var job = new DailyCleanup(config, logger);
+                        job.StartAsync(token);
+                        break;
+
+                    /* TODO Add more jobs if needed*/
+                    default:
+                        await Context.Channel.SendMessageAsync("Only available: DailyCleanup", false);
+                        break;
+                }
+
+                cts.CancelAfter(TimeSpan.FromSeconds(30));
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync("Error: " + ex.ToString(), false);
+            }
+        }
+
+        [Command("blockemote")]
+        public async Task BlockEmote(ulong emoteId, bool blockStatus)
+        {
+            var author = Context.Message.Author;
+            if (author.Id != Program.ApplicationSetting.Owner)
+            {
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
+            var emoteInfo = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(emoteId);
+            bool success = DatabaseManager.EmoteDatabaseManager.SetEmoteBlockStatus(emoteId, blockStatus);
 
             if (success)
             {
@@ -178,19 +261,19 @@ namespace ETHDINFKBot.Modules
         public async Task EmoteDump()
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
             }
 
-            var allEmotes = DatabaseManager.Instance().GetEmotes().OrderBy(i => i.DiscordEmoteId).ToList(); // sort it to ensure they are chronologically in there
+            var allEmotes = DatabaseManager.EmoteDatabaseManager.GetEmotes().OrderBy(i => i.DiscordEmoteId).ToList(); // sort it to ensure they are chronologically in there
 
             await Context.Channel.SendMessageAsync($"Successfully retreived {allEmotes.Count} emotes", false);
 
-            var emotesPath = Path.Combine(Program.BasePath, "Emotes");
+            var emotesPath = Path.Combine(Program.ApplicationSetting.BasePath, "Emotes");
             var archivePath = Path.Combine(emotesPath, "Archive");
-            
+
             try
             {
 
@@ -308,7 +391,7 @@ namespace ETHDINFKBot.Modules
             {
                 var author = Context.Message.Author;
                 var guildUser = Context.Message.Author as SocketGuildUser;
-                if (author.Id != ETHDINFKBot.Program.Owner || guildUser.GuildPermissions.ManageChannels)
+                if (author.Id != ETHDINFKBot.Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels)
                 {
                     await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -369,7 +452,7 @@ namespace ETHDINFKBot.Modules
             public async Task DeleteRantType(int typeId)
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -384,7 +467,7 @@ namespace ETHDINFKBot.Modules
             public async Task DeleteRantMessage(int typeId)
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -404,7 +487,7 @@ namespace ETHDINFKBot.Modules
             {
                 var author = Context.Message.Author;
                 var guildUser = Context.Message.Author as SocketGuildUser;
-                if (!(author.Id == ETHDINFKBot.Program.Owner || guildUser.GuildPermissions.ManageChannels))
+                if (!(author.Id == Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels))
                 {
                     await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -423,7 +506,7 @@ namespace ETHDINFKBot.Modules
                 builder.AddField("admin channel lock <true|false>", "Locks the ordering of all channels and reverts any order changes when active");
                 builder.AddField("admin channel lockinfo", "Returns positions for all channels (if the Position lock is active)");
                 builder.AddField("admin channel preload <channelId> <amount>", "Loads old messages into the DB");
-                builder.AddField("admin channel set <permission>", "Set permissions for the current channel");
+                builder.AddField("admin channel set <permission> <channelId>", "Set permissions for the current channel or specific channel");
                 builder.AddField("admin channel all <permission>", "Set the MINIMUM permissions for ALL channels");
                 builder.AddField("admin channel flags", "Returns help with the flag infos");
 
@@ -448,7 +531,8 @@ namespace ETHDINFKBot.Modules
             [RequireUserPermission(GuildPermission.ManageChannels)]
             public async Task GetLockInfo()
             {
-                ulong guildId = Program.BaseGuild;
+                // TODO Category infos
+                ulong guildId = Program.ApplicationSetting.BaseGuild;
 
 #if DEBUG
                 guildId = 774286694794919986;
@@ -458,37 +542,54 @@ namespace ETHDINFKBot.Modules
 
 
                 var channels = guild.Channels;
+                var categories = guild.CategoryChannels;
 
-                var sortedDict = from entry in Program.ChannelPositions orderby entry.Value ascending select entry;
+                var sortedDict = from entry in Program.ChannelPositions orderby entry.Position ascending select entry;
 
                 List<string> header = new List<string>()
                         {
-                            "Order",
-                            "Channel Name",
-                            "Id"
+                            "Discord / Cache Position",
+                            "Category Name",
+                            "Channel Name"
                         };
 
 
                 List<List<string>> data = new List<List<string>>();
 
-                foreach (var item in sortedDict)
+                List<TableRowInfo> tableRowInfos = new List<TableRowInfo>();
+
+                foreach (var category in categories.OrderBy(i => i.Position))
                 {
-                    var channel = channels.SingleOrDefault(i => i.Id == item.Key);
-                    if (channel == null)
-                        continue;
+                    var categoryInfos = Program.ChannelPositions.Where(i => i.CategoryId == category.Id);
 
-                    var currentRecord = new List<string>();
+                    var categoryInfo = new List<string>() { category.Position + " / --", category.Name, "" };
+                    data.Add(categoryInfo);
 
-                    currentRecord.Add(item.Value.ToString());
-                    currentRecord.Add(Regex.Replace(channel.Name, @"[^\u0000-\u007F]+", string.Empty));
-                    currentRecord.Add(item.Key.ToString());
+                    var cells = new List<TableCellInfo>() {
+                        new TableCellInfo() { ColumnId = 0, FontColor = new SkiaSharp.SKColor(255, 125, 0) },
+                        new TableCellInfo() { ColumnId = 1, FontColor = new SkiaSharp.SKColor(255, 125, 0) }
+                    };
 
+                    tableRowInfos.Add(new TableRowInfo()
+                    {
+                        RowId = data.Count - 1,
+                        Cells = cells
+                    });
 
-                    data.Add(currentRecord);
+                    // One category
+                    foreach (var channelInfo in categoryInfos.OrderBy(i => i.Position))
+                    {
+                        var channel = channels.SingleOrDefault(i => i.Id == channelInfo.ChannelId);
+                        if (channel == null)
+                            continue;
 
+                        var currentRecord = new List<string>() { channel.Position.ToString() + " / " + channelInfo.Position.ToString(), "", channelInfo.ChannelName.ToString() };
+                        //currentRecord.Add(Regex.Replace(channel.Name, @"[^\u0000-\u007F]+", string.Empty)); // replace non asci cars
+                        data.Add(currentRecord);
+                    }
                 }
 
-                var drawTable = new DrawTable(header, data, "");
+                var drawTable = new DrawTable(header, data, "", tableRowInfos, 1000);
 
                 var stream = await drawTable.GetImage();
                 if (stream == null)
@@ -504,16 +605,20 @@ namespace ETHDINFKBot.Modules
             {
                 // allow for people that can manage channels to lock the ordering
 
-                var botSettings = DatabaseManager.Instance().GetBotSettings();
-                botSettings.ChannelOrderLocked = lockChannels;
-                botSettings = DatabaseManager.Instance().SetBotSettings(botSettings);
+                //var botSettings = DatabaseManager.Instance().GetBotSettings();
+                //botSettings.ChannelOrderLocked = lockChannels;
+                //botSettings = DatabaseManager.Instance().SetBotSettings(botSettings);
 
-                await Context.Message.Channel.SendMessageAsync($"Set Global Postion Lock to: {botSettings.ChannelOrderLocked}");
+                var keyValueDBManager = DatabaseManager.KeyValueManager;
 
-                if (botSettings.ChannelOrderLocked)
+                var isLockEnabled = keyValueDBManager.Update<bool>("LockChannelPositions", lockChannels);
+
+                await Context.Message.Channel.SendMessageAsync($"Set Global Postion Lock to: {isLockEnabled}");
+
+                if (isLockEnabled)
                 {
                     // TODO Setting
-                    ulong guildId = Program.BaseGuild;
+                    ulong guildId = Program.ApplicationSetting.BaseGuild;
 
 #if DEBUG
                     guildId = 774286694794919986;
@@ -521,11 +626,14 @@ namespace ETHDINFKBot.Modules
 
                     var guild = Program.Client.GetGuild(guildId);
 
-                    Program.ChannelPositions = new Dictionary<ulong, int>();
+                    // list should always be empty
+                    Program.ChannelPositions = new List<ChannelOrderInfo>();
 
-                    // refresh the current order
-                    foreach (var item in guild.Channels)
-                        Program.ChannelPositions.Add(item.Id, item.Position);
+
+                    // Any channels outside of categories considered?
+                    foreach (var category in guild.CategoryChannels)
+                        foreach (var channel in category.Channels)
+                            Program.ChannelPositions.Add(new ChannelOrderInfo() { ChannelId = channel.Id, ChannelName = channel.Name, CategoryId = category.Id, CategoryName = category.Name, Position = channel.Position });
 
 
                     Context.Message.Channel.SendMessageAsync($"Saved ordering for: {Program.ChannelPositions.Count}");
@@ -543,7 +651,7 @@ namespace ETHDINFKBot.Modules
                 watch.Start();
                 // new column preloaded
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -629,13 +737,29 @@ namespace ETHDINFKBot.Modules
                 }
             }
 
+            // TODO move to common
+            private static string GetPermissionString(BotPermissionType flags)
+            {
+                List<string> permissionFlagNames = new List<string>();
+                foreach (BotPermissionType flag in Enum.GetValues(typeof(BotPermissionType)))
+                {
+                    var hasFlag = flags.HasFlag(flag);
+
+                    if (hasFlag)
+                        permissionFlagNames.Add($"{flag} ({(int)flag})");
+                }
+
+                return string.Join(", ", permissionFlagNames);
+            }
+
+
             [Command("info")]
 
             public async Task GetChannelInfoAsync(bool all = false)
             {
                 var guildUser = Context.Message.Author as SocketGuildUser;
                 var author = Context.Message.Author;
-                if (!(author.Id == ETHDINFKBot.Program.Owner || guildUser.GuildPermissions.ManageChannels))
+                if (!(author.Id == Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels))
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -646,7 +770,10 @@ namespace ETHDINFKBot.Modules
                     if (!all)
                     {
                         var channelInfo = DatabaseManager.Instance().GetChannelSetting(guildChannel.Id);
-                        var botSettings = DatabaseManager.Instance().GetBotSettings();
+                        //var botSettings = DatabaseManager.Instance().GetBotSettings();
+                        var keyValueDBManager = DatabaseManager.KeyValueManager;
+
+                        var isLockEnabled = keyValueDBManager.Get<bool>("LockChannelPositions");
 
                         if (channelInfo == null)
                         {
@@ -656,8 +783,7 @@ namespace ETHDINFKBot.Modules
 
                         EmbedBuilder builder = new EmbedBuilder();
                         builder.WithTitle($"Channel Info for {guildChannel.Name}");
-                        builder.WithDescription($"Global Channel position lock active: {botSettings.ChannelOrderLocked} for " +
-                            $"{(botSettings.ChannelOrderLocked ? Program.ChannelPositions.Count : -1)} channels");
+                        builder.WithDescription($"Global Channel position lock active: {isLockEnabled} for {(isLockEnabled ? Program.ChannelPositions.Count : -1)} channels");
                         builder.WithColor(255, 0, 0);
                         builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
 
@@ -677,12 +803,11 @@ namespace ETHDINFKBot.Modules
                     }
                     else
                     {
-                        var botChannelSettings = DatabaseManager.Instance().GetAllChannelSettings();
-
                         List<string> header = new List<string>()
                         {
-                            "Channel Id",
+                            "Category Name",
                             "Channel Name",
+                            "Thread Name",
                             "Permission value",
                             "Permission string",
                             "Preload old",
@@ -693,36 +818,123 @@ namespace ETHDINFKBot.Modules
 
                         List<List<string>> data = new List<List<string>>();
 
+                        List<TableRowInfo> tableRowInfos = new List<TableRowInfo>();
 
-                        foreach (var channelSetting in botChannelSettings)
+                        var categories = Program.Client.GetGuild(guildChannel.Guild.Id).CategoryChannels.OrderBy(i => i.Position);
+
+
+                        foreach (var category in categories)
                         {
-                            List<string> channelInfoRow = new List<string>();
+                            var channelCategorySettingInfo = CommonHelper.GetChannelSettingByChannelId(category.Id, false);
+                            var channelCategorySetting = channelCategorySettingInfo.Setting;
 
-                            var discordChannel = DatabaseManager.Instance().GetDiscordChannel(channelSetting.DiscordChannelId);
+                            // New category
+                            data.Add(new List<string>() {
+                                category.Name,
+                                "",
+                                "",
+                                channelCategorySetting?.ChannelPermissionFlags.ToString() ?? "N/A",
+                                GetPermissionString((BotPermissionType)(channelCategorySetting?.ChannelPermissionFlags ?? 0)),
+                                channelCategorySetting?.OldestPostTimePreloaded.ToString() ?? "N/A",
+                                channelCategorySetting?.NewestPostTimePreloaded.ToString() ?? "N/A",
+                                channelCategorySetting?.ReachedOldestPreload.ToString() ?? "N/A"
+                            });
 
-                            if (discordChannel.DiscordServerId != guildChannel.Guild.Id)
-                                break; // dont show other server
-
-                            channelInfoRow.Add(discordChannel.DiscordChannelId.ToString());
-                            channelInfoRow.Add(discordChannel.ChannelName);
-                            channelInfoRow.Add(channelSetting.ChannelPermissionFlags.ToString());
-                            List<string> permissionFlagNames = new List<string>();
-                            foreach (BotPermissionType flag in Enum.GetValues(typeof(BotPermissionType)))
+                            var cells = new List<TableCellInfo>() { new TableCellInfo() { ColumnId = 0, FontColor = new SkiaSharp.SKColor(255, 100, 0) } };
+                            if (channelCategorySettingInfo.Inherit || true /* For now categories cant Inherit -> but show visually*/)
                             {
-                                var hasFlag = ((BotPermissionType)(channelSetting.ChannelPermissionFlags)).HasFlag(flag);
-
-                                if (hasFlag)
-                                    permissionFlagNames.Add($"{flag} ({(int)flag})");
+                                cells.Add(new TableCellInfo() { ColumnId = 3, FontColor = new SkiaSharp.SKColor(255, 100, 0) });
+                                cells.Add(new TableCellInfo() { ColumnId = 4, FontColor = new SkiaSharp.SKColor(255, 100, 0) });
+                                cells.Add(new TableCellInfo() { ColumnId = 5, FontColor = new SkiaSharp.SKColor(255, 100, 0) });
+                                cells.Add(new TableCellInfo() { ColumnId = 6, FontColor = new SkiaSharp.SKColor(255, 100, 0) });
+                                cells.Add(new TableCellInfo() { ColumnId = 7, FontColor = new SkiaSharp.SKColor(255, 100, 0) });
                             }
 
-                            channelInfoRow.Add(string.Join(", " + Environment.NewLine, permissionFlagNames));
-                            channelInfoRow.Add(channelSetting.OldestPostTimePreloaded?.ToString());
-                            channelInfoRow.Add(channelSetting.NewestPostTimePreloaded?.ToString());
-                            channelInfoRow.Add(channelSetting.ReachedOldestPreload.ToString());
-                            data.Add(channelInfoRow);
+                            tableRowInfos.Add(new TableRowInfo()
+                            {
+                                RowId = data.Count - 1,
+                                Cells = cells
+                            });
+
+
+                            // TODO Order
+                            foreach (var channel in category.Channels)
+                            {
+                                var channelSettingInfo = CommonHelper.GetChannelSettingByChannelId(channel.Id, true);
+                                var channelSetting = channelSettingInfo.Setting;
+
+                                // New channel
+                                data.Add(new List<string>() {
+                                    "",
+                                    channel.Name,
+                                    "",
+                                    channelSetting?.ChannelPermissionFlags.ToString() ?? "N/A",
+                                    GetPermissionString((BotPermissionType)(channelSetting?.ChannelPermissionFlags ?? 0)),
+                                    channelSetting?.OldestPostTimePreloaded.ToString() ?? "N/A",
+                                    channelSetting?.NewestPostTimePreloaded.ToString() ?? "N/A",
+                                    channelSetting?.ReachedOldestPreload.ToString() ?? "N/A"
+                                });
+
+                                var channelCells = new List<TableCellInfo>() { new TableCellInfo() { ColumnId = 1, FontColor = new SkiaSharp.SKColor(255, 255, 0) } };
+                                if (channelSettingInfo.Inherit)
+                                {
+                                    channelCells.Add(new TableCellInfo() { ColumnId = 3, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                    channelCells.Add(new TableCellInfo() { ColumnId = 4, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                    channelCells.Add(new TableCellInfo() { ColumnId = 5, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                    channelCells.Add(new TableCellInfo() { ColumnId = 6, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                    channelCells.Add(new TableCellInfo() { ColumnId = 7, FontColor = new SkiaSharp.SKColor(0, 255, 255) });
+                                }
+
+                                tableRowInfos.Add(new TableRowInfo()
+                                {
+                                    RowId = data.Count - 1,
+                                    Cells = channelCells
+                                });
+
+                                if (channel is SocketTextChannel socketThextChannel)
+                                {
+                                    // Current channel is a thread
+
+                                    foreach (var thread in socketThextChannel.Threads)
+                                    {
+                                        var threadSettingInfo = CommonHelper.GetChannelSettingByThreadId(thread.Id);
+                                        var threadSetting = threadSettingInfo.Setting;
+
+                                        // New thread
+                                        data.Add(new List<string>() {
+                                            "",
+                                            "",
+                                            "#" + thread.Name,
+                                            threadSetting?.ChannelPermissionFlags.ToString() ?? "N/A",
+                                            GetPermissionString((BotPermissionType)(threadSetting?.ChannelPermissionFlags ?? 0)),
+                                            threadSetting?.OldestPostTimePreloaded.ToString() ?? "N/A",
+                                            threadSetting?.NewestPostTimePreloaded.ToString() ?? "N/A",
+                                            threadSetting?.ReachedOldestPreload.ToString() ?? "N/A"
+                                        });
+
+
+                                        var threadCells = new List<TableCellInfo>() { new TableCellInfo() { ColumnId = 2, FontColor = new SkiaSharp.SKColor(255, 255, 255) } };
+                                        if (threadSettingInfo.Inherit || true /* Thread for now always inherit */)
+                                        {
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 3, FontColor = new SkiaSharp.SKColor(144, 238, 144) });
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 4, FontColor = new SkiaSharp.SKColor(144, 238, 144) });
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 5, FontColor = new SkiaSharp.SKColor(144, 238, 144) });
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 6, FontColor = new SkiaSharp.SKColor(144, 238, 144) });
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 7, FontColor = new SkiaSharp.SKColor(144, 238, 144) });
+                                        }
+
+                                        tableRowInfos.Add(new TableRowInfo()
+                                        {
+                                            RowId = data.Count - 1,
+                                            Cells = threadCells
+                                        });
+                                    }
+                                }
+                            }
                         }
 
-                        var drawTable = new DrawTable(header, data, "");
+
+                        var drawTable = new DrawTable(header, data, "", tableRowInfos);
 
                         var stream = await drawTable.GetImage();
                         if (stream == null)
@@ -739,7 +951,7 @@ namespace ETHDINFKBot.Modules
             public async Task SetChannelInfoAsync(int flag, ulong? channelId = null)
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -754,7 +966,7 @@ namespace ETHDINFKBot.Modules
                     }
                     else
                     {
-                        var channel = guildChannel.Guild.GetTextChannel(channelId.Value);
+                        var channel = guildChannel.Guild.GetChannel(channelId.Value);
 
                         DatabaseManager.Instance().UpdateChannelSetting(channel.Id, flag);
                         Context.Channel.SendMessageAsync($"Set flag {flag} for channel {channel.Name}", false);
@@ -767,7 +979,7 @@ namespace ETHDINFKBot.Modules
             {
                 return; // this one is a bit too risky xD
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -790,7 +1002,7 @@ namespace ETHDINFKBot.Modules
             public async Task GetChannelInfoFlagsAsync()
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -824,7 +1036,7 @@ namespace ETHDINFKBot.Modules
             public async Task PlaceAdminHelp()
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -849,7 +1061,7 @@ namespace ETHDINFKBot.Modules
             public async Task VerifyPlaceUser(SocketUser user, bool verified)
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -868,7 +1080,7 @@ namespace ETHDINFKBot.Modules
             public async Task RedditAdminHelp()
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -895,7 +1107,7 @@ namespace ETHDINFKBot.Modules
             public async Task CheckStatusAsync()
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -909,7 +1121,7 @@ namespace ETHDINFKBot.Modules
                 subredditName = subredditName.ToLower();
 
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("Ping the owner and he will add it for you", false);
                     return;
@@ -924,7 +1136,7 @@ namespace ETHDINFKBot.Modules
                 subredditName = subredditName.ToLower();
 
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -939,7 +1151,7 @@ namespace ETHDINFKBot.Modules
             public async Task StartScraperAsync(string subredditName)
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner)
+                if (author.Id != Program.ApplicationSetting.Owner)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -998,7 +1210,7 @@ namespace ETHDINFKBot.Modules
 
             private async void AddSubreddit(string subredditName)
             {
-                var reddit = new RedditClient(Program.RedditAppId, Program.RedditRefreshToken, Program.RedditAppSecret);
+                var reddit = new RedditClient(Program.ApplicationSetting.RedditSetting.AppId, Program.ApplicationSetting.RedditSetting.RefreshToken, Program.ApplicationSetting.RedditSetting.AppSecret);
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
                     SubredditManager subManager = new SubredditManager(subredditName, reddit, context);
@@ -1010,6 +1222,148 @@ namespace ETHDINFKBot.Modules
             // TODO cleanup this mess
 
 
+        }
+
+
+        [Group("keyval")]
+        public class KeyValuePairAdminModule : ModuleBase<SocketCommandContext>
+        {
+            List<string> SupportedTypes = new List<string>() { "Boolean", "Byte", "Char", "DateTime", "DBNull", "Decimal,", "Double", "Enum", "Int16", "Int32", "Int64", "SByte", "Single", "String", "UInt16", "UInt32", "UInt64" };
+
+            private static KeyValueDBManager DBManager = DatabaseManager.KeyValueManager;
+
+            [Command("help")]
+            public async Task KeyValuePairAdminHelp()
+            {
+                EmbedBuilder builder = new EmbedBuilder();
+
+                builder.WithTitle("KeyValuePair Admin Help (Admin only)");
+
+                builder.WithColor(0, 0, 255);
+
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
+                builder.WithCurrentTimestamp();
+                builder.AddField("admin keyval help", "This message :)");
+                builder.AddField("admin keyval get <key>", "Get a specific KeyValuePair by Key");
+                builder.AddField("admin keyval add <key> <value> <type>", "Add new KeyValuePair");
+                builder.AddField("admin keyval update <key> <value> <type>", "Update existing KeyValuePair (Creates one if the key doesn't exist)");
+                builder.AddField("admin keyval delete <key>", "Deletes the KeyValuePair");
+                builder.AddField("admin keyval list", "Lists all current KeyValuePairs stored in the DB");
+                builder.AddField("admin keyval supported", "Lists supported types (IConvertible)");
+
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
+            }
+
+            [Command("get")]
+            public async Task GetKeyValuePair(string key)
+            {
+                var result = DBManager.Get(key);
+                await Context.Channel.SendMessageAsync($"Key: **{key}** has the value: **{result.Value}** with type: **{result.Type}**");
+            }
+
+            [Command("add")]
+            public async Task AddKeyValuePair(string key, string value, string type)
+            {
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                if (!SupportedTypes.Contains(type))
+                {
+                    await Context.Channel.SendMessageAsync($"**{type}** is not supported");
+                    return;
+                }
+
+                try
+                {
+                    var result = DBManager.Add(key, value, type);
+                    await Context.Channel.SendMessageAsync($"Added new key: **{key}** with value: **{value}** of type **{type}**");
+                }
+                catch (Exception ex)
+                {
+                    await Context.Channel.SendMessageAsync(ex.Message);
+                }
+            }
+
+            [Command("update")]
+            public async Task UpdateKeyValuePair(string key, string value, string type = null)
+            {
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                if (!SupportedTypes.Contains(type))
+                {
+                    await Context.Channel.SendMessageAsync($"**{type}** is not supported");
+                    return;
+                }
+
+                try
+                {
+                    var result = DBManager.Update(key, value, type);
+                    await Context.Channel.SendMessageAsync($"Updated key: **{key}** with value: **{value}** of type **{type}**");
+                }
+                catch (Exception ex)
+                {
+                    await Context.Channel.SendMessageAsync(ex.Message);
+                }
+            }
+
+            [Command("delete")]
+            public async Task DeleteKeyValuePair(string key)
+            {
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                try
+                {
+                    DBManager.Delete(key);
+                    await Context.Channel.SendMessageAsync($"Deleted key: **{key}**");
+                }
+                catch (Exception ex)
+                {
+                    await Context.Channel.SendMessageAsync(ex.Message);
+                }
+            }
+
+            [Command("list")]
+            public async Task ListKeyValuePairs()
+            {
+                var allStoredKeyValuePairs = DBManager.GetAll();
+
+                // TODO better way for future when many keys are stored
+
+                string text = "";
+                foreach (var item in allStoredKeyValuePairs)
+                {
+                    var line = $"{item.Key}:{item.Value}";
+                    if(text.Length + line.Length > 1975)
+                    {
+                        await Context.Channel.SendMessageAsync(text);
+                        text = "";
+                    }
+
+                    text += line + Environment.NewLine;
+                }
+
+                await Context.Channel.SendMessageAsync(text);
+            }
+
+            [Command("supported")]
+            public async Task ListSupportedTypes()
+            {
+                await Context.Channel.SendMessageAsync(string.Join(", ", SupportedTypes));
+            }
         }
     }
 }

@@ -53,6 +53,7 @@ namespace ETHBot.DataLayer
         public DbSet<CommandType> CommandTypes { get; set; }
 
         public DbSet<DiscordChannel> DiscordChannels { get; set; }
+        public DbSet<DiscordThread> DiscordThreads { get; set; }
         public DbSet<DiscordMessage> DiscordMessages { get; set; }
         public DbSet<DiscordServer> DiscordServers { get; set; }
         public DbSet<DiscordUser> DiscordUsers { get; set; }
@@ -89,8 +90,10 @@ namespace ETHBot.DataLayer
         public DbSet<PlaceMultipixelPacket> PlaceMultipixelPackets { get; set; }
 
 
+        public DbSet<FavouriteDiscordEmote> FavouriteDiscordEmotes { get; set; }
 
         public DbSet<BotStartUpTime> BotStartUpTimes { get; set; }
+        public DbSet<StoredKeyValuePair> StoredKeyValuePairs { get; set; }
 
         /*
 
@@ -123,9 +126,10 @@ namespace ETHBot.DataLayer
                 // apply the keys to the model builder
                 modelBuilder.Entity(entity.ClrType).HasKey(orderedKeys);
 
-                // Prevent PlaceUser table to have 2 discord users
-                modelBuilder.Entity<PlaceDiscordUser>().HasIndex(c => c.DiscordUserId).IsUnique();
             }
+
+            // Prevent PlaceUser table to have 2 discord users
+            modelBuilder.Entity<PlaceDiscordUser>().HasIndex(c => c.DiscordUserId).IsUnique();
         }
     }
 }

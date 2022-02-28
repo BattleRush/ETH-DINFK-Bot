@@ -127,7 +127,7 @@ namespace ETHDINFKBot.Data
             {
                 var sqlSelect = $@"SELECT COUNT(*) FROM PlaceBoardHistory WHERE PlaceBoardHistoryId > {lastPixelIdChunked}"; 
 
-                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionString))
+                using (var connection = new MySqlConnection(Program.ApplicationSetting.ConnectionStringsSetting.ConnectionString_ReadOnly))
                 {
                     using (var command = new MySqlCommand(sqlSelect, connection))
                     {
@@ -334,7 +334,7 @@ FROM PlaceBoardHistory
 WHERE PlaceBoardHistoryId > {fromPixelId}
 LIMIT {amount};";
 
-                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionString))
+                using (var connection = new MySqlConnection(Program.ApplicationSetting.ConnectionStringsSetting.ConnectionString_ReadOnly))
                 {
                     using (var command = new MySqlCommand(sqlQuery, connection))
                     {
@@ -449,7 +449,7 @@ WHERE DiscordUserId = {discordUserId} AND PlacedDateTime > {DateTime.UtcNow.AddM
 ";
 
 
-                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionString))
+                using (var connection = new MySqlConnection(Program.ApplicationSetting.ConnectionStringsSetting.ConnectionString_ReadOnly))
                 {
                     using (var command = new MySqlCommand(sqlSelect, connection))
                     {
@@ -475,7 +475,7 @@ SET R = 255, G = 255, B = 255
 WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
 
 
-                using (var connection = new MySqlConnection(Program.FULL_MariaDBReadOnlyConnectionString))
+                using (var connection = new MySqlConnection(Program.ApplicationSetting.ConnectionStringsSetting.ConnectionString_Full))
                 {
                     using (var command = new MySqlCommand(sqlSelect, connection))
                     {
@@ -712,7 +712,7 @@ INSERT INTO PlaceBoardHistory (PlaceDiscordUserId, XPos, YPos, R, G, B, PlacedDa
 VALUES ({placeUser.PlaceDiscordUserId},{x},{y},{color.Red},{color.Green},{color.Blue},@placedDateTime, 0)";
 #endif
 
-            using (var connection = new MySqlConnection(Program.FULL_MariaDBReadOnlyConnectionString))
+            using (var connection = new MySqlConnection(Program.ApplicationSetting.ConnectionStringsSetting.ConnectionString_Full))
             {
                 using (var command = new MySqlCommand(sqlQuery, connection))
                 {

@@ -31,19 +31,31 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
         private async void CleanUpOldMessages(SocketTextChannel channel, TimeSpan toDeleteOlderThan)
         {
-            DateTime oneWeekAgo = DateTime.Now.Add(toDeleteOlderThan);
-            ulong oneWeekAgoSnowflake = SnowflakeUtils.ToSnowflake(oneWeekAgo);
-            var oldMessages = await channel.GetMessagesAsync(oneWeekAgoSnowflake, Direction.Before, 100/*100 should be enought for a while*/).FlattenAsync();
-            await channel.DeleteMessagesAsync(oldMessages);
+            try
+            {
+                DateTime oneWeekAgo = DateTime.Now.Add(toDeleteOlderThan);
+                ulong oneWeekAgoSnowflake = SnowflakeUtils.ToSnowflake(oneWeekAgo);
+                var oldMessages = await channel.GetMessagesAsync(oneWeekAgoSnowflake, Direction.Before, 100/*100 should be enought for a while*/).FlattenAsync();
+                await channel.DeleteMessagesAsync(oldMessages);
+
+            }
+            catch (Exception ex)
+            {
+                // TODO log
+            }
 
             //var messageDelete = await channel.SendMessageAsync($"Deleting {oldMessages.Count()} messages"); // enable when this message is correct
             //Task.Delay(TimeSpan.FromMinutes(5));
             //messageDelete.DeleteAsync();
         }
 
-        public async void RemovePingHell()
+        public async void CleanupCDN()
         {
 
+        }
+
+        public async void RemovePingHell()
+        {
             var guild = Program.Client.GetGuild(747752542741725244);
             var textChannel = guild.GetTextChannel(768600365602963496);
 
@@ -67,6 +79,8 @@ ORDER BY MAX(PH.DiscordMessageId)";
             ulong pingHellRoleId = 895231323034222593;
             var rolePingHell = guild.Roles.FirstOrDefault(i => i.Id == pingHellRoleId);
 
+            //await guild.DownloadUsersAsync(); // Download all users
+
             foreach (var row in queryResult.Data)
             {
                 try
@@ -75,10 +89,16 @@ ORDER BY MAX(PH.DiscordMessageId)";
 
                     if ((utcNow - dateTimeLastPing).TotalHours >= 72)
                     {
+
                         ulong userId = Convert.ToUInt64(row[0]);
                         // last ping is over 72h
 
+                        if (guild == null)
+                            throw new InvalidOperationException("Guild is null");
+
                         var guildUser = guild.GetUser(userId);
+                        if (guildUser == null)
+                            continue;
 
                         if (guildUser.Roles.Any(i => i.Id == pingHellRoleId))
                         {
@@ -86,13 +106,18 @@ ORDER BY MAX(PH.DiscordMessageId)";
                             await guildUser.RemoveRoleAsync(rolePingHell);
 
                             // send in spam that they are free
-                            await textChannel.SendMessageAsync($"<@{userId}> finally escaped PingHell May you never ping it ever again.");
+                            await textChannel.SendMessageAsync($"<@{userId}> finally escaped PingHell. May you never ping it ever again.");
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    await textChannel.SendMessageAsync($"Failed to remove pinghell: {ex.ToString()}");
+                    // Disable for now
+                    await textChannel.SendMessageAsync($"Failed to remove pinghell ID: {row[0]} SnowFlakePing: {row[1]} | {ex.ToString()}");
+                    //if(ex.InnerException != null)
+                    //{
+                    //    await textChannel.SendMessageAsync($"InnerException: {ex.InnerException.ToString()}");
+                    //}
                 }
             }
         }

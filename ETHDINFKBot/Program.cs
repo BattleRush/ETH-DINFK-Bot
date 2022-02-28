@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
@@ -36,6 +35,9 @@ using System.Text;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using Discord.Net;
+using ETHDINFKBot.Classes;
+using Discord.Interactions;
 
 namespace ETHDINFKBot
 {
@@ -52,34 +54,17 @@ namespace ETHDINFKBot
         }
     }
 
-
     class Program
     {
         public static DiscordSocketClient Client;
-        private CommandService commands;
+        private CommandService Commands;
 
         private IServiceProvider services;
         private static IConfiguration Configuration;
-        private static string DiscordToken { get; set; }
-        public static ulong Owner { get; set; }
+
         public static long TotalEmotes { get; set; }
 
-        // TODO one object and somewhere else but im lazy
-        public static string RedditAppId { get; set; }
-        public static string RedditRefreshToken { get; set; }
-        public static string RedditAppSecret { get; set; }
-        public static string BasePath { get; set; }
-        public static string ConnectionString { get; set; }
-        public static string MariaDBFullUserName { get; set; }
-        public static string MariaDBReadOnlyUserName { get; set; }
-        public static string MariaDBReadOnlyConnectionString { get; set; }
-        public static string MariaDBDBName { get; set; }
-        public static ulong BaseGuild { get; set; }
-
         public static string CurrentPrefix { get; set; }
-
-        // TODO maybe compiler warning -> but longterm settings need to be moved from here
-        public static string FULL_MariaDBReadOnlyConnectionString { get; set; }
 
         // TODO Move settings to an object
         public static bool TempDisableIncomming { get; set; }
@@ -93,7 +78,7 @@ namespace ETHDINFKBot
         private static DateTime LastNewDailyMessagePost = DateTime.Now;
         private static DateTime LastAfternoonMessagePost = DateTime.Now;
 
-        private static List<BotChannelSetting> BotChannelSettings;
+        //private static List<BotChannelSetting> BotChannelSettings;
 
         private static List<string> AllowedBotCommands;
 
@@ -102,16 +87,19 @@ namespace ETHDINFKBot
 
 
         // Used for restoring channel ordering (TODO Maybe move that info into the DB?)
-        public static Dictionary<ulong, int> ChannelPositions = new Dictionary<ulong, int>();
-
-
+        public static List<ChannelOrderInfo> ChannelPositions = new List<ChannelOrderInfo>();
 
 
         private DatabaseManager DatabaseManager = DatabaseManager.Instance();
         private LogManager LogManager = new LogManager(DatabaseManager.Instance());
 
         public static BotSetting BotSetting;
+        public static IHost Host;
 
+        public static ApplicationSetting ApplicationSetting;
+
+        public static List<string> CommandNames { get; set; }
+        private static ServiceProvider Services;
         static void Main(string[] args)
         {
             CurrentPrefix = ".";
@@ -135,7 +123,7 @@ namespace ETHDINFKBot
 
                 // https://crontab.guru/
 
-                var host = new HostBuilder()
+                Host = new HostBuilder()
                    .ConfigureServices((hostContext, services) =>
                    {
                        // TODO read from DB
@@ -143,14 +131,14 @@ namespace ETHDINFKBot
                        //services.AddCronJob<CronJobTest>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"* * * * *"; });
 
                        // once a day at 1 or 2 AM CET/CEST
-                       services.AddCronJob<DailyCleanup>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"15 2 * * *"; });
+                       services.AddCronJob<DailyCleanup>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"50 * * * *"; }); // Changed to every hour at 30 mins
 
                        // TODO adjust for summer time in CET/CEST
-                       services.AddCronJob<DailyStatsJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 23 * * *"; });
+                       services.AddCronJob<DailyStatsJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"1 23 * * *"; });
 
                        // TODO adjust for summer time in CET/CEST
                        // TODO Enable for Maria DB
-                       services.AddCronJob<PreloadJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 3 * * *"; });// 3 am utc -> 4 am cet
+                       //services.AddCronJob<PreloadJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 3 * * *"; });// 3 am utc -> 4 am cet Disable until the permission tree is fully reworked
 
                        // TODO adjust for summer time in CET/CEST
                        services.AddCronJob<SpaceXSubredditJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = BotSetting?.SpaceXSubredditCheckCronJob ?? "*/10 * * * *"; }); //BotSetting.SpaceXSubredditCheckCronJob "*/ 10 * * * *"
@@ -159,12 +147,28 @@ namespace ETHDINFKBot
                        services.AddCronJob<StartAllSubredditsJobs>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 * * *"; });// 4 am utc -> 5 am cet
 
                        // TODO adjust for summer time in CET/CEST
-                       services.AddCronJob<GitPullMessageJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 21 * * TUE"; });// 22 CET each Tuesday
+                       //services.AddCronJob<GitPullMessageJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 21 * * TUE"; });// 22 CET each Tuesday
+
+
+                       // TODO adjust for summer time in CET/CEST
+                       //services.AddCronJob<JWSTUpdates>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"*/5 * * * *"; });// Check each 5 mins
+
+                       //// For easier find for the manual trigger
+                       //services.AddByName<IHostedService>()
+                       //  .Add<DailyCleanup>("DailyCleanup")
+                       //  .Add<DailyStatsJob>("DailyStatsJob")
+                       //  .Add<PreloadJob>("PreloadJob")
+                       //  .Add<SpaceXSubredditJob>("SpaceXSubredditJob")
+                       //  .Add<StartAllSubredditsJobs>("StartAllSubredditsJobs")
+                       //  .Add<GitPullMessageJob>("GitPullMessageJob")
+                       //  .Build();
 
                        // TODO adjust for summer time in CET/CEST
                        //services.AddCronJob<BackupDBJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 * * *"; });// 0 am utc
                    })
-                   .StartAsync();
+                   .Build();
+
+                Host.StartAsync();
 
                 // TODO check if HostBuilder Faulted -> likely wrong cron job implementation
 
@@ -172,36 +176,63 @@ namespace ETHDINFKBot
                   .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
                   .Build();
 
-                DiscordToken = Configuration["DiscordToken"];
-                Owner = Convert.ToUInt64(Configuration["Owner"]);
-                BaseGuild = Convert.ToUInt64(Configuration["BaseGuild"]);
+                ApplicationSetting = new ApplicationSetting()
+                {
+                    DiscordToken = Configuration["DiscordToken"],
+                    Owner = Convert.ToUInt64(Configuration["Owner"]),
+                    BaseGuild = Convert.ToUInt64(Configuration["BaseGuild"]),
 
-                BasePath = Configuration["BasePath"];
-                ConnectionString = Configuration["ConnectionString"];
+                    BasePath = Configuration["BasePath"],
+
+                    // TODO Fix app setting name for these 3
+                    MariaDBFullUserName = Configuration["MariaDB_FullUserName"],
+                    MariaDBReadOnlyUserName = Configuration["MariaDB_ReadOnlyUserName"],
+                    MariaDBName = Configuration["MariaDB_DBName"],
+
+                    ConnectionStringsSetting = new ConnectionStringsSetting()
+                    {
+                        ConnectionString_Full = Configuration.GetConnectionString("ConnectionString_Full").ToString(),
+                        ConnectionString_ReadOnly = Configuration.GetConnectionString("ConnectionString_ReadOnly").ToString()
+                    },
+                    CDNPath = Configuration["CDNPath"],
+                    CertFilePath = Configuration["CertFilePath"],
+                    FFMpegPath = Configuration["FFMpegPath"],
+
+                    RedditSetting = new RedditSetting()
+                    {
+                        AppId = Configuration["Reddit:AppId"],
+                        RefreshToken = Configuration["Reddit:RefreshToken"],
+                        AppSecret = Configuration["Reddit:AppSecret"],
+                    }
+                };
+
+
+
+                //;
+
                 // TODO Update for new connection strings and dev/prod
 
-                MariaDBReadOnlyConnectionString = Configuration.GetConnectionString("ConnectionString_ReadOnly").ToString();
-                FULL_MariaDBReadOnlyConnectionString = Configuration.GetConnectionString("ConnectionString_Full").ToString();
-
-                MariaDBFullUserName = Configuration["MariaDB_FullUserName"];
-                MariaDBReadOnlyUserName = Configuration["MariaDB_ReadOnlyUserName"];
-                MariaDBDBName = Configuration["MariaDB_DBName"];
-
-                RedditAppId = Configuration["Reddit:AppId"];
-                RedditRefreshToken = Configuration["Reddit:RefreshToken"];
-                RedditAppSecret = Configuration["Reddit:AppSecret"];
+                //MariaDBReadOnlyConnectionString = ;
+                //FULL_MariaDBReadOnlyConnectionString = ;
 
 
+
+                //RedditAppId = Configuration["Reddit:AppId"];
+                //RedditRefreshToken = Configuration["Reddit:RefreshToken"];
+                //RedditAppSecret = Configuration["Reddit:AppSecret"];
+
+                //Settings.FFMpegPath = Configuration["FFMpegPath"];
 
                 //BackupDBOnStartup();
 
-                new Program().MainAsync(DiscordToken).GetAwaiter().GetResult();
+                new Program().MainAsync(ApplicationSetting.DiscordToken).GetAwaiter().GetResult();
             }
             catch (BadImageFormatException bife)
             {
                 // In this case the update is running and the process loaded a half uploaded dll
                 // -> RESTART
 
+                Thread.Sleep(5000);
                 Process.GetCurrentProcess().Kill();
             }
             catch (Exception ex)
@@ -212,10 +243,10 @@ namespace ETHDINFKBot
 
         public static void BackupDBOnStartup()
         {
-            var path = Path.Combine(BasePath, "Database", "ETHBot.db");
+            var path = Path.Combine(ApplicationSetting.BasePath, "Database", "ETHBot.db");
             if (File.Exists(path))
             {
-                var backupPath = Path.Combine(BasePath, "Database", "Backup");
+                var backupPath = Path.Combine(ApplicationSetting.BasePath, "Database", "Backup");
                 if (Directory.Exists(backupPath))
                 {
                     // check if the oldest backup is newer than x h then dont backup
@@ -233,14 +264,15 @@ namespace ETHDINFKBot
                         return;
                 }
 
-                var path2 = Path.Combine(BasePath, "Database", "Backup", $"ETHBot_{DateTime.Now:yyyyMMdd_HHmmss}.db");
+                var path2 = Path.Combine(ApplicationSetting.BasePath, "Database", "Backup", $"ETHBot_{DateTime.Now:yyyyMMdd_HHmmss}.db");
                 File.Copy(path, path2);
             }
         }
 
         public static void LoadChannelSettings()
         {
-            BotChannelSettings = DatabaseManager.Instance().GetAllChannelSettings();
+            // TODO load settings into cache
+            //BotChannelSettings = DatabaseManager.Instance().GetAllChannelSettings();
         }
 
         public async Task MainAsync(string token)
@@ -331,12 +363,12 @@ namespace ETHDINFKBot
 
             DatabaseManager.Instance().SetAllSubredditsStatus();
             LoadChannelSettings();
-            DatabaseManager.Instance().AddBotStartUp(); // register bot startup time
 
             var config = new DiscordSocketConfig
             {
                 MessageCacheSize = 250,
-                AlwaysDownloadUsers = true
+                AlwaysDownloadUsers = true,
+                GatewayIntents = GatewayIntents.All
             };
 
             Client = new DiscordSocketClient(config);
@@ -355,6 +387,18 @@ namespace ETHDINFKBot
 
             Client.Log += Client_Log;
 
+            // For message commands
+            Client.MessageCommandExecuted += MessageCommandHandler;
+
+            // For user commands
+            Client.UserCommandExecuted += UserCommandHandler;
+
+            Client.ButtonExecuted += Client_ButtonExecuted;
+            Client.SlashCommandExecuted += Client_SlashCommandExecuted;
+            Client.ModalSubmitted += Client_ModalSubmitted;
+
+
+
             await Client.LoginAsync(TokenType.Bot, token);
             await Client.StartAsync();
 
@@ -362,30 +406,84 @@ namespace ETHDINFKBot
             await Client.SetGameAsync($"DEV MODE");
 #else
             //await Client.SetGameAsync($"with a neko");
-            TotalEmotes = DatabaseManager.Instance().TotalEmoteCount();
+            TotalEmotes = DatabaseManager.EmoteDatabaseManager.TotalEmoteCount();
             await Client.SetGameAsync($"{TotalEmotes} emotes", null, ActivityType.Watching);
 #endif
 
-            services = new ServiceCollection()
+            Services = new ServiceCollection()
                 .AddSingleton(Client)
-                .AddSingleton<InteractiveService>()
+                //.AddSingleton<InteractiveService>()
+                .AddSingleton<DiscordSocketClient>()
+                .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
                 .BuildServiceProvider();
 
-            commands = new CommandService();
-            await commands.AddModulesAsync(Assembly.GetEntryAssembly(), services);
 
 
-            /*if (DatabaseManager.GetDiscordServerById(747752542741725244) == null)
+            Commands = new CommandService();
+            await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), Services);
+
+
+            CommandNames = new List<string>();
+
+            List<string> buildCommandString(Discord.Commands.ModuleInfo module)
             {
-                // in ready event we should start the migration
-                TempDisableIncomming = true;
-            }*/
+                List<string> returnInfo = new List<string>();
+
+                foreach (var command in module.Commands)
+                    returnInfo.Add(command.Aliases.First());
+
+                foreach (var subModule in module.Submodules)
+                    returnInfo.AddRange(buildCommandString(subModule));
+
+                return returnInfo;
+            };
+
+            foreach (var module in Commands.Modules.Where(i => !i.IsSubmodule))
+                CommandNames.AddRange(buildCommandString(module));
 
             PlaceMultipixelHandler multipixelHandler = new PlaceMultipixelHandler();
             multipixelHandler.MultiPixelProcess();
 
             // Block this task until the program is closed.
             await Task.Delay(-1);
+        }
+
+        private Task Client_ModalSubmitted(SocketModal arg)
+        {
+            return Task.CompletedTask;
+            //throw new NotImplementedException();
+        }
+
+        private Task Client_SlashCommandExecuted(SocketSlashCommand arg)
+        {
+            return Task.CompletedTask;
+            //throw new NotImplementedException();
+        }
+
+        private async Task Client_ButtonExecuted(SocketMessageComponent arg)
+        {
+            ButtonHandler buttonHandler = new ButtonHandler(arg);
+            var result = await buttonHandler.Run();
+            arg.DeferAsync(true);
+        }
+
+        public async Task MessageCommandHandler(SocketMessageCommand arg)
+        {
+            MessageCommandHandler mch = new MessageCommandHandler(arg);
+            await mch.Run();
+
+            await arg.RespondAsync("Requested " + arg.CommandName, null, false, true);
+        }
+
+        public async Task UserCommandHandler(SocketUserCommand arg)
+        {
+            UserCommandHandler uch = new UserCommandHandler(arg);
+            var result = await uch.Run();
+
+            if (result)
+                await arg.RespondAsync("Requested " + arg.CommandName, null, false, true);
+            else
+                await arg.RespondAsync("Requested " + arg.CommandName + " failed. Likely you called the function in a channel the bot doesnt have permission to send this feature or an exception hapened.", null, false, true);
         }
 
         private void ReloadChannelPositionLock(SocketGuild guild, bool delete, string channelName)
@@ -395,42 +493,38 @@ namespace ETHDINFKBot
 #if DEBUG
             adminBotChannel = 774286694794919989;
 #endif
-            // Clear positions
-            ChannelPositions = new Dictionary<ulong, int>();
+            // list should always be empty
+            ChannelPositions = new List<ChannelOrderInfo>();
 
-            // Reload orders
-            foreach (var item in guild.Channels)
-                ChannelPositions.Add(item.Id, item.Position);
+            // Any channels outside of categories considered?
+            foreach (var category in guild.CategoryChannels)
+                foreach (var channel in category.Channels)
+                    ChannelPositions.Add(new ChannelOrderInfo() { ChannelId = channel.Id, ChannelName = channel.Name, CategoryId = category.Id, CategoryName = category.Name, Position = channel.Position });
 
             //var textChannel = guild.GetTextChannel(adminBotChannel);
             //textChannel.SendMessageAsync($"Global Channel Position lock has been updated. Reason: Channel {channelName} got {(delete ? "deleted" : "added")}.");
         }
+
         private Task Client_ChannelDestroyed(SocketChannel channel)
         {
-            if (channel is SocketGuildChannel guildChannel)
-            {
-                ulong guildId = Program.BaseGuild;
-
-#if DEBUG
-                guildId = 774286694794919986;
-#endif
-
-                var botSettings = DatabaseManager.Instance().GetBotSettings();
-
-                if (guildChannel.Guild.Id == guildId && botSettings.ChannelOrderLocked)
-                {
-                    ReloadChannelPositionLock(Client.GetGuild(guildId), true, guildChannel.Name);
-                }
-            }
-
+            ReloadLock(true, channel);
             return Task.CompletedTask;
         }
 
         private Task Client_ChannelCreated(SocketChannel channel)
         {
+            ReloadLock(false, channel);
+            return Task.CompletedTask;
+        }
+
+        private void ReloadLock(bool delete, SocketChannel channel)
+        {
+            var keyValueDBManager = DatabaseManager.KeyValueManager;
+            var isLockEnabled = keyValueDBManager.Get<bool>("LockChannelPositions");
+
             if (channel is SocketGuildChannel guildChannel)
             {
-                ulong guildId = Program.BaseGuild;
+                ulong guildId = Program.ApplicationSetting.BaseGuild;
 
 #if DEBUG
                 guildId = 774286694794919986;
@@ -438,37 +532,131 @@ namespace ETHDINFKBot
 
                 var botSettings = DatabaseManager.Instance().GetBotSettings();
 
-                if (guildChannel.Guild.Id == guildId && botSettings.ChannelOrderLocked)
+                if (guildChannel.Guild.Id == guildId && isLockEnabled)
                 {
-                    ReloadChannelPositionLock(Client.GetGuild(guildId), false, guildChannel.Name);
+                    ReloadChannelPositionLock(Client.GetGuild(guildId), delete, guildChannel.Name);
                 }
             }
-
-            return Task.CompletedTask;
         }
 
-        private Task Client_ChannelUpdated(SocketChannel originalChannel, SocketChannel newChannel)
+        private static bool Reordering = false;
+        private static DateTime LastReorderTrigger = DateTime.MinValue;
+        List<string> ChannelMoveDetections = new List<string>();
+        private async Task<bool> EnforceChannelPositions(ulong guildId, ulong textChannelId)
         {
-            if (originalChannel is SocketGuildChannel originalGuildChannel
-                && newChannel is SocketGuildChannel newGuildChannel)
+            if (LastReorderTrigger > DateTime.Now.AddSeconds(-5))
+                return false; // last reorder happened less than 5 sec ago skip
+
+            LastReorderTrigger = DateTime.Now;
+
+            // Wait 1 second to receive all new orders
+            await Task.Delay(TimeSpan.FromSeconds(5));
+
+            Reordering = true;
+
+            var categoryChannels = Client.GetGuild(guildId).CategoryChannels;
+            var guild = Program.Client.GetGuild(guildId);
+            var textChannel = guild.GetTextChannel(textChannelId);
+
+            if (ChannelMoveDetections.Count > 0)
             {
-                ulong guildId = Program.BaseGuild;
-                ulong adminBotChannel = 747768907992924192;
+                // TODO Detect 2k chars -> page
+                string infoMove = $"**Move detected**{Environment.NewLine}" + string.Join(Environment.NewLine, ChannelMoveDetections);
+                await textChannel.SendMessageAsync(infoMove.Substring(0, Math.Min(1970, infoMove.Length)));
 
-#if DEBUG
-                guildId = 774286694794919986;
-                adminBotChannel = 774286694794919989;
-#endif
+                ChannelMoveDetections = new List<string>();
+            }
 
-                // only for 1 specific server
-                if (originalGuildChannel.Guild.Id != guildId)
-                    return Task.CompletedTask;
+            bool updated = false;
 
-                if (originalGuildChannel.Position != newGuildChannel.Position)
+            string info = $"**New channel order applied**{Environment.NewLine}";
+
+            try
+            {
+
+                foreach (var categoryChannel in categoryChannels.OrderBy(i => i.Position))
                 {
-                    // ORDER CHANGED
+                    // We need to enforce this order
+                    var channelInfos = ChannelPositions.Where(i => i.CategoryId == categoryChannel.Id).OrderBy(i => i.Position).ToArray();
+                    var channels = categoryChannel.Channels.OrderBy(i => i.Position);
 
-                    // Detect if the order is correct
+                    // we enforce for 
+                    bool anyChange = false;
+
+                    int lastChannelPosition = categoryChannel.Position; // Default from the position the category is at
+
+                    info += $"    Enforced order for {categoryChannel.Name}{Environment.NewLine}";
+
+                    for (int i = 0; i < channelInfos.Count(); i++)
+                    {
+                        if (channels.Count() != channelInfos.Length)
+                        {
+                            await textChannel.SendMessageAsync($"**Someone really fatfingered this time. It looks like some channel moved categories. I wont fix this. Check the FIRST Move detected entry. This is likely the offender** {Environment.NewLine}" +
+                                $"Come on, why do you make my life that difficult <:pepegun:851456702973083728>");
+
+                            var missingChannels = channelInfos.Where(i => !channels.Any(j => j.Id == i.ChannelId));
+                            var additionalChannels = channels.Where(i => !channelInfos.Any(j => j.ChannelId == i.Id));
+
+                            if (missingChannels.Count() > 0)
+                                await textChannel.SendMessageAsync($"**Missing** channels for category <#{categoryChannel.Id}>: {string.Join(", ", missingChannels.Select(i => "<#" + i.ChannelId + ">"))}");
+
+                            if (additionalChannels.Count() > 0)
+                                await textChannel.SendMessageAsync($"**Additional** channels for category <#{categoryChannel.Id}>: {string.Join(", ", additionalChannels.Select(i => "<#" + i.Id + ">"))}");
+
+                            Reordering = false;
+                            return false;
+                        }
+
+                        var currentChannelInfo = channelInfos[i];
+                        var channel = channels.ElementAt(i);
+
+                        if (currentChannelInfo.ChannelId == channel.Id && !anyChange)
+                        {
+                            // The order is fine -> Ignore the id because Discord will screw with us no matter what
+                            lastChannelPosition = channel.Position;
+                            continue;
+                        }
+                        else
+                        {
+                            // Either the channel is now what we expected or the some channel before got wrong order -> enforce for all remaining channels the positions
+                            anyChange = true;
+                            updated = true;
+                            lastChannelPosition++;
+
+                            channel = channels.SingleOrDefault(i => i.Id == currentChannelInfo.ChannelId);
+                            if (channel != null)
+                            {
+                                info += $"        {channel.Name} from position {channel.Position} to {lastChannelPosition}{Environment.NewLine}";
+                                await channel.ModifyAsync(c => c.Position = lastChannelPosition);
+                            }
+                            else
+                            {
+                                // TODO error?
+                            }
+                        }
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            // TODO make sure its not over 2k chars -> Paging
+            if (updated)
+                await textChannel.SendMessageAsync(info.Substring(0, Math.Min(2000, info.Length)));
+
+            Reordering = false;
+
+            return false;
+
+            /*
+             * 
+             *                     
+             *                     
+             *                     
+             * // Detect if the order is correct
                     if (ChannelPositions.ContainsKey(newGuildChannel.Id)
                         && ChannelPositions[newGuildChannel.Id] != newGuildChannel.Position)
                     {
@@ -489,6 +677,44 @@ namespace ETHDINFKBot
                             textChannel.SendMessageAsync($"Reordered {newGuildChannel.Name} from Position {originalGuildChannel.Position} to {newGuildChannel.Position}");
                         }
                     }
+
+            */
+        }
+
+        private Task Client_ChannelUpdated(SocketChannel originalChannel, SocketChannel newChannel)
+        {
+            var keyValueDBManager = DatabaseManager.KeyValueManager;
+            var isLockEnabled = keyValueDBManager.Get<bool>("LockChannelPositions");
+
+            if (!isLockEnabled)
+                return Task.CompletedTask;
+
+            if (originalChannel is SocketGuildChannel originalGuildChannel
+                && newChannel is SocketGuildChannel newGuildChannel)
+            {
+                ulong guildId = Program.ApplicationSetting.BaseGuild;
+                ulong adminBotChannel = 747768907992924192;
+
+#if DEBUG
+                guildId = 774286694794919986;
+                adminBotChannel = 774286694794919989;
+#endif
+
+                // only for 1 specific server
+                if (originalGuildChannel.Guild.Id != guildId)
+                    return Task.CompletedTask;
+
+                if (originalGuildChannel.Position != newGuildChannel.Position)
+                {
+                    // ORDER CHANGED
+                    var guild = Program.Client.GetGuild(guildId);
+
+                    var textChannel = guild.GetTextChannel(adminBotChannel);
+
+                    EnforceChannelPositions(guildId, adminBotChannel);
+
+                    if (!Reordering)
+                        ChannelMoveDetections.Add($"    {newGuildChannel.Name} move from position {originalGuildChannel.Position} to {newGuildChannel.Position}");
                 }
             }
 
@@ -507,11 +733,14 @@ namespace ETHDINFKBot
                     Process.GetCurrentProcess().Kill();
                 }
             }
+#if DEBUG
+            Console.WriteLine("Discord log: " + arg.Message);
+#else
             if (arg.Severity == LogSeverity.Error || arg.Severity == LogSeverity.Critical)
                 Console.Write("Discord log: " + arg.Message);
+#endif
 
             return Task.CompletedTask;
-            //throw new NotImplementedException();
         }
 
 
@@ -522,21 +751,93 @@ namespace ETHDINFKBot
         //    await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
         //}
 
+
+
+
+        private static async Task SetUpApplicationCommands()
+        {
+            ulong guildId = 774286694794919986;
+
+#if !DEBUG
+            guildId = Program.ApplicationSetting.BaseGuild;
+#endif
+            // Let's build a guild command! We're going to need a guild so lets just put that in a variable.
+            var guild = Client.GetGuild(guildId);
+
+            // Next, lets create our user and message command builder. This is like the embed builder but for context menu commands.
+            var guildUserCommand = new UserCommandBuilder();
+            guildUserCommand.WithName("User's last pings");
+
+
+            // Note: Names have to be all lowercase and match the regular expression ^[\w -]{3,32}$
+            var guildMessageCommand = new MessageCommandBuilder();
+            guildMessageCommand.WithName("Save Message");
+
+
+            var guildMessageCommand2 = new MessageCommandBuilder();
+            guildMessageCommand2.WithName("Save Message2");
+
+            try
+            {
+                // Now that we have our builder, we can call the BulkOverwriteApplicationCommandAsync to make our context commands. Note: this will overwrite all your previous commands with this array.
+                await guild.BulkOverwriteApplicationCommandAsync(new ApplicationCommandProperties[]
+                {
+                    guildUserCommand.Build(),
+                    guildMessageCommand.Build()
+                    //guildMessageCommand2.Build()
+                });
+            }
+            catch (HttpException exception)
+            {
+                // If our command was invalid, we should catch an ApplicationCommandException. This exception contains the path of the error as well as the error message. You can serialize the Error field in the exception to get a visual of where your error is.
+                var json = JsonConvert.SerializeObject(exception, Formatting.Indented);
+
+                // You can send this error somewhere or just print it to the console, for this example we're just going to print it.
+                Console.WriteLine(json);
+            }
+
+            var commands = Services.GetRequiredService<InteractionService>();
+            try
+            {
+                //var t = await commands.RegisterCommandsToGuildAsync(747752542741725244, true);
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+        }
+
+
         // TODO Cleanup -> Remove (migration only
         private Task Client_Ready()
         {
-            ulong guildId = Program.BaseGuild; // TODO Update
+            SetUpApplicationCommands();
+
+            ulong guildId = Program.ApplicationSetting.BaseGuild; // TODO Update
 #if DEBUG
             guildId = 774286694794919986;
 #endif
+
+            var lastStartUp = DatabaseManager.Instance().GetLastBotStartUpTime();
+
             //ulong spamChannel = 768600365602963496;
             var guild = Program.Client.GetGuild(guildId);
 
-            // list should always be empty
-            ChannelPositions = new Dictionary<ulong, int>();
+            var textChannel = guild.GetTextChannel(DiscordHelper.DiscordChannels["spam"]);
+            if (textChannel != null)
+                textChannel.SendMessageAsync($"Restarted with Branch: {ThisAssembly.Git.Branch} and Commit: {ThisAssembly.Git.Commit}. Last Uptime was: {CommonHelper.ToReadableString(DateTime.Now - lastStartUp)} Bot client ready. <@{Program.ApplicationSetting.Owner}>");
 
-            foreach (var item in guild.Channels)
-                ChannelPositions.Add(item.Id, item.Position);
+            // Register bot startup time when bot is ready
+            DatabaseManager.Instance().AddBotStartUp();
+
+            // list should always be empty
+            ChannelPositions = new List<ChannelOrderInfo>();
+
+            // Any channels outside of categories considered?
+            foreach (var category in guild.CategoryChannels)
+                foreach (var channel in category.Channels)
+                    ChannelPositions.Add(new ChannelOrderInfo() { ChannelId = channel.Id, ChannelName = channel.Name, CategoryId = category.Id, CategoryName = category.Name, Position = channel.Position });
 
             return Task.CompletedTask;
 
@@ -706,7 +1007,8 @@ namespace ETHDINFKBot
 
             return Task.CompletedTask;
         }
-        private Task Client_MessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel arg2)
+
+        private Task Client_MessageDeleted(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel)
         {
             return Task.CompletedTask;
             /* if (TempDisableIncomming)
@@ -777,7 +1079,7 @@ namespace ETHDINFKBot
             }*/
         }
 
-        private async void HandleReaction(Cacheable<IUserMessage, ulong> argMessage, ISocketMessageChannel argMessageChannel, SocketReaction argReaction, bool addedReaction)
+        private async void HandleReaction(Cacheable<IUserMessage, ulong> argMessage, Cacheable<IMessageChannel, ulong> argMessageChannel, SocketReaction argReaction, bool addedReaction)
         {
             try
             {
@@ -791,10 +1093,11 @@ namespace ETHDINFKBot
                 }
                 else
                 {
-                    currentMessage = await argMessageChannel.GetMessageAsync(argMessage.Id);
+                    // TODO Check argMessageChannel.Value has value
+                    currentMessage = await argMessageChannel.Value.GetMessageAsync(argMessage.Id);
                 }
 
-                var channelSettings = BotChannelSettings?.SingleOrDefault(i => i.DiscordChannelId == argMessageChannel.Id);
+                var channelSettings = CommonHelper.GetChannelSettingByChannelId(argMessageChannel.Id).Setting;
 
                 ReactionHandler reactionHandler = new ReactionHandler(currentMessage, argReaction, channelSettings, addedReaction);
                 reactionHandler.Run();
@@ -804,12 +1107,13 @@ namespace ETHDINFKBot
 
             }
         }
-        private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> argMessage, ISocketMessageChannel argMessageChannel, SocketReaction argReaction)
+
+        private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> argMessage, Cacheable<IMessageChannel, ulong> argMessageChannel, SocketReaction argReaction)
         {
             HandleReaction(argMessage, argMessageChannel, argReaction, true);
         }
 
-        private async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> argMessage, ISocketMessageChannel argMessageChannel, SocketReaction argReaction)
+        private async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> argMessage, Cacheable<IMessageChannel, ulong> argMessageChannel, SocketReaction argReaction)
         {
             HandleReaction(argMessage, argMessageChannel, argReaction, false);
         }
@@ -831,28 +1135,6 @@ namespace ETHDINFKBot
 
         private static Dictionary<ulong, DateTime> SpamCache = new Dictionary<ulong, DateTime>();
 
-        public static bool SendedAnWChallenge = false;
-        public async void NewAnWChallenge()
-        {
-            var anwChannel = Client.GetGuild(Program.BaseGuild).GetTextChannel(772551551818268702);
-
-            // todo do more dynamic
-            /*
-            string name = "Count the Divisors";
-            string due = "Thursday, March 11, 2021 10:00:59 AM GMT+01:00";
-            int exp = 100;
-
-            EmbedBuilder builder = new EmbedBuilder();
-
-            builder.WithTitle($"A new AnW challenge has been uploaded");
-            builder.WithColor(128, 255, 128);
-            builder.WithDescription($"Task Name: **{name}** " + Environment.NewLine + $"Due date: {due}" + Environment.NewLine + $"EXP: {exp}");
-
-            builder.WithCurrentTimestamp();
-
-            await anwChannel.SendMessageAsync("May the fastest speedrunner win :)", false, builder.Build());*/
-        }
-
         // Because of the delay from discord there is a way that the "first daily" post arrives later than some other messages
         private static List<SocketMessage> FirstDailyPostsCandidates = new List<SocketMessage>();
         private static bool CollectFirstDailyPostMessages = false;
@@ -862,13 +1144,19 @@ namespace ETHDINFKBot
             CollectFirstDailyPostMessages = true;
 
             // Wait for 20 sec (10 before midnight and 10 after)
-
             await Task.Delay(TimeSpan.FromSeconds(20));
 
-            CollectFirstDailyPostMessages = false;
-
             // Prevent entries that were created before midnight
-            var firstMessage = FirstDailyPostsCandidates.Where(i => i.CreatedAt.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1).Hour != 23).OrderBy(i => i.CreatedAt).First();
+            SocketMessage firstMessage = null;
+
+            do
+            {
+                firstMessage = FirstDailyPostsCandidates.Where(i => i.CreatedAt.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1).Hour != 23).OrderBy(i => i.CreatedAt).FirstOrDefault();
+                await Task.Delay(TimeSpan.FromSeconds(2)); // Check each 2 seconds if a new message arrived
+            } while (firstMessage == null);
+
+            // Disable collection of first daily post after one such post has been found
+            CollectFirstDailyPostMessages = false;
 
             var timeNow = SnowflakeUtils.FromSnowflake(firstMessage.Id).AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1); // CEST CONVERSION
 
@@ -893,7 +1181,7 @@ namespace ETHDINFKBot
 
             EmbedBuilder builder = new EmbedBuilder();
 
-            builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST POSTER TODAY");
+            builder.WithTitle($"{firstPoster.Nickname ?? firstPoster.Username} IS THE FIRST POSTER {((timeNow.Day == 1 && timeNow.Month == 1) ? $"OF {timeNow.Year}" : "TODAY")}");
             builder.WithColor(0, 0, 255);
             builder.WithDescription($"This is the {CommonHelper.DisplayWithSuffix(firstPoster.FirstDailyPostCount + 1)} time you are the first poster of the day. With {(timeNow - timeNow.Date).TotalMilliseconds.ToString("N0")}ms from midnight.");
 
@@ -953,34 +1241,94 @@ namespace ETHDINFKBot
 
             FirstDailyPostsCandidates = new List<SocketMessage>(); // Reset
 
-            DiscordHelper.DiscordUserBirthday(Client, Program.BaseGuild, 768600365602963496, true); // on first daily post trigger birthday messages -> TODO maybe move to a cron job
+            DiscordHelper.DiscordUserBirthday(Client, Program.ApplicationSetting.BaseGuild, 768600365602963496, true); // on first daily post trigger birthday messages -> TODO maybe move to a cron job
         }
-
 
         public async Task HandleCommandAsync(SocketMessage m)
         {
             if (TempDisableIncomming)
                 return;
 
-            if (m is not SocketUserMessage msg) return;
+            if (m is not SocketUserMessage msg)
+                return;
 
             if (msg.Channel is not SocketGuildChannel guildChannel)
             {
                 // no DM parsing for now (maybe delete saved post) in the future
+                if (msg.Content == "AddDeleteButtons")
+                {
+                    var builderComponent = new ComponentBuilder().WithButton("Delete Message", "delete-saved-message-id", ButtonStyle.Danger);
+
+                    var messageToDelete = await msg.Channel.GetMessagesAsync(1000).FlattenAsync();
+                    if (messageToDelete != null)
+                    {
+                        foreach (var item in messageToDelete)
+                        {
+                            if (item.Components.Count == 0)
+                            {
+                                try
+                                {
+                                    // can only edit own messages
+                                    if (item.Author.IsBot)
+                                        await msg.Channel.ModifyMessageAsync(item.Id, i => i.Components = builderComponent.Build());
+                                }
+                                catch (Exception ex)
+                                {
+
+                                }
+                            }
+                        }
+                    }
+                }
+
                 return;
             }
-
-            // check if the emote is a command -> block
-            List<CommandInfo> commandList = commands.Commands.ToList();
 
             // ignore this channel -> high msg volume
             if (msg.Channel.Id != 819966095070330950)
             {
-                var channelSettings = BotChannelSettings?.SingleOrDefault(i => i.DiscordChannelId == msg.Channel.Id);
+                ulong channelId = msg.Channel.Id;
 
-                MessageHandler msgHandler = new MessageHandler(msg, commandList, channelSettings);
-                await msgHandler.Run();
+                if (msg.Author.IsWebhook)
+                {
+                    // Message was send by Webhook
+                    if (msg.Author.Id == 941068482567602206)
+                    {
+                        // BattleRush's Helper Webhook Id
 
+                        if (msg.Content.StartsWith("New Build available."))
+                        {
+                            // New Build has been deployed -> Restart application
+                            int fromBranch = msg.Content.IndexOf("Branch:");
+                            int fromCommit = msg.Content.IndexOf("Commit:");
+
+                            string branch = msg.Content.Substring(fromBranch + "Branch:".Length, fromCommit - fromBranch - "Branch:".Length).Trim();
+                            string commit = msg.Content.Substring(fromCommit + "Commit:".Length, msg.Content.Length - fromCommit - "Commit:".Length).Trim();
+
+
+                            await msg.Channel.SendMessageAsync($"New Update detected with Branch: {branch} and Commit: {commit}. Restarting to apply update...");
+                            Process.GetCurrentProcess().Kill();
+                        }
+                    }
+                }
+
+                // Get the perms from the parent channel if the message was send in a thread
+                if (msg.Channel is SocketThreadChannel threadChannel)
+                    channelId = threadChannel.ParentChannel.Id;
+
+                var channelSettings = CommonHelper.GetChannelSettingByChannelId(channelId).Setting;
+
+
+                try
+                {
+                    MessageHandler msgHandler = new MessageHandler(msg, CommandNames, channelSettings);
+                    await msgHandler.Run();
+
+                }
+                catch (Exception ex)
+                {
+                    // TODO LOG ERROR
+                }
 
                 //if (!m.Author.IsBot && !commandList.Any(i => i.Name.ToLower() == msg.Content.ToLower().Replace(".", "")) && await TryToParseEmoji(msg))
                 //    return; // emoji was found and we can exit here
@@ -991,15 +1339,6 @@ namespace ETHDINFKBot
 
                 var dbManager = DatabaseManager.Instance();
 
-                // todo do this in the future as scheduler
-
-                var openUtcDate = new DateTime(2021, 03, 04, 17, 0, 0, DateTimeKind.Utc);
-
-                if (!SendedAnWChallenge && (openUtcDate < DateTime.UtcNow) && (openUtcDate.AddMinutes(5) > DateTime.UtcNow)/*to prevent on restart that it sends again*/)
-                {
-                    SendedAnWChallenge = true;
-                    NewAnWChallenge();
-                }
 
                 // Use discord snowflake
                 // TODO may cause problems if the bot is hosted in a timezone that doesnt switch to daylight at the same time as the hosting region
@@ -1012,7 +1351,6 @@ namespace ETHDINFKBot
                     LastNewDailyMessagePost = DateTime.UtcNow.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1).AddSeconds(10);
 
                     // This person is the first (or one of the first) one to post a new message
-                    CollectFirstDailyPostMessages = true;
                     FirstDailyPost();
 
                     // run it only once a day // todo find better scheduler
@@ -1113,7 +1451,7 @@ namespace ETHDINFKBot
             if (!msg.HasStringPrefix(CurrentPrefix, ref argPos))
                 return;
 
-            if (!m.Author.IsBot && m.Author.Id != Owner)
+            if (!m.Author.IsBot && m.Author.Id != ApplicationSetting.Owner)
             {
                 if (SpamCache.ContainsKey(m.Author.Id))
                 {
@@ -1141,7 +1479,7 @@ namespace ETHDINFKBot
 
 
             var context = new SocketCommandContext(Client, msg);
-            commands.ExecuteAsync(context, argPos, services);
+            Commands.ExecuteAsync(context, argPos, services);
         }
 
 

@@ -21,6 +21,13 @@ namespace ETHBot.DataLayer.Data.Discord
         public ulong DiscordServerId { get; set; }
         public DiscordServer DiscordServer { get; set; }
 
-        // TODO Perm
+        public bool IsCategory { get; set; }
+
+        public int Position { get; set; }
+
+
+        [ForeignKey("ParentDiscordChannel")]
+        public ulong? ParentDiscordChannelId { get; set; }
+        public DiscordChannel ParentDiscordChannel { get; set; }
     }
 }

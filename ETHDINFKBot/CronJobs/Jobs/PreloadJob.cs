@@ -45,11 +45,6 @@ namespace ETHDINFKBot.CronJobs.Jobs
             return base.StartAsync(cancellationToken);
         }
 
-
-
-
-
-
         // this one needs some reworking
         private async Task<PreloadResponse> ProcessLoadedMessages(ISocketMessageChannel textChannel, ulong messageIdFrom, Direction direction, int count = 50_000)
         {
@@ -187,7 +182,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
             foreach (var item in Program.Client.Guilds)
             {
-                if (item.Id != Program.BaseGuild)
+                if (item.Id != Program.ApplicationSetting.BaseGuild)
                     continue; // only sync eth dinfk for now
 
                 foreach (var botChannelSetting in botChannelSettings)

@@ -5,6 +5,7 @@ using ETHBot.DataLayer.Data;
 using ETHBot.DataLayer.Data.Discord;
 using ETHBot.DataLayer.Data.Enums;
 using ETHBot.DataLayer.Data.Reddit;
+using ETHDINFKBot.Data;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -20,6 +21,10 @@ namespace ETHDINFKBot
 {
     public class DatabaseManager
     {
+        public static EmoteDBManager EmoteDatabaseManager = EmoteDBManager.Instance();
+        public static KeyValueDBManager KeyValueManager = KeyValueDBManager.Instance();
+
+        // TODO Move all methods to Data/
         private static DatabaseManager _instance;
         private static object syncLock = new object();
         private readonly ILogger _logger = new Logger<DiscordModule>(Program.Logger);
@@ -200,87 +205,7 @@ namespace ETHDINFKBot
             }
         }
 
-        public DiscordEmote GetEmoteByName(string emoteName)
-        {
-            try
-            {
-                using (ETHBotDBContext context = new ETHBotDBContext())
-                {
-                    return context.DiscordEmotes.FirstOrDefault(i => i.EmoteName.ToLower() == emoteName.ToLower());
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                return null;
-            }
-        }
-
-        public bool SetEmoteBlockStatus(ulong emoteId, bool blockStatus)
-        {
-            try
-            {
-                using (ETHBotDBContext context = new ETHBotDBContext())
-                {
-                    var emote = context.DiscordEmotes.FirstOrDefault(i => i.DiscordEmoteId == emoteId);
-                    if (emote != null)
-                    {
-                        emote.Blocked = blockStatus;
-
-                        if(blockStatus)
-                            emote.LocalPath = null;
-                        // TODO in case of unblock reload the file
-
-                        context.SaveChanges();
-                        return true;
-                    }
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                return false;
-            }
-        }
-
-        public List<DiscordEmote> GetEmotes(string name = null, bool blocked = false)
-        {
-            try
-            {
-                using (ETHBotDBContext context = new ETHBotDBContext())
-                {
-                    // Select all
-                    if (name == null)
-                        return context.DiscordEmotes.AsQueryable().Where(i => i.Blocked == blocked).ToList();
-
-                    // todo improve and better search
-                    return context.DiscordEmotes.AsQueryable().Where(i => i.EmoteName.ToLower().Contains(name) && i.Blocked == blocked).ToList();
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                return null;
-            }
-        }
-
-        public List<DiscordEmote> GetEmotesByDirectName(string name)
-        {
-            try
-            {
-                using (ETHBotDBContext context = new ETHBotDBContext())
-                {
-                    // todo improve and better search
-                    return context.DiscordEmotes.AsQueryable().Where(i => i.EmoteName.ToLower() == name.ToLower() && !i.Blocked).ToList();
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                return null;
-            }
-        }
+       
 
         public void UpdateBotSettings(BotSetting setting)
         {
@@ -351,7 +276,7 @@ namespace ETHDINFKBot
                     // temp workaround
                     if (settings != null)
                     {
-                        settings.ChannelOrderLocked = botSetting.ChannelOrderLocked;
+                        //settings.ChannelOrderLocked = botSetting.ChannelOrderLocked;
                         settings.PlacePixelIdLastChunked = botSetting.PlacePixelIdLastChunked;
                         settings.PlaceLastChunkId = botSetting.PlaceLastChunkId;
                     }
@@ -445,6 +370,25 @@ namespace ETHDINFKBot
             }
         }
 
+        public DiscordThread GetDiscordThread(ulong? id)
+        {
+            if (id == null)
+                return null;
+
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordThreads.SingleOrDefault(i => i.DiscordThreadId == id);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
         public void UpdateDiscordChannel(DiscordChannel channel)
         {
             try
@@ -453,12 +397,99 @@ namespace ETHDINFKBot
                 {
                     var dbDiscordChannel = context.DiscordChannels.SingleOrDefault(i => i.DiscordChannelId == channel.DiscordChannelId);
                     if (dbDiscordChannel == null)
+                    {
                         CreateDiscordChannel(channel);
+                        return;
+                    }
 
                     bool changes = false;
                     if (dbDiscordChannel.ChannelName != channel.ChannelName)
                     {
                         dbDiscordChannel.ChannelName = channel.ChannelName;
+                        changes = true;
+                    }
+
+                    if (dbDiscordChannel.ParentDiscordChannelId != channel.ParentDiscordChannelId)
+                    {
+                        dbDiscordChannel.ParentDiscordChannelId = channel.ParentDiscordChannelId;
+                        changes = true;
+                    }
+
+                    if (dbDiscordChannel.Position != channel.Position)
+                    {
+                        dbDiscordChannel.Position = channel.Position;
+                        changes = true;
+                    }
+
+                    // Likely never changes
+                    if (dbDiscordChannel.IsCategory != channel.IsCategory)
+                    {
+                        dbDiscordChannel.IsCategory = channel.IsCategory;
+                        changes = true;
+                    }
+
+                    if (changes)
+                        context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+        }
+
+        public void UpdateDiscordThread(DiscordThread thread)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new())
+                {
+                    var dbDiscordThread = context.DiscordThreads.SingleOrDefault(i => i.DiscordThreadId == thread.DiscordThreadId);
+                    if (dbDiscordThread == null)
+                    {
+                        CreateDiscordThread(thread);
+                        return;
+                    }
+
+                    // TODO change the logic
+
+                    bool changes = false;
+                    if (dbDiscordThread.ThreadName != thread.ThreadName)
+                    {
+                        dbDiscordThread.ThreadName = thread.ThreadName;
+                        changes = true;
+                    }
+
+                    if (dbDiscordThread.MemberCount != thread.MemberCount)
+                    {
+                        dbDiscordThread.MemberCount = thread.MemberCount;
+                        changes = true;
+                    }
+
+                    if (dbDiscordThread.IsArchived != thread.IsArchived)
+                    {
+                        dbDiscordThread.IsArchived = thread.IsArchived;
+                        changes = true;
+                    }
+                    if (dbDiscordThread.IsLocked != thread.IsLocked)
+                    {
+                        dbDiscordThread.IsLocked = thread.IsLocked;
+                        changes = true;
+                    }
+                    if (dbDiscordThread.IsNsfw != thread.IsNsfw)
+                    {
+                        dbDiscordThread.IsNsfw = thread.IsNsfw;
+                        changes = true;
+                    }
+                    if (dbDiscordThread.IsPrivateThread != thread.IsPrivateThread)
+                    {
+                        dbDiscordThread.IsPrivateThread = thread.IsPrivateThread;
+                        changes = true;
+                    }
+
+                    if (dbDiscordThread.ThreadType != thread.ThreadType)
+                    {
+                        dbDiscordThread.ThreadType = thread.ThreadType;
                         changes = true;
                     }
 
@@ -499,6 +530,25 @@ namespace ETHDINFKBot
                 }
 
                 return GetDiscordChannel(channel.DiscordChannelId); // since this will rarely happen its fine i guess but we could probably return the original user
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public DiscordThread CreateDiscordThread(DiscordThread thread)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    context.DiscordThreads.Add(thread);
+                    context.SaveChanges();
+                }
+
+                return GetDiscordThread(thread.DiscordThreadId); // since this will rarely happen its fine i guess but we could probably return the original user
             }
             catch (Exception ex)
             {
@@ -964,35 +1014,7 @@ namespace ETHDINFKBot
             }
         }
 
-        public long TotalEmoteCount()
-        {
-            try
-            {
-                //using (ETHBotDBContext context = new ETHBotDBContext())
-                //{
-                //    return context.DiscordEmotes.Count();
-                //}
-
-                var sqlSelect = $@"SELECT COUNT(*) FROM DiscordEmotes";
-
-                using (var connection = new MySqlConnection(Program.MariaDBReadOnlyConnectionString))
-                {
-                    using (var command = new MySqlCommand(sqlSelect, connection))
-                    {
-                        command.CommandTimeout = 5;
-                        connection.Open();
-
-                        return (long)command.ExecuteScalar();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-            }
-
-            return -1;
-        }
+        
 
         public void AddBotStartUp()
         {
@@ -1012,6 +1034,23 @@ namespace ETHDINFKBot
             {
                 _logger.LogError(ex, ex.Message);
             }
+        }
+
+        public DateTime GetLastBotStartUpTime()
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.BotStartUpTimes.Max(i => i.StartUpTime);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+
+            return DateTime.MinValue;
         }
 
         public void AddPingStatistic(ulong userId, int count, SocketGuildUser sgUser)
@@ -1059,21 +1098,7 @@ namespace ETHDINFKBot
         }
 
 
-        public DiscordEmote GetDiscordEmoteById(ulong id)
-        {
-            try
-            {
-                using (ETHBotDBContext context = new ETHBotDBContext())
-                {
-                    return context.DiscordEmotes.SingleOrDefault(i => i.DiscordEmoteId == id);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                return null;
-            }
-        }
+      
 
         public DiscordMessage GetDiscordMessageById(ulong? id)
         {
@@ -1273,21 +1298,7 @@ namespace ETHDINFKBot
                 return null;
             }
         }
-        public List<DiscordEmoteHistory> GetEmoteHistoryUsage(DateTime from, DateTime to)
-        {
-            try
-            {
-                using (ETHBotDBContext context = new ETHBotDBContext())
-                {
-                    return context.DiscordEmoteHistory.AsQueryable().Where(i => i.DateTimePosted > from && i.DateTimePosted < to).ToList();
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                return null;
-            }
-        }
+       
 
         public Dictionary<DateTime, int> GetMessageCountGrouped(DateTime from, DateTime to, int groupByMinutes)
         {
@@ -1373,143 +1384,7 @@ namespace ETHDINFKBot
             }
         }
 
-        public DiscordEmote AddDiscordEmote(DiscordEmote discordEmote)
-        {
-            try
-            {
-                using (ETHBotDBContext context = new ETHBotDBContext())
-                {
-                    var dbEmote = GetDiscordEmoteById(discordEmote.DiscordEmoteId);
-                    if (dbEmote == null)
-                    {
-                        context.DiscordEmotes.Add(discordEmote);
-                        context.SaveChanges();
-                    }
-                    else
-                    {
-                        return null;
-                    }
-                }
-
-                return GetDiscordEmoteById(discordEmote.DiscordEmoteId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                return null;
-            }
-        }
-
-
-        private string MoveEmoteToDisk(DiscordEmote emote, byte[] imageData)
-        {
-            var emojiDate = SnowflakeUtils.FromSnowflake(emote.DiscordEmoteId);
-
-            string additionalFolder = $"{emojiDate.Year}-{emojiDate.Month:00}";
-            string path = Path.Combine(Program.BasePath, "Emotes", additionalFolder);
-
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-
-            int i = emote.Url.LastIndexOf(".");
-            string fileEnding = emote.Url.Substring(i, emote.Url.Length - i);
-
-            string filePath = Path.Combine(path, $"{emote.DiscordEmoteId}{fileEnding}");
-
-            File.WriteAllBytes(filePath, imageData);
-
-            return filePath;
-        }
-
-
-        // TODO change for new emote table
-        public async void ProcessDiscordEmote(DiscordEmote emote, ulong? discordMessageId, int count, bool isReaction, SocketGuildUser user, bool isPreload)
-        {
-            try
-            {
-                using (ETHBotDBContext context = new ETHBotDBContext())
-                {
-                    var dbEmoji = GetDiscordEmoteById(emote.DiscordEmoteId);
-                    if (dbEmoji == null)
-                    {
-                        using (var webClient = new WebClient())
-                        {
-                            byte[] bytes = webClient.DownloadData(emote.Url);
-
-                            string filePath = MoveEmoteToDisk(emote, bytes);
-
-                            emote.LocalPath = filePath;
-
-                            context.DiscordEmotes.Add(emote);
-                        }
-                        context.SaveChanges();
-                    }
-
-
-                    var emojiStat = context.DiscordEmoteStatistics.SingleOrDefault(i => i.DiscordEmoteId == emote.DiscordEmoteId);
-                    if (emojiStat == null)
-                    {
-                        context.DiscordEmoteStatistics.Add(new DiscordEmoteStatistic()
-                        {
-                            DiscordEmoteId = emote.DiscordEmoteId,
-                            UsedAsReaction = !user.IsBot && isReaction ? count : 0,
-                            UsedInText = !user.IsBot && !isReaction ? count : 0,
-                            UsedInTextOnce = !user.IsBot && !isReaction ? 1 : 0,
-                            UsedByBots = user.IsBot && !isReaction ? count : 0
-                        });
-
-                    }
-                    else
-                    {
-                        emojiStat.UsedAsReaction += !user.IsBot && isReaction ? count : 0;
-                        emojiStat.UsedInText += !user.IsBot && !isReaction ? count : 0;
-                        emojiStat.UsedInTextOnce += !user.IsBot && !isReaction ? 1 : 0;
-                        emojiStat.UsedByBots += user.IsBot && !isReaction ? count : 0;
-                    }
-
-                    var message = GetDiscordMessageById(discordMessageId);
-
-
-
-                    if (message == null)
-                        discordMessageId = null;
-
-                    DateTime posted = DateTime.Now;
-
-                    if (isPreload && discordMessageId.HasValue)
-                    {
-                        posted = SnowflakeUtils.FromSnowflake(discordMessageId.Value).UtcDateTime;
-                    }
-
-                    context.DiscordEmoteHistory.Add(new DiscordEmoteHistory()
-                    {
-                        DateTimePosted = posted,
-                        Count = count,
-                        IsReaction = isReaction,
-
-                        DiscordUserId = user.Id,
-                        DiscordEmoteId = emote.DiscordEmoteId,
-                        DiscordMessageId = discordMessageId
-
-                    });
-
-                    context.SaveChanges();
-
-                }
-
-
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                return;
-            }
-
-            //return GetEmojiStatisticById(emote.DiscordEmoteId);
-        }
-
+    
 
 
         public CommandStatistic GetCommandStatisticById(BotMessageType type, ulong userId)
@@ -1579,13 +1454,34 @@ namespace ETHDINFKBot
                 return context.SavedMessages.Any(i => i.DiscordMessageId == messageId && i.SavedByDiscordUserId == savedByDiscordUserId); // TODO check it works
             }
         }
-
-        public bool SaveMessage(ulong messageId, ulong byDiscordUserId, ulong savedByDiscordUserId, string link, string content)
+        public bool DeleteInDmSavedMessage(ulong messageId)
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
-                if (GetDiscordMessageById(messageId) == null)
-                    return false; // this message isnt tracked
+                try
+                {
+                    var savedMessage = context.SavedMessages.SingleOrDefault(i => i.DMDiscordMessageId == messageId);
+                    if (savedMessage != null)
+                    {
+                        savedMessage.DeletedFromDM = true;
+                        context.SaveChanges();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
+        public bool SaveMessage(ulong messageId, ulong byDiscordUserId, ulong savedByDiscordUserId, string link, string content, bool byMessageCommand, ulong? dmMessageId = null)
+        {
+            using (ETHBotDBContext context = new ETHBotDBContext())
+            {
+                bool isTracked = GetDiscordMessageById(messageId) != null;
+                //    return false; // this message isnt tracked
 
                 try
                 {
@@ -1595,12 +1491,13 @@ namespace ETHDINFKBot
                     var newSave = new SavedMessage()
                     {
                         DirectLink = link,
-                        SendInDM = false,
                         ByDiscordUserId = byDiscordUserId,
                         //ByDiscordUser = user,
-                        Content = content, // todo attachment
-                        DiscordMessageId = messageId,
-                        SavedByDiscordUserId = savedByDiscordUserId
+                        Content = isTracked ? content : "Not tracked", // todo attachment
+                        DiscordMessageId = isTracked ? messageId : null,
+                        SavedByDiscordUserId = savedByDiscordUserId,
+                        TriggeredByCommand = byMessageCommand,
+                        DMDiscordMessageId = dmMessageId
                         //SavedByDiscordUser = saveBy
                     };
 

@@ -40,7 +40,7 @@ namespace ETHDINFKBot.Modules
 
                 var queryResult = await SQLHelper.GetQueryResults(Context, $@"
 SELECT table_name FROM information_schema.tables
-WHERE table_schema = '{Program.MariaDBDBName}' 
+WHERE table_schema = '{Program.ApplicationSetting.MariaDBName}' 
 ORDER BY table_name DESC;", true, 50);
 
                 EmbedBuilder builder = new EmbedBuilder();
@@ -78,7 +78,7 @@ DB Stats Help: '{prefix}sql stats help'");
                     if (largeTables.Contains(tableName))
                         query = $@"SELECT AUTO_INCREMENT
 FROM   information_schema.TABLES
-WHERE  TABLE_SCHEMA = '{Program.MariaDBDBName}' and TABLE_NAME = '{tableName}'";
+WHERE  TABLE_SCHEMA = '{Program.ApplicationSetting.MariaDBName}' and TABLE_NAME = '{tableName}'";
 
                     var rowCountInfo = await SQLHelper.GetQueryResults(Context, query, true, 1);
 
@@ -90,7 +90,7 @@ WHERE  TABLE_SCHEMA = '{Program.MariaDBDBName}' and TABLE_NAME = '{tableName}'";
 FROM
   information_schema.TABLES
 WHERE
-  TABLE_SCHEMA = '{Program.MariaDBDBName}' and TABLE_NAME = '{tableName}'";
+  TABLE_SCHEMA = '{Program.ApplicationSetting.MariaDBName}' and TABLE_NAME = '{tableName}'";
 
                     var tableSize = await SQLHelper.GetQueryResults(Context, tableSizeQuery, true, 1);
                     var sizeInBytesStr = tableSize.Data.FirstOrDefault()?.FirstOrDefault();
@@ -129,12 +129,6 @@ WHERE
             [Command("help")]
             public async Task SqlStatsHelp()
             {
-                string prefix = ".";
-
-#if DEBUG
-                prefix = "dev.";
-#endif
-
                 EmbedBuilder builder = new EmbedBuilder();
 
                 builder.WithTitle($"{Program.Client.CurrentUser.Username} SQL Stats Help");
@@ -143,10 +137,10 @@ WHERE
 
                 builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
                 builder.WithCurrentTimestamp();
-                builder.AddField($"{prefix}sql stats help", "This message :)");
-                builder.AddField($"{prefix}sql stats user", "User Stats");
-                builder.AddField($"{prefix}sql stats index", "Index Stats");
-                builder.AddField($"{prefix}sql stats table", "Table Stats");
+                builder.AddField($"{Program.CurrentPrefix}sql stats help", "This message :)");
+                builder.AddField($"{Program.CurrentPrefix}sql stats user", "User Stats");
+                builder.AddField($"{Program.CurrentPrefix}sql stats index", "Index Stats");
+                builder.AddField($"{Program.CurrentPrefix}sql stats table", "Table Stats");
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
@@ -168,9 +162,9 @@ WHERE
 
                 foreach (var row in queryResult.Data)
                 {
-                    if (row[0] == Program.MariaDBFullUserName)
+                    if (row[0] == Program.ApplicationSetting.MariaDBFullUserName)
                         row[0] = "FULL USER";
-                    if (row[0] == Program.MariaDBReadOnlyUserName)
+                    if (row[0] == Program.ApplicationSetting.MariaDBReadOnlyUserName)
                         row[0] = "READ-ONLY USER";
                 }
 
@@ -299,24 +293,23 @@ WHERE
                         {
 
                             string genetalType = "null";
-                            string type = reader.GetString(1);
-                            if (type.Contains("("))
-                                type = type.Substring(0, type.IndexOf('('));
-
-                            type = type.ToLower();
+                            string type = reader.GetString(1).ToLower();
 
                             switch (type)
                             {
-                                case "tinyint": // TODO SmallInt 1 is bool
-                                case "int":
-                                case "bigint":
-                                case "smallint":
+                                case "tinyint(1)":
+                                    genetalType = "bool";
+                                    break;
+                                case string int_1 when int_1.StartsWith("tinyint"):
+                                case string int_2 when int_2.StartsWith("int"):
+                                case string int_3 when int_3.StartsWith("bigint"):
                                     genetalType = "int";
                                     break;
-                                case "varchar":
+                                case string string_1 when string_1.StartsWith("varchar"):
+                                case string string_2 when string_2.StartsWith("longtext"):
                                     genetalType = "string";
                                     break;
-                                case "datetime":
+                                case string dateTime when dateTime.StartsWith("datetime"):
                                     genetalType = "datetime";
                                     break;
                                 default:
@@ -432,7 +425,7 @@ WHERE
 
                 var queryResult = await SQLHelper.GetQueryResults(Context, $@"
 SELECT table_name FROM information_schema.tables
-WHERE table_schema = '{Program.MariaDBDBName ?? "ETHBot"}' 
+WHERE table_schema = '{Program.ApplicationSetting.MariaDBName ?? "ETHBot"}' 
 ORDER BY table_name DESC;", true, 50);
 
                 // Add tables incase they arent in the list above for their correct order
@@ -471,7 +464,7 @@ ORDER BY table_name DESC;", true, 50);
                     {
                         using (var command = context.Database.GetDbConnection().CreateCommand())
                         {
-                            command.CommandText = $"SHOW COLUMNS FROM {item} FROM {Program.MariaDBDBName ?? "ETHBot"}";
+                            command.CommandText = $"SHOW COLUMNS FROM {item} FROM {Program.ApplicationSetting.MariaDBName ?? "ETHBot"}";
                             context.Database.OpenConnection();
                             if (item == "EmojiStatistics")
                             {
@@ -492,7 +485,7 @@ ORDER BY table_name DESC;", true, 50);
   from information_schema.table_constraints fk
   join information_schema.key_column_usage c
     on c.constraint_name = fk.constraint_name
-  where fk.constraint_type = 'FOREIGN KEY' AND c.TABLE_SCHEMA = '{Program.MariaDBDBName ?? "ETHBot"}' AND c.table_name = '{item}'; ";
+  where fk.constraint_type = 'FOREIGN KEY' AND c.TABLE_SCHEMA = '{Program.ApplicationSetting.MariaDBName ?? "ETHBot"}' AND c.table_name = '{item}'; ";
                             context.Database.OpenConnection();
 
                             ForeignKeyInfos.Add(GetForeignKeyInfo(command, item));
@@ -560,7 +553,7 @@ ORDER BY table_name DESC;", true, 50);
         private bool AllowedToRun(BotPermissionType type)
         {
             var channelSettings = DatabaseManager.Instance().GetChannelSetting(Context.Message.Channel.Id);
-            if (Context.Message.Author.Id != Program.Owner
+            if (Context.Message.Author.Id != Program.ApplicationSetting.Owner
                 && !((BotPermissionType)channelSettings?.ChannelPermissionFlags).HasFlag(type))
             {
 #if DEBUG
@@ -581,7 +574,7 @@ ORDER BY table_name DESC;", true, 50);
                 return;
 
             await Context.Channel.SendMessageAsync("<:pepegun:747783377716904008>", false);
-            await Context.Channel.SendMessageAsync($"<@!{Program.Owner}> someone tried to kill me with: {query.Substring(0, Math.Min(query.Length, 1500))}", false);
+            await Context.Channel.SendMessageAsync($"<@!{Program.ApplicationSetting.Owner}> someone tried to kill me with: {query.Substring(0, Math.Min(query.Length, 1500))}", false);
             if (query.Length > 1500)
                 await Context.Channel.SendMessageAsync($"{query.Substring(1500, query.Length - 1500)}", false);
             //connect.Close();
@@ -598,7 +591,7 @@ ORDER BY table_name DESC;", true, 50);
 
         private bool ForbiddenQuery(string commandSql, ulong authorId)
         {
-            if (CommonHelper.ContainsForbiddenQuery(commandSql) && authorId != ETHDINFKBot.Program.Owner)
+            if (CommonHelper.ContainsForbiddenQuery(commandSql) && authorId != Program.ApplicationSetting.Owner)
             {
                 Context.Channel.SendMessageAsync("Dont you dare to think you will be allowed to use this command https://tenor.com/view/you-shall-not-pass-lord-of-the-ring-gif-5234772", false);
                 return true;
@@ -687,7 +680,7 @@ ORDER BY table_name DESC;", true, 50);
                 string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
 
 
-                var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString);
+                var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString, null);
 
                 var stream = await drawTable.GetImage();
                 if (stream == null)

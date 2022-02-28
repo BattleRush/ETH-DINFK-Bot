@@ -13,7 +13,7 @@ namespace ETHBot.DataLayer.Data.Discord
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int SavedMessageId { get; set; }
 
-        public ulong DiscordMessageId { get; set; }
+        public ulong? DiscordMessageId { get; set; }
 
         [ForeignKey("DiscordMessageId")]
         public virtual DiscordMessage DiscordMessage { get; set; }
@@ -23,8 +23,6 @@ namespace ETHBot.DataLayer.Data.Discord
 
         [StringLength(4000)]
         public string Content { get; set; } // No file support yet
-
-        public bool SendInDM { get; set; } // not used
 
         public ulong SavedByDiscordUserId { get; set; }
 
@@ -36,5 +34,9 @@ namespace ETHBot.DataLayer.Data.Discord
         [ForeignKey("ByDiscordUserId")]
 
         public virtual DiscordUser ByDiscordUser { get; set; } // obsolete since the message has the author
+
+        public bool TriggeredByCommand { get; set; }
+        public ulong? DMDiscordMessageId { get; set; }
+        public bool DeletedFromDM { get; set; }
     }
 }

@@ -54,10 +54,8 @@ namespace ETHDINFKBot.CronJobs.Jobs
                     return Task.CompletedTask;
                 }
 
-
                 string subredditName = "spacex"; // spacex
-
-                var reddit = new RedditClient(Program.RedditAppId, Program.RedditRefreshToken, Program.RedditAppSecret);
+                var reddit = new RedditClient(Program.ApplicationSetting.RedditSetting.AppId, Program.ApplicationSetting.RedditSetting.RefreshToken, Program.ApplicationSetting.RedditSetting.AppSecret);
 
                 SubredditManager subManager = new SubredditManager(subredditName, reddit, null, settings.LastSpaceXRedditPost, null);
 

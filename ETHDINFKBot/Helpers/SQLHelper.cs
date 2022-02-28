@@ -1,4 +1,5 @@
-﻿using Discord.Commands;
+﻿using Discord;
+using Discord.Commands;
 using MySqlConnector;
 using System;
 using System.Collections.Generic;
@@ -76,7 +77,7 @@ namespace ETHDINFKBot.Helpers
             return resultString + Environment.NewLine + $"{queryResult.TotalResults.ToString("N0")} Row(s) affected Time: {queryResult.Time.ToString("N0")}ms";
         }
 
-        public static async Task<(List<string> Header, List<List<string>> Data, int TotalResults, long Time)> GetQueryResults(SocketCommandContext context, string commandSql, bool limitRows = false, int limitLength = 2000, bool fullUser = false)
+        public static async Task<(List<string> Header, List<List<string>> Data, int TotalResults, long Time)> GetQueryResults(SocketCommandContext context, string commandSql, bool limitRows = false, int limitLength = 2000, bool fullUser = false, bool diableCap = false)
         {
             // TODO Admin perms for daily jobs with no context object
             var author = context?.Message?.Author;
@@ -98,10 +99,10 @@ namespace ETHDINFKBot.Helpers
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
 
-                if (author?.Id == Program.Owner)
+                if (author?.Id == Program.ApplicationSetting.Owner)
                     fullUser = true;
 
-                string connectionString = fullUser ? Program.FULL_MariaDBReadOnlyConnectionString : Program.MariaDBReadOnlyConnectionString;
+                string connectionString = fullUser ? Program.ApplicationSetting.ConnectionStringsSetting.ConnectionString_Full : Program.ApplicationSetting.ConnectionStringsSetting.ConnectionString_ReadOnly;
 
                 using (var connection = new MySqlConnection(connectionString))
                 {
@@ -115,17 +116,21 @@ namespace ETHDINFKBot.Helpers
                         
                         while (reader.Read())
                         {
-                            // cap at 10k records to return in count (as temp fix if the query returns millions of rows)
-                            if (TotalResults == 10_000)
+                            if (!diableCap)
                             {
-                                command.Cancel();
-                                break;
-                            }
+                                // todo disable
+                                // cap at 10k records to return in count (as temp fix if the query returns millions of rows)
+                                if (TotalResults == 10_000)
+                                {
+                                    command.Cancel();
+                                    break;
+                                }
 
-                            if (TotalResults > 250)
-                            {
-                                TotalResults++;
-                                continue;
+                                if (TotalResults > 250)
+                                {
+                                    TotalResults++;
+                                    continue;
+                                }
                             }
 
 
@@ -226,8 +231,18 @@ namespace ETHDINFKBot.Helpers
                 if (context == null)
                     throw ex; // if no context is provided dont handle it
 
-                //cts.Cancel();
-                await context.Channel.SendMessageAsync("Error: " + ex.Message, false);
+
+                EmbedBuilder builder = new EmbedBuilder();
+
+                builder.WithTitle($"Error while executing SQL query");
+                builder.WithColor(0, 128, 255);
+                builder.WithDescription(ex.Message.Substring(0, Math.Min(ex.Message.Length, 2000)));
+
+                builder.WithAuthor(context.Message.Author);
+                builder.WithCurrentTimestamp();
+
+                // TODO include maybe the sql query also in the embed
+                await context.Channel.SendMessageAsync("", false, builder.Build(), null, null, new MessageReference(context.Message.Id, context.Channel.Id));
             }
 
             return (Header, Data, TotalResults, Time);

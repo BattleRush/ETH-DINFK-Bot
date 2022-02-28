@@ -1,6 +1,8 @@
 ﻿using Discord.WebSocket;
 using ETHBot.DataLayer;
+using ETHBot.DataLayer.Data;
 using ETHBot.DataLayer.Data.Discord;
+using ETHBot.DataLayer.Data.Enums;
 using ETHDINFKBot.Drawing;
 using Reddit;
 using Reddit.Controllers;
@@ -60,8 +62,50 @@ namespace ETHDINFKBot.Helpers
             return false;
         }
 
+        // https://stackoverflow.com/a/4423615/3144729
+        public static string ToReadableString(TimeSpan span)
+        {
+            string formatted = string.Format("{0}{1}{2}{3}",
+                span.Duration().Days > 0 ? string.Format("{0:0} day{1}, ", span.Days, span.Days == 1 ? string.Empty : "s") : string.Empty,
+                span.Duration().Hours > 0 ? string.Format("{0:0} hour{1}, ", span.Hours, span.Hours == 1 ? string.Empty : "s") : string.Empty,
+                span.Duration().Minutes > 0 ? string.Format("{0:0} min{1}, ", span.Minutes, span.Minutes == 1 ? string.Empty : "s") : string.Empty,
+                span.Duration().Seconds > 0 ? string.Format("{0:0} sec{1}", span.Seconds, span.Seconds == 1 ? string.Empty : "s") : string.Empty);
 
-        
+            if (formatted.EndsWith(", ")) formatted = formatted.Substring(0, formatted.Length - 2);
+
+            if (string.IsNullOrEmpty(formatted)) formatted = "0 seconds";
+
+            return formatted;
+        }
+
+        public static bool AllowedToRun(BotPermissionType type, ulong channelId, ulong authorId)
+        {
+            var channelSettings = DatabaseManager.Instance().GetChannelSetting(channelId);
+            return authorId == Program.ApplicationSetting.Owner || ((BotPermissionType)channelSettings?.ChannelPermissionFlags).HasFlag(type);
+        }
+
+        public static (BotChannelSetting Setting, bool Inherit) GetChannelSettingByChannelId(ulong channelId, bool recursive = true)
+        {
+            var channelInfo = DatabaseManager.Instance().GetDiscordChannel(channelId);
+            var channelSetting = DatabaseManager.Instance().GetChannelSetting(channelId);
+
+            // If no setting found try until we reach a parent with some setting
+            if (channelSetting == null && channelInfo?.ParentDiscordChannelId != null && recursive)
+                return (GetChannelSettingByChannelId(channelInfo.ParentDiscordChannelId.Value).Setting, true);
+
+            return (channelSetting, false);
+        }
+
+        public static (BotChannelSetting Setting, bool Inherit) GetChannelSettingByThreadId(ulong threadId)
+        {
+            // find out the parent thread id
+            var thread = DatabaseManager.Instance().GetDiscordThread(threadId);
+            if (thread == null)
+                return (null, false);
+
+            return GetChannelSettingByChannelId(thread.DiscordChannelId);
+        }
+
         public static Stream GetStream(SKBitmap bitmap)
         {
             Stream ms = new MemoryStream();
@@ -82,7 +126,7 @@ namespace ETHDINFKBot.Helpers
 
                 ms.Position = 0;
             }
-            catch (Exception ex)    
+            catch (Exception ex)
             {
                 return null; // TODO log error
             }
@@ -104,7 +148,8 @@ namespace ETHDINFKBot.Helpers
         public static SKBitmap ResizeImage(SKBitmap bitmap, int height, int width = -1)
         {
             SKSizeI size;
-            if (width > 0) {
+            if (width > 0)
+            {
                 size = new SKSizeI(width, height);
             }
             else
@@ -117,7 +162,7 @@ namespace ETHDINFKBot.Helpers
 
             return resized;
         }
-        
+
         // https://stackoverflow.com/a/19553611
         public static string DisplayWithSuffix(int num)
         {
@@ -145,7 +190,7 @@ namespace ETHDINFKBot.Helpers
         public static async Task ScrapReddit(string subredditName, ISocketMessageChannel channel)
         {
             DatabaseManager.Instance().SetSubredditScaperStatus(subredditName, true);
-            var reddit = new RedditClient(Program.RedditAppId, Program.RedditRefreshToken, Program.RedditAppSecret);
+            var reddit = new RedditClient(Program.ApplicationSetting.RedditSetting.AppId, Program.ApplicationSetting.RedditSetting.RefreshToken, Program.ApplicationSetting.RedditSetting.AppSecret);
 
             using (var context = new ETHBotDBContext())
             {
@@ -206,7 +251,7 @@ namespace ETHDINFKBot.Helpers
 
                             if (manager.IsImage())
                             {
-                                var imageInfos = manager.DownloadImage(Path.Combine(Program.BasePath, "Reddit")); // TODO send path in contructor
+                                var imageInfos = manager.DownloadImage(Path.Combine(Program.ApplicationSetting.BasePath, "Reddit")); // TODO send path in contructor
 
                                 context.RedditImages.AddRange(imageInfos);
                                 context.SaveChanges();

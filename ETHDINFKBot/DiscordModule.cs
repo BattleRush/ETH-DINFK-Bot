@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.Rest;
 using Discord.WebSocket;
@@ -56,11 +55,8 @@ namespace ETHDINFKBot
 
         private bool AllowedToRun(BotPermissionType type)
         {
-            // since this is always calles works for now as workaround
-            //NekoClient.LogType = LogType.None;
-
             var channelSettings = DatabaseManager.GetChannelSetting(Context.Message.Channel.Id);
-            if (Context.Message.Author.Id != Program.Owner
+            if (Context.Message.Author.Id != Program.ApplicationSetting.Owner
                 && !((BotPermissionType)channelSettings?.ChannelPermissionFlags).HasFlag(type))
             {
 #if DEBUG
@@ -98,7 +94,7 @@ namespace ETHDINFKBot
 
             //builder.WithThumbnailUrl("https://avatars0.githubusercontent.com/u/11750584");
 
-            var ownerUser = Program.Client.GetUser(Program.Owner);
+            var ownerUser = Program.Client.GetUser(Program.ApplicationSetting.Owner);
             builder.WithThumbnailUrl(ownerUser.GetAvatarUrl());
             builder.WithAuthor(ownerUser);
             builder.WithCurrentTimestamp();
@@ -106,22 +102,6 @@ namespace ETHDINFKBot
             await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
-        // https://stackoverflow.com/a/4423615/3144729
-        // TODO Move into a helper
-        private static string ToReadableString(TimeSpan span)
-        {
-            string formatted = string.Format("{0}{1}{2}{3}",
-                span.Duration().Days > 0 ? string.Format("{0:0} day{1}, ", span.Days, span.Days == 1 ? string.Empty : "s") : string.Empty,
-                span.Duration().Hours > 0 ? string.Format("{0:0} hour{1}, ", span.Hours, span.Hours == 1 ? string.Empty : "s") : string.Empty,
-                span.Duration().Minutes > 0 ? string.Format("{0:0} min{1}, ", span.Minutes, span.Minutes == 1 ? string.Empty : "s") : string.Empty,
-                span.Duration().Seconds > 0 ? string.Format("{0:0} sec{1}", span.Seconds, span.Seconds == 1 ? string.Empty : "s") : string.Empty);
-
-            if (formatted.EndsWith(", ")) formatted = formatted.Substring(0, formatted.Length - 2);
-
-            if (string.IsNullOrEmpty(formatted)) formatted = "0 seconds";
-
-            return formatted;
-        }
 
         // GET CPU USAGE
         // https://medium.com/@jackwild/getting-cpu-usage-in-net-core-7ef825831b8b
@@ -147,14 +127,14 @@ namespace ETHDINFKBot
             {
                 var currentProcessCpuUsage = GetCpuUsageForProcess();
                 var proc = Process.GetCurrentProcess();
- 
+
                 var currentAssembly = Assembly.GetExecutingAssembly();
                 var assembly = Assembly.GetExecutingAssembly();
                 var version = assembly.GetName().Version;
-                FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(Environment.ProcessPath);
-                string productVersion = fileVersionInfo.ProductVersion;
-                string fileVersion = fileVersionInfo.FileVersion;
-                bool isDebug = fileVersionInfo.IsDebug;
+                FileVersionInfo fileVersionInfo = Environment.ProcessPath != null ? FileVersionInfo.GetVersionInfo(Environment.ProcessPath) : null;
+                string productVersion = fileVersionInfo?.ProductVersion;
+                string fileVersion = fileVersionInfo?.FileVersion;
+                bool isDebug = fileVersionInfo?.IsDebug ?? false;
 
 
 
@@ -196,7 +176,7 @@ namespace ETHDINFKBot
                 builder.AddField(".NET Version", $"{netCoreVer?.ToString() ?? "N/A"}", true);
                 builder.AddField("Runtime Version", $"{runtimeVer ?? "N/A"}", true);
                 builder.AddField("OS Version", $"{osVersion?.ToString() ?? "N/A"}", true);
-                builder.AddField("Online for", $"{ToReadableString(applicationOnlineTime)}", true);
+                builder.AddField("Online for", $"{CommonHelper.ToReadableString(applicationOnlineTime)}", true);
                 builder.AddField("Processor Count", $"{processorCount.ToString("N0")}", true);
                 builder.AddField("Git Branch", $"{ThisAssembly.Git.Branch}", true);
                 builder.AddField("Git Commit", $"{ThisAssembly.Git.Commit}", true);
@@ -261,11 +241,12 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.AddField("Search", $"```{prefix}google|duck <search term>```", true);
             //builder.AddField("Images", $"```{prefix}neko[avatar] {prefix}fox {prefix}waifu {prefix}baka {prefix}smug {prefix}holo {prefix}avatar {prefix}wallpaper```");
             builder.AddField("Reddit", $"```{prefix}r[p] <subreddit>|all```", true);
-            builder.AddField("Rant", $"```{prefix}rant [ types | (<type> <message>) ]```", true);
+            builder.AddField("Rant", $"```{prefix}rant [ types | new) ]```", true);
             builder.AddField("SQL", $"```{prefix}sql (table info) | (query[d] <query>)```", true);
-            builder.AddField("Emote", $"```{prefix}emote <search_string> [<page>] | {prefix}<emote_name>```");
+            builder.AddField("Emote Help for more info", $"```{prefix}emote help```");
             builder.AddField("React (only this server emotes)", $"```{prefix}react <message_id> <emote_name>```", true);
             builder.AddField("Space Min: 1 Max: 5", $"```{prefix}space [<amount>]```", true);
+            builder.AddField("Space (for more commands)", $"```{prefix}space help```", true);
             builder.AddField("WIP Command", $"```{prefix}messagegraph [all|lernphase|bp]```", true);
             builder.AddField("ETH DINFK Place", $"```Type '{prefix}place help' for more information```");
 
@@ -529,120 +510,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             Context.Channel.SendMessageAsync(req.ImageUrl, false);
         }*/
 
-        // TODO alot of rework to do
-        // TODO dynamic image sizes
-        // TODO support 100+
-        // TODO gifs -> video?
-        private Stream DrawPreviewImage(List<DiscordEmote> emojis, List<GuildEmote> guildEmotes)
-        {
-            int page = 10;
-
-            int padding = 50;
-            int paddingY = 55;
-
-            int imgSize = 48;
-            int blockSize = imgSize + 35;
-
-            int yOffsetFixForImage = 2;
-
-            int width = Math.Min(emojis.Count, 10) * blockSize + padding;
-            int height = (int)(Math.Ceiling(emojis.Count / 10d) * blockSize + paddingY - 5);
-
-            width = Math.Max(width + 25, 350); // because of the title
-
-
-            SKBitmap bitmap = new(width, height); // TODO insert into constructor
-            SKCanvas canvas = new(bitmap);
-
-            canvas.Clear(DrawingHelper.DiscordBackgroundColor);
-
-            //Font drawFont = new Font("Arial", 10, FontStyle.Bold);
-            //Font drawFontTitle = new Font("Arial", 12, FontStyle.Bold);
-            //Font drawFontIndex = new Font("Arial", 16, FontStyle.Bold);
-
-            //Brush brush = new SolidBrush(Color.White);
-            //Brush brushNormal = new SolidBrush(Color.LightSkyBlue);
-            //Brush brushGif = new SolidBrush(Color.Coral);
-            //Brush brushEmote = new SolidBrush(Color.Gold);
-
-            var normalEmotePaint = new SKPaint()
-            {
-                Color = new SKColor(255, 255, 255),
-                Typeface = DrawingHelper.Typeface_Arial,
-                TextSize = 13
-            };
-
-            var gifEmotePaint = new SKPaint()
-            {
-                Color = new SKColor(248, 131, 121),// Coral
-                Typeface = DrawingHelper.Typeface_Arial,
-                TextSize = 13
-            };
-
-            var serverEmotePaint = new SKPaint()
-            {
-                Color = new SKColor(255, 215, 0), // Gold
-                Typeface = DrawingHelper.Typeface_Arial,
-                TextSize = 13
-            };
-
-            canvas.DrawText($"Normal emote", new SKPoint(10, 15), normalEmotePaint);
-            canvas.DrawText($"Gif emote", new SKPoint(125, 15), gifEmotePaint);
-            canvas.DrawText($"Server emote", new SKPoint(210, 15), serverEmotePaint);
-
-            //Pen p = new Pen(brush);
-
-            // TODO make it more robust and cleaner
-            for (int i = 0; i < page; i++)
-            {
-                canvas.DrawText($"[{i}]", new SKPoint(10, i * blockSize + paddingY + 12), new SKPaint() { Color = new SKColor(255, 255, 255), Typeface = DrawingHelper.Typeface_Arial, TextSize = 20 });
-
-                for (int j = 0; j < page; j++)
-                {
-                    if (emojis.Count <= i * j)
-                        break;
-
-                    try
-                    {
-                        var emote = emojis[i * page + j];
-
-                        SKBitmap emoteBitmap;
-                        using (var ms = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
-                        {
-                            emoteBitmap = SKBitmap.Decode(ms);
-                        }
-
-                        SKPaint paint = normalEmotePaint;
-
-                        if (emote.Animated)
-                            paint = gifEmotePaint;
-
-                        // this server contains this emote
-                        if (guildEmotes.Any(i => i.Id == emote.DiscordEmoteId))
-                            paint = serverEmotePaint;
-
-                        int x = j * blockSize + padding;
-                        int y = i * blockSize + paddingY + yOffsetFixForImage;
-
-                        canvas.DrawBitmap(emoteBitmap, new SKRect(x, y, x + imgSize, y + imgSize));
-                        canvas.DrawText($"{emote.EmoteName}", new SKPoint(x - 1, i * blockSize + j % 2 * (imgSize + 15) + paddingY), paint);
-                    }
-                    catch (Exception ex)
-                    {
-
-                    }
-                }
-
-                canvas.DrawLine(new SKPoint(0, i * blockSize + paddingY - 15), new SKPoint(width, i * blockSize + paddingY - 15), DrawingHelper.DefaultDrawing);
-            }
-
-            var stream = CommonHelper.GetStream(bitmap);
-
-            bitmap.Dispose();
-            canvas.Dispose();
-
-            return stream;
-        }
+      
 
         [Command("react")]
         public async Task ReactEmote(ulong messageid, string emoteName)
@@ -666,7 +534,15 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
 
-            DiscordHelper.DiscordUserBirthday(Program.Client, Context.Guild.Id, Context.Message.Channel.Id, false);
+            try
+            {
+                DiscordHelper.DiscordUserBirthday(Program.Client, Context.Guild.Id, Context.Message.Channel.Id, false);
+            }
+            catch (Exception ex)
+            {
+                Context.Channel.SendMessageAsync(ex.ToString());
+                _logger.LogError(ex, "Error while DiscordHelper.DiscordUserBirthday");
+            }
         }
 
         [Command("ping")]
@@ -684,90 +560,10 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                 // load the user in question
                 if (userId.HasValue)
-                    user = Program.Client.GetGuild(Program.BaseGuild).GetUser(userId.Value) as SocketGuildUser;
+                    user = Program.Client.GetGuild(Program.ApplicationSetting.BaseGuild).GetUser(userId.Value) as SocketGuildUser;
 
-                List<PingHistory> pingHistory = new();
-
-                pingHistory.AddRange(DatabaseManager.GetLastPingHistory(50, user.Id, null));
-
-                foreach (var userRole in user.Roles)
-                {
-                    ulong roleId = DiscordHelper.GetRoleIdFromMention(userRole);
-                    pingHistory.AddRange(DatabaseManager.GetLastPingHistory(50, null, roleId));
-                }
-
-                // Add reply message pings
-                pingHistory.AddRange(DatabaseManager.GetLastReplyHistory(50, user.Id));
-
-                pingHistory = pingHistory.OrderByDescending(i => i.DiscordMessageId).ToList(); // TODO Change to reply id
-
-                EmbedBuilder builder = new EmbedBuilder();
-                builder.WithTitle($"{(user.Id == 0 ? user.Username : "Your")} last 10 pings");
-
-                pingHistory = pingHistory.Take(30).ToList();
-
-                
-
-                string messageText = "";
-                string currentBuilder = "";
-                int count = 1;
-
-                foreach (var item in pingHistory)
-                {
-                    //if (item.DiscordMessageId == null)
-                    //    continue;
-
-                    var dbMessage = DatabaseManager.GetDiscordMessageById(item.DiscordMessageId);
-                    var dbChannel = DatabaseManager.GetDiscordChannel(dbMessage?.DiscordChannelId);
-
-                    var dateTime = SnowflakeUtils.FromSnowflake(item.DiscordMessageId ?? 0); // TODO maybe track time in the ping history
-
-                    var dateTimeCET = dateTime.Add(Program.TimeZoneInfo.GetUtcOffset(DateTime.Now)); // CEST CONVERSION
-
-                    string link = null;
-
-                    if (dbChannel != null)
-                        link = $"https://discord.com/channels/{dbChannel.DiscordServerId}/{dbMessage.DiscordChannelId}/{dbMessage.DiscordMessageId}";
-
-                    var channel = "unknown";
-                    if (dbMessage?.DiscordChannelId != null)
-                        channel = $"<#{dbMessage?.DiscordChannelId}>";
-
-                    string line = "";
-
-                    // RoleIds smaller than 100 cant exist due to the Id size, so they are reserved for internal code
-                    if (item.DiscordRoleId.HasValue && item.DiscordRoleId.Value >= 100)
-                        line += $"<@{item.FromDiscordUserId}> {(link == null ? "pinged" : $"[pinged]({link})")} <@&{item.DiscordRoleId}> at {dateTimeCET.ToString("dd.MM HH:mm")} in {channel} {Environment.NewLine}"; // todo check for everyone or here
-                    else if (item.DiscordRoleId.HasValue && item.DiscordRoleId.Value < 100)
-                        line += $"<@{item.FromDiscordUserId}> {(link == null ? "replied" : $"[replied]({link})")} at {dateTimeCET.ToString("dd.MM HH:mm")} in {channel} {Environment.NewLine}"; // todo check for everyone or here
-                    else
-                        line += $"<@{item.FromDiscordUserId}> {(link == null ? "pinged" : $"[pinged]({link})")} at {dateTimeCET.ToString("dd.MM HH:mm")} in {channel} {Environment.NewLine}";
-
-                    if(count <= 10)
-                    {
-                        messageText += line;
-                    }
-                    else 
-                    {
-                        currentBuilder += line;
-
-                        if (count % 5 == 0)
-                        {
-                            builder.AddField($"{(user.Id == 0 ? user.Username : "Your")} last {count} pings", currentBuilder, false);
-                            currentBuilder = "";
-                        }
-                    }
-
-                    count++;
-                }
-
-                messageText += Environment.NewLine;
-
-                builder.WithDescription(messageText);
-                builder.WithColor(128, 64, 128);
-
-                builder.WithAuthor(user);
-                builder.WithCurrentTimestamp();
+                var pingHistory = DiscordHelper.GetTotalPingHistory(user, 30);
+                var builder = DiscordHelper.GetEmbedForPingHistory(pingHistory, user);
 
                 await Context.Message.Channel.SendMessageAsync("", false, builder.Build());
             }
@@ -806,154 +602,22 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
+        // Temp
+        [Command("emote"), Priority(1)]
+        public async Task EmojiInfo(string search)
+        {
+            await Context.Channel.SendMessageAsync($"This command has been moved. \"{Program.CurrentPrefix}emote help\" for more info", false);
+        }
 
         // TODO duplicate finder -> fingerprint
         // TODO better selection
-        [Command("emote")]
-        public async Task EmojiInfo(string search, int page = 0, bool debug = false)
-        {
-            if (AllowedToRun(BotPermissionType.EnableType2Commands))
-                return;
-
-            //await Context.Channel.SendMessageAsync($"Disabled dev", false); // to prevent from db overload
-            //return;
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-            if (AllowedToRun(BotPermissionType.EnableType2Commands))
-                return;
-
-            var author = Context.Message.Author;
-
-            if (search.Length < 2 && author.Id != Program.Owner)
-            {
-                await Context.Channel.SendMessageAsync($"Search term needs to be atleast 2 characters long", false); // to prevent from db overload
-                return;
-            }
-
-            var emotes = DatabaseManager.GetEmotes(search); // TODO dont dowload the emote data before its further filtered
-
-            int count = 0;
-
-            if (count > 0)
-            {
-                await Context.Channel.SendMessageAsync($"Downloaded {count} emote(s)", false);
-            }
-
-            List<GuildEmote> guildEmotes = new List<GuildEmote>();
-
-            if (Context.Channel is SocketGuildChannel guildChannel)
-                guildEmotes = guildChannel.Guild.Emotes.ToList();
-
-            int total = emotes.Count;
-            // limit to 100
-
-            int rowMax = debug ? 8 : 10; // since it will reach the char count
-            int columnMax = 10;
-            int pageSize = rowMax * columnMax;
+        //[Command("emote")]
+        //public async Task EmojiInfo(string search, int page = 0, bool debug = false)
+        //{
 
 
-            string nextPageInfo = "";
-
-            if (total > (page + 1) * pageSize)
-            {
-                nextPageInfo = $" or .emote {search} {page + 1} for next page";
-            }
-
-
-            Dictionary<string, int> dupes = new Dictionary<string, int>();
-
-            string sep = "-";
-
-            foreach (var emote in emotes)
-            {
-                int offset = 0;
-
-                if (dupes.ContainsKey(emote.EmoteName.ToLower()))
-                {
-                    // we found a dupe
-                    offset = dupes[emote.EmoteName.ToLower()] += 1;
-                }
-                else
-                {
-                    dupes.Add(emote.EmoteName.ToLower(), 1);
-                }
-
-                if (debug)
-                {
-                    emote.EmoteName = emote.DiscordEmoteId.ToString();
-                }
-                else
-                {
-                    if (offset > 0)
-                    {
-                        emote.EmoteName += $"{sep}{offset}";
-                    }
-                }
-            }
-
-            emotes = emotes.Skip(page * pageSize).Take(pageSize).ToList();
-
-            // TODO make it look nice
-            string text = $"**Available({page * pageSize}-{Math.Min((page + 1) * pageSize, total)}/{total}) '{search}' emojis to use (Usage .<name>){nextPageInfo}**" + Environment.NewLine;
-
-            int countEmotes = 0;
-            int row = 0;
-
-            text += "```css" + Environment.NewLine;
-
-            text += "[0] ";
-
-
-
-            foreach (var emoji in emotes)
-            {
-                string emoteString = $"{Program.CurrentPrefix}{emoji.EmoteName} ";
-
-                if (emoji.Animated)
-                    emoteString = $"[{emoji.EmoteName}] ";
-
-                if (guildEmotes.Any(i => i.Id == emoji.DiscordEmoteId))
-                    emoteString = $"({emoji.EmoteName}) ";
-
-
-                text += emoteString;
-
-                countEmotes++;
-
-                if (countEmotes >= columnMax)
-                {
-                    row++;
-                    text += Environment.NewLine;
-
-                    if (row < rowMax)
-                    {
-                        text += $"[{row}] ";
-                    }
-                    countEmotes = 0;
-                }
-
-                /*          if (text.Length > 1950)
-                {
-                    await Context.Channel.SendMessageAsync(text, false);
-                    text = "";
-                }*/
-            }
-
-            text += "```";
-
-            //await Context.Channel.SendMessageAsync(, false);
-
-
-
-            var stream = DrawPreviewImage(emotes, guildEmotes);
-
-            if (text.Length > 1990)
-            {
-                text = text.Substring(0, 1990);
-            }
-            watch.Stop();
-            var msg = await Context.Channel.SendFileAsync(stream, $"emote_{search}.png", text + $"Time: {watch.ElapsedMilliseconds} ms");
-        }
+        //    //msg.ModifyAsync(i => i.Attachments.)
+        //}
 
         //[Command("study", RunMode = RunMode.Async)]
         //public async Task Study(ulong confirmId = 0)
@@ -1038,7 +702,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         public async Task Latex([Remainder] string input)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
@@ -1228,7 +892,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != ETHDINFKBot.Program.ApplicationSetting.Owner)
             {
                 //Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 //return
@@ -1300,6 +964,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         public async Task Rant(string type = null, [Remainder] string content = "")
         {
             // TODO perm check but for now open everwhere
+            //Context.Channel.SendMessageAsync("Ask <@675445762900885515> or <@276462585690193921> or <@124603627833786370> why its disabled. Also ill fix it in the evening.");
+
+
 
             if (type == null)
             {
@@ -1382,7 +1049,11 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.WithTitle($"Rant about {rantType} on {datePosted:dd.MM.yyyy}");
             builder.Description = rant.Content;
             builder.WithColor(255, 0, 255);
-            builder.WithAuthor(byUser);
+
+            // Can cause NRE
+            if(byUser != null)
+                builder.WithAuthor(byUser);
+
             builder.WithCurrentTimestamp();
             builder.WithFooter($"RantId: {rant.RantMessageId} TypeId: {rant.RantTypeId}");
 
@@ -1499,7 +1170,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         public async Task Say(string message, int amount)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 //Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
@@ -1521,13 +1192,13 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         public async Task Purge(int count, bool fromBot = false)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 //Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
             }
 
-            ulong fromUserToDelete = fromBot ? 774276700557148170 : ETHDINFKBot.Program.Owner;
+            ulong fromUserToDelete = fromBot ? 774276700557148170 : Program.ApplicationSetting.Owner;
 
             if (fromBot)
             {
@@ -1543,7 +1214,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         public async Task Nuke(int count, bool tts = false)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 return;
             }
@@ -2428,12 +2099,12 @@ ORDER BY RANDOM() LIMIT 1
         public async Task GenerateCloud()
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 return;
             }
 
-            var txtFile = Path.Combine(Program.BasePath, "Database", "MessagesText.txt");
+            var txtFile = Path.Combine(Program.ApplicationSetting.BasePath, "Database", "MessagesText.txt");
 
             File.WriteAllText(txtFile, ""); // reset file
 
@@ -2480,442 +2151,6 @@ ORDER BY RANDOM() LIMIT 1
                 pos++;
             }
             return rankingString;
-        }
-    }
-
-
-    public class ModIntroduction : InteractiveBase
-    {
-        private static Random random = new Random();
-        public static string RandomString(int length)
-        {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            return new string(Enumerable.Repeat(chars, length)
-              .Select(s => s[random.Next(s.Length)]).ToArray());
-        }
-
-        public static byte[] StringToByteArray(string hex)
-        {
-            return Enumerable.Range(0, hex.Length)
-                             .Where(x => x % 2 == 0)
-                             .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
-                             .ToArray();
-        }
-        [Command("ACP")]
-        public async Task ACPanel()
-        {
-            var m = Context.Message;
-            var author = Context.Message.Author;
-            if (author.Id != 321022340412735509)
-            {
-                await Context.Channel.SendMessageAsync($"Unauthorized access atempt. Banning <@{author.Id}>", false);
-                return;
-            }
-
-            await m.Channel.SendMessageAsync("https://i.gifer.com/embedded/download/8XAj.gif");
-            await m.Channel.SendMessageAsync("**Entering Admin Control Panel**");
-            Thread.Sleep(4000);
-            await m.Channel.SendMessageAsync("**ACP open** Hello <@321022340412735509>");
-            Thread.Sleep(3000);
-
-            var selectOption = await m.Channel.SendMessageAsync(@"Loading options please wait");
-            Thread.Sleep(2000);
-
-            await selectOption.ModifyAsync(msg => msg.Content = @"Loading options please wait.
-1) Give Marc Admin");
-            Thread.Sleep(2000);
-
-            await selectOption.ModifyAsync(msg => msg.Content = @"Loading options please wait..
-1) Give Marc Admin
-2) Delete Server");
-            Thread.Sleep(2000);
-
-            await selectOption.ModifyAsync(msg => msg.Content = @"Loading options please wait...
-1) Give Marc Admin
-2) Delete Server
-3) Ban all current Admins");
-            Thread.Sleep(2000);
-
-            await selectOption.ModifyAsync(msg => msg.Content = @"Loading options please wait..
-1) Give Marc Admin
-2) Delete Server
-3) Ban all current Admins
-4) Show BP2 Exam Solutions");
-            Thread.Sleep(2000);
-
-            await selectOption.ModifyAsync(msg => msg.Content = @"Loading options please wait.
-1) Give Marc Admin
-2) Delete Server
-3) Ban all current Admins
-4) Show BP2 Exam Solutions
-5) Assign Random User Moderator");
-            Thread.Sleep(2000);
-
-            await selectOption.ModifyAsync(msg => msg.Content = @"Loading options please wait
-1) Give Marc Admin
-2) Delete Server
-3) Ban all current Admins
-4) Show BP2 Exam Solutions
-5) Assign Random User Moderator
-6) Remove Mod from Marc");
-
-            Thread.Sleep(2000);
-
-            await selectOption.ModifyAsync(msg => msg.Content = @"Type an option you want to select:
-1) Give Marc Admin
-2) Delete Server
-3) Ban all current Admins
-4) Show BP2 Exam Solutions
-5) Assign Random User Moderator
-6) Remove Mod from Marc
-7) Exit");
-
-            var response = await NextMessageAsync(true, true, TimeSpan.FromMinutes(3));
-            await m.Channel.SendMessageAsync($"You have chosen option: {response.Content}");
-
-            if (response.Content != "5")
-            {
-                await m.Channel.SendMessageAsync("NotImplemented Exception has been throws. Exiting ACP");
-                return;
-            }
-
-            var breachMessage = await m.Channel.SendMessageAsync("Selecting random user to become mod. 1 out of 997 Users selected");
-
-            Thread.Sleep(1000);
-
-            // unlock next stage
-            var randomString = await m.Channel.SendMessageAsync("Seed: GENERATING_SEED");
-            Thread.Sleep(2000);
-            await randomString.ModifyAsync(msg => msg.Content = "Seed: " + RandomString(32));
-            Thread.Sleep(1000);
-            await randomString.ModifyAsync(msg => msg.Content = "Seed: " + RandomString(32));
-            Thread.Sleep(1000);
-            await randomString.ModifyAsync(msg => msg.Content = "Seed: " + RandomString(32));
-            Thread.Sleep(1000);
-            await randomString.ModifyAsync(msg => msg.Content = "Seed: " + RandomString(32));
-            Thread.Sleep(1000);
-            await randomString.ModifyAsync(msg => msg.Content = "Seed: " + RandomString(32));
-            Thread.Sleep(1000);
-            await randomString.ModifyAsync(msg => msg.Content = "Seed: " + RandomString(32));
-            Thread.Sleep(1000);
-            await randomString.ModifyAsync(msg => msg.Content = "Seed: " + RandomString(32));
-            Thread.Sleep(1000);
-            await randomString.ModifyAsync(msg => msg.Content = "Seed: " + RandomString(32));
-            Thread.Sleep(1000);
-            await randomString.ModifyAsync(msg => msg.Content = "Seed: " + RandomString(32));
-            Thread.Sleep(1000);
-            await randomString.ModifyAsync(msg => msg.Content = "Seed: " + RandomString(32));
-            Thread.Sleep(1000);
-            await randomString.ModifyAsync(msg => msg.Content = "Seed: " + RandomString(32));
-            Thread.Sleep(1000);
-            await randomString.ModifyAsync(msg => msg.Content = "Seed: " + RandomString(32));
-            Thread.Sleep(1000);
-            await randomString.ModifyAsync(msg => msg.Content = "Seed: " + RandomString(32));
-            Thread.Sleep(1000);
-            await randomString.ModifyAsync(msg => msg.Content = "Seed: " + RandomString(32));
-            Thread.Sleep(1000);
-            await randomString.ModifyAsync(msg => msg.Content = "Seed: " + RandomString(32));
-            Thread.Sleep(1000);
-            await randomString.ModifyAsync(msg => msg.Content = "Seed: " + RandomString(32));
-            Thread.Sleep(1000);
-            await randomString.ModifyAsync(msg => msg.Content = "Seed: " + RandomString(32));
-            Thread.Sleep(1000);
-
-
-            var initMsg = await m.Channel.SendMessageAsync("User selected.");
-            Thread.Sleep(3000);
-            await initMsg.ModifyAsync(msg => msg.Content = @"Initializing process to assign mod..");
-            Thread.Sleep(2000);
-
-            await initMsg.ModifyAsync(msg => msg.Content = @"Initializing process to assign mod....");
-            Thread.Sleep(3000);
-
-            await initMsg.ModifyAsync(msg => msg.Content = @"Initializing process to assign mod......");
-            Thread.Sleep(4000);
-
-            await PrintProgressBar(m);
-
-            string hex = "48656c6c6f2c20696620796f75206172652072656164696e672074686973206d6573736167653a20436f6e67726174756c6174696f6e212120596f7520686176652070726f6772657373656420746f20746865206e6578742073746167652e2054686973206d65737361676520697320686f7765766572206f6e6c79206d65616e7420666f72206f6e6520706572736f6e206f6e6c792e20546f2076616c696461746520796f752061726520746865207265616c206465616c20616e6420776f756c64206c696b6520746f206a6f696e20746865204d6f6465726174696f6e2074696d652c20737461727420746865202e3c796f7572446973636f726449643e20636f6d6d616e6420746f2070726f6365656420746f20746865206e65787420737465702e2054686973207761792077652063616e20656e737572652074686174206e6f20696d706f737465722063616e207472696767657220746865206e6578742073746167652e20496620796f75206861766520636f6e74696e75656420746f20746f207265616420757020746f20686572652c206865726520697320612068696e742e20546865204964206973204175737472616c69616e203b2920474c2120202020202020202020202020202020202020202020202020202020202020202020";
-
-            var bytes = StringToByteArray(hex);
-
-            // size = 22;
-
-            //int pixelSize = 10;
-
-            // SYSTEM.DRAWING
-            /*
-            var board = DrawingHelper.GetEmptyGraphics(size * pixelSize, size * pixelSize);
-
-            for (int x = 0; x < size; x++)
-            {
-                for (int y = 0; y < size; y++)
-                {
-                    int xBase = x * pixelSize;
-                    int yBase = y * pixelSize;
-
-                    for (int xx = 0; xx < pixelSize; xx++)
-                    {
-                        for (int yy = 0; yy < pixelSize; yy++)
-                        {
-                            byte r = x * size + y - 1 >= 0 ? bytes[x * size + y - 1] : (byte)0;
-                            byte g = x * size + y - 0 >= 0 ? bytes[x * size + y - 0] : (byte)0;
-                            byte b = x * size + y + 1 < bytes.Length ? bytes[x * size + y + 1] : (byte)0;
-                            board.Bitmap.SetPixel(xBase + xx, yBase + yy, Color.FromArgb(r, g, b));
-                        }
-                    }
-                }
-            }
-
-            var stream = CommonHelper.GetStream(board.Bitmap);
-            await Context.Channel.SendFileAsync(stream, "secret_message.png", $"Dump file output");
-            */
-            //return true;
-        }
-
-        [Command("449499266612148321")]
-        public async Task UserEnter()
-        {
-            var m = Context.Message;
-            var author = Context.Message.Author;
-            if (author.Id != 123841216662994944)
-            {
-                await Context.Channel.SendMessageAsync($"Unauthorized access atempt. Banning <@{author.Id}>", false);
-                return;
-            }
-
-            //await initMsg.DeleteAsync();
-
-            EmbedBuilder nextStage = new();
-
-            nextStage.WithTitle($"Confirm to assign <@123841216662994944> to the next stage.");
-            nextStage.WithColor(0, 0, 255);
-            nextStage.WithAuthor(author);
-            nextStage.WithCurrentTimestamp();
-
-            var reactMessage = await m.Channel.SendMessageAsync("Process Initialization Check", false, nextStage.Build());
-            await reactMessage.AddReactionAsync(Emote.Parse($"<:this:{DiscordHelper.DiscordEmotes["this"]}>"));
-        }
-
-        private static async Task<bool> PrintProgressBar(SocketMessage m)
-        {
-            List<string> left = new() {
-                "<:left0:829444101308547136>",
-                "<:left1:829444101551423508>",
-                "<:left2:829444101614600252>",
-                "<:left3:829444101619318814>",
-                "<:left4:829444101627707452>",
-                "<:left5:829444101639372910>",
-                "<:left6:829444304799399946>",
-                "<:left7:829444328626847745>",
-                "<:left8:829444338840633387>",
-                "<:left9:829444353637875772>",
-                "<:left10:829444368329998387>"
-            };
-
-            List<string> middle = new() {
-
-                "<:middle0:832534031177613352>",
-                "<:middle1:832534056138571796>",
-                "<:middle2:832534067156746270>",
-                "<:middle3:832534079844778014>",
-                "<:middle4:832534090593992705>",
-                "<:middle5:832534101969207306>",
-                "<:middle6:832534113285963776>",
-                "<:middle7:832534125260701726>",
-                "<:middle8:832534134927654922>",
-                "<:middle9:832534146475229276>",
-                "<:middle10:832534158186250260>"
-            };
-            // Progressbar right
-
-            List<string> right = new()
-            {
-
-                "<:right0:829444702105239613>",
-                "<:right1:829444715803443261>",
-                "<:right2:829444741062066246>",
-                "<:right3:829444752251551744>",
-                "<:right4:829444776746549260>",
-                "<:right5:829444791137206332>",
-                "<:right6:829444802928050206>",
-                "<:right7:829444814180319242>",
-                "<:right8:829444826843578378>",
-                "<:right9:829444840520810586>",
-                "<:right10:829444852583759913>"
-            };
-
-            var progressText = await m.Channel.SendMessageAsync("Startup");
-            var progressBar = await m.Channel.SendMessageAsync(left[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + right[0]);
-
-            //10
-            for (int i = 0; i < 11; i++)
-            {
-                string line = left[i] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + right[0];
-                await progressBar.ModifyAsync(msg => msg.Content = line);
-                Thread.Sleep(1100);
-            }
-            await progressText.ModifyAsync(msg => msg.Content = "Wonder who won the mod lotery <:thonku:747783377846927401>");
-
-            // 20
-            for (int i = 1; i < 11; i++)
-            {
-                string line = left[10] + middle[i] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + right[0];
-                await progressBar.ModifyAsync(msg => msg.Content = line);
-                Thread.Sleep(1100);
-            }
-
-            await progressText.ModifyAsync(msg => msg.Content = "Could it be Marc again?");
-
-            // 30
-            for (int i = 1; i < 11; i++)
-            {
-                string line = left[10] + middle[10] + middle[i] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + right[0];
-                await progressBar.ModifyAsync(msg => msg.Content = line);
-                Thread.Sleep(1100);
-            }
-
-            await progressText.ModifyAsync(msg => msg.Content = "Or you?");
-
-            // 40
-            for (int i = 1; i < 11; i++)
-            {
-                string line = left[10] + middle[10] + middle[10] + middle[i] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + right[0];
-                await progressBar.ModifyAsync(msg => msg.Content = line);
-                Thread.Sleep(1100);
-            }
-
-            await progressText.ModifyAsync(msg => msg.Content = "Weird that such messages come again....");
-            // 50
-            for (int i = 1; i < 11; i++)
-            {
-                string line = left[10] + middle[10] + middle[10] + middle[10] + middle[i] + middle[0] + middle[0] + middle[0] + middle[0] + right[0];
-                await progressBar.ModifyAsync(msg => msg.Content = line);
-                Thread.Sleep(1100);
-
-            }
-
-            await progressText.ModifyAsync(msg => msg.Content = "Maybe its just a big troll, who knows");
-            // 60
-            for (int i = 1; i < 11; i++)
-            {
-                string line = left[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[i] + middle[0] + middle[0] + middle[0] + right[0];
-                await progressBar.ModifyAsync(msg => msg.Content = line);
-                Thread.Sleep(1100);
-            }
-
-            await progressText.ModifyAsync(msg => msg.Content = "Soon..");
-
-            // 70
-            for (int i = 1; i < 11; i++)
-            {
-                string line = left[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[i] + middle[0] + middle[0] + right[0];
-                await progressBar.ModifyAsync(msg => msg.Content = line);
-                Thread.Sleep(1100);
-            }
-
-            await progressText.ModifyAsync(msg => msg.Content = "Soon....");
-            // 80
-            for (int i = 1; i < 11; i++)
-            {
-                string line = left[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[i] + middle[0] + right[0];
-                await progressBar.ModifyAsync(msg => msg.Content = line);
-                Thread.Sleep(1100);
-            }
-
-
-            await progressText.ModifyAsync(msg => msg.Content = "Soon......");
-            // 90
-            for (int i = 1; i < 11; i++)
-            {
-                string line = left[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[i] + right[0];
-                await progressBar.ModifyAsync(msg => msg.Content = line);
-                Thread.Sleep(1100);
-            }
-
-            //----------------------------------------------------------------------------------------------------------------------------------------------
-            await progressText.ModifyAsync(msg => msg.Content = "SYSTEM FAILURE. SHUTTING DOWN");
-            Thread.Sleep(6000);
-            //----------------------------------------------------------------------------------------------------------------------------------------------
-
-            // 90
-            for (int i = 10; i > 0; i -= 2)
-            {
-                string line = left[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[i] + right[0];
-                await progressBar.ModifyAsync(msg => msg.Content = line);
-                Thread.Sleep(1100);
-            }
-
-            // 80
-            for (int i = 10; i > 0; i -= 2)
-            {
-                string line = left[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[i] + middle[0] + right[0];
-                await progressBar.ModifyAsync(msg => msg.Content = line);
-                Thread.Sleep(1100);
-            }
-
-            // 70
-            for (int i = 10; i > 0; i -= 2)
-            {
-                string line = left[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[i] + middle[0] + middle[0] + right[0];
-                await progressBar.ModifyAsync(msg => msg.Content = line);
-                Thread.Sleep(1100);
-            }
-
-            await progressText.ModifyAsync(msg => msg.Content = "GENERATING DUMP FILE");
-
-            // 60
-            for (int i = 10; i > 0; i -= 3)
-            {
-                string line = left[10] + middle[10] + middle[10] + middle[10] + middle[10] + middle[i] + middle[0] + middle[0] + middle[0] + right[0];
-                await progressBar.ModifyAsync(msg => msg.Content = line);
-                Thread.Sleep(1100);
-            }
-
-            // 50
-            for (int i = 10; i > 0; i -= 3)
-            {
-                string line = left[10] + middle[10] + middle[10] + middle[10] + middle[i] + middle[0] + middle[0] + middle[0] + middle[0] + right[0];
-                await progressBar.ModifyAsync(msg => msg.Content = line);
-                Thread.Sleep(1100);
-
-            }
-
-            // 40
-            for (int i = 10; i > 0; i -= 4)
-            {
-                string line = left[10] + middle[10] + middle[10] + middle[i] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + right[0];
-                await progressBar.ModifyAsync(msg => msg.Content = line);
-                Thread.Sleep(1100);
-            }
-
-            // 30
-            for (int i = 10; i > 0; i -= 4)
-            {
-                string line = left[10] + middle[10] + middle[i] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + right[0];
-                await progressBar.ModifyAsync(msg => msg.Content = line);
-                Thread.Sleep(1100);
-            }
-
-            // 20
-            for (int i = 10; i > 0; i -= 5)
-            {
-                string line = left[10] + middle[i] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + right[0];
-                await progressBar.ModifyAsync(msg => msg.Content = line);
-                Thread.Sleep(1100);
-            }
-
-            //10
-            for (int i = 10; i > 0; i -= 5)
-            {
-                string line = left[i] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + right[0];
-                await progressBar.ModifyAsync(msg => msg.Content = line);
-                Thread.Sleep(1100);
-            }
-
-            string lineEnd = left[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + middle[0] + right[0];
-            await progressBar.ModifyAsync(msg => msg.Content = lineEnd);
-            return true;
         }
     }
 }

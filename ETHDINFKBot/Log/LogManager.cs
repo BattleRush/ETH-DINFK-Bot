@@ -6,6 +6,7 @@ using ETHDINFKBot.Helpers;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,47 +27,47 @@ namespace ETHDINFKBot.Log
         // TODO lock
         public static DateTime LastUpdate = DateTime.MinValue;
         public static DateTime LastGlobalUpdate = DateTime.MinValue;
-        public async void AddReaction(Emote emote, ulong discordMessageId, SocketGuildUser user)
-        {
-            try
-            {
-                var discordEmote = new DiscordEmote()
-                {
-                    Animated = emote.Animated,
-                    DiscordEmoteId = emote.Id,
-                    EmoteName = emote.Name,
-                    Url = emote.Url,
-                    CreatedAt = emote.CreatedAt,
-                    Blocked = false,
-                    LastUpdatedAt = DateTime.Now, // todo chech changes
-                    LocalPath = null
-                };
+        //public async void AddReaction(Emote emote, ulong discordMessageId, SocketGuildUser user)
+        //{
+        //    try
+        //    {
+        //        var discordEmote = new DiscordEmote()
+        //        {
+        //            Animated = emote.Animated,
+        //            DiscordEmoteId = emote.Id,
+        //            EmoteName = emote.Name,
+        //            Url = emote.Url,
+        //            CreatedAt = emote.CreatedAt,
+        //            Blocked = false,
+        //            LastUpdatedAt = DateTime.Now, // todo chech changes
+        //            LocalPath = null
+        //        };
 
-                DatabaseManager.ProcessDiscordEmote(discordEmote, discordMessageId, 1, true, user, false);
-                //Program.GlobalStats.EmojiInfoUsage.Single(i => i.EmojiId == emote.Id).UsedAsReaction++;
-            }
-            catch (Exception ex)
-            {
+        //        DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(discordEmote, discordMessageId, 1, true, user, false);
+        //        //Program.GlobalStats.EmojiInfoUsage.Single(i => i.EmojiId == emote.Id).UsedAsReaction++;
+        //    }
+        //    catch (Exception ex)
+        //    {
 
-            }
-        }
+        //    }
+        //}
 
-        public async void RemoveReaction(Emote emote, ulong discordMessageId, SocketGuildUser user)
-        {
-            var discordEmote = new DiscordEmote()
-            {
-                Animated = emote.Animated,
-                DiscordEmoteId = emote.Id,
-                EmoteName = emote.Name,
-                Url = emote.Url,
-                CreatedAt = emote.CreatedAt,
-                Blocked = false,
-                LastUpdatedAt = DateTime.Now, // todo chech changes
-                LocalPath = null
-            };
+        //public async void RemoveReaction(Emote emote, ulong discordMessageId, SocketGuildUser user)
+        //{
+        //    var discordEmote = new DiscordEmote()
+        //    {
+        //        Animated = emote.Animated,
+        //        DiscordEmoteId = emote.Id,
+        //        EmoteName = emote.Name,
+        //        Url = emote.Url,
+        //        CreatedAt = emote.CreatedAt,
+        //        Blocked = false,
+        //        LastUpdatedAt = DateTime.Now, // todo chech changes
+        //        LocalPath = null
+        //    };
 
-            DatabaseManager.ProcessDiscordEmote(discordEmote, discordMessageId, -1, true, user, false);
-        }
+        //    DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(discordEmote, discordMessageId, -1, true, user, false);
+        //}
 
         public async Task ProcessEmojisAndPings(IReadOnlyCollection<ITag> tags, ulong authorId, SocketMessage message, SocketGuildUser fromUser, bool isPreload = false)
         {
@@ -89,6 +90,9 @@ namespace ETHDINFKBot.Log
                 }
 
                 var guildUser = (fromUser as IGuildUser);
+                string messages = "";
+
+                bool anyDownload = false;
 
                 foreach (var emote in listOfEmotes)
                 {
@@ -106,30 +110,43 @@ namespace ETHDINFKBot.Log
                         LocalPath = null
                     };
 
-                    if (emote.Value == 10 && tag.Value?.Id == 747783377146347590)
-                    {
-                       
-                        ulong caveBobGang = 824425544333656104;
 
-                        if (!guildUser.RoleIds.Contains(caveBobGang))
-                        {
-                            var role = guildUser.Guild.Roles.FirstOrDefault(x => x.Id == caveBobGang);
+                    /*cavebob stuff outdated*/
+                    //if (emote.Value == 10 && tag.Value?.Id == 747783377146347590)
+                    //{
 
-                            // cavebob gang role
-                            await guildUser.AddRoleAsync(role);
-                        }
-                    }
+                    //    ulong caveBobGang = 824425544333656104;
 
-                    DatabaseManager.ProcessDiscordEmote(stat, message.Id, emote.Value, false, fromUser, isPreload);
+                    //    if (!guildUser.RoleIds.Contains(caveBobGang))
+                    //    {
+                    //        var role = guildUser.Guild.Roles.FirstOrDefault(x => x.Id == caveBobGang);
+
+                    //        // cavebob gang role
+                    //        await guildUser.AddRoleAsync(role);
+                    //    }
+                    //}
+
+                    long elapsedDownload = await DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(stat, message.Id, emote.Value, false, fromUser, isPreload);
+                    if (elapsedDownload > 0)
+                        anyDownload = true;
                 }
 
-                // TODO dont hammer the db after each call (check if any new emotes have been added
-                long emoteCount = DatabaseManager.Instance().TotalEmoteCount();
-                if (Program.TotalEmotes != emoteCount)
+                if (anyDownload)
                 {
-                    Program.TotalEmotes = emoteCount;
-                    // place pixels is now tracked
-                    //await Program.Client.SetGameAsync($"{Program.TotalEmotes} emotes", null, ActivityType.Watching);
+                    Stopwatch stopwatch3 = Stopwatch.StartNew();
+                    // TODO dont hammer the db after each call (check if any new emotes have been added
+                    long emoteCount = DatabaseManager.EmoteDatabaseManager.TotalEmoteCount();
+                    if (Program.TotalEmotes != emoteCount)
+                    {
+                        Program.TotalEmotes = emoteCount;
+                        // place pixels is now tracked all 5 mins
+                        await Program.Client.SetGameAsync($"{Program.TotalEmotes} emotes", null, ActivityType.Watching);
+                    }
+
+                    stopwatch3.Stop();
+
+                    if (message.Author.Id == 155419933998579713 && message.Tags.Count > 5)
+                        message.Channel.SendMessageAsync($"{stopwatch3.ElapsedMilliseconds} ms (Emote count)");
                 }
 
                 /*
@@ -215,19 +232,19 @@ namespace ETHDINFKBot.Log
 
 
                         // Ping Hell
-                        if(role.Key == 895231323034222593)
+                        if (role.Key == 895231323034222593)
                         {
                             // If the user doesnt have the Ping Hell role assign the role to it
-
                             ulong pingHellRole = 895231323034222593;
 
-                            if (!guildUser.RoleIds.Contains(pingHellRole))
+                            var user = await message.Channel.GetUserAsync(guildUser.Id) as SocketGuildUser; // Download the user -> to refresh the cache
+
+                            if (!guildUser.RoleIds.Contains(pingHellRole) || (user != null && !user.Roles.Any(i => i.Id == pingHellRole)))
                             {
                                 var rolePingHell = guildUser.Guild.Roles.FirstOrDefault(x => x.Id == pingHellRole);
 
                                 await guildUser.AddRoleAsync(rolePingHell);
-
-                                message.Channel.SendMessageAsync($"<@{authorId}> welcome to PingHell!");
+                                await message.Channel.SendMessageAsync($"<@{authorId}> welcome to PingHell!");
                             }
                         }
                     }

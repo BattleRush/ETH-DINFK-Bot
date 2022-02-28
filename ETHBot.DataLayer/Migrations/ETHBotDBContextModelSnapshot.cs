@@ -16,7 +16,7 @@ namespace ETHBot.DataLayer.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.0")
+                .HasAnnotation("ProductVersion", "6.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.BotChannelSetting", b =>
@@ -165,9 +165,20 @@ namespace ETHBot.DataLayer.Migrations
                     b.Property<ulong>("DiscordServerId")
                         .HasColumnType("bigint unsigned");
 
+                    b.Property<bool>("IsCategory")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<ulong?>("ParentDiscordChannelId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("int");
+
                     b.HasKey("DiscordChannelId");
 
                     b.HasIndex("DiscordServerId");
+
+                    b.HasIndex("ParentDiscordChannelId");
 
                     b.ToTable("DiscordChannels");
                 });
@@ -276,6 +287,9 @@ namespace ETHBot.DataLayer.Migrations
                     b.Property<ulong>("DiscordChannelId")
                         .HasColumnType("bigint unsigned");
 
+                    b.Property<ulong?>("DiscordThreadId")
+                        .HasColumnType("bigint unsigned");
+
                     b.Property<ulong>("DiscordUserId")
                         .HasColumnType("bigint unsigned");
 
@@ -288,6 +302,8 @@ namespace ETHBot.DataLayer.Migrations
                     b.HasKey("DiscordMessageId");
 
                     b.HasIndex("DiscordChannelId");
+
+                    b.HasIndex("DiscordThreadId");
 
                     b.HasIndex("DiscordUserId");
 
@@ -346,6 +362,43 @@ namespace ETHBot.DataLayer.Migrations
                     b.HasKey("DiscordServerId");
 
                     b.ToTable("DiscordServers");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.DiscordThread", b =>
+                {
+                    b.Property<ulong>("DiscordThreadId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<ulong>("DiscordChannelId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsLocked")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsNsfw")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsPrivateThread")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("MemberCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ThreadName")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("ThreadType")
+                        .HasColumnType("int");
+
+                    b.HasKey("DiscordThreadId");
+
+                    b.HasIndex("DiscordChannelId");
+
+                    b.ToTable("DiscordThreads");
                 });
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.DiscordUser", b =>
@@ -409,6 +462,9 @@ namespace ETHBot.DataLayer.Migrations
                     b.Property<ulong>("FromDiscordUserId")
                         .HasColumnType("bigint unsigned");
 
+                    b.Property<bool>("IsReply")
+                        .HasColumnType("tinyint(1)");
+
                     b.HasKey("PingHistoryId");
 
                     b.HasIndex("DiscordMessageId");
@@ -438,6 +494,12 @@ namespace ETHBot.DataLayer.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("PingCountOnce")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ReplyCount")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ReplyCountBot")
                         .HasColumnType("int");
 
                     b.HasKey("PingInfoId");
@@ -510,17 +572,23 @@ namespace ETHBot.DataLayer.Migrations
                         .HasMaxLength(4000)
                         .HasColumnType("varchar(4000)");
 
+                    b.Property<ulong?>("DMDiscordMessageId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<bool>("DeletedFromDM")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<string>("DirectLink")
                         .HasMaxLength(128)
                         .HasColumnType("varchar(128)");
 
-                    b.Property<ulong>("DiscordMessageId")
+                    b.Property<ulong?>("DiscordMessageId")
                         .HasColumnType("bigint unsigned");
 
                     b.Property<ulong>("SavedByDiscordUserId")
                         .HasColumnType("bigint unsigned");
 
-                    b.Property<bool>("SendInDM")
+                    b.Property<bool>("TriggeredByCommand")
                         .HasColumnType("tinyint(1)");
 
                     b.HasKey("SavedMessageId");
@@ -532,6 +600,26 @@ namespace ETHBot.DataLayer.Migrations
                     b.HasIndex("SavedByDiscordUserId");
 
                     b.ToTable("SavedMessages");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.Fun.FavouriteDiscordEmote", b =>
+                {
+                    b.Property<ulong>("DiscordEmoteId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnOrder(0);
+
+                    b.Property<ulong>("DiscordUserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnOrder(1);
+
+                    b.Property<string>("Name")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("DiscordEmoteId", "DiscordUserId");
+
+                    b.HasIndex("DiscordUserId");
+
+                    b.ToTable("FavouriteDiscordEmotes");
                 });
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.Fun.PlaceBoardHistory", b =>
@@ -828,6 +916,22 @@ namespace ETHBot.DataLayer.Migrations
                     b.ToTable("SubredditInfos");
                 });
 
+            modelBuilder.Entity("ETHBot.DataLayer.Data.StoredKeyValuePair", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Type")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("StoredKeyValuePairs");
+                });
+
             modelBuilder.Entity("ETHBot.DataLayer.Data.BotChannelSetting", b =>
                 {
                     b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordChannel", "DiscordChannel")
@@ -877,7 +981,13 @@ namespace ETHBot.DataLayer.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordChannel", "ParentDiscordChannel")
+                        .WithMany()
+                        .HasForeignKey("ParentDiscordChannelId");
+
                     b.Navigation("DiscordServer");
+
+                    b.Navigation("ParentDiscordChannel");
                 });
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.DiscordEmoteHistory", b =>
@@ -916,11 +1026,15 @@ namespace ETHBot.DataLayer.Migrations
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.DiscordMessage", b =>
                 {
-                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordChannel", "Channel")
+                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordChannel", "DiscordChannel")
                         .WithMany()
                         .HasForeignKey("DiscordChannelId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordThread", "DiscordThread")
+                        .WithMany()
+                        .HasForeignKey("DiscordThreadId");
 
                     b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordUser", "DiscordUser")
                         .WithMany()
@@ -932,7 +1046,9 @@ namespace ETHBot.DataLayer.Migrations
                         .WithMany()
                         .HasForeignKey("ReplyMessageId");
 
-                    b.Navigation("Channel");
+                    b.Navigation("DiscordChannel");
+
+                    b.Navigation("DiscordThread");
 
                     b.Navigation("DiscordUser");
 
@@ -946,6 +1062,17 @@ namespace ETHBot.DataLayer.Migrations
                         .HasForeignKey("DiscordServerId");
 
                     b.Navigation("DiscordServer");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.DiscordThread", b =>
+                {
+                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordChannel", "DiscordChannel")
+                        .WithMany()
+                        .HasForeignKey("DiscordChannelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DiscordChannel");
                 });
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.Discord.PingHistory", b =>
@@ -1033,9 +1160,7 @@ namespace ETHBot.DataLayer.Migrations
 
                     b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordMessage", "DiscordMessage")
                         .WithMany()
-                        .HasForeignKey("DiscordMessageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("DiscordMessageId");
 
                     b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordUser", "SavedByDiscordUser")
                         .WithMany()
@@ -1048,6 +1173,25 @@ namespace ETHBot.DataLayer.Migrations
                     b.Navigation("DiscordMessage");
 
                     b.Navigation("SavedByDiscordUser");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.Fun.FavouriteDiscordEmote", b =>
+                {
+                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordEmote", "DiscordEmote")
+                        .WithMany()
+                        .HasForeignKey("DiscordEmoteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordUser", "DiscordUser")
+                        .WithMany()
+                        .HasForeignKey("DiscordUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DiscordEmote");
+
+                    b.Navigation("DiscordUser");
                 });
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.Fun.PlaceBoardHistory", b =>

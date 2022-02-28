@@ -14,6 +14,8 @@ namespace ETHBot.DataLayer.Data.Discord
         public int PingCount { get; set; }
         public int PingCountOnce { get; set; }
         public int PingCountBot { get; set; }
+        public int ReplyCount { get; set; }
+        public int ReplyCountBot { get; set; }
 
         [ForeignKey("DiscordUser")]
         public ulong DiscordUserId { get; set; }

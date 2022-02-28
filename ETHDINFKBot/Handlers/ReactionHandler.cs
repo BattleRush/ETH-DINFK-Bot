@@ -120,7 +120,7 @@ namespace ETHDINFKBot.Handlers
                     LocalPath = null
                 };
 
-                DatabaseManager.ProcessDiscordEmote(discordEmote, Message.Id, AddedReaction ? 1 : -1, true, SocketGuildReactionUser, false);
+                DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(discordEmote, Message.Id, AddedReaction ? 1 : -1, true, SocketGuildReactionUser, false);
                 //Program.GlobalStats.EmojiInfoUsage.Single(i => i.EmojiId == emote.Id).UsedAsReaction++;
             }
             catch (Exception ex)
@@ -142,40 +142,45 @@ namespace ETHDINFKBot.Handlers
         {
             if (reactionEmote.Id == DiscordEmotes["savethis"] && !SocketGuildReactionUser.IsBot)
             {
+                DiscordHelper.SaveMessage(SocketTextChannel, SocketGuildReactionUser, Message, false);
+
                 // Save the post link
 
                 /*          var user = DatabaseManager.GetDiscordUserById(arg1.Value.Author.Id); // Verify the user is created but should actually be available by this poitn
                 var saveBy = DatabaseManager.GetDiscordUserById(arg3.User.Value.Id); // Verify the user is created but should actually be available by this poitn
                 */
-
+                /*
                 if (DatabaseManager.IsSaveMessage(Message.Id, SocketGuildReactionUser.Id))
                 {
                     // dont allow double saves
                     return;
                 }
 
+                if (SocketGuildMessageUser == null)
+                    return; // Likely a DM reaction
 
                 string authorUsername = SocketGuildMessageUser.Nickname ?? SocketGuildMessageUser.Username;
 
                 var link = $"https://discord.com/channels/{SocketGuild.Id}/{SocketGuildChannel.Id}/{Message.Id}";
+                IUserMessage msg = null;
                 if (!string.IsNullOrWhiteSpace(Message.Content))
                 {
-                    DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, Message.Content);
+                    DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, Message.Content, false);
 
                     if (Message.Content.Length > 1750)
                     {
                         // the message is too big to send with other content
                         // Send a DM to the user
-                        await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
+                        msg = await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
                             $"Direct link: [{SocketGuild.Name}/{SocketGuildChannel.Name}/by {authorUsername}] <{link}>");
 
                         // Send a DM to the user
-                        await SocketGuildReactionUser.SendMessageAsync(Message.Content);
+                        msg = await SocketGuildReactionUser.SendMessageAsync(Message.Content);
                     }
                     else
                     {
                         // Send a DM to the user
-                        await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
+                        msg = await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
                             $"{Message.Content} {Environment.NewLine}" +
                             $"Direct link: [{SocketGuild.Name}/{SocketGuildChannel.Name}/by {authorUsername}] <{link}>");
                     }
@@ -186,18 +191,53 @@ namespace ETHDINFKBot.Handlers
                 {
                     foreach (var item in Message.Embeds)
                     {
-                        DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, "Embed: " + item.ToString());
-                        await SocketGuildReactionUser.SendMessageAsync("", false, (Embed)item);
+                        DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, "Embed: " + item.ToString(), false);
+                        msg = await SocketGuildReactionUser.SendMessageAsync("", false, (Embed)item);
                     }
                 }
 
                 foreach (var item in Message.Attachments)
                 {
-                    DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, item.Url);
+                    DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, item.Url, false);
 
-                    await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
+                    msg = await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
                         $"{item.Url} {Environment.NewLine}" +
                         $"Direct link: [{SocketGuild.Name}/{SocketGuildChannel.Name}/by {authorUsername}] <{link}>");
+                }*/
+
+
+
+                // Only temp until the function is disabled
+                /*
+                msg = await SocketGuildReactionUser.SendMessageAsync(@$"⚠⚠⚠ **IMPORTANT ⚠⚠⚠
+Please use the new method to save messages. 
+Save via reactions will be disabled in the near future. 
+See in the image bellow how to use the new method to save messages.
+(right click) Message -> Apps -> Save Message** 
+https://cdn.discordapp.com/attachments/843957532380889098/914184155342995456/unknown.png");
+
+                // Be nice and add buttons
+                var builderComponent = new ComponentBuilder().WithButton("Delete Message", "delete-saved-message-id", ButtonStyle.Danger);
+
+                var messageToDelete = await msg.Channel.GetMessagesAsync(500).FlattenAsync();
+                if (messageToDelete != null)
+                {
+                    foreach (var item in messageToDelete)
+                    {
+                        if (item.Components.Count == 0)
+                        {
+                            try
+                            {
+                                // can only edit own messages
+                                if (item.Author.IsBot)
+                                    await msg.Channel.ModifyMessageAsync(item.Id, i => i.Components = builderComponent.Build());
+                            }
+                            catch (Exception ex)
+                            {
+
+                            }
+                        }
+                    }
                 }
 
 
@@ -212,6 +252,7 @@ namespace ETHDINFKBot.Handlers
                     builder.AddField("Message Author", $"{authorUsername}", true);
 
                     builder.AddField("Info", $"To save a message react with <:savethis:780179874656419880> to a message", false);
+                    builder.AddField("**Soon depricated info**", $"This feature will soon no longer work trough reactions. Please use the new Method: (right click) Message -> Apps -> Save Message", false);
 
                     builder.WithAuthor(SocketGuildReactionUser);
                     builder.WithCurrentTimestamp();
@@ -220,7 +261,7 @@ namespace ETHDINFKBot.Handlers
                     var saveMessage = await SocketTextChannel.SendMessageAsync("", false, builder.Build());
 
                     DiscordHelper.DeleteMessage(saveMessage, TimeSpan.FromSeconds(45));
-                }
+                }*/
             }
         }
 
@@ -277,17 +318,21 @@ namespace ETHDINFKBot.Handlers
 
                             builder.WithTitle($"{SocketGuildMessageUser.Username} has a suggestion");
                             builder.WithColor(0, 0, 255);
-                            
+
+                            if (SocketGuildMessageUser != null)
+                                builder.WithAuthor(SocketGuildMessageUser);
+
                             //add first attachement as thumbnail (if attachment is not picture, height == null) 
-                            if(Message.Attachments != null && Message.Attachments.FirstOrDefault()?.Height != null)
+                            if (Message.Attachments != null && Message.Attachments.FirstOrDefault()?.Height != null)
                             {
                                 builder.WithThumbnailUrl(Message.Attachments.First().Url);
+                                builder.WithImageUrl(Message.Attachments.First().Url);
                             }
-                            
+
                             builder.WithCurrentTimestamp();
                             //if no content, add content
-                            builder.AddField("Suggestion", (Message.Content.Length > 0 ? Message.Content : "No content provided."));
-                            builder.AddField("Up/Downvotes", "<:this:"+ DiscordEmotes["this"]+ "> " + upvoteCount.Value.ReactionCount + " / <:that:"+ DiscordEmotes["that"]+ "> " + downvoteCount.Value.ReactionCount);
+                            builder.AddField("Suggestion", (Message.Content.Length > 0 ? Message.Content : "No content provided."), true);
+                            builder.AddField("Up/Downvotes", $"<:this:{DiscordEmotes["this"]}> {upvoteCount.Value.ReactionCount} / <:that:{DiscordEmotes["that"]}> {downvoteCount.Value.ReactionCount}", true);
                             var link = $"https://discord.com/channels/{SocketGuild.Id}/{SocketGuildChannel.Id}/{Message.Id}";
 
                             builder.AddField("Link", $"[Message]({link})");

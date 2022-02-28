@@ -20,6 +20,7 @@ namespace ETHBot.DataLayer.Data.Discord
         public ulong? DiscordUserId { get; set; }
         public DiscordUser DiscordUser { get; set; }
         public ulong? DiscordMessageId { get; set; }
+        public bool IsReply { get; set; }
 
         [ForeignKey("DiscordMessageId")]
         public virtual DiscordMessage DiscordMessage { get; set; }

@@ -1,33 +1,35 @@
 ﻿{
-    "DiscordToken": "",
-    "Owner": -1,
-    "BaseGuild": -1,
-    "Connectionstring": "Data Source=<PATH>", // TODO -> To be removed
+  "DiscordToken": "",
+  "Owner": -1,
+  "BaseGuild": -1,
+  "Connectionstring": "Data Source=<PATH>", // TODO -> To be removed
 
-    // TODO Create Connection string from these variables
-    "MariaDB_FullUserName": "",
-    "MariaDB_ReadOnlyUserName": "",
-    "MariaDBName": "",
+  // TODO Create Connection string from these variables
+  "MariaDB_FullUserName": "",
+  "MariaDB_ReadOnlyUserName": "",
+  "MariaDBName": "",
 
-    "ConnectionStrings": {
-        "ConnectionString_Full": "Server=<SERVER_PROD_FULL>;User Id=<USER>;Password=<PASSWORD>;Database=<DATABASE_NAME>",
-        "ConnectionString_ReadOnly": "Server=<SERVER_PROD_READONLY>;User Id=<USER>;Password=<PASSWORD>;Database=<DATABASE_NAME>"
-    },
+  "ConnectionStrings": {
+    "ConnectionString_Full": "Server=<SERVER_PROD_FULL>;User Id=<USER>;Password=<PASSWORD>;Database=<DATABASE_NAME>",
+    "ConnectionString_ReadOnly": "Server=<SERVER_PROD_READONLY>;User Id=<USER>;Password=<PASSWORD>;Database=<DATABASE_NAME>"
+  },
 
-    "CertFilePath": "",
+  "CertFilePath": "",
+  "FFMpegPath": "",
+  "CDNPath": "",
 
-    "BasePath": "",
-    "Reddit": {
-        "AppId": "",
-        "RefreshToken": "",
-        "AppSecret": ""
-    },
+  "BasePath": "",
+  "Reddit": {
+    "AppId": "",
+    "RefreshToken": "",
+    "AppSecret": ""
+  },
 
-    "Logging": {
-        "LogLevel": {
-            "Default": "Warning",
-            "Microsoft": "Warning",
-            "Microsoft.Hosting.Lifetime": "Warning"
-        }
+  "Logging": {
+    "LogLevel": {
+      "Default": "Warning",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Warning"
     }
+  }
 }

@@ -163,7 +163,7 @@ namespace ETHDINFKBot
 
         private byte[] GetTotalChunks()
         {
-            var chunkFolder = Path.Combine(Program.BasePath, "TimelapseChunks");
+            var chunkFolder = Path.Combine(Program.ApplicationSetting.BasePath, "TimelapseChunks");
 
             var fileAmount = Directory.GetFiles(chunkFolder).Length;
 
@@ -179,7 +179,7 @@ namespace ETHDINFKBot
         }
         private byte[] GetChunk(short chunkId)
         {
-            var chunkFolder = Path.Combine(Program.BasePath, "TimelapseChunks");
+            var chunkFolder = Path.Combine(Program.ApplicationSetting.BasePath, "TimelapseChunks");
 
             string file = $"Chunk_{chunkId}.dat";
             string filePath = Path.Combine(chunkFolder, file);

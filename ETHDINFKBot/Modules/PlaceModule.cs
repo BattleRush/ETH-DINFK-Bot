@@ -353,7 +353,7 @@ If you violate the server rules your pixels will be removed.
 
             //builder.WithThumbnailUrl("https://avatars0.githubusercontent.com/u/11750584");
 
-            var ownerUser = Program.Client.GetUser(Program.Owner);
+            var ownerUser = Program.Client.GetUser(Program.ApplicationSetting.Owner);
 
             // TODO move admin commands to the admin module
             builder.AddField("Admin ONLY", $"```{prefix}place lock <true|false>" + Environment.NewLine +
@@ -386,7 +386,7 @@ If you violate the server rules your pixels will be removed.
         public async Task LockPlace(bool lockPlace)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 Context.Channel.SendMessageAsync("You aren't allowed to run this command.", false);
                 return;
@@ -408,7 +408,7 @@ If you violate the server rules your pixels will be removed.
         public async Task RemovePixels(ulong discordUserId, int x, int y, int xSize, int ySize, int mins = 1440)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 Context.Channel.SendMessageAsync("You really tought you could run this huh?", false);
                 return;
@@ -643,7 +643,7 @@ If you violate the server rules your pixels will be removed.
         public async Task GenerateTimelapse(params SocketUser[] users)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 Context.Channel.SendMessageAsync("You aren't allowed to run this command || Yes this is because someone likes to spam db heavy commands ||", false);
                 return;
@@ -656,7 +656,7 @@ If you violate the server rules your pixels will be removed.
         public async Task GenerateTimelapse(int x, int y, int size, params SocketUser[] users)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner && size > 250)
+            if (author.Id != Program.ApplicationSetting.Owner && size > 250)
             {
                 Context.Channel.SendMessageAsync("You aren't allowed to run this command for size > 250", false);
                 return;
@@ -668,7 +668,7 @@ If you violate the server rules your pixels will be removed.
         public async Task GenerateTimelapse(int x, int y, int size)
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner && size > 250)
+            if (author.Id != Program.ApplicationSetting.Owner && size > 250)
             {
                 Context.Channel.SendMessageAsync("You aren't allowed to run this command for size > 250", false);
                 return;
@@ -681,7 +681,7 @@ If you violate the server rules your pixels will be removed.
         public async Task GenerateTimelapse()
         {
             var author = Context.Message.Author;
-            if (author.Id != ETHDINFKBot.Program.Owner)
+            if (author.Id != Program.ApplicationSetting.Owner)
             {
                 Context.Channel.SendMessageAsync("You aren't allowed to run this command || Yes this is because someone likes to spam db heavy commands ||", false);
                 return;
@@ -940,7 +940,7 @@ If you violate the server rules your pixels will be removed.
             try
             {
                 var author = Context.Message.Author;
-                if (author.Id != ETHDINFKBot.Program.Owner && forceReload)
+                if (author.Id != Program.ApplicationSetting.Owner && forceReload)
                 {
                     Context.Channel.SendMessageAsync("You aren't allowed to run this command || Yes this is because someone likes to spam db heavy commands ||", false);
                     return;
@@ -1224,21 +1224,26 @@ If you violate the server rules your pixels will be removed.
                     var dataPointsCount = list.ToDictionary(i => i.DateTime, i => i.SuccessCount);
                     var dataPointsFailed = list.ToDictionary(i => i.DateTime, i => i.FailedCount);
 
+                    int maxCountSuccess = list.Select(i => i.SuccessCount).Max();
+                    int maxCountFailed = list.Select(i => i.FailedCount).Max();
+
+                    int maxVal = Math.Max(maxCountFailed, maxCountSuccess);
+
                     var drawInfo = DrawingHelper.GetEmptyGraphics();
                     var padding = DrawingHelper.DefaultPadding;
                     var labels = DrawingHelper.GetLabels(dataPointsAvg, 6, 10, true, startTime, endTime, " ms");
                     var labelsCount = DrawingHelper.GetLabels(dataPointsCount, 6, 10, true, startTime, endTime);
                     var gridSize = new GridSize(drawInfo.Bitmap, padding);
                     var dataPointListAvg = DrawingHelper.GetPoints(dataPointsAvg, gridSize, true, startTime, endTime);
-                    var dataPointListCount = DrawingHelper.GetPoints(dataPointsCount, gridSize, true, startTime, endTime);
-                    var dataPointListFailed = DrawingHelper.GetPoints(dataPointsFailed, gridSize, true, startTime, endTime);
+                    var dataPointListCount = DrawingHelper.GetPoints(dataPointsCount, gridSize, true, startTime, endTime, false, maxVal);
+                    var dataPointListFailed = DrawingHelper.GetPoints(dataPointsFailed, gridSize, true, startTime, endTime, false, maxVal);
 
                     DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, $"Place Perf {list.Count} mins", labelsCount.YAxisLabels);
                     // todo add 2. y Axis on the right
 
-                    DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListAvg, 6, new SKPaint() { Color = new SKColor(255, 0, 0) }, "Avg in ms / min", 0, true); //new Pen(System.Drawing.Color.LightGreen)
-                    DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListCount, 6, new SKPaint() { Color = new SKColor(0, 255, 0) }, "Count / min", 1, true); // new Pen(System.Drawing.Color.Yellow)
-                    DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListFailed, 6, new SKPaint() { Color = new SKColor(0, 0, 255) }, "Failed Count / min", 2, true); // new Pen(System.Drawing.Color.DarkOrange)
+                    var info = DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListAvg, new SKPaint() { Color = new SKColor(255, 0, 0) }, 6, "Avg in ms / min", 0, 0, true); //new Pen(System.Drawing.Color.LightGreen)
+                    var info2 = DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListCount, new SKPaint() { Color = new SKColor(0, 255, 0) }, 6, "Count / min", 0, info.usedWidth, true); // new Pen(System.Drawing.Color.Yellow)
+                    var info3 = DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListFailed, new SKPaint() { Color = new SKColor(0, 0, 255) }, 6, "Failed Count / min", 0, info.usedWidth + info2.usedWidth, true); // new Pen(System.Drawing.Color.DarkOrange)
 
                     // TODO add methods to the drawing lib
                     if (listStartUpTimes.Count > 0)
@@ -1349,7 +1354,9 @@ If you violate the server rules your pixels will be removed.
 
             //OldPixelCountMod = totalPixelsPlaced % 100_000;
 
-            Program.Client.SetGameAsync($"{totalPixelsPlaced:N0} pixels", null, ActivityType.Watching);
+            if (DateTime.Now.Minute % 5 == 0) // Only all 5 mins
+                Program.Client.SetGameAsync($"{totalPixelsPlaced:N0} pixels", null, ActivityType.Watching);
+            
             RefreshBoard(10);
 
             if (DateTime.Now.Minute % 60 == 0 || PlaceDiscordUsers.Count == 0)
@@ -1368,13 +1375,13 @@ If you violate the server rules your pixels will be removed.
             watch.Start();
 
             // todo config
-            ulong guildId = Program.BaseGuild;
+            ulong guildId = Program.ApplicationSetting.BaseGuild;
             ulong spamChannel = 768600365602963496;
 
             var guild = Program.Client.GetGuild(guildId);
             var textChannel = guild.GetTextChannel(spamChannel);
 
-            var chunkFolder = Path.Combine(Program.BasePath, "TimelapseChunks");
+            var chunkFolder = Path.Combine(Program.ApplicationSetting.BasePath, "TimelapseChunks");
 
             if (!Directory.Exists(chunkFolder))
                 Directory.CreateDirectory(chunkFolder);
