@@ -17,27 +17,30 @@ namespace ETHDINFKBot.Helpers
             if (data.Count == 0)
                 return ""; // no response
 
-            string result = "";
+            string result = "``";
 
-            result += "**";
+            result += "";
 
             for (int i = 0; i < header.Count; i++)
             {
                 if (selectColumns.Contains(i) || selectColumns.Count == 0)
-                    result += header[i] + "\t";
+                    result += header[i].Replace("`", "") + "\t"; // ensure it cant be escaped
             }
 
-            result += "**" + Environment.NewLine;
+            result += "``" + Environment.NewLine;
 
-            
+            // If the header is really long then abort the message
+            if(result.Length > 1000)
+            {
+                result = $"Reconsider how many colums you are selecting. Maybe use {Program.CurrentPrefix}sql queryd <query>";
+                return result;
+            }    
 
             if (data.Count > 0)
             {
                 result += "```";
                 foreach (var row in data)
                 {
-
-
                     string rowString = "";
                     for (int i = 0; i < row.Count; i++)
                     {

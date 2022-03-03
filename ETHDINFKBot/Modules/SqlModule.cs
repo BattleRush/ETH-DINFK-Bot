@@ -676,7 +676,7 @@ ORDER BY table_name DESC;", true, 50);
                 else
                     ActiveSQLCommands.Add(userId, DateTime.Now);
 
-                var queryResult = await SQLHelper.GetQueryResults(Context, commandSql, true, 50);
+                var queryResult = await SQLHelper.GetQueryResults(Context, commandSql, true, 100);
                 string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
 
 
