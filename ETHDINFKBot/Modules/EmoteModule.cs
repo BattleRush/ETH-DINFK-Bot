@@ -1,7 +1,9 @@
 ﻿using Discord;
 using Discord.Commands;
+using Discord.Net;
 using ETHBot.DataLayer.Data.Enums;
 using ETHBot.DataLayer.Data.Fun;
+using ETHDINFKBot.Data;
 using ETHDINFKBot.Drawing;
 using ETHDINFKBot.Helpers;
 using System;
@@ -10,6 +12,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace ETHDINFKBot.Modules
@@ -136,37 +139,36 @@ namespace ETHDINFKBot.Modules
 
         [Command("favourite"), Priority(1000)]
         [Alias("fav")]
-        public async Task EmoteFavourite(string search)
+        public async Task EmoteFavourite(string search, bool secondTry = false)
         {
+            int rows = 4;
+            int columns = 5;
+
+            if (!CommonHelper.AllowedToRun(BotPermissionType.EnableType2Commands, Context.Message.Channel.Id, Context.Message.Author.Id))
+                return;
+
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+
+            var author = Context.Message.Author;
+
+            if (search.Length < 2 && author.Id != Program.ApplicationSetting.Owner)
+            {
+                await Context.Channel.SendMessageAsync($"Search term needs to be atleast 2 characters long", false); // to prevent from db overload
+                return;
+            }
+
+            var emoteResult = DiscordHelper.SearchEmote(search, Context.Guild.Id, 0, false, rows, columns);
+
+
+            watch.Stop();
+
+            int page = 0;
+
+            string desc = $"**Available({page * emoteResult.PageSize}-{Math.Min((page + 1) * emoteResult.PageSize, emoteResult.TotalEmotesFound)}/{emoteResult.TotalEmotesFound}) '{search}' emojis to use (Usage .<name>)**" + Environment.NewLine;
+
             try
             {
-                int rows = 4;
-                int columns = 5;
-
-                if (!CommonHelper.AllowedToRun(BotPermissionType.EnableType2Commands, Context.Message.Channel.Id, Context.Message.Author.Id))
-                    return;
-
-                Stopwatch watch = new Stopwatch();
-                watch.Start();
-
-                var author = Context.Message.Author;
-
-                if (search.Length < 2 && author.Id != Program.ApplicationSetting.Owner)
-                {
-                    await Context.Channel.SendMessageAsync($"Search term needs to be atleast 2 characters long", false); // to prevent from db overload
-                    return;
-                }
-
-                var emoteResult = DiscordHelper.SearchEmote(search, Context.Guild.Id, 0, false, rows, columns);
-
-
-                watch.Stop();
-
-                int page = 0;
-
-                string desc = $"**Available({page * emoteResult.PageSize}-{Math.Min((page + 1) * emoteResult.PageSize, emoteResult.TotalEmotesFound)}/{emoteResult.TotalEmotesFound}) '{search}' emojis to use (Usage .<name>)**" + Environment.NewLine;
-
-
                 EmbedBuilder builder = new EmbedBuilder()
                 {
                     ImageUrl = emoteResult.Url,
@@ -201,7 +203,15 @@ namespace ETHDINFKBot.Modules
                 int col = 0;
                 foreach (var emote in emoteResult.EmoteList)
                 {
-                    builderComponent.WithButton(emote.Value, $"emote-fav-{emote.Key}", ButtonStyle.Primary, Emote.Parse($"<:{emote.Value}:{emote.Key}>"), null, false, row);
+                    if (emoteResult.valid.Skip(row * columns + col).First())
+                    {
+                        builderComponent.WithButton(emote.Value, $"emote-fav-{emote.Key}", ButtonStyle.Primary, Emote.Parse($"<:{emote.Value}:{emote.Key}>"), null, false, row);
+                    }
+                    else
+                    {
+                        builderComponent.WithButton(emote.Value, $"emote-fav-{emote.Key}", ButtonStyle.Primary, null, null, false, row);
+                    }
+
                     col++;
 
                     if (col == columns)
@@ -220,9 +230,32 @@ namespace ETHDINFKBot.Modules
 
                 var msg2 = await Context.Channel.SendMessageAsync("", false, builder.Build(), null, null, null, builderComponent.Build());
             }
+            catch (HttpException ex)
+            {
+                foreach (var error in ex.Errors)
+                {
+                    if (error.Errors.Any(i => i.Code == "BUTTON_COMPONENT_INVALID_EMOJI"))
+                    {
+                        var parts = error.Path.Split('.');
+
+                        int error_row = Convert.ToInt32(Regex.Replace(parts[0], "[^0-9]", ""));
+                        int error_column = Convert.ToInt32(Regex.Replace(parts[1], "[^0-9]", ""));
+
+
+                        var brokenEmote = emoteResult.EmoteList.Skip(error_row * columns + error_column).First();
+                        EmoteDBManager.Instance().ChangeValidStatus(brokenEmote.Key, false);
+                    }
+                }
+
+                // call yourself again to retry -> 
+                if (secondTry == false)
+                    await EmoteFavourite(search, true);
+
+                // Some emotes may no lonver be valid -> db entry to invalidate the emote
+
+            }
             catch (Exception ex)
             {
-                // Some emotes may no lonver be valid -> db entry to invalidate the emote
                 await Context.Channel.SendMessageAsync(ex.ToString(), false);
             }
         }

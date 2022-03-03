@@ -107,9 +107,9 @@ namespace ETHDINFKBot.Log
                         CreatedAt = tag.Value.CreatedAt,
                         Blocked = false,
                         LastUpdatedAt = DateTime.Now,
-                        LocalPath = null
+                        LocalPath = null,
+                        IsValid = true // TODO Set default on db to true?
                     };
-
 
                     /*cavebob stuff outdated*/
                     //if (emote.Value == 10 && tag.Value?.Id == 747783377146347590)

@@ -19,8 +19,6 @@ namespace ETHDINFKBot.Helpers
 
             string result = "``";
 
-            result += "";
-
             for (int i = 0; i < header.Count; i++)
             {
                 if (selectColumns.Contains(i) || selectColumns.Count == 0)

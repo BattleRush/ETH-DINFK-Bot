@@ -51,6 +51,23 @@ namespace ETHDINFKBot.Data
             }
         }
 
+        public void ChangeValidStatus(ulong emoteId, bool valid)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    context.DiscordEmotes.Single(i => i.DiscordEmoteId == emoteId).IsValid = valid;
+                    context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return;
+            }
+        }
+
         public bool SetEmoteBlockStatus(ulong emoteId, bool blockStatus)
         {
             try
