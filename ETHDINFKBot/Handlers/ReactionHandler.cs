@@ -303,7 +303,7 @@ https://cdn.discordapp.com/attachments/843957532380889098/914184155342995456/unk
                     var downvoteCount = Message.Reactions.Where(i => i.Key is Emote emote && emote.Id == DiscordEmotes["that"]).FirstOrDefault();
 
 
-                    if (upvoteCount.Value.ReactionCount > 15 && upvoteCount.Value.ReactionCount > downvoteCount.Value.ReactionCount)
+                    if (upvoteCount.Value.ReactionCount - downvoteCount.Value.ReactionCount >= 15)
                     {
                         // TODO not fixed ids
                         var adminSuggestionChannel = SocketGuild.GetTextChannel(DiscordChannels["pullrequest"]);
