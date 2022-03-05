@@ -2,7 +2,6 @@
 using ETHBot.DataLayer;
 using ETHBot.DataLayer.Data.Enums;
 using ETHDINFKBot.Helpers;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;

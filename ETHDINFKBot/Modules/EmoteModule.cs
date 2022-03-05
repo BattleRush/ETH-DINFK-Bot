@@ -53,51 +53,52 @@ namespace ETHDINFKBot.Modules
         [Command("set"), Priority(1000)]
         public async Task SetEmoteFavourite(ulong emoteId, string name)
         {
-            name = name.Replace("`", ""); // Dont allow people to escape the code blocks
-            var discordEmote = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(emoteId);
+            return;
+            //name = name.Replace("`", ""); // Dont allow people to escape the code blocks
+            //var discordEmote = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(emoteId);
 
-            if (discordEmote == null)
-            {
-                // THIS EMOTE ID IS UNKNOWN
+            //if (discordEmote == null)
+            //{
+            //    // THIS EMOTE ID IS UNKNOWN
 
-                Context.Message.ReplyAsync("This emote id does not exist in the database.");
-                return;
-            }
+            //    Context.Message.ReplyAsync("This emote id does not exist in the database.");
+            //    return;
+            //}
 
-            var existingFavEmotes = DatabaseManager.EmoteDatabaseManager.GetFavouriteEmotes(Context.User.Id);
+            //var existingFavEmotes = DatabaseManager.EmoteDatabaseManager.GetFavouriteEmotes(Context.User.Id);
 
-            if (existingFavEmotes == null) return; // TODO error?
+            //if (existingFavEmotes == null) return; // TODO error?
 
-            if (existingFavEmotes.Any(i => i.DiscordEmoteId == emoteId))
-            {
-                // EMOTE IS ALREADY MAPPED
+            //if (existingFavEmotes.Any(i => i.DiscordEmoteId == emoteId))
+            //{
+            //    // EMOTE IS ALREADY MAPPED
 
-                Context.Message.ReplyAsync("Emote is already in your favourites"); // -> UPDATE
+            //    Context.Message.ReplyAsync("Emote is already in your favourites"); // -> UPDATE
 
-                return;
-            }
+            //    return;
+            //}
 
-            if (existingFavEmotes.Any(i => string.Equals(i.Name, name, StringComparison.OrdinalIgnoreCase)))
-            {
-                // THIS USER MAPPED THE NAME ALREADY FOR AN EMOTE
+            //if (existingFavEmotes.Any(i => string.Equals(i.Name, name, StringComparison.OrdinalIgnoreCase)))
+            //{
+            //    // THIS USER MAPPED THE NAME ALREADY FOR AN EMOTE
 
-                Context.Message.ReplyAsync("You reserved this name for some other emote already."); // -> DELETE FIRST THEN CREATE NEW
-                return;
-            }
+            //    Context.Message.ReplyAsync("You reserved this name for some other emote already."); // -> DELETE FIRST THEN CREATE NEW
+            //    return;
+            //}
 
 
-            // Clear to create a new fav mapping
+            //// Clear to create a new fav mapping
 
-            FavouriteDiscordEmote newFawEmote = new FavouriteDiscordEmote()
-            {
-                DiscordEmoteId = emoteId,
-                DiscordUserId = Context.User.Id,
-                Name = name
-            };
+            //FavouriteDiscordEmote newFawEmote = new FavouriteDiscordEmote()
+            //{
+            //    DiscordEmoteId = emoteId,
+            //    DiscordUserId = Context.User.Id,
+            //    Name = name
+            //};
 
-            var addedFavEmote = DatabaseManager.EmoteDatabaseManager.AddFavouriteEmote(newFawEmote);
+            //var addedFavEmote = DatabaseManager.EmoteDatabaseManager.AddFavouriteEmote(newFawEmote);
 
-            await Context.Message.ReplyAsync($"``Successfully added {name} as a new favourite emote. You can call the emote with {Program.CurrentPrefix}{name}``");
+            //await Context.Message.ReplyAsync($"``Successfully added {name} as a new favourite emote. You can call the emote with {Program.CurrentPrefix}{name}``");
         }
 
         [Command("favourite"), Priority(1000)]
@@ -226,8 +227,8 @@ namespace ETHDINFKBot.Modules
                 if (col > 0)
                     row++;
 
-                builderComponent.WithButton("Prev <", "emote-fav-get-prev-page", ButtonStyle.Danger, null, null, page == 0, row);
-                builderComponent.WithButton("> Next", "emote-fav-get-next-page", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound, row);
+                builderComponent.WithButton("Prev <", $"emote-fav-get-prev-page-{search}-{page}", ButtonStyle.Danger, null, null, page == 0, row);
+                builderComponent.WithButton("> Next", $"emote-fav-get-next-page-{search}-{page}", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound, row);
 
                 var msg2 = await Context.Channel.SendMessageAsync("", false, builder.Build(), null, null, null, builderComponent.Build());
             }

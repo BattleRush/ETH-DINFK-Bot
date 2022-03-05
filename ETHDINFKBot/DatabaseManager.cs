@@ -6,7 +6,6 @@ using ETHBot.DataLayer.Data.Discord;
 using ETHBot.DataLayer.Data.Enums;
 using ETHBot.DataLayer.Data.Reddit;
 using ETHDINFKBot.Data;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MySqlConnector;

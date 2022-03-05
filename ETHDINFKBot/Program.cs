@@ -60,6 +60,7 @@ namespace ETHDINFKBot
         private CommandService Commands;
 
         private IServiceProvider services;
+        private static InteractionService _interactionService;
         private static IConfiguration Configuration;
 
         public static long TotalEmotes { get; set; }
@@ -393,35 +394,22 @@ namespace ETHDINFKBot
             // For user commands
             Client.UserCommandExecuted += UserCommandHandler;
 
-            Client.ButtonExecuted += Client_ButtonExecuted;
-            Client.SlashCommandExecuted += Client_SlashCommandExecuted;
+            //Client.ButtonExecuted += Client_ButtonExecuted;
+            //Client.SlashCommandExecuted += Client_SlashCommandExecuted;
+
             Client.ModalSubmitted += Client_ModalSubmitted;
-
-
-
-            await Client.LoginAsync(TokenType.Bot, token);
-            await Client.StartAsync();
-
-#if DEBUG
-            await Client.SetGameAsync($"DEV MODE");
-#else
-            //await Client.SetGameAsync($"with a neko");
-            TotalEmotes = DatabaseManager.EmoteDatabaseManager.TotalEmoteCount();
-            await Client.SetGameAsync($"{TotalEmotes} emotes", null, ActivityType.Watching);
-#endif
+            Client.InteractionCreated += Client_InteractionCreated;
 
             Services = new ServiceCollection()
                 .AddSingleton(Client)
                 //.AddSingleton<InteractiveService>()
                 .AddSingleton<DiscordSocketClient>()
                 .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
+                //.AddSingleton<CommandHandler>()
                 .BuildServiceProvider();
-
-
 
             Commands = new CommandService();
             await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), Services);
-
 
             CommandNames = new List<string>();
 
@@ -444,8 +432,42 @@ namespace ETHDINFKBot
             PlaceMultipixelHandler multipixelHandler = new PlaceMultipixelHandler();
             multipixelHandler.MultiPixelProcess();
 
+
+            // Here we can initialize the service that will register and execute our commands
+            //await Services.GetRequiredService<CommandHandler>().InitializeAsync();
+
+            await Client.LoginAsync(TokenType.Bot, token);
+            await Client.StartAsync();
+
+#if DEBUG
+            await Client.SetGameAsync($"DEV MODE");
+#else
+            //await Client.SetGameAsync($"with a neko");
+            TotalEmotes = DatabaseManager.EmoteDatabaseManager.TotalEmoteCount();
+            await Client.SetGameAsync($"{TotalEmotes} emotes", null, ActivityType.Watching);
+#endif
+
             // Block this task until the program is closed.
             await Task.Delay(-1);
+        }
+
+        private async Task Client_InteractionCreated(SocketInteraction arg)
+        {
+            try
+            {
+                // Create an execution context that matches the generic type parameter of your InteractionModuleBase<T> modules
+                var ctx = new SocketInteractionContext(Client, arg);
+                await _interactionService.ExecuteCommandAsync(ctx, Services);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+
+                // If a Slash Command execution fails it is most likely that the original interaction acknowledgement will persist. It is a good idea to delete the original
+                // response, or at least let the user know that something went wrong during the command execution.
+                if (arg.Type == InteractionType.ApplicationCommand)
+                    await arg.GetOriginalResponseAsync().ContinueWith(async (msg) => await msg.Result.DeleteAsync());
+            }
         }
 
         private Task Client_ModalSubmitted(SocketModal arg)
@@ -462,9 +484,10 @@ namespace ETHDINFKBot
 
         private async Task Client_ButtonExecuted(SocketMessageComponent arg)
         {
+            return;
             ButtonHandler buttonHandler = new ButtonHandler(arg);
             var result = await buttonHandler.Run();
-            arg.DeferAsync(true);
+            await arg.DeferAsync(false);
         }
 
         public async Task MessageCommandHandler(SocketMessageCommand arg)
@@ -799,6 +822,9 @@ namespace ETHDINFKBot
             var commands = Services.GetRequiredService<InteractionService>();
             try
             {
+                _interactionService = new InteractionService(Client);
+                await _interactionService.AddModulesAsync(Assembly.GetEntryAssembly(), Services);
+                
                 //var t = await commands.RegisterCommandsToGuildAsync(747752542741725244, true);
             }
             catch (Exception ex)
@@ -841,112 +867,7 @@ namespace ETHDINFKBot
 
             return Task.CompletedTask;
 
-            //if (!TempDisableIncomming)
-            //    return Task.CompletedTask;
-            //OnlyHereToTestMyBadCodingSkills
-
-            // todo config
-            /*
-
-                        var textChannel = guild.GetTextChannel(spamChannel);
-
-                        try
-                        {
-                            textChannel.SendMessageAsync("Starting DB Migration");
-
-
-                            MigrateSQLiteToMariaDB migration = new MigrateSQLiteToMariaDB();
-
-                            int count = migration.MigrateDiscordServers();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordServers");
-
-                            count = migration.MigrateDiscordChannels();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordChannels");
-
-                            count = migration.MigrateDiscordUsers();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordUsers");
-
-
-                            count = migration.MigrateDiscordMessages(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordMessagess");
-
-
-                            count = migration.MigrateDiscordEmotes(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordEmotes");
-
-
-                            count = migration.MigrateDiscordEmoteStatistics(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordEmoteStatistics");
-
-                            count = migration.MigrateDiscordEmoteHistory(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordEmoteHistory");
-
-                            count = migration.MigrateBannedLinks();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} BannedLinks");
-
-                            count = migration.MigrateCommandTypes();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} CommandTypes");
-
-                            count = migration.MigrateCommandStatistics();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} CommandStatistics");
-
-                            count = migration.MigrateDiscordRoles();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordRoles");
-
-                            count = migration.MigratePingHistory(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PingHistory");
-
-                            count = migration.MigratePingStatistics();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PingStatistics");
-
-                            count = migration.MigrateRantTypes();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RantTypes");
-
-                            count = migration.MigrateRantMessages();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RantMessages");
-
-                            count = migration.MigrateSavedMessages();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} SavedMessages");
-
-                            count = migration.MigratePlaceBoardPerformanceInfos();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardPerformanceInfos");
-
-                            count = migration.MigratePlaceBoardPixels(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardPixels");
-
-                            count = migration.MigratePlaceBoardDiscordUsers();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardDiscordUsers");
-
-                            count = migration.MigratePlaceBoardPixelHistory(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardPixelHistory"); // (SKIPED) // TODO Convert snowflake id to datetime
-
-                            count = migration.MigrateSubredditInfos();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} SubredditInfos");
-
-                            count = migration.MigrateRedditPosts(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RedditPosts");
-
-                            count = migration.MigrateRedditImages(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RedditImages");
-
-                            count = migration.MigrateBotChannelSettings();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} BotChannelSettings");
-
-
-                            /*count = migration.MigrateDiscordMessages(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordMessagess");
-                            */
-            /*
-                            textChannel.SendMessageAsync($"Migration done. Releasing DB.");
-                        }
-                        catch (Exception ex)
-                        {
-                            textChannel.SendMessageAsync(ex.ToString());
-                        }
-
-                        TempDisableIncomming = false;*/
-
-            //return Task.CompletedTask;
+        
         }
 
         private Task Client_RoleCreated(SocketRole arg)
@@ -1246,6 +1167,15 @@ namespace ETHDINFKBot
 
         public async Task HandleCommandAsync(SocketMessage m)
         {
+            // Ignore everyone but the owner in debug mode
+#if DEBUG
+            if(m.Author.Id != Program.ApplicationSetting.Owner && !m.Author.IsBot && m.Content.StartsWith(Program.CurrentPrefix))
+            {
+                m.Channel.SendMessageAsync("I'll ignore you");
+                return;
+            }
+#endif
+
             if (TempDisableIncomming)
                 return;
 
