@@ -53,6 +53,7 @@ namespace ETHDINFKBot.Modules
         [Command("set"), Priority(1000)]
         public async Task SetEmoteFavourite(ulong emoteId, string name)
         {
+            name = name.Replace("`", ""); // Dont allow people to escape the code blocks
             var discordEmote = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(emoteId);
 
             if (discordEmote == null)
@@ -96,7 +97,7 @@ namespace ETHDINFKBot.Modules
 
             var addedFavEmote = DatabaseManager.EmoteDatabaseManager.AddFavouriteEmote(newFawEmote);
 
-            await Context.Message.ReplyAsync($"Successfully added {name} as a new favourite emote. You can call the emote with {Program.CurrentPrefix}{name}");
+            await Context.Message.ReplyAsync($"``Successfully added {name} as a new favourite emote. You can call the emote with {Program.CurrentPrefix}{name}``");
         }
 
         [Command("favourite"), Priority(1000)]
