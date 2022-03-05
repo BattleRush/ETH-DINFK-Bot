@@ -74,7 +74,8 @@ namespace ETHDINFKBot.Interactions
         private async Task<bool> EmoteGetPage(int dir, string searchTerm, int page, bool debug, int rows = 5, int columns = 10)
         {
             var message = Context.Interaction as SocketMessageComponent;
-            if(message.Message.Author.Id != Context.Interaction.User.Id)
+            var user = Context.Interaction.User;
+            if (message.Message.Embeds.First().Author.Value.Name != $"{user.Username}#{user.Discriminator}")
             {
                 Context.Interaction.RespondAsync("You did not invoke this message.", null, false, true);
                 Context.Interaction.DeferAsync();
@@ -110,8 +111,8 @@ namespace ETHDINFKBot.Interactions
 
             // TODO create common place for button ids
             var builderComponent = new ComponentBuilder()
-                .WithButton("Prev <", "emote-get-prev-page", ButtonStyle.Danger, null, null, page == 0)
-                .WithButton("> Next", "emote-get-next-page", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound); // TODO detect max page
+                .WithButton("Prev <", $"emote-get-prev-page-{searchTerm}-{page}-{debug}", ButtonStyle.Danger, null, null, page == 0)
+                .WithButton("> Next", $"emote-get-next-page-{searchTerm}-{page}-{debug}", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound); // TODO detect max page
 
             
             await message.Message.ModifyAsync(i => { i.Embed = builder.Build(); i.Content = emoteResult.textBlock; i.Components = builderComponent.Build(); });
@@ -124,7 +125,8 @@ namespace ETHDINFKBot.Interactions
         private async Task<bool> FavEmoteGetPage(int dir, string searchTerm, int page, int rows = 4, int columns = 5, bool secondTry = false)
         {
             var message = Context.Interaction as SocketMessageComponent;
-            if (message.Message.Author.Id != Context.Interaction.User.Id)
+            var user = Context.Interaction.User;
+            if (message.Message.Embeds.First().Author.Value.Name != $"{user.Username}#{user.Discriminator}")
             {
                 Context.Interaction.RespondAsync("You did not invoke this message.", null, false, true);
                 Context.Interaction.DeferAsync();

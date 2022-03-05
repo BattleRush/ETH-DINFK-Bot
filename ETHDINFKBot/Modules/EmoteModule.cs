@@ -193,13 +193,6 @@ namespace ETHDINFKBot.Modules
 
                 // TODO create common place for button ids
                 var builderComponent = new ComponentBuilder();
-                //.WithButton("Prev <", "emote-get-prev-page", ButtonStyle.Danger, null, null, true)
-                //.WithButton("> Next", "emote-get-next-page", ButtonStyle.Success, null, null, true); // TODO properly calc max page
-                //.WithButton("Row 1", "emote-get-row-1", ButtonStyle.Secondary, null, null, false, 1)
-                //.WithButton("Row 2", "emote-get-row-2", ButtonStyle.Secondary, null, null, false, 1)
-                //.WithButton("Row 3", "emote-get-row-3", ButtonStyle.Secondary, null, null, false, 1)
-                //.WithButton("Row 4", "emote-get-row-4", ButtonStyle.Secondary, null, null, false, 1)
-                //.WithButton("Row 5", "emote-get-row-5", ButtonStyle.Secondary, null, null, false, 1);
 
                 int row = 0;
                 int col = 0;
@@ -313,8 +306,8 @@ namespace ETHDINFKBot.Modules
             {
                 // TODO create common place for button ids
                 var builderComponent = new ComponentBuilder()
-                    .WithButton("Prev <", "emote-get-prev-page", ButtonStyle.Danger, null, null, page == 0)
-                    .WithButton("> Next", "emote-get-next-page", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound); // TODO properly calc max page
+                    .WithButton("Prev <", $"emote-get-prev-page-{search}-{page}-{debug}", ButtonStyle.Danger, null, null, page == 0)
+                    .WithButton("> Next", $"emote-get-next-page-{search}-{page}-{debug}", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound); // TODO properly calc max page
                                                                                                                                                                      //.WithButton("Row 1", "emote-get-row-1", ButtonStyle.Secondary, null, null, false, 1)
                                                                                                                                                                      //.WithButton("Row 2", "emote-get-row-2", ButtonStyle.Secondary, null, null, false, 1)
                                                                                                                                                                      //.WithButton("Row 3", "emote-get-row-3", ButtonStyle.Secondary, null, null, false, 1)
