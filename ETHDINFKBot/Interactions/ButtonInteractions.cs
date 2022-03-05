@@ -73,6 +73,14 @@ namespace ETHDINFKBot.Interactions
 
         private async Task<bool> EmoteGetPage(int dir, string searchTerm, int page, bool debug, int rows = 5, int columns = 10)
         {
+            var message = Context.Interaction as SocketMessageComponent;
+            if(message.Message.Author.Id != Context.Interaction.User.Id)
+            {
+                Context.Interaction.RespondAsync("You did not invoke this message.", null, false, true);
+                Context.Interaction.DeferAsync();
+                return false;
+            }
+
             page += dir;
 
             if (page < 0)
@@ -105,9 +113,8 @@ namespace ETHDINFKBot.Interactions
                 .WithButton("Prev <", "emote-get-prev-page", ButtonStyle.Danger, null, null, page == 0)
                 .WithButton("> Next", "emote-get-next-page", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound); // TODO detect max page
 
-            var t = Context.Interaction as SocketMessageComponent;
-
-            await t.Message.ModifyAsync(i => { i.Embed = builder.Build(); i.Content = emoteResult.textBlock; i.Components = builderComponent.Build(); });
+            
+            await message.Message.ModifyAsync(i => { i.Embed = builder.Build(); i.Content = emoteResult.textBlock; i.Components = builderComponent.Build(); });
 
             Context.Interaction.DeferAsync();
 
@@ -116,6 +123,13 @@ namespace ETHDINFKBot.Interactions
 
         private async Task<bool> FavEmoteGetPage(int dir, string searchTerm, int page, int rows = 4, int columns = 5, bool secondTry = false)
         {
+            var message = Context.Interaction as SocketMessageComponent;
+            if (message.Message.Author.Id != Context.Interaction.User.Id)
+            {
+                Context.Interaction.RespondAsync("You did not invoke this message.", null, false, true);
+                Context.Interaction.DeferAsync();
+                return false;
+            }
 
             page += dir;
 
@@ -174,9 +188,7 @@ namespace ETHDINFKBot.Interactions
                 builderComponent.WithButton("Prev <", $"emote-fav-get-prev-page-{searchTerm}-{page}", ButtonStyle.Danger, null, null, page == 0, row);
                 builderComponent.WithButton("> Next", $"emote-fav-get-next-page-{searchTerm}-{page}", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound, row);
 
-                var t = Context.Interaction as SocketMessageComponent;
-
-                await t.Message.ModifyAsync(i => { i.Embed = builder.Build(); i.Components = builderComponent.Build(); });
+                await message.Message.ModifyAsync(i => { i.Embed = builder.Build(); i.Components = builderComponent.Build(); });
             }
             catch (HttpException ex)
             {
