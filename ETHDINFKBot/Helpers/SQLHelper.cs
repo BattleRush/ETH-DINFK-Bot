@@ -288,6 +288,8 @@ namespace ETHDINFKBot.Helpers
                 await using var connection = new NpgsqlConnection(connString);
                 await connection.OpenAsync();
 
+                connection.ReloadTypes(); // This is needed for the employees table
+
                 await using (var command = new NpgsqlCommand(commandSql, connection))
                 await using (var reader = await command.ExecuteReaderAsync())
                 {
