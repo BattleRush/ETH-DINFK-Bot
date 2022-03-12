@@ -6,8 +6,8 @@ CREATE DATABASE employee
     WITH 
     OWNER = postgres
     ENCODING = 'UTF8'
-    LC_COLLATE = 'English_Switzerland.1252'
-    LC_CTYPE = 'English_Switzerland.1252'
+    --LC_COLLATE = 'English_Switzerland.1252'
+    --LC_CTYPE = 'English_Switzerland.1252'
     TABLESPACE = pg_default
     CONNECTION LIMIT = -1;
 
@@ -21,8 +21,8 @@ CREATE DATABASE tpch
     WITH 
     OWNER = postgres
     ENCODING = 'UTF8'
-    LC_COLLATE = 'English_Switzerland.1252'
-    LC_CTYPE = 'English_Switzerland.1252'
+    --LC_COLLATE = 'English_Switzerland.1252'
+    --LC_CTYPE = 'English_Switzerland.1252'
     TABLESPACE = pg_default
     CONNECTION LIMIT = -1;
 
@@ -36,8 +36,8 @@ CREATE DATABASE zvv
     WITH 
     OWNER = postgres
     ENCODING = 'UTF8'
-    LC_COLLATE = 'English_Switzerland.1252'
-    LC_CTYPE = 'English_Switzerland.1252'
+    --LC_COLLATE = 'English_Switzerland.1252'
+    --LC_CTYPE = 'English_Switzerland.1252'
     TABLESPACE = pg_default
     CONNECTION LIMIT = -1;
 
