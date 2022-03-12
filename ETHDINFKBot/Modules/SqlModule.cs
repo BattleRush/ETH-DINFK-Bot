@@ -30,6 +30,27 @@ namespace ETHDINFKBot.Modules
         [Group("dmdb")]
         public class DMDBModule : ModuleBase<SocketCommandContext>
         {
+            [Command("help")]
+            public async Task SqlStatsHelp()
+            {
+                EmbedBuilder builder = new EmbedBuilder();
+
+                builder.WithTitle($"{Program.Client.CurrentUser.Username} DMDB Help");
+                builder.WithDescription("This feature supports the 3 Databases provided by the DMDB Course: 'employee', 'zvv' and 'tpch'. " + Environment.NewLine +
+                    "**IMPORTANT: Unlike on the main MariaDB you have full Admin permissions on the PostgreSQL.** It's intended that you may experiemnt with the Database without any need to install it locally." +
+                    "Any Admin can restore the Database should it become unusable/corrupted. If you abuse it on purpose, then you will be banned for using this command");
+                builder.WithColor(0, 0, 255);
+
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
+                builder.WithCurrentTimestamp();
+                builder.AddField($"{Program.CurrentPrefix}sql dmdb help", "This message :)");
+                builder.AddField($"{Program.CurrentPrefix}sql dmdb restore", "Restore the Database (Any Admin/Mod can do this)");
+                builder.AddField($"{Program.CurrentPrefix}sql dmdb info <database>", "Get the Table Graph. Available DBs: employee, zvv and tpch");
+                builder.AddField($"{Program.CurrentPrefix}sql dmdb query <database> <query>", "Run the query on a specified Database (employee, zvv or tpch), restult will be in text form");
+                builder.AddField($"{Program.CurrentPrefix}sql dmdb queryd <database> <query>", "Run the query on a specified Database (employee, zvv or tpch), but returns the restult as an Image ");
+
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
+            }
             // TODO Duplicate from MariaDB
             private List<ForeignKeyInfo> GetForeignKeyInfo(List<List<string>> fkData, string tableName)
             {
@@ -91,6 +112,7 @@ namespace ETHDINFKBot.Modules
                             case string int_1 when int_1.StartsWith("tinyint"):
                             case string int_2 when int_2.StartsWith("int"):
                             case string int_3 when int_3.StartsWith("bigint"):
+                            case string int_4 when int_4.StartsWith("numeric"):
                                 genetalType = "int";
                                 break;
                             case string string_1 when string_1.StartsWith("varchar"):
@@ -509,6 +531,7 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
 
 
         [Command("info")]
+        [Alias("help")]
         public async Task TableInfo()
         {
             string prefix = Program.CurrentPrefix;
@@ -527,8 +550,9 @@ ORDER BY table_name DESC;", true, 50);
 
                 builder.WithTitle($"{Program.Client.CurrentUser.Username} DB INFO");
                 builder.WithDescription($@"SQL Tables 
-DB Diagram: '{prefix}sql table info' 
-DB Stats Help: '{prefix}sql stats help'");
+DB Diagram: **{prefix}sql table info** 
+DB Stats Help: **{prefix}sql stats help**
+DMDB Help: **{prefix}sql dmdb help**");
                 builder.WithColor(65, 17, 187);
 
                 builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
@@ -583,7 +607,7 @@ WHERE
                     }
                 }
 
-                builder.AddField("Row count", rowCountString);
+                builder.AddField("Row count", rowCountString.Length > 0 ? rowCountString : "n/a");
 
                 //var dbSizeInfo = await GetQueryResults($"SELECT page_count *page_size / 1024 / 1024 as size FROM pragma_page_count(), pragma_page_size()", true, 1);
                 //string dbSizeStr = dbSizeInfo.Data.FirstOrDefault().FirstOrDefault(); // todo rework this first first thing
