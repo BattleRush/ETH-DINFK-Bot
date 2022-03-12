@@ -52,8 +52,10 @@ namespace ETHDINFKBot.Modules
 
         [Command("set"), Priority(1000)]
         public async Task SetEmoteFavourite(ulong emoteId, string name)
-        {
+        {          
+            Context.Message.ReplyAsync("Disabled. Use emote fav and press the buttons");
             return;
+
             //name = name.Replace("`", ""); // Dont allow people to escape the code blocks
             //var discordEmote = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(emoteId);
 
@@ -136,7 +138,42 @@ namespace ETHDINFKBot.Modules
             };
             builder.WithAuthor(Context.User);
 
-            var msg2 = await Context.Channel.SendMessageAsync("", false, builder.Build(), null, null, null, null);
+            // COPY OF OTHER FAV FUNCTION
+            var builderComponent = new ComponentBuilder();
+
+            int rows = 4;
+            int columns = 5;
+
+            int row = 0;
+            int col = 0;
+            foreach (var emote in emotes)
+            {
+                if (emote.IsValid && false)
+                {
+                    builderComponent.WithButton(emote.EmoteName, $"emote-fav-del-{emote.DiscordEmoteId}", ButtonStyle.Primary, Emote.Parse($"<:{emote.EmoteName}:{emote.DiscordEmoteId}>"), null, false, row);
+                }
+                else
+                {
+                    builderComponent.WithButton(emote.EmoteName, $"emote-fav-del-{emote.DiscordEmoteId}", ButtonStyle.Danger, null, null, false, row);
+                }
+
+                col++;
+
+                if (col == columns)
+                {
+                    row++;
+                    col = 0;
+                }
+            }
+
+            // Start fresh row for paging
+            if (col > 0)
+                row++;
+
+            //builderComponent.WithButton("Prev <", $"emote-fav-get-prev-page-{search}-{page}", ButtonStyle.Danger, null, null, page == 0, row);
+            //builderComponent.WithButton("> Next", $"emote-fav-get-next-page-{search}-{page}", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound, row);
+
+            var msg2 = await Context.Channel.SendMessageAsync("", false, builder.Build(), null, null, null, builderComponent.Build());
         }
 
         [Command("favourite"), Priority(1000)]

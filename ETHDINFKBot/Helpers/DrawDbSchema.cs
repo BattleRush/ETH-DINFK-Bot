@@ -228,7 +228,7 @@ namespace ETHDINFKBot.Helpers
                     int tableHeight = dbTable.FieldInfos.Count * RowHeight;
                     currentRowMaxHeight = Math.Max(currentRowMaxHeight, tableHeight);
 
-                    if (field.IsForeignKey && !field.IsPrimaryKey)
+                    if (field.IsForeignKey /*&& !field.IsPrimaryKey*/ /*Disabled for PostgreSQL*/)
                     {
                         var tablePrimaryKeys = primaryKeys.Where(i => i.Key == field.ForeignKeyInfo.ToTable);
                         if (tablePrimaryKeys.Count() > 0)

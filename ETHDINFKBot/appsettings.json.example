@@ -14,6 +14,14 @@
     "ConnectionString_ReadOnly": "Server=<SERVER_PROD_READONLY>;User Id=<USER>;Password=<PASSWORD>;Database=<DATABASE_NAME>"
   },
 
+  "PostgreSQL": {
+    "Host": "localhost",
+    "OwnerUsername": "",
+    "OwnerPassword": "",
+    "DMDBUserUsername": "",
+    "DMDBUserPassword": ""
+  },
+
   "CertFilePath": "",
   "FFMpegPath": "",
   "CDNPath": "",

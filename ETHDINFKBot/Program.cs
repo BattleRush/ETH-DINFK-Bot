@@ -195,6 +195,7 @@ namespace ETHDINFKBot
                         ConnectionString_Full = Configuration.GetConnectionString("ConnectionString_Full").ToString(),
                         ConnectionString_ReadOnly = Configuration.GetConnectionString("ConnectionString_ReadOnly").ToString()
                     },
+
                     CDNPath = Configuration["CDNPath"],
                     CertFilePath = Configuration["CertFilePath"],
                     FFMpegPath = Configuration["FFMpegPath"],
@@ -204,6 +205,15 @@ namespace ETHDINFKBot
                         AppId = Configuration["Reddit:AppId"],
                         RefreshToken = Configuration["Reddit:RefreshToken"],
                         AppSecret = Configuration["Reddit:AppSecret"],
+                    },
+
+                    PostgreSQLSetting = new PostgreSQLSetting()
+                    {
+                        Host = Configuration["PostgreSQL:Host"],
+                        OwnerUsername = Configuration["PostgreSQL:OwnerUsername"],
+                        OwnerPassword = Configuration["PostgreSQL:OwnerPassword"],
+                        DMDBUserUsername = Configuration["PostgreSQL:DMDBUserUsername"],
+                        DMDBUserPassword = Configuration["PostgreSQL:DMDBUserPassword"],
                     }
                 };
 
@@ -824,7 +834,7 @@ namespace ETHDINFKBot
             {
                 _interactionService = new InteractionService(Client);
                 await _interactionService.AddModulesAsync(Assembly.GetEntryAssembly(), Services);
-                
+
                 //var t = await commands.RegisterCommandsToGuildAsync(747752542741725244, true);
             }
             catch (Exception ex)
@@ -867,7 +877,7 @@ namespace ETHDINFKBot
 
             return Task.CompletedTask;
 
-        
+
         }
 
         private Task Client_RoleCreated(SocketRole arg)
@@ -1169,10 +1179,10 @@ namespace ETHDINFKBot
         {
             // Ignore everyone but the owner in debug mode
 #if DEBUG
-            if(m.Author.Id != Program.ApplicationSetting.Owner && !m.Author.IsBot && m.Content.StartsWith(Program.CurrentPrefix))
+            if (m.Author.Id != Program.ApplicationSetting.Owner && !m.Author.IsBot && m.Content.StartsWith(Program.CurrentPrefix))
             {
-                m.Channel.SendMessageAsync("I'll ignore you");
-                return;
+                //m.Channel.SendMessageAsync("I'll ignore you");
+                //return;
             }
 #endif
 

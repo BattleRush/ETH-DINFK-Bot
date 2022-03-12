@@ -23,6 +23,7 @@ namespace ETHDINFKBot.Interactions
 
             DatabaseManager.Instance().DeleteInDmSavedMessage(t.Message.Id);
             await t.Message.DeleteAsync();
+            Context.Interaction.DeferAsync();
         }
 
         [ComponentInteraction("emote-fav-*")]
@@ -37,37 +38,50 @@ namespace ETHDINFKBot.Interactions
 .AddTextInput($"Name for {emote.EmoteName}", "custom-emote-name", placeholder: emote.EmoteName, required: true);
 
             Context.Interaction.RespondWithModalAsync(mb.Build());
+            Context.Interaction.DeferAsync();
         }
 
-        //[ComponentInteraction("emote-get-next-page")]
-        //public async Task ButtonPress2()
-        //{
-        //    // ...
-        //    await RespondAsync($"Emote: {2}");
-        //}
+        [ComponentInteraction("emote-fav-del-*")]
+        public async Task DeleteFavEmote(string id)
+        {
+            var emote = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(ulong.Parse(id));
+
+            var mb = new ModalBuilder()
+.WithTitle("Delete favourite emote")
+.WithCustomId($"emote-fav-delete-modal-{emote.DiscordEmoteId}")
+//.AddComponents(new List<IMessageComponent>() { menuBuilder.Build() }, 0)
+.AddTextInput($"Confirm delete by typing \"DELETE\"", "custom-emote-name-delete", placeholder: "DELETE", required: true);
+
+            Context.Interaction.RespondWithModalAsync(mb.Build());
+            Context.Interaction.DeferAsync();
+        }
 
 
         [ComponentInteraction("emote-get-prev-page-*-*-*")]
         public async Task EmoteGetPrevPage(string searchTerm, string page, string debug)
         {
+            Context.Interaction.DeferAsync();
             EmoteGetPage(-1, searchTerm, Convert.ToInt32(page), Convert.ToBoolean(debug));
         }
 
         [ComponentInteraction("emote-get-next-page-*-*-*")]
         public async Task EmoteGetNextPage(string searchTerm, string page, string debug)
         {
+            Context.Interaction.DeferAsync();
             EmoteGetPage(1, searchTerm, Convert.ToInt32(page), Convert.ToBoolean(debug));
         }
 
         [ComponentInteraction("emote-fav-get-prev-page-*-*")]
         public async Task EmoteFavGetPrevPage(string searchTerm, string page)
         {
+            Context.Interaction.DeferAsync();
             FavEmoteGetPage(-1, searchTerm, Convert.ToInt32(page));
         }
 
         [ComponentInteraction("emote-fav-get-next-page-*-*")]
         public async Task EmoteFavGetNextPage(string searchTerm, string page)
         {
+            Context.Interaction.DeferAsync();
             FavEmoteGetPage(1, searchTerm, Convert.ToInt32(page));
         }
 
@@ -78,7 +92,7 @@ namespace ETHDINFKBot.Interactions
             if (message.Message.Embeds.First().Author.Value.Name != $"{user.Username}#{user.Discriminator}")
             {
                 Context.Interaction.RespondAsync("You did not invoke this message.", null, false, true);
-                Context.Interaction.DeferAsync();
+                //Context.Interaction.DeferAsync();
                 return false;
             }
 
@@ -117,7 +131,7 @@ namespace ETHDINFKBot.Interactions
             
             await message.Message.ModifyAsync(i => { i.Embed = builder.Build(); i.Content = emoteResult.textBlock; i.Components = builderComponent.Build(); });
 
-            Context.Interaction.DeferAsync();
+            //Context.Interaction.DeferAsync();
 
             return true;
         }
@@ -129,7 +143,7 @@ namespace ETHDINFKBot.Interactions
             if (message.Message.Embeds.First().Author.Value.Name != $"{user.Username}#{user.Discriminator}")
             {
                 Context.Interaction.RespondAsync("You did not invoke this message.", null, false, true);
-                Context.Interaction.DeferAsync();
+                //Context.Interaction.DeferAsync();
                 return false;
             }
 
@@ -216,7 +230,7 @@ namespace ETHDINFKBot.Interactions
                 // Some emotes may no lonver be valid -> db entry to invalidate the emote
 
             }
-            Context.Interaction.DeferAsync();
+            //Context.Interaction.DeferAsync();
             return true;
         }
     }

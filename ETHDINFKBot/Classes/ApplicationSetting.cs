@@ -24,6 +24,7 @@ namespace ETHDINFKBot.Classes
         public string BasePath { get; set; }
 
         public RedditSetting RedditSetting { get; set; }
+        public PostgreSQLSetting PostgreSQLSetting { get; set; }
     }
 
     public class ConnectionStringsSetting
@@ -37,6 +38,15 @@ namespace ETHDINFKBot.Classes
         public string AppId { get; set; }
         public string RefreshToken { get; set; }
         public string AppSecret { get; set; }
+    }
+
+    public class PostgreSQLSetting
+    {
+        public string Host { get; set; }
+        public string OwnerUsername { get; set; }
+        public string OwnerPassword { get; set; }
+        public string DMDBUserUsername { get; set; }
+        public string DMDBUserPassword { get; set; }
     }
 
     // ignore for now

@@ -278,6 +278,30 @@ namespace ETHDINFKBot.Data
             }
         }
 
+        public bool DeleteFavouriteEmote(ulong discordUserId, ulong discordEmoteId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var emoteFavRecord = context.FavouriteDiscordEmotes.SingleOrDefault(i => i.DiscordUserId == discordUserId && i.DiscordEmoteId == discordEmoteId);
+                    if(emoteFavRecord != null)
+                    {
+                        context.FavouriteDiscordEmotes.Remove(emoteFavRecord);
+                        context.SaveChanges();
+                        return true;
+                    }
+
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return false;
+            }
+        }
+
         public DiscordEmote AddDiscordEmote(DiscordEmote discordEmote)
         {
             try

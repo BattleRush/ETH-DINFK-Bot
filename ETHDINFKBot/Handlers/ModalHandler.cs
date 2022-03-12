@@ -9,55 +9,83 @@ using System.Threading.Tasks;
 
 namespace ETHDINFKBot.Handlers
 {
-    
+
     // Defines the modal that will be sent.
-    public class FoodModal : IModal
+    public class CustomEmoteFav : IModal
     {
         public string Title => "";
 
         [ModalTextInput("custom-emote-name")]
         public string CustomEmoteName { get; set; }
+
+        [ModalTextInput("custom-emote-name-delete")]
+        public string DeleteConfirm { get; set; }
     }
 
     public class ModalHandler : InteractionModuleBase<SocketInteractionContext>
     {
-        // Responds to the modal.
-        [ModalInteraction("emote-fav-modal-*")]
-        public async Task ModalResponce(string discordEmoteId, FoodModal modal)
+        [ModalInteraction("emote-fav-delete-modal-*")]
+        public async Task DeleteEmoteFavModalResponse(string discordEmoteId, CustomEmoteFav modal)
         {
             var emoteId = Convert.ToUInt64(discordEmoteId);
-            string name = modal.CustomEmoteName.Replace("`", ""); // Dont allow people to escape the code blocks
             var discordEmote = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(emoteId);
+
+            Context.Interaction.DeferAsync();
 
             if (discordEmote == null)
             {
-                // THIS EMOTE ID IS UNKNOWN
+                await Context.Interaction.FollowupAsync("This EmoteId does not exist in the database.", ephemeral: true);
+                return;
+            }
 
-                Context.Interaction.RespondAsync("This emote id does not exist in the database.");
+            if (modal.DeleteConfirm.ToLower() != "delete")
+            {
+                await Context.Interaction.FollowupAsync("You did not type \"delete\"", ephemeral: true);
+                return;
+            }
+
+            var success = DatabaseManager.EmoteDatabaseManager.DeleteFavouriteEmote(Context.User.Id, emoteId);
+
+            await Context.Interaction.FollowupAsync("Emote deleted success: " + success, ephemeral: true);
+        }
+
+
+        [ModalInteraction("emote-fav-modal-*")]
+        public async Task AddEmoteFavModalResponce(string discordEmoteId, CustomEmoteFav modal)
+        {
+            var emoteId = Convert.ToUInt64(discordEmoteId);
+            string name = modal.CustomEmoteName.Replace("`", ""); // Dont allow people to escape the code blocks
+            
+            Context.Interaction.DeferAsync();
+
+            if (!name.All(Char.IsLetterOrDigit))
+            {
+                await Context.Interaction.FollowupAsync("You are only allowed to use alphanimeric characters.", ephemeral: true);
+                return;
+            }
+
+            var discordEmote = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(emoteId);
+            if (discordEmote == null)
+            {
+                await Context.Interaction.FollowupAsync("This EmoteId does not exist in the database.", ephemeral: true);
                 return;
             }
 
             var existingFavEmotes = DatabaseManager.EmoteDatabaseManager.GetFavouriteEmotes(Context.User.Id);
-
-            if (existingFavEmotes == null) return; // TODO error?
+            if (existingFavEmotes == null) 
+                return; // TODO error?
 
             if (existingFavEmotes.Any(i => i.DiscordEmoteId == emoteId))
             {
-                // EMOTE IS ALREADY MAPPED
-
-                Context.Interaction.RespondAsync("Emote is already in your favourites"); // -> UPDATE
-
+                await Context.Interaction.FollowupAsync("Emote is already in your favourites", ephemeral: true);
                 return;
             }
 
             if (existingFavEmotes.Any(i => string.Equals(i.Name, name, StringComparison.OrdinalIgnoreCase)))
             {
-                // THIS USER MAPPED THE NAME ALREADY FOR AN EMOTE
-
-                Context.Interaction.RespondAsync("You reserved this name for some other emote already."); // -> DELETE FIRST THEN CREATE NEW
+                await Context.Interaction.FollowupAsync("You reserved this name for some other emote already.", ephemeral: true);
                 return;
             }
-
 
             // Clear to create a new fav mapping
 
