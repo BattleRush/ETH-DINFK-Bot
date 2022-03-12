@@ -39,7 +39,7 @@ namespace ETHDINFKBot.Modules
                 builder.WithTitle($"{Program.Client.CurrentUser.Username} DMDB Help");
                 builder.WithDescription("This feature supports the 3 Databases provided by the DMDB Course: 'employee', 'zvv' and 'tpch'. " + Environment.NewLine +
                     "**IMPORTANT: Unlike on the main MariaDB you have full Admin permissions on the PostgreSQL.** It's intended that you may experiemnt with the Database without any need to install it locally." +
-                    "Any Admin can restore the Database should it become unusable/corrupted. If you abuse it on purpose, then you will be banned for using this command");
+                    "Any Admin can restore the Database should it become unusable/corrupted. If you abuse it on purpose, then you will be banned for using this command.");
                 builder.WithColor(0, 0, 255);
 
                 builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
@@ -364,7 +364,7 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
                 string restoreDBsScriptPath = Path.Combine(Program.ApplicationSetting.BasePath, "SQLScripts", "create.sql");
                 string restoreDBsScript = string.Format(File.ReadAllText(restoreDBsScriptPath), postgreSettings.DMDBUserUsername, postgreSettings.DMDBUserPassword);
 
-                var connString = $"Host={postgreSettings.Host};Port={postgreSettings.Port};Username={postgreSettings.OwnerUsername};Password={postgreSettings.OwnerPassword};Include Error Detail=True;";
+                var connString = $"Host={postgreSettings.Host};Port={postgreSettings.Port};Username={postgreSettings.OwnerUsername};Password={postgreSettings.OwnerPassword};Include Error Detail=True;Timeout=300;CommandTimeout=300;KeepAlive=300;";
                 await using var connection = new NpgsqlConnection(connString);
                 await connection.OpenAsync();
 
