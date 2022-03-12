@@ -31,6 +31,7 @@ namespace ETHDINFKBot.Modules
         public class DMDBModule : ModuleBase<SocketCommandContext>
         {
             [Command("help")]
+            [Alias("info")]
             public async Task SqlStatsHelp()
             {
                 EmbedBuilder builder = new EmbedBuilder();
