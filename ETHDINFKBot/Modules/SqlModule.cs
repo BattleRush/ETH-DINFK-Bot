@@ -399,7 +399,7 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
                     Thread.Sleep(1000);
                     stopwatch.Restart();
 
-                    var connStringDB = $"Host={postgreSettings.Host};Port={postgreSettings.Port};Username={postgreSettings.OwnerUsername};Password={postgreSettings.OwnerPassword};Database={dbName};";
+                    var connStringDB = $"Host={postgreSettings.Host};Port={postgreSettings.Port};Username={postgreSettings.OwnerUsername};Password={postgreSettings.OwnerPassword};Database={dbName};Include Error Detail=True;Timeout=300;CommandTimeout=300;KeepAlive=300;";
                     string dbSchemaScriptAndInsertPath = Path.Combine(Program.ApplicationSetting.BasePath, "SQLScripts", $"{dbName}.sql");
                     string dbSchemaScriptAndInsert = string.Format(File.ReadAllText(dbSchemaScriptAndInsertPath), postgreSettings.DMDBUserUsername);
 
