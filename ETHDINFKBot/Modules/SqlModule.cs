@@ -341,7 +341,7 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
                 string restoreDBsScriptPath = Path.Combine(Program.ApplicationSetting.BasePath, "SQLScripts", "create.sql");
                 string restoreDBsScript = string.Format(File.ReadAllText(restoreDBsScriptPath), postgreSettings.DMDBUserUsername, postgreSettings.DMDBUserPassword);
 
-                var connString = $"Host=localhost;Username={postgreSettings.OwnerUsername};Password={postgreSettings.OwnerPassword};Include Error Detail=True;";
+                var connString = $"Host={postgreSettings.Host};Port={postgreSettings.Port};Username={postgreSettings.OwnerUsername};Password={postgreSettings.OwnerPassword};Include Error Detail=True;";
                 await using var connection = new NpgsqlConnection(connString);
                 await connection.OpenAsync();
 
@@ -376,7 +376,7 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
                     Thread.Sleep(1000);
                     stopwatch.Restart();
 
-                    var connStringDB = $"Host=localhost;Username={postgreSettings.OwnerUsername};Password={postgreSettings.OwnerPassword};Database={dbName};";
+                    var connStringDB = $"Host={postgreSettings.Host};Port={postgreSettings.Port};Username={postgreSettings.OwnerUsername};Password={postgreSettings.OwnerPassword};Database={dbName};";
                     string dbSchemaScriptAndInsertPath = Path.Combine(Program.ApplicationSetting.BasePath, "SQLScripts", $"{dbName}.sql");
                     string dbSchemaScriptAndInsert = string.Format(File.ReadAllText(dbSchemaScriptAndInsertPath), postgreSettings.DMDBUserUsername);
 

@@ -16,6 +16,7 @@
 
   "PostgreSQL": {
     "Host": "localhost",
+    "Port": 5432,
     "OwnerUsername": "",
     "OwnerPassword": "",
     "DMDBUserUsername": "",

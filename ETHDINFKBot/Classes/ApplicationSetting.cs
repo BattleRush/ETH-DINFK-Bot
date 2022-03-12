@@ -43,6 +43,7 @@ namespace ETHDINFKBot.Classes
     public class PostgreSQLSetting
     {
         public string Host { get; set; }
+        public int Port { get; set; }
         public string OwnerUsername { get; set; }
         public string OwnerPassword { get; set; }
         public string DMDBUserUsername { get; set; }

@@ -210,10 +210,11 @@ namespace ETHDINFKBot
                     PostgreSQLSetting = new PostgreSQLSetting()
                     {
                         Host = Configuration["PostgreSQL:Host"],
+                        Port = Convert.ToInt32(Configuration["PostgreSQL:Port"]),
                         OwnerUsername = Configuration["PostgreSQL:OwnerUsername"],
                         OwnerPassword = Configuration["PostgreSQL:OwnerPassword"],
                         DMDBUserUsername = Configuration["PostgreSQL:DMDBUserUsername"],
-                        DMDBUserPassword = Configuration["PostgreSQL:DMDBUserPassword"],
+                        DMDBUserPassword = Configuration["PostgreSQL:DMDBUserPassword"]
                     }
                 };
 

@@ -280,10 +280,10 @@ namespace ETHDINFKBot.Helpers
             {
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
-
-                var connString = $"Host=localhost;Command Timeout=10;Username={Program.ApplicationSetting.PostgreSQLSetting.DMDBUserUsername.ToLower()};Password={Program.ApplicationSetting.PostgreSQLSetting.DMDBUserPassword};Database={database}";
+                var postgreSettings = Program.ApplicationSetting.PostgreSQLSetting;
+                var connString = $"Host={postgreSettings.Host};Port={postgreSettings.Port};Command Timeout=10;Username={postgreSettings.DMDBUserUsername.ToLower()};Password={postgreSettings.DMDBUserPassword};Database={database}";
                 if(fullUser)
-                    connString = $"Host=localhost;Command Timeout=10;Username={Program.ApplicationSetting.PostgreSQLSetting.OwnerUsername.ToLower()};Password={Program.ApplicationSetting.PostgreSQLSetting.OwnerPassword};Database={database}";
+                    connString = $"Host={postgreSettings.Host};Port={postgreSettings.Port};Command Timeout=10;Username={postgreSettings.OwnerUsername.ToLower()};Password={postgreSettings.OwnerPassword};Database={database}";
 
                 await using var connection = new NpgsqlConnection(connString);
                 await connection.OpenAsync();
