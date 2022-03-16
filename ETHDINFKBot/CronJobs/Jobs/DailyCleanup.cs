@@ -134,7 +134,9 @@ ORDER BY MAX(PH.DiscordMessageId)";
                     if (channel != null)
                     {
                         CleanUpOldMessages(channel, TimeSpan.FromDays(-7));
+#if !DEBUG
                         RemovePingHell();
+#endif
                     }
                 }
             }

@@ -147,7 +147,10 @@ namespace ETHDINFKBot.Data
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
                     var storedKeyValuePair = context.StoredKeyValuePairs.AsQueryable().SingleOrDefault(i => i.Key == keyName);
-                    return (T)Convert.ChangeType(storedKeyValuePair.Value, typeof(T));
+                    if(storedKeyValuePair != null)
+                        return (T)Convert.ChangeType(storedKeyValuePair.Value, typeof(T));
+                    else
+                        return default(T);
                 }
             }
             catch (Exception ex)

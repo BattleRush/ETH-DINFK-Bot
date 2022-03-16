@@ -51,7 +51,9 @@ namespace ETHDINFKBot.Handlers
             if (socketMessage.Channel is SocketThreadChannel)
             {
                 // The message if from a thread -> Replace the SocketChannel to the parent channel
-                SocketTextChannel = SocketThreadChannel.ParentChannel;
+                if (SocketThreadChannel.ParentChannel is SocketTextChannel)
+                    SocketTextChannel = SocketThreadChannel.ParentChannel as SocketTextChannel;
+
                 SocketGuildChannel = SocketThreadChannel.ParentChannel;
 
                 // TODO Fix the correct setting from the calling method
@@ -417,7 +419,7 @@ namespace ETHDINFKBot.Handlers
                         await SocketMessage.DeleteAsync();
 
                         // TODO Keep relevant webhook infos in cache
-                         
+
 
                         string avatarUrl = SocketGuildUser.GetGuildAvatarUrl();
                         if (avatarUrl == null)
@@ -431,7 +433,7 @@ namespace ETHDINFKBot.Handlers
                             //await SocketTextChannel.SendMessageAsync(emoteString);
                             if (webhookClient != null)
                                 await webhookClient.SendMessageAsync(emoteString, false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
-                            else 
+                            else
                                 await SocketMessage.Channel.SendMessageAsync(emoteString, false, null, null, null, new MessageReference(SocketMessage.ReferencedMessage?.Id));
                         }
                         else
@@ -449,12 +451,12 @@ namespace ETHDINFKBot.Handlers
                                 if (webhookClient != null)
                                     //await webhookClient.SendFileAsync(emote.LocalPath, "", false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
                                     await webhookClient.SendFileAsync(fileAttachment, "", false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
-                                else 
+                                else
                                     await SocketMessage.Channel.SendFileAsync(emote.LocalPath, "", false, null, null, false, null, new MessageReference(SocketMessage.ReferencedMessage?.Id));
                             }
                             else
                             {
-                                
+
                                 SKBitmap bmp;
                                 using (var ms = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
                                     bmp = SKBitmap.Decode(ms);
@@ -473,7 +475,7 @@ namespace ETHDINFKBot.Handlers
                         }
 
                         // In case the webhook could not be created
-                        if(webhookClient == null)
+                        if (webhookClient == null)
                             await SocketMessage.Channel.SendMessageAsync($"({Program.CurrentPrefix}{emote.EmoteName}) by <@{SocketGuildUser.Id}>");
                     }
                 }
@@ -517,7 +519,7 @@ namespace ETHDINFKBot.Handlers
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
 
             }

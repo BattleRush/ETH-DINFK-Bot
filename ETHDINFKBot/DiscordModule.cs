@@ -26,7 +26,6 @@ using SkiaSharp;
 using CSharpMath.SkiaSharp;
 using System.Globalization;
 using System.Diagnostics;
-using Microsoft.Data.Sqlite;
 
 using ETHDINFKBot.Drawing;
 using System.Reflection;

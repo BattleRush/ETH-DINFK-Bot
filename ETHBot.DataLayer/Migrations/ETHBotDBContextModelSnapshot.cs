@@ -16,7 +16,7 @@ namespace ETHBot.DataLayer.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.1")
+                .HasAnnotation("ProductVersion", "6.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.BotChannelSetting", b =>
@@ -200,6 +200,9 @@ namespace ETHBot.DataLayer.Migrations
                     b.Property<string>("EmoteName")
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
+
+                    b.Property<bool>("IsValid")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<DateTimeOffset>("LastUpdatedAt")
                         .HasColumnType("datetime(6)");

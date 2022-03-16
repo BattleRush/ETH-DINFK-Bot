@@ -5,7 +5,6 @@ using ETHBot.DataLayer.Data.Fun;
 using ETHDINFKBot.Enums;
 using ETHDINFKBot.Helpers;
 using ETHDINFKBot.Modules;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MySqlConnector;

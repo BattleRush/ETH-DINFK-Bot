@@ -32,5 +32,7 @@ namespace ETHBot.DataLayer.Data.Discord
         public DateTimeOffset CreatedAt { get; set; }
 
         public DateTimeOffset LastUpdatedAt { get; set; }
+
+        public bool IsValid { get; set; }
     }
 }

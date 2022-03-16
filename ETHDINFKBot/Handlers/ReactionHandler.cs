@@ -117,7 +117,8 @@ namespace ETHDINFKBot.Handlers
                     CreatedAt = emote.CreatedAt,
                     Blocked = false,
                     LastUpdatedAt = DateTime.Now, // todo chech changes
-                    LocalPath = null
+                    LocalPath = null,
+                    IsValid = true // TODO maybe set default as true from db?
                 };
 
                 DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(discordEmote, Message.Id, AddedReaction ? 1 : -1, true, SocketGuildReactionUser, false);
