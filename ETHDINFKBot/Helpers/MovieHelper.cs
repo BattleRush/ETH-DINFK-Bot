@@ -282,10 +282,10 @@ namespace ETHDINFKBot.Helpers
             Xabe.FFmpeg.FFmpeg.SetExecutablesPath(Program.ApplicationSetting.FFMpegPath);
 
             var files = Directory.GetFiles(Path.Combine(basePath)).ToList().OrderBy(i => i);
-            string fileName = Path.Combine(baseOutputPath, $"movie_{random}.mp4");
+            string fileName = Path.Combine(baseOutputPath, $"movie_{random}.webm");
 
             if (!string.IsNullOrWhiteSpace(filePrefix))
-                fileName = Path.Combine(baseOutputPath, $"{filePrefix}_{random}.mp4");
+                fileName = Path.Combine(baseOutputPath, $"{filePrefix}_{random}.webm");
 
             var conversion = new Conversion();
             conversion.SetInputFrameRate(fps);
