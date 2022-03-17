@@ -348,7 +348,7 @@ namespace ETHDINFKBot.Modules
             builder.WithDescription(@"Rules: There are none. However everything that is forbidden by the serverrules, is also forbidden to 'draw' on the board.
 
 If you violate the server rules your pixels will be removed.
-**LIVE Website: http://ethplace.spclr.ch:81/**");
+**LIVE Website: https://place.battlerush.dev/**");
             builder.WithColor(g, 255, 0);
 
             //builder.WithThumbnailUrl("https://avatars0.githubusercontent.com/u/11750584");
