@@ -1077,7 +1077,7 @@ If you violate the server rules your pixels will be removed.
             foreach (var pixel in pixelHistory)
             {
                 var color = new SKColor(pixel.R, pixel.G, pixel.B);
-                var stringHex = "#TODO set color hex";
+                var stringHex = "#"+ color.Red.ToString("X2") + color.Green.ToString("X2") + color.Blue.ToString("X2");
 
                 ulong discordUserId = PlaceDiscordUsers.FirstOrDefault(i => i.PlaceDiscordUserId == pixel.PlaceDiscordUserId)?.DiscordUserId ?? 0;
                 if (all?.ToLower() == "all")
