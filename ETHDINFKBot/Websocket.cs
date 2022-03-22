@@ -16,9 +16,9 @@ using System.Threading.Tasks;
 
 namespace ETHDINFKBot
 {
-    public class PlaceSession : WssSession
+    public class PlaceSession : TcpSession
     {
-        public PlaceSession(WssServer server) : base(server) { }
+        public PlaceSession(TcpServer server) : base(server) { }
 
         public void SendPixel(short x, short y, SKColor color)
         {
@@ -291,21 +291,22 @@ namespace ETHDINFKBot
         }
 
 
-        
-            
-        public override void OnWsClose(byte[] buffer, long offset, long size)
-        {
 
-        }
-        public override void OnWsError(string error)
-        {
 
-        }
-        public override void OnWsConnected(HttpRequest request)
+        protected override void OnConnected()
         {
+            Console.WriteLine($"Chat TCP session with Id {Id} connected!");
 
+            // Send invite message
+            string message = "Hello from TCP chat! Please send a message or '!' to disconnect the client!";
+            //SendAsync(message);
         }
-        public override void OnWsReceived(byte[] buffer, long offset, long size)
+
+        protected override void OnDisconnected()
+        {
+            Console.WriteLine($"Chat TCP session with Id {Id} disconnected!");
+        }
+        protected override void OnReceived(byte[] buffer, long offset, long size)
         {
             var data = buffer.Skip(Convert.ToInt32(offset)).ToArray();
 
@@ -317,20 +318,20 @@ namespace ETHDINFKBot
                 {
                     case MessageEnum.FullImage_Request:
                         var fullImageBytes = GetFullImageResponse();
-                        SendBinary(fullImageBytes, 0, fullImageBytes.Length);
+                        Send(fullImageBytes, 0, fullImageBytes.Length);
                         break;
 
                     case MessageEnum.TotalPixelCount_Request:
                         var totalPixelCountResponse = GetTotalPixelCount();
                         byte[] dataReturn = new byte[offset + totalPixelCountResponse.Length];
 
-                        SendBinary(totalPixelCountResponse, 0, totalPixelCountResponse.Length);
+                        Send(totalPixelCountResponse, 0, totalPixelCountResponse.Length);
                         break;
 
                     case MessageEnum.TotalChunksAvailable_Request:
                         var totalChunkResponse = GetTotalChunks();
 
-                        SendBinary(totalChunkResponse, 0, totalChunkResponse.Length);
+                        Send(totalChunkResponse, 0, totalChunkResponse.Length);
                         break;
 
                     case MessageEnum.GetChunk_Request:
@@ -340,7 +341,7 @@ namespace ETHDINFKBot
 
                         var chunkBytes = GetChunk(chunkId);
 
-                        SendBinary(chunkBytes, 0, chunkBytes.Length);
+                        Send(chunkBytes, 0, chunkBytes.Length);
 
                         //Console.WriteLine("SEND GetChunk_Request");
                         break;
@@ -348,7 +349,7 @@ namespace ETHDINFKBot
                     case MessageEnum.GetUsers_Request:
                         var userBytes = GetFullUserInfos();
 
-                        SendBinary(userBytes, 0, userBytes.Length);
+                        Send(userBytes, 0, userBytes.Length);
                         break;
 
                     case MessageEnum.GetUserProfileImage_Request:
@@ -357,7 +358,7 @@ namespace ETHDINFKBot
                         short userId = BitConverter.ToInt16(userIdBytes, 0);
                         var userImageBytes = GetUserImageBytes(userId);
 
-                        SendBinary(userImageBytes, 0, userImageBytes.Length);
+                        Send(userImageBytes, 0, userImageBytes.Length);
                         break;
 
                     case MessageEnum.FullImage_Response:

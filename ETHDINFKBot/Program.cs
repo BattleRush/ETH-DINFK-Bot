@@ -42,15 +42,15 @@ using Discord.Interactions;
 namespace ETHDINFKBot
 {
 
-    class PlaceServer : WssServer
+    class PlaceServer : TcpServer
     {
-        public PlaceServer(SslContext context, IPAddress address, int port) : base(context, address, port) { }
+        public PlaceServer(IPAddress address, int port) : base(address, port) { }
 
-        protected override SslSession CreateSession() { return new PlaceSession(this); }
+        protected override TcpSession CreateSession() { return new PlaceSession(this); }
 
         protected override void OnError(SocketError error)
         {
-            Console.WriteLine($"Chat WebSocket server caught an error with code {error}");
+            Console.WriteLine($"Chat TCP server caught an error with code {error}");
         }
     }
 
@@ -107,7 +107,7 @@ namespace ETHDINFKBot
             CurrentPrefix = ".";
 
 #if DEBUG
-            CurrentPrefix = "dev.";
+            //CurrentPrefix = "dev.";
 #endif
 
             try
@@ -329,6 +329,7 @@ namespace ETHDINFKBot
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
+#if !DEBUG
                 string www = "/var/www/wss";
                 try
                 {
@@ -351,23 +352,33 @@ namespace ETHDINFKBot
                 {
                     Console.Write("Error while starting WS: " + ex.ToString());
                 }
+#endif
             }
             else
             {
-#if false
-                string www = @"C:\Temp\wss";
-                // Create and prepare a new SSL server context
-                //var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
-                var context = new SslContext(SslProtocols.Tls12);
-                // Create a new WebSocket server
-                PlaceServer = new PlaceServer(context, IPAddress.Any, 9000);
-                PlaceServer.AddStaticContent(www, "/place");
+                try
+                {
 
-                // Start the server
-                Console.Write("Server starting...");
-                PlaceServer.Start();
-                Console.WriteLine("Done!");
-#endif
+                    string www = @"C:\Temp\wss";
+                    // Create and prepare a new SSL server context
+                    //var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
+                    var context = new SslContext(SslProtocols.Tls12);
+                    // Create a new WebSocket server
+                    PlaceServer = new PlaceServer(IPAddress.Any, 9000);
+                    PlaceServer.OptionKeepAlive = true;
+                    //PlaceServer.OptionNoDelay = true;
+  
+                    //PlaceServer.AddStaticContent(www, "/place");
+
+                    // Start the server
+                    Console.Write("Server starting...");
+                    PlaceServer.Start();
+                    Console.WriteLine("Done!");
+                }
+                catch (Exception ex)
+                {
+                    Console.Write("Error while starting WS: " + ex.ToString());
+                }
             }
 
 
@@ -1387,6 +1398,7 @@ namespace ETHDINFKBot
             int argPos = 0;
 
             // accept .dev only in dev mode
+
 
             if (!msg.HasStringPrefix(CurrentPrefix, ref argPos))
                 return;

@@ -514,17 +514,24 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         [Command("react")]
         public async Task ReactEmote(ulong messageid, string emoteName)
         {
-            if (Context.Channel is SocketGuildChannel guildChannel)
+            try
             {
-                var emote = guildChannel.Guild.Emotes.FirstOrDefault(i => i.Name.ToLower().Contains(emoteName.ToLower()));
+                if (Context.Channel is SocketGuildChannel guildChannel)
+                {
+                    var emote = guildChannel.Guild.Emotes.FirstOrDefault(i => i.Name.ToLower().Contains(emoteName.ToLower()));
 
-                if (emote == null)
-                    return;
+                    if (emote == null)
+                        return;
 
-                var message = await Context.Channel.GetMessageAsync(messageid);
-                await message.AddReactionAsync(emote);
+                    var message = await Context.Channel.GetMessageAsync(messageid);
+                    await message.AddReactionAsync(emote);
+                }
+                await Context.Message.DeleteAsync();
             }
-            await Context.Message.DeleteAsync();
+            catch (Exception ex)
+            {
+                // TODO log
+            }
         }
 
         [Command("today")]
