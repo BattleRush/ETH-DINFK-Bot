@@ -346,6 +346,7 @@ namespace ETHDINFKBot
 
                     PlaceServer = new PlaceServer(IPAddress.Any, 9000);
                     PlaceServer.OptionKeepAlive = true;
+                    PlaceServer.OptionAcceptorBacklog = 8192;
                     PlaceServer.OptionSendBufferSize = 4_000_000;
 
                     // Start the server
@@ -371,8 +372,9 @@ namespace ETHDINFKBot
                     // Create a new WebSocket server
                     PlaceServer = new PlaceServer(IPAddress.Any, 9000);
                     PlaceServer.OptionKeepAlive = true;
+                    PlaceServer.OptionAcceptorBacklog = 8192;
                     //PlaceServer.OptionNoDelay = true;
-  
+
                     //PlaceServer.AddStaticContent(www, "/place");
 
                     // Start the server
