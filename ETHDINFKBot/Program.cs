@@ -333,6 +333,7 @@ namespace ETHDINFKBot
                 string www = "/var/www/wss";
                 try
                 {
+                /*
                     //string www = @"C:\Temp\wss";
                     // Create and prepare a new SSL server context
                     var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
@@ -341,6 +342,9 @@ namespace ETHDINFKBot
                     PlaceServer = new PlaceServer(context, IPAddress.Any, 9000);
                     PlaceServer.AddStaticContent(www, "/place");
 
+                    PlaceServer.OptionKeepAlive = true;*/
+
+                    PlaceServer = new PlaceServer(IPAddress.Any, 9000);
                     PlaceServer.OptionKeepAlive = true;
 
                     // Start the server
@@ -359,7 +363,7 @@ namespace ETHDINFKBot
                 try
                 {
 
-                    string www = @"C:\Temp\wss";
+                    //string www = @"C:\Temp\wss";
                     // Create and prepare a new SSL server context
                     //var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
                     var context = new SslContext(SslProtocols.Tls12);
