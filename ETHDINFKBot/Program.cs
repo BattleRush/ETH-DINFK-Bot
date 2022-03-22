@@ -81,7 +81,8 @@ namespace ETHDINFKBot
 
         //private static List<BotChannelSetting> BotChannelSettings;
 
-        private static List<string> AllowedBotCommands;
+        private static List<string> AllowedBotCommands = new List<string>() { CurrentPrefix + "place setpixel ", CurrentPrefix + "place pixelverify " };
+        private static List<ulong> PlaceChannels = new List<ulong>() { 819966095070330950, 955751651942211604 };
 
         //public static WebSocketServer PlaceWebsocket;
         public static PlaceServer PlaceServer;
@@ -108,8 +109,6 @@ namespace ETHDINFKBot
 #if DEBUG
             CurrentPrefix = "dev.";
 #endif
-
-            AllowedBotCommands = new List<string>() { CurrentPrefix + "place setpixel ", CurrentPrefix + "place pixelverify " };
 
             try
             {
@@ -1226,7 +1225,7 @@ namespace ETHDINFKBot
             }
 
             // ignore this channel -> high msg volume
-            if (msg.Channel.Id != 819966095070330950)
+            if (!PlaceChannels.Any(i => i == msg.Channel.Id))
             {
                 ulong channelId = msg.Channel.Id;
 
@@ -1375,7 +1374,7 @@ namespace ETHDINFKBot
 
 
 
-            if (!(m.Channel.Id == 819966095070330950 && AllowedBotCommands.Any(i => !m.Content.StartsWith(i))))
+            if (!(PlaceChannels.Any(i => i == m.Channel.Id) && AllowedBotCommands.Any(i => !m.Content.StartsWith(i))))
                 if (m.Author.IsBot) // make exception for place command
                     return;
 
