@@ -346,6 +346,7 @@ namespace ETHDINFKBot
 
                     PlaceServer = new PlaceServer(IPAddress.Any, 9000);
                     PlaceServer.OptionKeepAlive = true;
+                    PlaceServer.OptionSendBufferSize = 4_000_000;
 
                     // Start the server
                     Console.Write("Server starting...");
