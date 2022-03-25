@@ -229,6 +229,7 @@ namespace ETHDINFKBot.Modules
         }
 
         [Command("blockemote")]
+        [RequireUserPermission(GuildPermission.ManageChannels)]
         public async Task BlockEmote(ulong emoteId, bool blockStatus)
         {
             var author = Context.Message.Author;
