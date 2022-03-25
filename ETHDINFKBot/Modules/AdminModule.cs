@@ -109,8 +109,9 @@ namespace ETHDINFKBot.Modules
             //}
         }
 
-        [RequireOwner]
+        //[RequireOwner]
         [Command("help")]
+        [RequireUserPermission(GuildPermission.ManageChannels)]
         public async Task AdminHelp()
         {
             //var author = Context.Message.Author;
@@ -233,11 +234,11 @@ namespace ETHDINFKBot.Modules
         public async Task BlockEmote(ulong emoteId, bool blockStatus)
         {
             var author = Context.Message.Author;
-            if (author.Id != Program.ApplicationSetting.Owner)
-            {
-                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
-                return;
-            }
+            //if (author.Id != Program.ApplicationSetting.Owner)
+            //{
+                //await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                //return;
+            //}
 
             var emoteInfo = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(emoteId);
             bool success = DatabaseManager.EmoteDatabaseManager.SetEmoteBlockStatus(emoteId, blockStatus);
@@ -246,9 +247,7 @@ namespace ETHDINFKBot.Modules
             {
                 // Also locally delete the file
                 if (File.Exists(emoteInfo.LocalPath))
-                {
-                    File.Delete(emoteInfo.LocalPath);
-                }
+                    File.Delete(emoteInfo.LocalPath); // TODO Redownload if the emote is unblocked
 
                 await Context.Channel.SendMessageAsync($"Successfully set block status of emote {emoteId} to: {blockStatus}", false);
             }
