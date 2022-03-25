@@ -39,7 +39,7 @@ namespace ETHDINFKBot.Modules
                 builder.WithTitle($"{Program.Client.CurrentUser.Username} DMDB Help");
                 builder.WithDescription("This feature supports the 3 Databases provided by the DMDB Course: 'employee', 'zvv' and 'tpch'. " + Environment.NewLine +
                     "**IMPORTANT: Unlike on the main MariaDB you have full Admin permissions on the PostgreSQL.** It's intended that you may experiemnt with the Database without any need to install it locally." +
-                    "Any Admin can restore the Database should it become unusable/corrupted. If you abuse it on purpose, then you will be banned for using this command.");
+                    "Any Admin can restore the Database should it become unusable/corrupted. If you abuse it on purpose, then you will be banned from using this command.");
                 builder.WithColor(0, 0, 255);
 
                 builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
@@ -48,7 +48,7 @@ namespace ETHDINFKBot.Modules
                 builder.AddField($"{Program.CurrentPrefix}sql dmdb restore", "Restore the Database (Any Admin/Mod can do this)");
                 builder.AddField($"{Program.CurrentPrefix}sql dmdb info <database>", "Get the Table Graph. Available DBs: employee, zvv and tpch");
                 builder.AddField($"{Program.CurrentPrefix}sql dmdb query <database> <query>", "Run the query on a specified Database (employee, zvv or tpch), restult will be in text form");
-                builder.AddField($"{Program.CurrentPrefix}sql dmdb queryd <database> <query>", "Run the query on a specified Database (employee, zvv or tpch), but returns the restult as an Image ");
+                builder.AddField($"{Program.CurrentPrefix}sql dmdb queryd <database> <query>", "Run the query on a specified Database (employee, zvv or tpch), but returns the result as an Image ");
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
