@@ -1456,6 +1456,10 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             paint.TextSize = 20;
             paint.Color = new SKColor(255, 32, 32);
             canvas.DrawText("THIS FEATURE IS IN ALPHA CURRENTLY", new SKPoint(padding.Left, bitmap.Height - 50), paint);
+            paint.TextSize = 16;
+            canvas.DrawText("(Images are taken from google.com and may not represent the actual product)", new SKPoint(padding.Left, bitmap.Height - 30), paint);
+
+
 
             var stream = CommonHelper.GetStream(bitmap);
 
