@@ -1527,7 +1527,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         }
         catch(Exception ex)
         {
-            await Context.Channel:SendMessageAsync(ex.ToString());
+            await Context.Channel.SendMessageAsync(ex.ToString());
 
         }
         }
