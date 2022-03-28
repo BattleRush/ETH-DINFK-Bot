@@ -1388,7 +1388,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             var meal = MealTime.Lunch;
 
-            if (DateTime.Now.AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1).Hour >= 14)
+            // TODO Do CET/CEST Switch
+            if (DateTime.Now.Hour >= 12)
                 meal = MealTime.Dinner;
 
             var restaurants = FoodHelper.GetCurrentMenu(meal, Language.English, Location.Zentrum);
