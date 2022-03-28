@@ -1434,14 +1434,17 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     {
                         img = webClient.DownloadData(menu.ImgUrl);
                     }
-
-                    // decode the bitmap stream
-                    var resourceBitmap = SKBitmap.Decode(img);
-
-                    if (resourceBitmap != null)
+                    
+                    if(img != null)
                     {
-                        var resizedBitmap = resourceBitmap.Resize(new SKSizeI(128, 128), SKFilterQuality.High); //Resize to the canvas
-                        canvas.DrawBitmap(resizedBitmap, new SKPoint(padding.Left + column * colWidth, usedHeight + 20));
+                        // decode the bitmap stream
+                        var resourceBitmap = SKBitmap.Decode(img);
+
+                        if (resourceBitmap != null)
+                        {
+                            var resizedBitmap = resourceBitmap.Resize(new SKSizeI(128, 128), SKFilterQuality.High); //Resize to the canvas
+                            canvas.DrawBitmap(resizedBitmap, new SKPoint(padding.Left + column * colWidth, usedHeight + 20));
+                        }
                     }
 
 
