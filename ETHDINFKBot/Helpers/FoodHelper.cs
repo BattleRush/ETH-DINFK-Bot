@@ -114,7 +114,7 @@ namespace ETHDINFKBot.Helpers
                 {
                     Description = childNodes[1].InnerText,
                     Name = childNodes[0].InnerText,
-                    Price = decimal.Parse(childNodes[2].InnerText) / 100 // TODO fix formating with the comma
+                    Price = decimal.Parse(childNodes[2].InnerText) // TODO fix formating with the comma
                 };
 
 
@@ -182,7 +182,7 @@ namespace ETHDINFKBot.Helpers
                         {
                             currentMenu.Name = child.InnerText.Split('|')[0];
                             // Sometimes the price is missing idk why
-                            currentMenu.Price = child.InnerText.Contains("|") ? decimal.Parse(child.InnerText.Split('|')[1].Split('/')[0].Replace("CHF","")) / 100 : 0;
+                            currentMenu.Price = child.InnerText.Contains("|") ? decimal.Parse(child.InnerText.Split('|')[1].Split('/')[0].Replace("CHF","")) : 0;
                             // TODO Detect pricing
                             step++;
                         }
