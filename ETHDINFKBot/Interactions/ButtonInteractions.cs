@@ -41,9 +41,11 @@ namespace ETHDINFKBot.Interactions
             Context.Interaction.DeferAsync();
         }
 
-        [ComponentInteraction("emote-fav-del-*")]
+        [ComponentInteraction("emote-del-*")]
         public async Task DeleteFavEmote(string id)
         {
+            Context.Interaction.DeferAsync();
+            
             var emote = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(ulong.Parse(id));
 
             var mb = new ModalBuilder()
@@ -53,7 +55,7 @@ namespace ETHDINFKBot.Interactions
 .AddTextInput($"Confirm delete by typing \"DELETE\"", "custom-emote-name-delete", placeholder: "DELETE", required: true);
 
             Context.Interaction.RespondWithModalAsync(mb.Build());
-            Context.Interaction.DeferAsync();
+            
         }
 
 

@@ -150,11 +150,11 @@ namespace ETHDINFKBot.Modules
             {
                 if (emote.IsValid && false)
                 {
-                    builderComponent.WithButton(emote.EmoteName, $"emote-fav-del-{emote.DiscordEmoteId}", ButtonStyle.Primary, Emote.Parse($"<:{emote.EmoteName}:{emote.DiscordEmoteId}>"), null, false, row);
+                    builderComponent.WithButton(emote.EmoteName, $"emote-del-{emote.DiscordEmoteId}", ButtonStyle.Primary, Emote.Parse($"<:{emote.EmoteName}:{emote.DiscordEmoteId}>"), null, false, row);
                 }
                 else
                 {
-                    builderComponent.WithButton(emote.EmoteName, $"emote-fav-del-{emote.DiscordEmoteId}", ButtonStyle.Danger, null, null, false, row);
+                    builderComponent.WithButton(emote.EmoteName, $"emote-del-{emote.DiscordEmoteId}", ButtonStyle.Danger, null, null, false, row);
                 }
 
                 col++;
