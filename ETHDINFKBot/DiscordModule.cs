@@ -1383,6 +1383,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         [Command("food")]
         public async Task FoodB()
         {
+        try
+        {
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
 
@@ -1522,7 +1524,12 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             //        Console.WriteLine($"statuscode:{e.HttpStatusCode}");
             //    }
 
+        }
+        catch(Exception ex)
+        {
+            await Context.Channel:SendMessageAsync(ex.ToString());
 
+        }
         }
 
 
