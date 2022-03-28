@@ -159,7 +159,7 @@ namespace ETHDINFKBot.Helpers
 
 
             WebClient client = new WebClient();
-            string html = client.DownloadString($"https://www.mensa.uzh.ch/en/menueplaene/{mensa}/{day}.html");
+            string html = client.DownloadString($"https://www.mensa.uzh.ch/de/menueplaene/{mensa}/{day}.html");
 
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
