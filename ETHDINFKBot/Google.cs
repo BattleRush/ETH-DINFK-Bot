@@ -123,7 +123,7 @@ namespace ETHDINFKBot
             {
 
                 if(cache.ContainsKey(query))
-                    return cache[query][0];
+                    return cache[query][0] ?? "";
 
                 string queryUrl = $"https://www.google.com/search?q={HttpUtility.UrlEncode(query.ToLower())}&start={start}&hl={lang}&gl={lang}&safe=active"; //Create The Query URL
                                                                                                                                                              //if (cache.ContainsKey(queryUrl)) //Check If This Query Has Already Been Sent
@@ -155,7 +155,7 @@ namespace ETHDINFKBot
                         Uri myUri = new Uri(link);
 
                         string param1 = HttpUtility.ParseQueryString(myUri.Query).Get("imgurl");
-                        links.Add(param1);
+                        links.Add(param1 ?? "");
                     }
                     catch (Exception ex)
                     {
