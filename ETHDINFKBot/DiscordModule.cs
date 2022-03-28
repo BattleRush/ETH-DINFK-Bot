@@ -1427,7 +1427,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     //canvas.DrawText(menu.Description, new SKPoint(, ), DrawingHelper.DefaultTextPaint);
                     canvas.DrawText("CHF " + menu.Price.ToString("#,##0.00"), new SKPoint(padding.Left + column * colWidth, usedHeight + 10), DrawingHelper.DefaultTextPaint);
 
-
+                    try
+                    {
                     // download the bytes
                     byte[] img = null;
                     using (var webClient = new WebClient())
@@ -1445,6 +1446,11 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                             var resizedBitmap = resourceBitmap.Resize(new SKSizeI(128, 128), SKFilterQuality.High); //Resize to the canvas
                             canvas.DrawBitmap(resizedBitmap, new SKPoint(padding.Left + column * colWidth, usedHeight + 20));
                         }
+                    }
+                    }
+                    catch(Exception ex)
+                    {
+
                     }
 
 
