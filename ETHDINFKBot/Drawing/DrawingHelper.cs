@@ -376,7 +376,7 @@ namespace ETHDINFKBot.Drawing
 
                 canvas.DrawText($"{yAxis[i]}", new SKPoint(padding.Left - 5, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i + labelPaint.TextSize / 2), labelPaint);
                 if (secondYAxis != null)
-                    canvas.DrawText($"{secondYAxis[i]}", new SKPoint(gridSize.XMax + 15, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i + labelPaint.TextSize / 2), labelPaint);
+                    canvas.DrawText($"{secondYAxis[i]}", new SKPoint(gridSize.XMax + 25, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i + labelPaint.TextSize / 2), labelPaint);
 
                 if (i < rows)
                     canvas.DrawLine(new SKPoint(gridSize.XMin, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i), new SKPoint(gridSize.XMax, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i), DefaultDrawing);

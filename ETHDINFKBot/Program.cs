@@ -107,7 +107,7 @@ namespace ETHDINFKBot
             CurrentPrefix = ".";
 
 #if DEBUG
-            //CurrentPrefix = "dev.";
+            CurrentPrefix = "dev.";
 #endif
 
             try
@@ -347,7 +347,7 @@ namespace ETHDINFKBot
                     PlaceServer = new PlaceServer(IPAddress.Any, 9000);
                     PlaceServer.OptionKeepAlive = true;
                     PlaceServer.OptionAcceptorBacklog = 8192;
-                    PlaceServer.OptionSendBufferSize = 4_000_000;
+                    PlaceServer.OptionSendBufferSize = 10_000_000;
 
                     // Start the server
                     Console.Write("Server starting...");

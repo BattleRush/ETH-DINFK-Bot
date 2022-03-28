@@ -30,6 +30,11 @@ using System.Diagnostics;
 using ETHDINFKBot.Drawing;
 using System.Reflection;
 using TimeZoneConverter;
+using HtmlAgilityPack;
+using Google.Apis.CustomSearchAPI.v1;
+using Google.Apis.Services;
+using Google.Apis.CustomSearchAPI.v1.Data;
+using Google;
 
 namespace ETHDINFKBot
 {
@@ -246,7 +251,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.AddField("React (only this server emotes)", $"```{prefix}react <message_id> <emote_name>```", true);
             builder.AddField("Space Min: 1 Max: 5", $"```{prefix}space [<amount>]```", true);
             builder.AddField("Space (for more commands)", $"```{prefix}space help```", true);
-            builder.AddField("WIP Command", $"```{prefix}messagegraph [all|lernphase|bp]```", true);
+            builder.AddField("WIP Command", $"```{prefix}messagegraph [all|lernphase|bp] {prefix}food```", true);
             builder.AddField("ETH DINFK Place", $"```Type '{prefix}place help' for more information```");
 
             /*builder.AddField("Write .study to force yourself away from discord", "```May contain spoilers to old exams! Once you receive the study role you will be only to chat for max of 15 mins at a time." + Environment.NewLine +
@@ -306,6 +311,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         [Summary("Returns info about the current user, or the user parameter, if one passed.")]
         public async Task GoogleSearch([Remainder] string searchString)
         {
+            await Context.Channel.SendMessageAsync("Temp disabled", false);
+
+            return; // Disabled for now
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
 
@@ -334,7 +342,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             foreach (var item in reply.Results.Take(3))
             {
-                builder.AddField(item.title, item.description + Environment.NewLine + item.url);
+                //builder.AddField(item.title, item.description + Environment.NewLine + item.url);
             }
 
             await Context.Channel.SendMessageAsync("", false, builder.Build());
@@ -509,7 +517,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             Context.Channel.SendMessageAsync(req.ImageUrl, false);
         }*/
 
-      
+
 
         [Command("react")]
         public async Task ReactEmote(ulong messageid, string emoteName)
@@ -1057,7 +1065,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.WithColor(255, 0, 255);
 
             // Can cause NRE
-            if(byUser != null)
+            if (byUser != null)
                 builder.WithAuthor(byUser);
 
             builder.WithCurrentTimestamp();
@@ -1292,6 +1300,234 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             await nuke.DeleteAsync();
             await nukeMsg.DeleteAsync();
         }
+
+
+
+
+        [Command("a")]
+        public async Task Food()
+        {
+            ///html/body/div[6]/section/div/section/div[2]/div[1]/div/div[2]/div/div/div/div/div/div/div/div/table/tbody[2]
+
+
+            //foreach (var menu in polymensaMenus)
+            //{
+            //    await Context.Channel.SendMessageAsync($"**Menu: {menu.Name} Description: {menu.Description} Price: {menu.Price}**");
+
+            //    var reply = new GoogleEngine().ImageSearch(menu.Description.Replace("\"", ""));
+            //    if (reply == "")
+            //        await Context.Channel.SendMessageAsync("Image not found");
+            //    else
+            //        await Context.Channel.SendMessageAsync(reply);
+            //}
+
+
+        }
+
+        // TODO Create helper method
+        // https://github.com/mono/SkiaSharp.Extended/issues/12
+        private float DrawTextArea(SKCanvas canvas, SKPaint paint, float x, float y, float maxWidth, float lineHeight, string text)
+        {
+            var spaceWidth = paint.MeasureText(" ");
+            var lines = text.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+            lines = lines.SelectMany(l => SplitLine(paint, maxWidth, l, spaceWidth)).ToArray();
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+                canvas.DrawText(line, x, y, paint);
+                y += lineHeight;
+            }
+
+            return y;
+        }
+        // TODO Create helper method
+        private string[] SplitLine(SKPaint paint, float maxWidth, string text, float spaceWidth)
+        {
+            var result = new List<string>();
+
+            var words = text.Split(new[] { " " }, StringSplitOptions.None);
+
+            var line = new StringBuilder();
+            float width = 0;
+            foreach (var word in words)
+            {
+                var wordWidth = paint.MeasureText(word);
+                var wordWithSpaceWidth = wordWidth + spaceWidth;
+                var wordWithSpace = word + " ";
+
+                if (width + wordWidth > maxWidth)
+                {
+                    result.Add(line.ToString());
+                    line = new StringBuilder(wordWithSpace);
+                    width = wordWithSpaceWidth;
+                }
+                else
+                {
+                    line.Append(wordWithSpace);
+                    width += wordWithSpaceWidth;
+                }
+            }
+
+            result.Add(line.ToString());
+
+            return result.ToArray();
+        }
+
+
+        public async Task SubmitImage()
+        {
+
+        }
+
+        [Command("food")]
+        public async Task FoodB()
+        {
+            var meal = MealTime.Lunch;
+
+            if (DateTime.Now.Hour >= 14)
+                meal = MealTime.Dinner;
+
+            var restaurants = FoodHelper.GetCurrentMenu(meal, Language.English, Location.Zentrum);
+
+            var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(800, 1000);
+
+            int row = 0;
+
+            var padding = DrawingHelper.DefaultPadding;
+
+            padding.Left = 20;
+            padding.Top = 40;
+
+            int rowHeight = 300;
+            int colWidth = 200;
+
+            var paint = DrawingHelper.DefaultTextPaint;
+            paint.TextSize = 20;
+            paint.Color = new SKColor(128, 255, 64);
+            canvas.DrawText(meal.ToString(), new SKPoint(700, 25), paint);
+
+
+            foreach (var restaurant in restaurants)
+            {
+
+                canvas.DrawText(restaurant.Key.ToString(), new SKPoint(padding.Left, padding.Top + row * rowHeight), DrawingHelper.TitleTextPaint); // TODO Correct paint?
+
+                int column = 0;
+                foreach (var menu in restaurant.Value)
+                {
+                    canvas.DrawText(menu.Name, new SKPoint(padding.Left + column * colWidth, padding.Top + row * rowHeight + 20), DrawingHelper.DefaultTextPaint);
+                    int usedHeight = (int)DrawTextArea(canvas, DrawingHelper.DefaultTextPaint, padding.Left + column * colWidth, padding.Top + row * rowHeight + 40, 180, DrawingHelper.DefaultTextPaint.TextSize, menu.MultilineDescription);
+                    //canvas.DrawText(menu.Description, new SKPoint(, ), DrawingHelper.DefaultTextPaint);
+                    canvas.DrawText("CHF " + menu.Price.ToString("#,##0.00"), new SKPoint(padding.Left + column * colWidth, usedHeight +  10), DrawingHelper.DefaultTextPaint);
+
+
+                    // download the bytes
+                    byte[] img = null;
+                    using (var webClient = new WebClient())
+                    {
+                        img = webClient.DownloadData(menu.ImgUrl);
+                    }
+
+                    // decode the bitmap stream
+                   var resourceBitmap = SKBitmap.Decode(img);
+
+                    if (resourceBitmap != null)
+                    {
+                        var resizedBitmap = resourceBitmap.Resize(new SKSizeI(128, 128), SKFilterQuality.High); //Resize to the canvas
+                        canvas.DrawBitmap(resizedBitmap, new SKPoint(padding.Left + column * colWidth, usedHeight + 20));
+                    }
+
+
+                    column++;
+                }
+
+
+                /* await Context.Channel.SendMessageAsync($"**Menu: {menu.Name} Description: {menu.Description} Price: {menu.Price}**");
+
+                 if (!string.IsNullOrEmpty(menu.ImgUrl))
+                     await Context.Channel.SendMessageAsync(menu.ImgUrl);
+                */
+
+                row++;
+            }
+
+            paint = DrawingHelper.DefaultTextPaint;
+            paint.TextSize = 20;
+            paint.Color = new SKColor(255, 32, 32);
+            canvas.DrawText("THIS FEATURE IS IN ALPHA CURRENTLY AND WORKS ONLY FOR LUNCH MENUS", new SKPoint(padding.Left, bitmap.Height-50), paint);
+
+            var stream = CommonHelper.GetStream(bitmap);
+
+
+            bitmap.Dispose();
+            canvas.Dispose();
+
+            await Context.Channel.SendFileAsync(stream, "menu.png", $"");
+
+
+
+
+
+
+
+
+
+
+
+
+            //    // Create the service.
+            //    var service = new CustomSearchAPIService(new BaseClientService.Initializer
+            //    {
+            //        //ApplicationName = "Discovery Sample",
+            //        ApiKey = "",
+            //    });
+
+            //    // Run the request.
+            //    Console.WriteLine("Executing a list request...");
+            //    CseResource.ListRequest listRequest = new CseResource.ListRequest(service)
+            //    {
+            //        Cx = "",
+            //        Q = polymensaMenus[0].FirstLine,
+            //        Safe = CseResource.ListRequest.SafeEnum.Active,
+            //        SearchType = CseResource.ListRequest.SearchTypeEnum.Image,
+            //        Hl = "de"
+            //    };
+
+
+            //    try
+            //    {
+
+            //        Search search = listRequest.Execute();
+            //        // Display the results.
+            //        if (search.Items != null)
+            //        {
+            //            foreach (var api in search.Items)
+            //            {
+            //                Context.Channel.SendMessageAsync(api.Link);
+            //                Console.WriteLine(api.DisplayLink + " - " + api.Title);
+            //            }
+            //        }
+            //    }
+            //    catch (GoogleApiException e)
+            //    {
+            //        Console.WriteLine($"statuscode:{e.HttpStatusCode}");
+            //    }
+
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
 
         //[Command("countdown2021")]
         //public async Task countdown2021()
