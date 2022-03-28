@@ -370,11 +370,24 @@ namespace ETHDINFKBot.Helpers
 
             var menus = new Dictionary<Restaurant, List<Menu>>();
 
-            menus.Add(Restaurant.ETH_Polymensa, GetPolymensaMenu(mealTime));
-
+            try
+            {
+                menus.Add(Restaurant.ETH_Polymensa, GetPolymensaMenu(mealTime));
+            }
+            catch(Exception ex)
+            {
+            }
+            
             foreach (var restaurant in lunchUzh)
-                menus.Add(restaurant, GetUzhMenus(day, ToFriendlyString(restaurant)));
-
+            {
+                try
+                {
+                    menus.Add(restaurant, GetUzhMenus(day, ToFriendlyString(restaurant)));
+                }
+                catch(Exception ex)
+                {
+                }
+            }
 
 
             return menus;
