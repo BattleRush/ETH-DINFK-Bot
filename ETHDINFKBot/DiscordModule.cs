@@ -1419,7 +1419,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     canvas.DrawText(menu.Name, new SKPoint(padding.Left + column * colWidth, padding.Top + row * rowHeight + 20), DrawingHelper.DefaultTextPaint);
                     int usedHeight = (int)DrawTextArea(canvas, DrawingHelper.DefaultTextPaint, padding.Left + column * colWidth, padding.Top + row * rowHeight + 40, 180, DrawingHelper.DefaultTextPaint.TextSize, menu.MultilineDescription);
                     //canvas.DrawText(menu.Description, new SKPoint(, ), DrawingHelper.DefaultTextPaint);
-                    canvas.DrawText("CHF " + menu.Price.ToString("#,##0.00"), new SKPoint(padding.Left + column * colWidth, usedHeight +  10), DrawingHelper.DefaultTextPaint);
+                    canvas.DrawText("CHF " + menu.Price.ToString("#,##0.00"), new SKPoint(padding.Left + column * colWidth, usedHeight + 10), DrawingHelper.DefaultTextPaint);
 
 
                     // download the bytes
@@ -1430,7 +1430,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     }
 
                     // decode the bitmap stream
-                   var resourceBitmap = SKBitmap.Decode(img);
+                    var resourceBitmap = SKBitmap.Decode(img);
 
                     if (resourceBitmap != null)
                     {
@@ -1455,7 +1455,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             paint = DrawingHelper.DefaultTextPaint;
             paint.TextSize = 20;
             paint.Color = new SKColor(255, 32, 32);
-            canvas.DrawText("THIS FEATURE IS IN ALPHA CURRENTLY AND WORKS ONLY FOR LUNCH MENUS", new SKPoint(padding.Left, bitmap.Height-50), paint);
+            canvas.DrawText("THIS FEATURE IS IN ALPHA CURRENTLY", new SKPoint(padding.Left, bitmap.Height - 50), paint);
 
             var stream = CommonHelper.GetStream(bitmap);
 
