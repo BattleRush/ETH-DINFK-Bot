@@ -1383,6 +1383,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         [Command("food")]
         public async Task FoodB()
         {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
+
             var meal = MealTime.Lunch;
 
             if (DateTime.Now.Hour >= 14)
