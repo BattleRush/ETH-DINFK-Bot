@@ -1381,7 +1381,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         }
 
         private static DateTime LastLukasPing = DateTime.MinValue;
-        [Commans("lukas")]
+        [Command("lukas")]
         public async Task Lukas()
         {
             if(LastLukasPing.AddMinutes(1)) > DateTime.Now)
