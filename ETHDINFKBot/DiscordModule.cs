@@ -1380,14 +1380,10 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
         }
 
-        private static DateTime LastLukasPing = DateTime.MinValue;
-        [Command("lukas")]
+        [RequireOwner]
+        [Command("serverowner")]
         public async Task Lukas()
         {
-            if(LastLukasPing.AddMinutes(1) > DateTime.Now)
-                return;
-
-            LastLukasPing = DateTime.Now;
             await Context.Channel.SendMessageAsync("<@223932775474921472>");
             await Context.Channel.SendMessageAsync("https://media.discordapp.net/attachments/768600365602963496/958082710100901988/ezgif.com-gif-maker.gif");
         }
