@@ -90,7 +90,7 @@ namespace RedditScrapper
             string fileEnding = url.Substring(url.LastIndexOf("."));
 
 
-            // check if image is in db alread TODO
+            // check if image is in db already TODO
             string file = Path.Combine(path, Post.Fullname+fileEnding);
             
             

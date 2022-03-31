@@ -171,7 +171,7 @@ namespace ETHDINFKBot.Helpers
             if (number.EndsWith("12")) return number + "th";
             if (number.EndsWith("13")) return number + "th";
             if (number.EndsWith("1")) return number + "st";
-            if (number.EndsWith("2")) return number + "nd";
+            if (number.EndsWith("2")) return number + "and";
             if (number.EndsWith("3")) return number + "rd";
             return number + "th";
         }
@@ -251,7 +251,7 @@ namespace ETHDINFKBot.Helpers
 
                             if (manager.IsImage())
                             {
-                                var imageInfos = manager.DownloadImage(Path.Combine(Program.ApplicationSetting.BasePath, "Reddit")); // TODO send path in contructor
+                                var imageInfos = manager.DownloadImage(Path.Combine(Program.ApplicationSetting.BasePath, "Reddit")); // TODO send path in constructor
 
                                 context.RedditImages.AddRange(imageInfos);
                                 context.SaveChanges();

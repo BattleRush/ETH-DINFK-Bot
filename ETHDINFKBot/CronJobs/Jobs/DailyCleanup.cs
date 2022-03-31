@@ -35,7 +35,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
             {
                 DateTime oneWeekAgo = DateTime.Now.Add(toDeleteOlderThan);
                 ulong oneWeekAgoSnowflake = SnowflakeUtils.ToSnowflake(oneWeekAgo);
-                var oldMessages = await channel.GetMessagesAsync(oneWeekAgoSnowflake, Direction.Before, 100/*100 should be enought for a while*/).FlattenAsync();
+                var oldMessages = await channel.GetMessagesAsync(oneWeekAgoSnowflake, Direction.Before, 100/*100 should be enough for a while*/).FlattenAsync();
                 await channel.DeleteMessagesAsync(oldMessages);
 
             }

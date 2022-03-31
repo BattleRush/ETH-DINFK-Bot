@@ -31,7 +31,7 @@ namespace ETHDINFKBot.Helpers
             // If the header is really long then abort the message
             if (result.Length > 1000)
             {
-                result = $"Reconsider how many colums you are selecting. Maybe use {Program.CurrentPrefix}sql queryd <query>";
+                result = $"Reconsider how many columns you are selecting. Maybe use {Program.CurrentPrefix}sql queryd <query>";
                 return result;
             }
 
@@ -89,7 +89,7 @@ namespace ETHDINFKBot.Helpers
             return resultString + Environment.NewLine + $"{queryResult.TotalResults.ToString("N0")} Row(s) affected Time: {queryResult.Time.ToString("N0")}ms";
         }
 
-        public static async Task<(List<string> Header, List<List<string>> Data, int TotalResults, long Time)> GetQueryResults(SocketCommandContext context, string commandSql, bool limitRows = false, int limitLength = 2000, bool fullUser = false, bool diableCap = false)
+        public static async Task<(List<string> Header, List<List<string>> Data, int TotalResults, long Time)> GetQueryResults(SocketCommandContext context, string commandSql, bool limitRows = false, int limitLength = 2000, bool fullUser = false, bool disableCap = false)
         {
             // TODO Admin perms for daily jobs with no context object
             var author = context?.Message?.Author;
@@ -128,7 +128,7 @@ namespace ETHDINFKBot.Helpers
 
                         while (reader.Read())
                         {
-                            if (!diableCap)
+                            if (!disableCap)
                             {
                                 // todo disable
                                 // cap at 10k records to return in count (as temp fix if the query returns millions of rows)
@@ -259,7 +259,7 @@ namespace ETHDINFKBot.Helpers
             return (Header, Data, TotalResults, Time);
         }
 
-        public static async Task<(List<string> Header, List<List<string>> Data, int TotalResults, long Time)> GetQueryResultsPostgreSQL(SocketCommandContext context, string commandSql, string database, bool limitRows = false, int limitLength = 2000, bool fullUser = false, bool diableCap = false)
+        public static async Task<(List<string> Header, List<List<string>> Data, int TotalResults, long Time)> GetQueryResultsPostgreSQL(SocketCommandContext context, string commandSql, string database, bool limitRows = false, int limitLength = 2000, bool fullUser = false, bool disableCap = false)
         {
             // TODO Admin perms for daily jobs with no context object
             var author = context?.Message?.Author;
@@ -295,7 +295,7 @@ namespace ETHDINFKBot.Helpers
                 {
                     while (await reader.ReadAsync())
                     {
-                        if (!diableCap)
+                        if (!disableCap)
                         {
                             // todo disable
                             // cap at 10k records to return in count (as temp fix if the query returns millions of rows)

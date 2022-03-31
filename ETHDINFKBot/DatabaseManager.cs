@@ -1259,7 +1259,7 @@ namespace ETHDINFKBot
                     var messageIds = context.DiscordMessages.AsQueryable().Where(i => i.DiscordUserId == userId).OrderByDescending(i => i.DiscordMessageId).Take(queryMessageLength).Select(i => i.DiscordMessageId).ToList();
 
                     // We query only in the last 10k messages for performance reasons
-                    var messages = context.DiscordMessages.AsQueryable().OrderByDescending(i => i.DiscordMessageId).Take(10_000);/*Retreive the last 10k messages into memory*///.Where(i => messageIds.Contains(i.ReplyMessageId ?? 0));
+                    var messages = context.DiscordMessages.AsQueryable().OrderByDescending(i => i.DiscordMessageId).Take(10_000);/*Retrieve the last 10k messages into memory*///.Where(i => messageIds.Contains(i.ReplyMessageId ?? 0));
 
                     List<DiscordMessage> replyMessages = new List<DiscordMessage>();
 
@@ -1272,7 +1272,7 @@ namespace ETHDINFKBot
 
                     List<PingHistory> returnValue = new List<PingHistory>();
 
-                    // Priorotize newer replies
+                    // Prioritize newer replies
                     foreach (var replyMessage in replyMessages.OrderByDescending(i => i.DiscordMessageId))
                     {
                         returnValue.Add(new PingHistory()
@@ -1484,8 +1484,8 @@ namespace ETHDINFKBot
 
                 try
                 {
-                    //var user = GetDiscordUserById(byDiscordUserId); // Verify the user is created but should actually be available by this poitn
-                    //var saveBy = GetDiscordUserById(savedByDiscordUserId); // Verify the user is created but should actually be available by this poitn
+                    //var user = GetDiscordUserById(byDiscordUserId); // Verify the user is created but should actually be available by this point
+                    //var saveBy = GetDiscordUserById(savedByDiscordUserId); // Verify the user is created but should actually be available by this point
                     //ETHBotDBContext.SaveChanges();
                     var newSave = new SavedMessage()
                     {
