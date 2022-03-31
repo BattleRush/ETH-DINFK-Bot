@@ -83,7 +83,7 @@ namespace ETHDINFKBot.Helpers
         {
             string xPath = "//*[@class=\"scrollarea-content\"]";
 
-            string lang = "en";
+            string lang = "de";
             string dateString =  DateTime.Today.ToString("yyyy-MM-dd"); //"2022-03-25";
 
             int polyMensaId = 12;
@@ -136,9 +136,9 @@ namespace ETHDINFKBot.Helpers
 
 
 
-                menu.ImgUrl = GetImageFromGoole(menu.FirstLine, "en");
+                menu.ImgUrl = GetImageFromGoole(menu.FirstLine, "de");
                 if(menu.ImgUrl == "")
-                    menu.ImgUrl = GetImageFromGoole(menu.Description, "en");
+                    menu.ImgUrl = GetImageFromGoole(menu.Description, "de");
 
                 if (menu.ImgUrl == "")
                     menu.ImgUrl = "https://cdn.discordapp.com/avatars/153929916977643521/5d6e05d48ab1b0599aa801ac4aebc1ea.png";
