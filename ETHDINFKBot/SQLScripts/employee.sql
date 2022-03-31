@@ -1302,7 +1302,7 @@ INSERT INTO public.dept_manager VALUES (11024, 'd009', '1996-01-03', '9999-01-01
 INSERT INTO public.employees VALUES (10001, '1953-09-02', 'Georgi', 'Facello', 'M', '1986-06-26');
 INSERT INTO public.employees VALUES (10002, '1964-06-02', 'Bezalel', 'Simmel', 'F', '1985-11-21');
 INSERT INTO public.employees VALUES (10003, '1959-12-03', 'Parto', 'Bamford', 'M', '1986-08-28');
-INSERT INTO public.employees VALUES (10004, '1954-05-01', 'Christian', 'Koblick', 'M', '1986-12-01');
+INSERT INTO public.employees VALUES (10004, '1954-05-01', 'Chirstian', 'Koblick', 'M', '1986-12-01');
 INSERT INTO public.employees VALUES (10005, '1955-01-21', 'Kyoichi', 'Maliniak', 'M', '1989-09-12');
 INSERT INTO public.employees VALUES (10006, '1953-04-20', 'Anneke', 'Preusig', 'F', '1989-06-02');
 INSERT INTO public.employees VALUES (10007, '1957-05-23', 'Tzvetan', 'Zielinski', 'F', '1989-02-10');
@@ -1450,7 +1450,7 @@ INSERT INTO public.employees VALUES (10148, '1957-10-04', 'Douadi', 'Azumi', 'M'
 INSERT INTO public.employees VALUES (10149, '1953-05-20', 'Xiadong', 'Perry', 'F', '1986-11-05');
 INSERT INTO public.employees VALUES (10150, '1955-01-29', 'Zhenbing', 'Perng', 'F', '1986-11-16');
 INSERT INTO public.employees VALUES (10151, '1959-03-06', 'Itzchak', 'Lichtner', 'M', '1990-04-10');
-INSERT INTO public.employees VALUES (10152, '1954-12-01', 'Jacques', 'Munro', 'F', '1986-01-27');
+INSERT INTO public.employees VALUES (10152, '1954-12-01', 'Jaques', 'Munro', 'F', '1986-01-27');
 INSERT INTO public.employees VALUES (10153, '1955-12-15', 'Heekeun', 'Majewski', 'M', '1987-04-08');
 INSERT INTO public.employees VALUES (10154, '1957-01-17', 'Abdulah', 'Thibadeau', 'F', '1990-12-12');
 INSERT INTO public.employees VALUES (10155, '1959-12-07', 'Adas', 'Nastansky', 'M', '1990-01-05');
@@ -1839,7 +1839,7 @@ INSERT INTO public.employees VALUES (10537, '1962-06-29', 'Stella', 'Benzmuller'
 INSERT INTO public.employees VALUES (10538, '1955-08-18', 'Przemyslawa', 'Falby', 'M', '1987-07-23');
 INSERT INTO public.employees VALUES (10539, '1959-05-13', 'Yucel', 'Reinhard', 'M', '1990-06-05');
 INSERT INTO public.employees VALUES (10540, '1961-02-24', 'Martins', 'Barriga', 'M', '1994-05-03');
-INSERT INTO public.employees VALUES (10541, '1955-11-05', 'Godehard', 'Either', 'M', '1986-02-28');
+INSERT INTO public.employees VALUES (10541, '1955-11-05', 'Godehard', 'Eiter', 'M', '1986-02-28');
 INSERT INTO public.employees VALUES (10542, '1955-01-05', 'Yannis', 'Couchot', 'F', '1989-03-28');
 INSERT INTO public.employees VALUES (10543, '1962-10-06', 'Lein', 'Lichtman', 'M', '1998-10-16');
 INSERT INTO public.employees VALUES (10544, '1962-02-01', 'Ishfaq', 'Krzyzanowski', 'F', '1995-04-29');
@@ -1981,7 +1981,7 @@ INSERT INTO public.employees VALUES (10679, '1956-09-25', 'Neven', 'Brender', 'M
 INSERT INTO public.employees VALUES (10680, '1962-10-11', 'Kish', 'Honglei', 'M', '1986-06-20');
 INSERT INTO public.employees VALUES (10681, '1964-12-25', 'Florina', 'Garnier', 'M', '1992-10-25');
 INSERT INTO public.employees VALUES (10682, '1956-07-04', 'Bedir', 'Haumacher', 'M', '1990-11-09');
-INSERT INTO public.employees VALUES (10683, '1952-06-18', 'Giuseppe', 'Stranks', 'F', '1993-09-07');
+INSERT INTO public.employees VALUES (10683, '1952-06-18', 'Guiseppe', 'Stranks', 'F', '1993-09-07');
 INSERT INTO public.employees VALUES (10684, '1956-01-23', 'Aimee', 'Tokunaga', 'F', '1999-10-28');
 INSERT INTO public.employees VALUES (10685, '1959-01-14', 'Zongyan', 'Cusworth', 'M', '1990-04-24');
 INSERT INTO public.employees VALUES (10686, '1963-05-25', 'Avishai', 'Azadmanesh', 'F', '1987-05-17');
@@ -1990,7 +1990,7 @@ INSERT INTO public.employees VALUES (10688, '1964-02-28', 'Xiaopeng', 'Lanphier'
 INSERT INTO public.employees VALUES (10689, '1958-09-13', 'Satoru', 'Otillio', 'M', '1988-08-05');
 INSERT INTO public.employees VALUES (10690, '1962-09-06', 'Matt', 'Jumpertz', 'F', '1989-08-22');
 INSERT INTO public.employees VALUES (10691, '1957-11-18', 'Denny', 'Setia', 'M', '1989-09-17');
-INSERT INTO public.employees VALUES (10692, '1960-08-11', 'Larisa', 'Bag', 'M', '1993-03-22');
+INSERT INTO public.employees VALUES (10692, '1960-08-11', 'Larisa', 'Bage', 'M', '1993-03-22');
 INSERT INTO public.employees VALUES (10693, '1953-12-14', 'Berhard', 'Daescu', 'F', '1986-01-08');
 INSERT INTO public.employees VALUES (10694, '1955-12-16', 'Rildo', 'Straney', 'M', '1988-01-26');
 INSERT INTO public.employees VALUES (10695, '1962-08-30', 'Zorica', 'Acton', 'M', '1989-08-05');
@@ -2069,7 +2069,7 @@ INSERT INTO public.employees VALUES (10767, '1954-02-28', 'Monique', 'Doering', 
 INSERT INTO public.employees VALUES (10768, '1955-06-24', 'Ishfaq', 'Candan', 'M', '1985-07-04');
 INSERT INTO public.employees VALUES (10769, '1962-11-02', 'Vishv', 'Bouloucos', 'M', '1987-08-16');
 INSERT INTO public.employees VALUES (10770, '1956-06-18', 'Bedir', 'Perry', 'F', '1987-12-25');
-INSERT INTO public.employees VALUES (10771, '1960-05-10', 'Giuseppe', 'Kleiser', 'F', '1989-11-08');
+INSERT INTO public.employees VALUES (10771, '1960-05-10', 'Guiseppe', 'Kleiser', 'F', '1989-11-08');
 INSERT INTO public.employees VALUES (10772, '1956-01-21', 'Munehiro', 'Dayana', 'M', '1987-06-29');
 INSERT INTO public.employees VALUES (10773, '1960-07-11', 'Avishai', 'Bahr', 'F', '1985-12-01');
 INSERT INTO public.employees VALUES (10774, '1958-10-03', 'Jacqueline', 'Masand', 'M', '1990-01-26');
@@ -2270,7 +2270,7 @@ INSERT INTO public.employees VALUES (10968, '1961-03-19', 'Lakshmi', 'Kolinko', 
 INSERT INTO public.employees VALUES (10969, '1954-09-05', 'Premal', 'Noriega', 'M', '1988-08-22');
 INSERT INTO public.employees VALUES (10970, '1962-08-24', 'Gen', 'Tiemann', 'F', '1994-09-16');
 INSERT INTO public.employees VALUES (10971, '1955-02-08', 'Isamu', 'Vadhan', 'M', '1991-07-30');
-INSERT INTO public.employees VALUES (10972, '1961-10-05', 'Fumiko', 'Assert', 'F', '1987-06-06');
+INSERT INTO public.employees VALUES (10972, '1961-10-05', 'Fumiko', 'Asser', 'F', '1987-06-06');
 INSERT INTO public.employees VALUES (10973, '1961-10-02', 'Valdiodio', 'Raczkowsky', 'M', '1989-03-05');
 INSERT INTO public.employees VALUES (10974, '1952-03-07', 'Muneo', 'Papsdorf', 'M', '1985-11-25');
 INSERT INTO public.employees VALUES (10975, '1962-07-27', 'Peternela', 'Birnbaum', 'F', '1986-10-31');

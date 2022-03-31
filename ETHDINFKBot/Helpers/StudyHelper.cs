@@ -214,7 +214,7 @@ namespace ETHDINFKBot.Helpers
                 Text = "Solve the Multiple-Choice question",
                 ExpectedInputFormat = "1 or 0 for (true or false)",
                 Hint = "None (if you have one please send one to BattleRush :)",
-                Latex = @"\text{Eine normierte Eigenzerlegung einer Matrix ist die Menge ihrer Eigenwerte mit zugehörigen normierten Eigenvektoren. Zwei Zerlegungen, die sich nur durch ihre Reihenfolgeunterscheiden, betrachten wir also identisch.} \\ 
+                Latex = @"\text{Eine normierte Eigenzerlegung einer Matrix ist die Menge ihrer Eigenwerte mit zugehörigen normierten Eigenvektoren. Zwei Zerlegungen, die sich nur durch ihre Reihenfolgeunterscheiden, betrachten wir als identisch.} \\ 
 \text{Eine Matrix {\bf A}\in \mathbb{R}^{nxn} hat eine eindeutig bestimmte normierte Eigenzerlegung.}",
                 Answer = "false"
             },
@@ -226,7 +226,7 @@ namespace ETHDINFKBot.Helpers
                 Text = "Solve the Multiple-Choice question",
                 ExpectedInputFormat = "1 or 0 for (true or false)",
                 Hint = "None (if you have one please send one to BattleRush :)",
-                Latex = @"\text{Eine normierte Eigenzerlegung einer Matrix ist die Menge ihrer Eigenwerte mit zugehörigen normierten Eigenvektoren. Zwei Zerlegungen, die sich nur durch ihre Reihenfolgeunterscheiden, betrachten wir also identisch.} \\ 
+                Latex = @"\text{Eine normierte Eigenzerlegung einer Matrix ist die Menge ihrer Eigenwerte mit zugehörigen normierten Eigenvektoren. Zwei Zerlegungen, die sich nur durch ihre Reihenfolgeunterscheiden, betrachten wir als identisch.} \\ 
 \text{Eine invertierbare Matrix {\bf A}\in \mathbb{R}^{nxn} hat eine eindeutig bestimmte normierte Eigenzerlegung.}",
                 Answer = "false"
             },
@@ -238,7 +238,7 @@ namespace ETHDINFKBot.Helpers
                 Text = "Solve the Multiple-Choice question",
                 ExpectedInputFormat = "1 or 0 for (true or false)",
                 Hint = "None (if you have one please send one to BattleRush :)",
-                Latex = @"\text{Eine normierte Eigenzerlegung einer Matrix ist die Menge ihrer Eigenwerte mit zugehörigen normierten Eigenvektoren. Zwei Zerlegungen, die sich nur durch ihre Reihenfolgeunterscheiden, betrachten wir also identisch.} \\ 
+                Latex = @"\text{Eine normierte Eigenzerlegung einer Matrix ist die Menge ihrer Eigenwerte mit zugehörigen normierten Eigenvektoren. Zwei Zerlegungen, die sich nur durch ihre Reihenfolgeunterscheiden, betrachten wir als identisch.} \\ 
 \text{Eine Matrix {\bf A}\in \mathbb{R}^{nxn} hat n verschiedene normierte Eigenzerlegungen.}",
                 Answer = "false"
             },
@@ -250,7 +250,7 @@ namespace ETHDINFKBot.Helpers
                 Text = "Solve the Multiple-Choice question",
                 ExpectedInputFormat = "1 or 0 for (true or false)",
                 Hint = "None (if you have one please send one to BattleRush :)",
-                Latex = @"\text{Eine normierte Eigenzerlegung einer Matrix ist die Menge ihrer Eigenwerte mit zugehörigen normierten Eigenvektoren. Zwei Zerlegungen, die sich nur durch ihre Reihenfolgeunterscheiden, betrachten wir also identisch.} \\ 
+                Latex = @"\text{Eine normierte Eigenzerlegung einer Matrix ist die Menge ihrer Eigenwerte mit zugehörigen normierten Eigenvektoren. Zwei Zerlegungen, die sich nur durch ihre Reihenfolgeunterscheiden, betrachten wir als identisch.} \\ 
 \text{Eine Matrix {\bf A}\in \mathbb{R}^{nxn} mit n verschiedenen Eigenwerten hat 2^n verschiedene normierte Eigenzerlegungen.}",
                 Answer = "true"
             },
@@ -289,7 +289,7 @@ namespace ETHDINFKBot.Helpers
                 ExpectedInputFormat = "1 or 0 for (true or false)",
                 Hint = "None (if you have one please send one to BattleRush :)",
                 Latex = @"\text{Gegeben sind die Matrizen {\bf A}\in \mathbb{R}^{nxn} und {\bf B}\in \mathbb{R}^{nxn}.} \\ 
-\text{Es gilt det({\bf A})^{-1} = det ({\bf A}^{-1}) als {\bf A} invertierbar ist.}",
+\text{Es gilt det({\bf A})^{-1} = det ({\bf A}^{-1}) alls {\bf A} invertierbar ist.}",
                 Answer = "true Korr. 8.8."
             },
             new Question()
@@ -361,7 +361,7 @@ namespace ETHDINFKBot.Helpers
                 Text = "Solve the Multiple-Choice question",
                 ExpectedInputFormat = "1 or 0 for (true or false)",
                 Hint = "None (if you have one please send one to BattleRush :)",
-                Latex = @"\text{Sei {\bf A}\in \mathbb{R}^{nxn} gegeben und der Vector x\in \mathbb{R}^{m} unbekannt. Das System {\bf Ax = 0} hat genau dann eine eindeutig bestimmte Lösung, wenn die Zeilen von {\bf A} linear unabhängig sind.}",
+                Latex = @"\text{Sei {\bf A}\in \mathbb{R}^{nxn} gegeben und der Vektor x\in \mathbb{R}^{m} unbekannt. Das System {\bf Ax = 0} hat genau dann eine eindeutig bestimmte Lösung, wenn die Zeilen von {\bf A} linear unabhängig sind.}",
                 Answer = "false"
             },
             new Question()
@@ -372,7 +372,7 @@ namespace ETHDINFKBot.Helpers
                 Text = "Solve the Multiple-Choice question",
                 ExpectedInputFormat = "1 or 0 for (true or false)",
                 Hint = "None (if you have one please send one to BattleRush :)",
-                Latex = @"\text{Sei {\bf A}\in \mathbb{R}^{nxn} gegeben und der Vector x\in \mathbb{R}^{m} unbekannt. Das System {\bf Ax = 0} hat genau dann eine eindeutig bestimmte Lösung, wenn die Spalten von {\bf A} linear unabhängig sind.}",
+                Latex = @"\text{Sei {\bf A}\in \mathbb{R}^{nxn} gegeben und der Vektor x\in \mathbb{R}^{m} unbekannt. Das System {\bf Ax = 0} hat genau dann eine eindeutig bestimmte Lösung, wenn die Spalten von {\bf A} linear unabhängig sind.}",
                 Answer = "true"
             },
             new Question()

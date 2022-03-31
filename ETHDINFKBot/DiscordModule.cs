@@ -359,7 +359,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             LogManager.ProcessMessage(author, BotMessageType.Neko);
 
             var req = await NekoClient.Image_v3.Neko();
-            var report = GetReportInfoByImag'e(req.ImageUrl);
+            var report = GetReportInfoByImage(req.ImageUrl);
             if (report != null)
             {
                 var user = DatabaseManager.GetDiscordUserById(report.AddedByDiscordUserId);
