@@ -89,7 +89,7 @@ namespace ETHDINFKBot.Helpers
             int polyMensaId = 12;
 
             WebClient client = new WebClient();
-            string html = client.DownloadString($"https://ethz.ch/en/campus/getting-to-know/cafes-restaurants-shops/gastronomy/menueplaene/offerDay.html?language={lang}&id={polyMensaId}&date={dateString}");
+            string html = client.DownloadString($"https://ethz.ch/de/campus/erleben/gastronomie-und-einkaufen/gastronomie/menueplaene/offerDay.html?language={lang}&id={polyMensaId}&date={dateString}");
 
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
