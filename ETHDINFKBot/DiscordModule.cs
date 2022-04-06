@@ -1391,162 +1391,158 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         [Command("food")]
         public async Task FoodB()
         {
-        try
-        {
-            if (AllowedToRun(BotPermissionType.EnableType2Commands))
-                return;
-
-            var meal = MealTime.Lunch;
-
-            // TODO Do CET/CEST Switch
-            if (DateTime.Now.Hour >= 12)
-                meal = MealTime.Dinner;
-
-            var restaurants = FoodHelper.GetCurrentMenu(meal, Language.English, Location.Zentrum);
-
-            var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(800, 1000);
-
-            int row = 0;
-
-            var padding = DrawingHelper.DefaultPadding;
-
-            padding.Left = 20;
-            padding.Top = 40;
-
-            int rowHeight = 300;
-            int colWidth = 200;
-
-            var paint = DrawingHelper.DefaultTextPaint;
-            paint.TextSize = 20;
-            paint.Color = new SKColor(128, 255, 64);
-            canvas.DrawText(meal.ToString(), new SKPoint(700, 25), paint);
-
-
-            foreach (var restaurant in restaurants)
+            try
             {
+                if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                    return;
 
-                canvas.DrawText(restaurant.Key.ToString(), new SKPoint(padding.Left, padding.Top + row * rowHeight), DrawingHelper.TitleTextPaint); // TODO Correct paint?
+                var meal = MealTime.Lunch;
 
-                int column = 0;
-                foreach (var menu in restaurant.Value)
+                // TODO Do CET/CEST Switch
+                if (DateTime.Now.Hour >= 12)
+                    meal = MealTime.Dinner;
+
+                var restaurants = FoodHelper.GetCurrentMenu(meal, Language.English, Location.Zentrum);
+
+
+                int row = 0;
+
+                var padding = DrawingHelper.DefaultPadding;
+
+                padding.Left = 20;
+                padding.Top = 40;
+
+                int rowHeight = 300;
+                int colWidth = 200;
+
+                var paint = DrawingHelper.DefaultTextPaint;
+                paint.TextSize = 20;
+                paint.Color = new SKColor(128, 255, 64);
+
+                List<Stream> streams = new List<Stream>();
+
+                foreach (var restaurant in restaurants)
                 {
-                    canvas.DrawText(menu.Name, new SKPoint(padding.Left + column * colWidth, padding.Top + row * rowHeight + 20), DrawingHelper.DefaultTextPaint);
-                    int usedHeight = (int)DrawTextArea(canvas, DrawingHelper.DefaultTextPaint, padding.Left + column * colWidth, padding.Top + row * rowHeight + 40, 180, DrawingHelper.DefaultTextPaint.TextSize, menu.MultilineDescription);
-                    //canvas.DrawText(menu.Description, new SKPoint(, ), DrawingHelper.DefaultTextPaint);
-                    canvas.DrawText("CHF " + menu.Price.ToString("#,##0.00"), new SKPoint(padding.Left + column * colWidth, usedHeight + 10), DrawingHelper.DefaultTextPaint);
 
-                    try
-                    {
-                    // download the bytes
-                    byte[] img = null;
-                    using (var webClient = new WebClient())
-                    {
-                        img = webClient.DownloadData(menu.ImgUrl);
-                    }
-                    
-                    if(img != null)
-                    {
-                        // decode the bitmap stream
-                        var resourceBitmap = SKBitmap.Decode(img);
+                    var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(800, 300);
+                    canvas.DrawText(meal.ToString(), new SKPoint(700, 25), paint);
 
-                        if (resourceBitmap != null)
+
+                    canvas.DrawText(restaurant.Key.ToString(), new SKPoint(padding.Left, padding.Top + row * rowHeight), DrawingHelper.TitleTextPaint); // TODO Correct paint?
+
+                    int column = 0;
+                    foreach (var menu in restaurant.Value)
+                    {
+                        canvas.DrawText(menu.Name, new SKPoint(padding.Left + column * colWidth, padding.Top + row * rowHeight + 20), DrawingHelper.DefaultTextPaint);
+                        int usedHeight = (int)DrawTextArea(canvas, DrawingHelper.DefaultTextPaint, padding.Left + column * colWidth, padding.Top + row * rowHeight + 40, 180, DrawingHelper.DefaultTextPaint.TextSize, menu.MultilineDescription);
+                        //canvas.DrawText(menu.Description, new SKPoint(, ), DrawingHelper.DefaultTextPaint);
+                        canvas.DrawText("CHF " + menu.Price.ToString("#,##0.00"), new SKPoint(padding.Left + column * colWidth, usedHeight + 10), DrawingHelper.DefaultTextPaint);
+
+                        try
                         {
-                            var resizedBitmap = resourceBitmap.Resize(new SKSizeI(128, 128), SKFilterQuality.High); //Resize to the canvas
-                            canvas.DrawBitmap(resizedBitmap, new SKPoint(padding.Left + column * colWidth, usedHeight + 20));
+                            // download the bytes
+                            byte[] img = null;
+                            using (var webClient = new WebClient())
+                            {
+                                img = webClient.DownloadData(menu.ImgUrl);
+                            }
+
+                            if (img != null)
+                            {
+                                // decode the bitmap stream
+                                var resourceBitmap = SKBitmap.Decode(img);
+
+                                if (resourceBitmap != null)
+                                {
+                                    var resizedBitmap = resourceBitmap.Resize(new SKSizeI(128, 128), SKFilterQuality.High); //Resize to the canvas
+                                    canvas.DrawBitmap(resizedBitmap, new SKPoint(padding.Left + column * colWidth, usedHeight + 20));
+                                }
+                            }
                         }
-                    }
-                    }
-                    catch(Exception ex)
-                    {
+                        catch (Exception ex)
+                        {
 
-                    }
+                        }
 
 
-                    column++;
+                        column++;
+                    }
+
+
+                    /* await Context.Channel.SendMessageAsync($"**Menu: {menu.Name} Description: {menu.Description} Price: {menu.Price}**");
+
+                     if (!string.IsNullOrEmpty(menu.ImgUrl))
+                         await Context.Channel.SendMessageAsync(menu.ImgUrl);
+                    */
+
+                    
+
+                    streams.Add(CommonHelper.GetStream(bitmap));
+
+                    bitmap.Dispose();
+                    canvas.Dispose();
+
                 }
 
+                paint = DrawingHelper.DefaultTextPaint;
+                paint.TextSize = 20;
+                paint.Color = new SKColor(255, 32, 32);
+                //canvas.DrawText("THIS FEATURE IS IN ALPHA CURRENTLY", new SKPoint(padding.Left, bitmap.Height - 50), paint);
+                paint.TextSize = 16;
+                //canvas.DrawText("(Images are taken from google.com and may not represent the actual product)", new SKPoint(padding.Left, bitmap.Height - 30), paint);
 
-                /* await Context.Channel.SendMessageAsync($"**Menu: {menu.Name} Description: {menu.Description} Price: {menu.Price}**");
 
-                 if (!string.IsNullOrEmpty(menu.ImgUrl))
-                     await Context.Channel.SendMessageAsync(menu.ImgUrl);
-                */
 
-                row++;
+                // TODO send multiple attachments
+                foreach(var stream in streams)
+                    await Context.Channel.SendFileAsync(stream, "menu.png", $"");
+
+
+
+                //    // Create the service.
+                //    var service = new CustomSearchAPIService(new BaseClientService.Initializer
+                //    {
+                //        //ApplicationName = "Discovery Sample",
+                //        ApiKey = "",
+                //    });
+
+                //    // Run the request.
+                //    Console.WriteLine("Executing a list request...");
+                //    CseResource.ListRequest listRequest = new CseResource.ListRequest(service)
+                //    {
+                //        Cx = "",
+                //        Q = polymensaMenus[0].FirstLine,
+                //        Safe = CseResource.ListRequest.SafeEnum.Active,
+                //        SearchType = CseResource.ListRequest.SearchTypeEnum.Image,
+                //        Hl = "de"
+                //    };
+
+
+                //    try
+                //    {
+
+                //        Search search = listRequest.Execute();
+                //        // Display the results.
+                //        if (search.Items != null)
+                //        {
+                //            foreach (var api in search.Items)
+                //            {
+                //                Context.Channel.SendMessageAsync(api.Link);
+                //                Console.WriteLine(api.DisplayLink + " - " + api.Title);
+                //            }
+                //        }
+                //    }
+                //    catch (GoogleApiException e)
+                //    {
+                //        Console.WriteLine($"statuscode:{e.HttpStatusCode}");
+                //    }
+
             }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.ToString());
 
-            paint = DrawingHelper.DefaultTextPaint;
-            paint.TextSize = 20;
-            paint.Color = new SKColor(255, 32, 32);
-            canvas.DrawText("THIS FEATURE IS IN ALPHA CURRENTLY", new SKPoint(padding.Left, bitmap.Height - 50), paint);
-            paint.TextSize = 16;
-            canvas.DrawText("(Images are taken from google.com and may not represent the actual product)", new SKPoint(padding.Left, bitmap.Height - 30), paint);
-
-
-
-            var stream = CommonHelper.GetStream(bitmap);
-
-
-            bitmap.Dispose();
-            canvas.Dispose();
-
-            await Context.Channel.SendFileAsync(stream, "menu.png", $"");
-
-
-
-
-
-
-
-
-
-
-
-
-            //    // Create the service.
-            //    var service = new CustomSearchAPIService(new BaseClientService.Initializer
-            //    {
-            //        //ApplicationName = "Discovery Sample",
-            //        ApiKey = "",
-            //    });
-
-            //    // Run the request.
-            //    Console.WriteLine("Executing a list request...");
-            //    CseResource.ListRequest listRequest = new CseResource.ListRequest(service)
-            //    {
-            //        Cx = "",
-            //        Q = polymensaMenus[0].FirstLine,
-            //        Safe = CseResource.ListRequest.SafeEnum.Active,
-            //        SearchType = CseResource.ListRequest.SearchTypeEnum.Image,
-            //        Hl = "de"
-            //    };
-
-
-            //    try
-            //    {
-
-            //        Search search = listRequest.Execute();
-            //        // Display the results.
-            //        if (search.Items != null)
-            //        {
-            //            foreach (var api in search.Items)
-            //            {
-            //                Context.Channel.SendMessageAsync(api.Link);
-            //                Console.WriteLine(api.DisplayLink + " - " + api.Title);
-            //            }
-            //        }
-            //    }
-            //    catch (GoogleApiException e)
-            //    {
-            //        Console.WriteLine($"statuscode:{e.HttpStatusCode}");
-            //    }
-
-        }
-        catch(Exception ex)
-        {
-            await Context.Channel.SendMessageAsync(ex.ToString());
-
-        }
+            }
         }
 
 
