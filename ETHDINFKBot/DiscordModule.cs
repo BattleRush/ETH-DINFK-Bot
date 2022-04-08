@@ -1421,11 +1421,12 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                 List<Stream> streams = new List<Stream>();
 
+                int maxMenus = restaurants.Max(i => i.Value.Count);
                 foreach (var restaurant in restaurants)
                 {
 
-                    var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(800, 300);
-                    canvas.DrawText(meal.ToString(), new SKPoint(700, 25), paint);
+                    var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(maxMenus*colWidth, 300);
+                    canvas.DrawText(meal.ToString(), new SKPoint(maxMenus*colWidth - 100, 25), paint);
 
 
                     canvas.DrawText(restaurant.Key.ToString(), new SKPoint(padding.Left, padding.Top + row * rowHeight), DrawingHelper.TitleTextPaint); // TODO Correct paint?
