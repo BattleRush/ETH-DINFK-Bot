@@ -14,7 +14,7 @@ namespace ETHBot.DataLayer.Data.Enums
         EnableSave = 8,
         SaveMessage = 16,
         EnableType1Commands = 32,
-        EnableType2Commands = 64,    // Usualy the commands that lead to spam
+        EnableType2Commands = 64,    // Usually the commands that lead to spam
         RemovedPingMessage = 128,
         EnableEmojiParsing = 256
     }

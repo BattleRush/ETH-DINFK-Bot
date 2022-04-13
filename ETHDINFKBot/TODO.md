@@ -1,4 +1,4 @@
-﻿- store in a config most needed channels and have them available globaly (since they should almost never change)
+﻿- store in a config most needed channels and have them available globally (since they should almost never change)
 
 - generalize automatic reactions
     - upvote/downvote
@@ -16,7 +16,7 @@
     - preload old messages to db (4am job)
 
 - add command to see all perms for all channels
-- add posibility to edit channel perms from outside
+- add possibility to edit channel perms from outside
 
 - finish preload messages -> as cron job
 - add preload table info
@@ -30,7 +30,7 @@
     - add free room draw
     - save floor plan (maybe depending on space and amount)
 
-- introduce propper branches for update
+- introduce proper branches for update
 
 - break up database manager 
     - folder database

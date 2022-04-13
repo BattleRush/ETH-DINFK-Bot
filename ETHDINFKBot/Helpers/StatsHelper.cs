@@ -21,7 +21,7 @@ namespace ETHDINFKBot.Helpers
             var gridSize = new GridSize(drawInfo.Bitmap, padding);
             var dataPointList = DrawingHelper.GetPoints(dataPoints, gridSize, true, from, to);
 
-            DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, "Stats table");
+            DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLabels, labels.YAxisLabels, "Stats table");
             DrawingHelper.DrawPoints(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, 6, null, "Message count", 0);
 
             var stream = CommonHelper.GetStream(drawInfo.Bitmap);

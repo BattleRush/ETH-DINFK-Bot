@@ -51,7 +51,7 @@ namespace ETHDINFKBot.Handlers
 
 
         [ModalInteraction("emote-fav-modal-*")]
-        public async Task AddEmoteFavModalResponce(string discordEmoteId, CustomEmoteFav modal)
+        public async Task AddEmoteFavModalResponse(string discordEmoteId, CustomEmoteFav modal)
         {
             var emoteId = Convert.ToUInt64(discordEmoteId);
             string name = modal.CustomEmoteName.Replace("`", ""); // Dont allow people to escape the code blocks

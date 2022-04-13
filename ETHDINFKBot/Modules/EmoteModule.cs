@@ -45,7 +45,7 @@ namespace ETHDINFKBot.Modules
             builder.AddField($"{Program.CurrentPrefix}emote set <emote_id> <name>", $"Set favourite emote with the <emote_id> and <name>. To see the emote_id use {Program.CurrentPrefix}emote fav <search>");
             builder.AddField($"{Program.CurrentPrefix}emote search <name>", $"Search for emotes");
             builder.AddField($"{Program.CurrentPrefix}emote fav {Environment.NewLine}{Program.CurrentPrefix}emote favourite", $"See your own favourite emotes");
-            builder.AddField($"{Program.CurrentPrefix}emote fav <name> {Environment.NewLine}{Program.CurrentPrefix}emote favourite <name>", $"Seach for emotes you want to favourite");
+            builder.AddField($"{Program.CurrentPrefix}emote fav <name> {Environment.NewLine}{Program.CurrentPrefix}emote favourite <name>", $"Search for emotes you want to favourite");
 
             await Context.Channel.SendMessageAsync("", false, builder.Build());
         }

@@ -61,7 +61,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
             var dbManager = DatabaseManager.Instance();
 
 
-            //var messages = channel.GetMessagesAsync(100000).FlattenAsync(); //defualt is 100
+            //var messages = channel.GetMessagesAsync(100000).FlattenAsync(); //default is 100
 
             var messagesFromMsg = await textChannel.GetMessagesAsync(messageIdFrom, direction, count).FlattenAsync();
 

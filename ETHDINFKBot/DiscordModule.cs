@@ -248,7 +248,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.AddField("Rant", $"```{prefix}rant [ types | new) ]```", true);
             builder.AddField("SQL", $"```{prefix}sql (table info) | (query[d] <query>)```", true);
             builder.AddField("Emote Help for more info", $"```{prefix}emote help```");
-            builder.AddField("React (only this server emotes)", $"```{prefix}react <message_id> <emote_name>```", true);
+            builder.AddField("React (only this server's emotes)", $"```{prefix}react <message_id> <emote_name>```", true);
             builder.AddField("Space Min: 1 Max: 5", $"```{prefix}space [<amount>]```", true);
             builder.AddField("Space (for more commands)", $"```{prefix}space help```", true);
             builder.AddField("WIP Command", $"```{prefix}messagegraph [all|lernphase|bp] {prefix}food```", true);
@@ -977,7 +977,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         [Command("rant")]
         public async Task Rant(string type = null, [Remainder] string content = "")
         {
-            // TODO perm check but for now open everwhere
+            // TODO perm check but for now open everywhere
             //Context.Channel.SendMessageAsync("Ask <@675445762900885515> or <@276462585690193921> or <@124603627833786370> why its disabled. Also ill fix it in the evening.");
 
 
@@ -1050,7 +1050,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             if (rant == null)
             {
                 await Context.Channel.SendMessageAsync($"No rant could be loaded for type {type} (To see all types write: '.rant types')." +
-                    $"If you are trying to add a rant type '.rant {type} <your actuall rant>'", false);
+                    $"If you are trying to add a rant type '.rant {type} <your actual rant>'", false);
                 return;
             }
 
@@ -1219,7 +1219,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 await Context.Message.DeleteAsync();
             }
 
-            var messages = await Context.Channel.GetMessagesAsync(100).FlattenAsync(); //defualt is 100
+            var messages = await Context.Channel.GetMessagesAsync(100).FlattenAsync(); //default is 100
             messages = messages.Where(i => i.Author.Id == fromUserToDelete).OrderByDescending(i => i.Id).Take(count);
             await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
         }
@@ -1279,7 +1279,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             }
 
 
-            var messages = Context.Channel.GetMessagesAsync(count).FlattenAsync(); //defualt is 100
+            var messages = Context.Channel.GetMessagesAsync(count).FlattenAsync(); //default is 100
 
             var messageCountDown = await Context.Channel.SendMessageAsync("https://media4.giphy.com/media/tBvPFCFQHSpEI/200.gif");
             await Context.Channel.SendMessageAsync($"Placing a tactical nuke KMN-{count}. Scheduled to detonate in 10 seconds.");
