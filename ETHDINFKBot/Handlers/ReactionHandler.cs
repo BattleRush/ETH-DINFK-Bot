@@ -45,6 +45,12 @@ namespace ETHDINFKBot.Handlers
                 SocketTextChannel = SocketGuildChannel as SocketTextChannel;
                 SocketGuild = SocketGuildChannel.Guild;
 
+                //probably fixes problem of webhookUser being null
+                if (SocketGuildMessageUser == null) 
+                {
+                    SocketGuildMessageUser = Program.Client.CurrentUser as SocketGuildUser;
+                }
+
                 ChannelSettings = channelSettings;
                 DatabaseManager = DatabaseManager.Instance();
 
