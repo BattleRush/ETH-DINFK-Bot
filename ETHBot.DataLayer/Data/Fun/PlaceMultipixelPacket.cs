@@ -21,7 +21,7 @@ namespace ETHBot.DataLayer.Data.Fun
         // Reason to not insert each instruction into the db as it would result in up to 100k inserts and each pixel paint process would need to read, paint and mark instruction as painted
         // Each Instruction
         // X|Y|Color(Hex)
-        // Seperated by ;
+        // Separated by ;
         public string Instructions { get; set; }
         public bool Done { get; set; }
     }

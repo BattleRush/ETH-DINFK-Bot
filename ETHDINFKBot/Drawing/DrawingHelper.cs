@@ -90,7 +90,7 @@ namespace ETHDINFKBot.Drawing
 
         // TODO duplicate params similar to GetPoints
         // TODO call other get labels
-        public static (List<string> XAxisLables, List<string> YAxisLabels) GetLabels(Dictionary<DateTime, int> data, int columns, int rows, bool yZeroIndexed = true, DateTime? minDate = null, DateTime? maxDate = null, string suffix = "")
+        public static (List<string> XAxisLabels, List<string> YAxisLabels) GetLabels(Dictionary<DateTime, int> data, int columns, int rows, bool yZeroIndexed = true, DateTime? minDate = null, DateTime? maxDate = null, string suffix = "")
         {
             if (columns < 1)
                 columns = 1;
@@ -148,7 +148,7 @@ namespace ETHDINFKBot.Drawing
             return (xAxisLabels, yAxisLabels);
         }
 
-        public static (List<string> XAxisLables, List<string> YAxisLabels) GetLabels(DateTime minX, DateTime maxX, int minY, int maxY, int columns, int rows, string suffix = "")
+        public static (List<string> XAxisLabels, List<string> YAxisLabels) GetLabels(DateTime minX, DateTime maxX, int minY, int maxY, int columns, int rows, string suffix = "")
         {
             if (columns < 1)
                 columns = 1;
@@ -268,17 +268,17 @@ namespace ETHDINFKBot.Drawing
 
             // draw Legend
 
-            int heigth = bitmap.Height;
+            int height = bitmap.Height;
             int labelWidth = 250;
 
             int yOffset = 50;
             int xOffset = 110;
 
             int x = xOffset - 5 + labelWidth * index;
-            int y = heigth - yOffset + 10;
+            int y = height - yOffset + 10;
 
             canvas.DrawRect(new SKRect(x - size / 2, y - size / 2, x + size / 2, y + size / 2), paint);
-            canvas.DrawText(text, new SKPoint(xOffset + labelWidth * index, heigth - yOffset), DefaultTextPaint); // TODO Correct paint?
+            canvas.DrawText(text, new SKPoint(xOffset + labelWidth * index, height - yOffset), DefaultTextPaint); // TODO Correct paint?
         }
 
         public static (bool newRow, int usedWidth) DrawLine(SKCanvas canvas, SKBitmap bitmap, List<SKPoint> points, SKPaint paint, int size = 6, string text = "", int labelRow = 0, int labelXOffset = 0, bool drawPoint = false, float labelYHeight = -1, SKBitmap bitmapIcon = null)
@@ -317,7 +317,7 @@ namespace ETHDINFKBot.Drawing
 
             // draw Legend
 
-            int heigth = bitmap.Height;
+            int height = bitmap.Height;
 
             int yOffset = 25; // TODO Make padding depending
 
@@ -326,7 +326,7 @@ namespace ETHDINFKBot.Drawing
 
             var textPaint = MediumTextPaint;
 
-            int yBase = heigth - yOffset - (int)textPaint.TextSize / 2 + labelRow * 20;
+            int yBase = height - yOffset - (int)textPaint.TextSize / 2 + labelRow * 20;
             int xBase = xOffset + labelXOffset;
 
             if (drawPoint)

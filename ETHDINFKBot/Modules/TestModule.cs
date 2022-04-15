@@ -245,7 +245,7 @@ namespace ETHDINFKBot.Modules
             var queryResult = await SQLHelper.GetQueryResults(null, sqlQuery, true, 10_000_000, true, true);
 
 
-            Context.Channel.SendMessageAsync($"Retreived data in {watch.ElapsedMilliseconds}ms");
+            Context.Channel.SendMessageAsync($"Retrieved data in {watch.ElapsedMilliseconds}ms");
 
 
             var parsedInfo = new ParsedGraphInfo()
@@ -346,7 +346,7 @@ namespace ETHDINFKBot.Modules
 
                     var gridSize = new GridSize(drawInfo.Bitmap, padding);
 
-                    DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, $"Messages count");
+                    DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLabels, labels.YAxisLabels, $"Messages count");
 
                     // TODO optimize some lines + move to draw helper
                     var dataPoints = parsedInfo.Info.Where(j => j.Key <= endTime).OrderBy(i => i.Key).ToDictionary(j => j.Key.DateTime, j => j.Value);

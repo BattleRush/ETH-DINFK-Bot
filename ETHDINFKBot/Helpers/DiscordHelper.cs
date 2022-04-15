@@ -343,7 +343,7 @@ namespace ETHDINFKBot.Helpers
             Stopwatch watch = new Stopwatch();
             watch.Start();
 
-            var emotes = EmoteDBManager.Instance().GetEmotes(search); // TODO dont dowload the emote data before its further filtered
+            var emotes = EmoteDBManager.Instance().GetEmotes(search); // TODO dont download the emote data before its further filtered
             var guildEmotes = Program.Client.GetGuild(guildId).Emotes.ToList();
 
             int total = emotes.Count;

@@ -51,7 +51,7 @@ namespace RedditScrapper
                 {
                     SubredditDescription = Subreddit.Description,
                     SubredditName = Subreddit.Name,
-                    IsNSFW = Subreddit.Over18 ?? false // TODO correct to assume false othwerwise?
+                    IsNSFW = Subreddit.Over18 ?? false // TODO correct to assume false otherwise?
                 });
 
                 ETHBotDBContext.SaveChanges();

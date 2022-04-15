@@ -82,16 +82,16 @@ namespace ETHDINFKBot.Modules
 
             //    foreach (SocketGuildUser user in allUsers)
             //    {
-            //        var targerUser = jsonUsers.SingleOrDefault(i => i.id == user.Id);
+            //        var targetUser = jsonUsers.SingleOrDefault(i => i.id == user.Id);
 
-            //        if (targerUser == null || targerUser.nick == user.Nickname)
+            //        if (targetUser == null || targetUser.nick == user.Nickname)
             //            continue;
 
             //        try
             //        {
             //            await user.ModifyAsync(i =>
             //            {
-            //                i.Nickname = targerUser.nick;
+            //                i.Nickname = targetUser.nick;
             //            });
 
             //            await Context.Channel.SendMessageAsync("Fixing " + user.Username, false);
@@ -269,7 +269,7 @@ namespace ETHDINFKBot.Modules
 
             var allEmotes = DatabaseManager.EmoteDatabaseManager.GetEmotes().OrderBy(i => i.DiscordEmoteId).ToList(); // sort it to ensure they are chronologically in there
 
-            await Context.Channel.SendMessageAsync($"Successfully retreived {allEmotes.Count} emotes", false);
+            await Context.Channel.SendMessageAsync($"Successfully retrieved {allEmotes.Count} emotes", false);
 
             var emotesPath = Path.Combine(Program.ApplicationSetting.BasePath, "Emotes");
             var archivePath = Path.Combine(emotesPath, "Archive");
@@ -613,7 +613,7 @@ namespace ETHDINFKBot.Modules
 
                 var isLockEnabled = keyValueDBManager.Update<bool>("LockChannelPositions", lockChannels);
 
-                await Context.Message.Channel.SendMessageAsync($"Set Global Postion Lock to: {isLockEnabled}");
+                await Context.Message.Channel.SendMessageAsync($"Set Global Position Lock to: {isLockEnabled}");
 
                 if (isLockEnabled)
                 {

@@ -38,7 +38,7 @@ namespace ETHDINFKBot.Modules
 
                 builder.WithTitle($"{Program.Client.CurrentUser.Username} DMDB Help");
                 builder.WithDescription("This feature supports the 3 Databases provided by the DMDB Course: 'employee', 'zvv' and 'tpch'. " + Environment.NewLine +
-                    "**IMPORTANT: Unlike on the main MariaDB you have full Admin permissions on the PostgreSQL.** It's intended that you may experiemnt with the Database without any need to install it locally." +
+                    "**IMPORTANT: Unlike on the main MariaDB you have full Admin permissions on the PostgreSQL.** It's intended that you may experiment with the Database without any need to install it locally." +
                     "Any Admin can restore the Database should it become unusable/corrupted. If you abuse it on purpose, then you will be banned from using this command.");
                 builder.WithColor(0, 0, 255);
 
@@ -164,7 +164,7 @@ namespace ETHDINFKBot.Modules
 
 
 
-            // todo maybe move to a seperate class
+            // todo maybe move to a separate class
             private async Task<List<DBTableInfo>> GetAllDBTableInfos(string database)
             {
                 List<string> tableList = new List<string>()
@@ -884,7 +884,7 @@ WHERE
 
 
 
-            // todo maybe move to a seperate class
+            // todo maybe move to a separate class
             private async Task<List<DBTableInfo>> GetAllDBTableInfos()
             {
                 List<string> tableList = new List<string>()

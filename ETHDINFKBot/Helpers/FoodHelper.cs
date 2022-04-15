@@ -102,10 +102,10 @@ namespace ETHDINFKBot.Helpers
 
             var node = mainNode.ChildNodes.First(i => i.Name == "table");
 
-            var childs = node.ChildNodes;
+            var children = node.ChildNodes;
 
             List<Menu> polymensaMenus = new List<Menu>();
-            foreach (var child in childs.Where(i => i.Name == "tr"))
+            foreach (var child in children.Where(i => i.Name == "tr"))
             {
                 var childNodes = child.ChildNodes.Where(i => i.Name == "td").ToList();
 
@@ -114,7 +114,7 @@ namespace ETHDINFKBot.Helpers
                 {
                     Description = childNodes[1].InnerText,
                     Name = childNodes[0].InnerText,
-                    Price = decimal.Parse(childNodes[2].InnerText) // TODO fix formating with the comma
+                    Price = decimal.Parse(childNodes[2].InnerText) // TODO fix formatting with the comma
                 };
 
 

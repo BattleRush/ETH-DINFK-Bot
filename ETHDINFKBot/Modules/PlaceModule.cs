@@ -410,7 +410,7 @@ If you violate the server rules your pixels will be removed.
             var author = Context.Message.Author;
             if (author.Id != Program.ApplicationSetting.Owner)
             {
-                Context.Channel.SendMessageAsync("You really tought you could run this huh?", false);
+                Context.Channel.SendMessageAsync("You really thought you could run this, huh?", false);
                 return;
             }
 
@@ -649,7 +649,7 @@ If you violate the server rules your pixels will be removed.
                 return;
             }
 
-            GenerateTimelapseCommans(0, 0, 1000, users.ToList());
+            GenerateTimelapseCommands(0, 0, 1000, users.ToList());
         }
 
         [Command("timelapse")]
@@ -661,7 +661,7 @@ If you violate the server rules your pixels will be removed.
                 Context.Channel.SendMessageAsync("You aren't allowed to run this command for size > 250", false);
                 return;
             }
-            GenerateTimelapseCommans(x, y, size, users.ToList());
+            GenerateTimelapseCommands(x, y, size, users.ToList());
         }
 
         [Command("timelapse")]
@@ -674,7 +674,7 @@ If you violate the server rules your pixels will be removed.
                 return;
             }
 
-            GenerateTimelapseCommans(x, y, size, new List<SocketUser>());
+            GenerateTimelapseCommands(x, y, size, new List<SocketUser>());
         }
 
         [Command("timelapse")]
@@ -687,10 +687,10 @@ If you violate the server rules your pixels will be removed.
                 return;
             }
 
-            GenerateTimelapseCommans(0, 0, 1000, new List<SocketUser>());
+            GenerateTimelapseCommands(0, 0, 1000, new List<SocketUser>());
         }
 
-        private async void GenerateTimelapseCommans(int x, int y, int size, List<SocketUser> socketUsers)
+        private async void GenerateTimelapseCommands(int x, int y, int size, List<SocketUser> socketUsers)
         {
             return;
             /*
@@ -1238,7 +1238,7 @@ If you violate the server rules your pixels will be removed.
                     var dataPointListCount = DrawingHelper.GetPoints(dataPointsCount, gridSize, true, startTime, endTime, false, maxVal);
                     var dataPointListFailed = DrawingHelper.GetPoints(dataPointsFailed, gridSize, true, startTime, endTime, false, maxVal);
 
-                    DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, $"Place Perf {list.Count} mins", labelsCount.YAxisLabels);
+                    DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLabels, labels.YAxisLabels, $"Place Perf {list.Count} mins", labelsCount.YAxisLabels);
                     // todo add 2. y Axis on the right
 
                     var info = DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListAvg, new SKPaint() { Color = new SKColor(255, 0, 0) }, 6, "Avg in ms / min", 0, 0, true); //new Pen(System.Drawing.Color.LightGreen)
@@ -1301,7 +1301,7 @@ If you violate the server rules your pixels will be removed.
         public static readonly object PlaceAggregateObj = new object();
         //static long OldPixelCountMod = -1;
 
-        // TODO Move chunk logic into a seperate file
+        // TODO Move chunk logic into a separate file
         private bool IsNewChunkAvailable(PlaceDBManager dbManager)
         {
             var lastPixelIdChunked = GetLastPixelIdChunked(); // Get info about the last pixel id that was saved in a chunk
@@ -1537,11 +1537,11 @@ If you violate the server rules your pixels will be removed.
 
             PlaceDBManager dbManager = PlaceDBManager.Instance();
 
-            var successfull = dbManager.PlacePixel(x, y, color, userId);
+            var successful = dbManager.PlacePixel(x, y, color, userId);
 
             watch.Stop();
 
-            if (successfull)
+            if (successful)
             {
                 PixelPlacementTimeLastMinute.Add(watch.ElapsedMilliseconds);
             }
@@ -1560,7 +1560,7 @@ If you violate the server rules your pixels will be removed.
                     AggregatePlace(dbManager);
             }
 
-            if (!isBot && successfull)
+            if (!isBot && successful)
             {
                 Context.Channel.SendMessageAsync($"Placed {color.Red}.{color.Green}.{color.Blue} on X: {x} Y: {y}");
             }

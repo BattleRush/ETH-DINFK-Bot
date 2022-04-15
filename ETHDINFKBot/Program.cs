@@ -68,7 +68,7 @@ namespace ETHDINFKBot
         public static string CurrentPrefix { get; set; }
 
         // TODO Move settings to an object
-        public static bool TempDisableIncomming { get; set; }
+        public static bool TempDisableIncoming { get; set; }
 
         public static Dictionary<ulong, Question> CurrentActiveQuestion = new Dictionary<ulong, Question>();
         public static Dictionary<ulong, DateTime> CurrentDiscordOutOfJailTime = new Dictionary<ulong, DateTime>();
@@ -534,7 +534,7 @@ namespace ETHDINFKBot
             if (result)
                 await arg.RespondAsync("Requested " + arg.CommandName, null, false, true);
             else
-                await arg.RespondAsync("Requested " + arg.CommandName + " failed. Likely you called the function in a channel the bot doesnt have permission to send this feature or an exception hapened.", null, false, true);
+                await arg.RespondAsync("Requested " + arg.CommandName + " failed. Likely you called the function in a channel the bot doesnt have permission to send this feature or an exception happened.", null, false, true);
         }
 
         private void ReloadChannelPositionLock(SocketGuild guild, bool delete, string channelName)
@@ -912,7 +912,7 @@ namespace ETHDINFKBot
             return Task.CompletedTask;
             // TODO check EditedTimestamp if first edit
 
-            if (TempDisableIncomming)
+            if (TempDisableIncoming)
                 return Task.CompletedTask;
 
             if (before.HasValue)
@@ -960,7 +960,7 @@ namespace ETHDINFKBot
         private Task Client_MessageDeleted(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel)
         {
             return Task.CompletedTask;
-            /* if (TempDisableIncomming)
+            /* if (TempDisableIncoming)
                  return Task.CompletedTask;
 
              if (message.HasValue)
@@ -1032,7 +1032,7 @@ namespace ETHDINFKBot
         {
             try
             {
-                if (TempDisableIncomming)
+                if (TempDisableIncoming)
                     return;
 
                 IMessage currentMessage = null;
@@ -1204,7 +1204,7 @@ namespace ETHDINFKBot
             }
 #endif
 
-            if (TempDisableIncomming)
+            if (TempDisableIncoming)
                 return;
 
             if (m is not SocketUserMessage msg)
@@ -1720,7 +1720,7 @@ Rebooting.........");
 
             await PrintProgressBar(m);
 
-            var initMsg = await m.Channel.SendMessageAsync("Starup done.");
+            var initMsg = await m.Channel.SendMessageAsync("Startup done.");
             await initMsg.ModifyAsync(msg => msg.Content = @"Initializing..");
             Thread.Sleep(2000);
 
