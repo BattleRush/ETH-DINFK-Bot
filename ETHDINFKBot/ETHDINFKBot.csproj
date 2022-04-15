@@ -31,6 +31,7 @@
     <PackageReference Include="Google.Apis.CustomSearchAPI.v1" Version="1.56.0.2455" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.42" />
     <PackageReference Include="Magick.NET-Q8-x64" Version="10.1.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="6.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
