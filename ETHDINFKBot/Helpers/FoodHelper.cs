@@ -118,7 +118,7 @@ namespace ETHDINFKBot.Helpers
                 };
                 
                 //Check if PolyMensa has menu with useless information
-                if (menu.Name == "Dieses Menu servieren wir Ihnen gerne bald wieder!") {
+                if (menu.Description == "Dieses Menu servieren wir Ihnen gerne bald wieder!") {
                     continue;
                 }
 
