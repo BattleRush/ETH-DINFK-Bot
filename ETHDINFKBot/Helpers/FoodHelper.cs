@@ -116,7 +116,11 @@ namespace ETHDINFKBot.Helpers
                     Name = childNodes[0].InnerText,
                     Price = decimal.Parse(childNodes[2].InnerText) // TODO fix formatting with the comma
                 };
-
+                
+                //Check if PolyMensa has menu with useless information
+                if (menu.Description == "Dieses Menu servieren wir Ihnen gerne bald wieder!") {
+                    continue;
+                }
 
                 var lines = childNodes[1].ChildNodes.Where(i => i.Name == "strong" || i.Name == "#text").Select(i => i.InnerText.Replace("\"", "")).ToList();
                 menu.Description = string.Join(" ", lines);
