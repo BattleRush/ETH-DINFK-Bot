@@ -1040,7 +1040,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 var guildChannel = (SocketGuildChannel)Context.Message.Channel;
 
                 bool successRant = DatabaseManager.AddRant(Context.Message.Id, Context.Message.Author.Id, guildChannel.Id, typeId, content);
-                await Context.Channel.SendMessageAsync($"Added rant for {type} Success: {successRant}", false);
+                await Context.Channel.SendMessageAsync($"Added rant Success: {successRant}", false);
             }
         }
 
