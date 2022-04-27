@@ -179,8 +179,8 @@ namespace ETHDINFKBot.Modules
             {
 
 
-                string url = "https://rgw-k8s.vis.ethz.ch/eventmanager-prod/poster_504.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=TXNNB7Q57MNWQ0Z9OKHO%2F20220427%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20220427T092205Z&X-Amz-Expires=300&X-Amz-SignedHeaders=host&X-Amz-Signature=9fb95dcb4ad32a3bad212ccc0ec9ba0c24153f5c1b7b6df7cdb38c1075d036c4";
-                var stream = await client.GetStreamAsync(new Uri("<your url>"));
+                string url = "https://cdn.vis.ethz.ch/brand/logo/inverse.svg";
+                var stream = await client.GetStreamAsync(new Uri(url));
 
                 cover = new Image(stream); 
             
