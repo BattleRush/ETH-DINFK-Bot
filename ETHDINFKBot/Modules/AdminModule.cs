@@ -173,6 +173,7 @@ namespace ETHDINFKBot.Modules
         public async Task SyncVisEvents()
         {
 
+try{
             // Download image from url
             Image cover = new Image();
             using (System.Net.Http.HttpClient client = new System.Net.Http.HttpClient()) 
@@ -195,6 +196,11 @@ namespace ETHDINFKBot.Modules
                 endTime: DateTimeOffset.UtcNow.AddDays(2), 
                 location: "Space", coverImage: cover);
             }
+}
+catch(Exception ex)
+{
+    await Context.Channel.SendMessageAsync(ex.ToString());
+}
         }
 
         [Command("cronjob")]
