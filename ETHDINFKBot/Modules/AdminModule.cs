@@ -12,6 +12,7 @@ using ETHDINFKBot.Drawing;
 using ETHDINFKBot.Helpers;
 using ETHDINFKBot.Log;
 using ETHDINFKBot.Struct;
+using HtmlAgilityPack;
 using ICSharpCode.SharpZipLib.GZip;
 using ICSharpCode.SharpZipLib.Tar;
 using Microsoft.Extensions.Logging;
@@ -24,6 +25,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -169,38 +172,77 @@ namespace ETHDINFKBot.Modules
 
         [Command("events")]
         [RequireUserPermission(GuildPermission.ManageChannels)]
-
         public async Task SyncVisEvents()
         {
-
-try{
-            // Download image from url
-            Image cover = new Image();
-            using (System.Net.Http.HttpClient client = new System.Net.Http.HttpClient()) 
+            try
             {
-
-
-                string url = "https://cdn.vis.ethz.ch/brand/logo/inverse.svg";
-                var stream = await client.GetStreamAsync(new Uri(url));
-
-                cover = new Image(stream); 
-            
-
-
-
                 var guild = Program.Client.GetGuild((Context.Channel as SocketGuildChannel).Guild.Id);
 
-                var guildEvent = await guild.CreateEventAsync("test event", 
-                DateTimeOffset.UtcNow.AddDays(1), 
-                GuildScheduledEventType.External, 
-                endTime: DateTimeOffset.UtcNow.AddDays(2), 
-                location: "Space", coverImage: cover);
+                var activeEvents = await guild.GetEventsAsync();
+                // Download image from url
+                Image cover = new Image();
+                using (HttpClient client = new HttpClient())
+                {
+                    var response = await client.GetAsync($"https://vis.ethz.ch/en/events/");
+                    var contents = await response.Content.ReadAsStringAsync();
+
+                    var doc = new HtmlDocument();
+                    doc.LoadHtml(contents);
+
+                    string xPath = "//*[@class=\"card full-height\"]";
+                    HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes(xPath);
+
+                    foreach (var node in nodes)
+                    {
+                        string title = node.SelectSingleNode(".//h5")?.InnerText;
+
+                        if (title != null)
+                        {
+                            // This event is already created
+                            if (activeEvents.Any(i => i.Name == title))
+                                continue;
+
+                            bool startDateParsed = false;
+                            DateTime startDateTime = DateTime.Now;
+                            bool endDateParsed = false;
+                            DateTime endDateTime = DateTime.Now;
+
+                            var pNodes = node.SelectNodes(".//p");
+                            var imgNode = node.SelectSingleNode(".//img");
+
+                            string imgUrl = imgNode.Attributes["src"]?.Value;
+
+                            foreach (var pNode in pNodes)
+                            {
+                                if (pNode.InnerText.ToLower().Contains("event start time"))
+                                {
+                                    string dateTimeString = pNode.InnerText.Replace("Event start time", "").Trim();
+                                    startDateParsed = DateTime.TryParse(dateTimeString, out startDateTime);
+                                }
+                                else if (pNode.InnerText.ToLower().Contains("event end time"))
+                                {
+                                    string dateTimeString = pNode.InnerText.Replace("Event end time", "").Trim();
+                                    endDateParsed = DateTime.TryParse(dateTimeString, out endDateTime);
+                                }
+                            }
+
+                            // Either end or start date is not parsed
+                            if (!startDateParsed || !endDateParsed)
+                                continue;
+
+                            var stream = await client.GetStreamAsync(new Uri(WebUtility.HtmlDecode(imgUrl)));
+                            cover = new Image(stream);
+
+                            // Create Event
+                            var guildEvent = await guild.CreateEventAsync(title, startTime: startDateTime, GuildScheduledEventType.External, endTime: endDateTime, location: "VIS Event", coverImage: cover);
+                        }
+                    }
+                }
             }
-}
-catch(Exception ex)
-{
-    await Context.Channel.SendMessageAsync(ex.ToString());
-}
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.ToString());
+            }
         }
 
         [Command("cronjob")]
@@ -274,8 +316,8 @@ catch(Exception ex)
             var author = Context.Message.Author;
             //if (author.Id != Program.ApplicationSetting.Owner)
             //{
-                //await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
-                //return;
+            //await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+            //return;
             //}
 
             var emoteInfo = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(emoteId);
@@ -1385,7 +1427,7 @@ catch(Exception ex)
                 foreach (var item in allStoredKeyValuePairs)
                 {
                     var line = $"{item.Key}:{item.Value}";
-                    if(text.Length + line.Length > 1975)
+                    if (text.Length + line.Length > 1975)
                     {
                         await Context.Channel.SendMessageAsync(text);
                         text = "";
