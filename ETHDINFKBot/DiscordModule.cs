@@ -1049,8 +1049,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             var rant = DatabaseManager.GetRandomRant(type);
             if (rant == null)
             {
-                await Context.Channel.SendMessageAsync($"No rant could be loaded for type {type} (To see all types write: '.rant types')." +
-                    $"If you are trying to add a rant type '.rant {type} <your actual rant>'", false);
+                await Context.Channel.SendMessageAsync($"No rant could be loaded"); //for type {type} (To see all types write: '.rant types')." +
+                   // $"If you are trying to add a rant type '.rant {type} <your actual rant>'", false);
                 return;
             }
 
