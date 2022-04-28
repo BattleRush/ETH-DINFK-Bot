@@ -32,6 +32,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Globalization;
 
 namespace ETHDINFKBot.Modules
 {
@@ -210,19 +211,28 @@ namespace ETHDINFKBot.Modules
                             var pNodes = node.SelectNodes(".//p");
                             var imgNode = node.SelectSingleNode(".//img");
 
-                            string imgUrl = imgNode.Attributes["src"]?.Value;
+                            var description = pNodes[1].InnerText;
 
+                            var eventLink = "https://vis.ethz.ch" + node.SelectSingleNode(".//a").Attributes["href"].Value;
+
+                            description = $"Link: {eventLink}{Environment.NewLine}{description}";
+
+                            string imgUrl = imgNode.Attributes["src"]?.Value;
+                            CultureInfo provider = CultureInfo.InvariantCulture;
+                            
                             foreach (var pNode in pNodes)
                             {
                                 if (pNode.InnerText.ToLower().Contains("event start time"))
                                 {
                                     string dateTimeString = pNode.InnerText.Replace("Event start time", "").Trim();
-                                    startDateParsed = DateTime.TryParse(dateTimeString, out startDateTime);
+                                    startDateParsed = DateTime.TryParseExact(dateTimeString, "d.M.yyyy hh:mm", provider, 
+                                    DateTimeStyles.AssumeLocal, out startDateTime);
                                 }
                                 else if (pNode.InnerText.ToLower().Contains("event end time"))
                                 {
                                     string dateTimeString = pNode.InnerText.Replace("Event end time", "").Trim();
-                                    endDateParsed = DateTime.TryParse(dateTimeString, out endDateTime);
+                                    endDateParsed = DateTime.TryParseExact(dateTimeString, "d.M.yyyy hh:mm", provider, 
+                                    DateTimeStyles.AssumeLocal, out endDateTime);
                                 }
                             }
 
