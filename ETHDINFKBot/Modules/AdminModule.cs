@@ -143,6 +143,7 @@ namespace ETHDINFKBot.Modules
             builder.AddField("admin kill", "Do I really need to explain this one");
             builder.AddField("admin cronjob <name>", "Manually start a CronJob");
             builder.AddField("admin blockemote <id> <block>", "Block an emote from being selectable");
+            builder.AddField("admin events", "Sync VIS Events");
 
             await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
@@ -180,6 +181,8 @@ namespace ETHDINFKBot.Modules
                 var guild = Program.Client.GetGuild((Context.Channel as SocketGuildChannel).Guild.Id);
 
                 var activeEvents = await guild.GetEventsAsync();
+                await Context.Channel.SendMessageAsync($"Currently {activeEvents.Count} active");
+
                 // Download image from url
                 Image cover = new Image();
                 using (HttpClient client = new HttpClient())
@@ -227,12 +230,18 @@ namespace ETHDINFKBot.Modules
                                     string dateTimeString = pNode.InnerText.Replace("Event start time", "").Trim();
                                     startDateParsed = DateTime.TryParseExact(dateTimeString, "d.M.yyyy HH:mm", provider, 
                                     DateTimeStyles.None, out startDateTime);
+
+                                    // CET/CEST to UTC
+                                    startDateTime = startDateTime.AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(startDateTime) ? -2 : -1);
                                 }
                                 else if (pNode.InnerText.ToLower().Contains("event end time"))
                                 {
                                     string dateTimeString = pNode.InnerText.Replace("Event end time", "").Trim();
                                     endDateParsed = DateTime.TryParseExact(dateTimeString, "d.M.yyyy HH:mm", provider, 
                                     DateTimeStyles.None, out endDateTime);
+
+                                    // CET/CEST to UTC
+                                    endDateTime = endDateTime.AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(endDateTime) ? -2 : -1);
                                 }
                             }
 
@@ -253,9 +262,13 @@ namespace ETHDINFKBot.Modules
                                 location: "VIS Event", 
                                 coverImage: cover
                             );
+
+                            await Context.Channel.SendMessageAsync($"Created new VIS Event: {title}");
                         }
                     }
                 }
+
+                await Context.Channel.SendMessageAsync("Events synced");
             }
             catch (Exception ex)
             {
