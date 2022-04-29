@@ -225,14 +225,14 @@ namespace ETHDINFKBot.Modules
                                 if (pNode.InnerText.ToLower().Contains("event start time"))
                                 {
                                     string dateTimeString = pNode.InnerText.Replace("Event start time", "").Trim();
-                                    startDateParsed = DateTime.TryParseExact(dateTimeString, "d.M.yyyy hh:mm", provider, 
-                                    DateTimeStyles.AssumeLocal, out startDateTime);
+                                    startDateParsed = DateTime.TryParseExact(dateTimeString, "d.M.yyyy HH:mm", provider, 
+                                    DateTimeStyles.None, out startDateTime);
                                 }
                                 else if (pNode.InnerText.ToLower().Contains("event end time"))
                                 {
                                     string dateTimeString = pNode.InnerText.Replace("Event end time", "").Trim();
-                                    endDateParsed = DateTime.TryParseExact(dateTimeString, "d.M.yyyy hh:mm", provider, 
-                                    DateTimeStyles.AssumeLocal, out endDateTime);
+                                    endDateParsed = DateTime.TryParseExact(dateTimeString, "d.M.yyyy HH:mm", provider, 
+                                    DateTimeStyles.None, out endDateTime);
                                 }
                             }
 
@@ -244,7 +244,15 @@ namespace ETHDINFKBot.Modules
                             cover = new Image(stream);
 
                             // Create Event
-                            var guildEvent = await guild.CreateEventAsync(title, startTime: startDateTime, GuildScheduledEventType.External, endTime: endDateTime, location: "VIS Event", coverImage: cover);
+                            var guildEvent = await guild.CreateEventAsync(
+                                title, 
+                                startTime: startDateTime, 
+                                GuildScheduledEventType.External, 
+                                description: description,
+                                endTime: endDateTime, 
+                                location: "VIS Event", 
+                                coverImage: cover
+                            );
                         }
                     }
                 }
