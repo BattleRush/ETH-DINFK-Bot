@@ -135,7 +135,7 @@ namespace ETHDINFKBot.Log
                 /* DB time for emote add, no longer needed */
                 /* Still here because there is a TODO :) */
                 //if (anyDownload)
-                {
+                //{
                     //Stopwatch stopwatch3 = Stopwatch.StartNew();
                     // TODO dont hammer the db after each call (check if any new emotes have been added
                     //long emoteCount = DatabaseManager.EmoteDatabaseManager.TotalEmoteCount();
