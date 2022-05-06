@@ -310,7 +310,11 @@ namespace ETHDINFKBot.Helpers
                     if (byUser is not null)
                         builder.WithAuthor(byUser); // TODO Check User Download for offline users
 
-                    builder.WithImageUrl(birthdayUser.AvatarUrl);
+                    // Show bigger avatar image
+                    StringBuilder stringBuilder = new StringBuilder(birthdayUser.AvatarUrl);
+                    stringBuilder.Replace("size=128", "size=512");
+                    builder.WithImageUrl(stringBuilder.toString());
+                    
                     builder.WithTimestamp(SnowflakeUtils.FromSnowflake(birthdayUser.DiscordUserId)); // has to be in UTC
 
                     var message = await spamChannel.SendMessageAsync("", false, builder.Build());
