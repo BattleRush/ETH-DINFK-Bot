@@ -34,7 +34,7 @@ namespace ETHDINFKBot.Modules
             var author = Context.Message.Author;
             if (author.Id != 321022340412735509)
             {
-                await Context.Channel.SendMessageAsync($"Unauthorized access atempt. Banning <@{author.Id}>", false);
+                await Context.Channel.SendMessageAsync($"Unauthorized access attempt. Banning <@{author.Id}>", false);
                 return;
             }
 
@@ -206,7 +206,7 @@ namespace ETHDINFKBot.Modules
             var author = Context.Message.Author;
             if (author.Id != 123841216662994944)
             {
-                await Context.Channel.SendMessageAsync($"Unauthorized access atempt. Banning <@{author.Id}>", false);
+                await Context.Channel.SendMessageAsync($"Unauthorized access attempt. Banning <@{author.Id}>", false);
                 return;
             }
 

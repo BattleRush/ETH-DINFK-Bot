@@ -14,13 +14,13 @@ namespace ETHDINFKBot
     {
         public bool cacheResponses = true; //Indicates If A Cache Of All Search Results Should Be Saved To Increase Speed And Lower Actual Queries
         public WebClient client = new WebClient(); //WebClient Used To Fetch Google Search Results
-        public Dictionary<string, Result[]> cache = new Dictionary<string, Result[]>(); //Cache Dictionary Containtion All Results Cached
+        public Dictionary<string, string[]> cache = new Dictionary<string, string[]>(); //Cache Dictionary Containtion All Results Cached IMAGES ONLY
 
         //Used To Send A Search Query
         public SearchResult Search(string query, int start = 0)
         {
             //Try To Load The Cache If Caching Is Enabled And A Cache Has Not Been Loaded Yet
-            try { if (cacheResponses && cache.Count == 0) LoadCache(); } catch { }
+            //try { if (cacheResponses && cache.Count == 0) LoadCache(); } catch { }
 
             try
             {
@@ -41,6 +41,7 @@ namespace ETHDINFKBot
 
 
                         if (node.FirstChild.GetClasses().Contains("kCrYT")) //Check If The Node Has The Class "jfp3ef"
+                        {
                             if (node.FirstChild.FirstChild.OuterHtml.StartsWith("<a href=\"/url?q=")) //Check If The Link(Inside The Node)'s Outer HTML Starts With "<a href="/url?q="
                             {
                                 results.Add(new Result() //Add A New Result Class
@@ -82,6 +83,7 @@ namespace ETHDINFKBot
                                 }
 
                             }
+                        }
 
                     }
                 }
@@ -89,20 +91,155 @@ namespace ETHDINFKBot
                 //Save Cache If Enabled And The Response HTML Was Longer Than 1500 Characters (If It's Longer Than That, It Has Probably Gone Well)
                 if (response.Length > 1500 && cacheResponses)
                 {
-                    cache[queryUrl] = results.ToArray(); //Set The Cache
-                    SaveCache(); //Save The Cache
+                    //cache[queryUrl] = results.ToArray(); //Set The Cache
+                    //SaveCache(); //Save The Cache
                 }
 
 
+                // TODO Restore normal google search
 
-
-                searchResult.Results = results;
+                //searchResult.Results = results;
                 return searchResult;
             }
             catch (Exception ex)
             {
                 return null; //Return Null On Error
             }
+        }
+
+        public string ImageSearch(string query, int start = 0, string lang = "en")
+        {
+            //Try To Load The Cache If Caching Is Enabled And A Cache Has Not Been Loaded Yet
+            try
+            {
+                if (cacheResponses && cache.Count == 0) 
+                    LoadCache();
+            }
+            catch (Exception ex) 
+            {
+            }
+
+            try
+            {
+
+                if(cache.ContainsKey(query))
+                    return cache[query][0] ?? "";
+
+                string queryUrl = $"https://www.google.com/search?q={HttpUtility.UrlEncode(query.ToLower())}&start={start}&hl={lang}&gl={lang}&safe=active"; //Create The Query URL
+                                                                                                                                                             //if (cache.ContainsKey(queryUrl)) //Check If This Query Has Already Been Sent
+                SearchResult searchResult = new SearchResult();
+
+                string response = client.DownloadString(queryUrl); //Download The HTML From The Query URL
+
+                var doc = new HtmlAgilityPack.HtmlDocument(); //Create An HTML Document From The Downloaded HTML
+                doc.LoadHtml(response); //Load The Downloaded HTML
+                var divs = doc.DocumentNode.Descendants("div"); //Get All The Divs In The Document
+                List<Result> results = new List<Result>(); //Create A List For All The Results
+
+                var imageDiv = doc.DocumentNode.SelectNodes("//*[@class=\"idg8be\"]");
+                if (imageDiv == null)
+                    return "";
+
+                var hrefs = imageDiv[0].SelectNodes("a").Select(i => i.GetAttributeValue("href", string.Empty));
+                string validImage = "";
+
+                if(hrefs.Count() == 0)
+                    return ""; // only if more than one was found proceed
+
+                var links = new List<string>();
+
+                foreach (var link in hrefs)
+                {
+                    try
+                    {
+                        Uri myUri = new Uri(link);
+
+                        string param1 = HttpUtility.ParseQueryString(myUri.Query).Get("imgurl");
+                        links.Add(param1 ?? "");
+                    }
+                    catch (Exception ex)
+                    {
+                        // TODO See in which cases this happens 
+                    }
+                }
+
+                //Save Cache If Enabled And The Response HTML Was Longer Than 1500 Characters (If It's Longer Than That, It Has Probably Gone Well)
+                if (response.Length > 1500 && cacheResponses)
+                {
+                    cache.Add(query, links.ToArray()); //Set The Cache
+                    SaveCache(); //Save The Cache
+                }
+
+                return links[0];
+
+                /*
+                foreach (HtmlNode node in divs) //Loop Through All Nodes In The Div Array
+                {
+                    if (node.Attributes.Count == 1 && node.Attributes[0].Value == "ZINbbc xpd O9g5cc uUPGi") //Check If The Node Has The Class "ZINbbc"
+                    {
+                        
+
+                        if (node.FirstChild.GetClasses().Contains("kCrYT")) //Check If The Node Has The Class "jfp3ef"
+                        {
+                            if (node.FirstChild.FirstChild.OuterHtml.StartsWith("<a href=\"/url?q=")) //Check If The Link(Inside The Node)'s Outer HTML Starts With "<a href="/url?q="
+                            {
+                                results.Add(new Result() //Add A New Result Class
+                                {
+                                    url = HttpUtility.HtmlDecode(node.FirstChild.FirstChild.GetAttributeValue("href", "").Substring(("/url?q=").Length).Split('&')[0]), //Set The URL To The One Found In The Link (Inside The Node)
+                                    title = HttpUtility.HtmlDecode(node.FirstChild.FirstChild.FirstChild.InnerText), //Set The Result Title
+                                    description = HttpUtility.HtmlDecode(node.LastChild.InnerText) //Set The Result Description
+                                });
+                            }
+                            else
+                            {
+                                if (searchResult.Description == null)
+                                {
+                                    string desc = node.InnerText;
+
+                                    var imgNode = node.Descendants("img").FirstOrDefault();
+                                    if (imgNode != null)
+                                    {
+                                        string id = imgNode.Id;
+
+
+
+
+                                        string startString = "data:image";
+                                        string endString = $"['{id}']";
+                                        int endIdx = response.IndexOf(endString) - 8;
+
+                                        string temp = response.Substring(0, endIdx);// workaround as last index of
+                                        int pTo = temp.LastIndexOf(startString);
+                                        temp = temp.Substring(pTo);
+
+                                        searchResult.Description = desc;
+                                        searchResult.ImageUrl = temp;
+                                    }
+                                }
+                                else
+                                {
+
+                                }
+
+                            }
+                        }
+
+                    }
+                }
+
+
+
+
+
+
+                searchResult.Results = results;
+                return searchResult;*/
+            }
+            catch (Exception ex)
+            {
+                return ""; //Return Null On Error
+            }
+            return "";
         }
 
         //Search Multiple Pages
@@ -118,16 +255,15 @@ namespace ETHDINFKBot
 
         public void LoadCache()
         {
-            if (File.Exists("GoogleSearchCache.json"))
-                cache = JsonConvert.DeserializeObject<Dictionary<string, Result[]>>(File.ReadAllText("GoogleSearchCache.json"));
-        } 
+            if (File.Exists(Path.Combine(Program.ApplicationSetting.BasePath, "GoogleImageSearchCache.json")))
+                cache = JsonConvert.DeserializeObject<Dictionary<string, string[]>>(File.ReadAllText(Path.Combine(Program.ApplicationSetting.BasePath, "GoogleImageSearchCache.json")));
+        }
         //Read The Cache File And Deserialize It Into A Dictionary
 
         public void SaveCache()
         {
-            return;
-            File.WriteAllText("GoogleSearchCache.json", JsonConvert.SerializeObject(cache));
-        } 
+            File.WriteAllText(Path.Combine(Program.ApplicationSetting.BasePath, "GoogleImageSearchCache.json"), JsonConvert.SerializeObject(cache, Formatting.Indented));
+        }
         //Serialize The Cache Dictionary And Save It To The Cache File
 
 
@@ -136,7 +272,7 @@ namespace ETHDINFKBot
         {
             public string ImageUrl { get; set; }
             public string Description { get; set; }
-            public List<Result> Results { get; set; }
+            public List<string> Results { get; set; }
         }
 
         //Simple Class To Store Result URL, Title And Description

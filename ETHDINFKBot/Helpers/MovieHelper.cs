@@ -167,7 +167,7 @@ namespace ETHDINFKBot.Helpers
 
             var userIdsOfTopPosters = messageInfos.GroupBy(i => i.KeyId).OrderByDescending(i => i.Count()).Take(50).Select(i => i.Key);
 
-            //await Context.Channel.SendMessageAsync($"Retreived data in {watch.ElapsedMilliseconds}ms");
+            //await Context.Channel.SendMessageAsync($"Retrieved data in {watch.ElapsedMilliseconds}ms");
 
             var groups = GroupGraphEntryInfoBy(groupByHours, groupByMinutes, messageInfos);
             var keys = groups.Select(x => x.Key);
@@ -209,7 +209,7 @@ namespace ETHDINFKBot.Helpers
             var messageInfos = GetMessageInfos(hoursAmount < 0 ? null : SnowflakeUtils.ToSnowflake(DateTimeOffset.Now.AddHours(hoursAmount * (-1))));
             watch.Stop();
 
-            //await Context.Channel.SendMessageAsync($"Retreived data in {watch.ElapsedMilliseconds}ms");
+            //await Context.Channel.SendMessageAsync($"Retrieved data in {watch.ElapsedMilliseconds}ms");
 
             var groups = GroupGraphEntryInfoBy(groupByHours, groupByMinutes, messageInfos);
             var keys = groups.Select(x => x.Key);
@@ -290,9 +290,9 @@ namespace ETHDINFKBot.Helpers
             var conversion = new Conversion();
             conversion.SetInputFrameRate(fps);
             conversion.BuildVideoFromImages(files);
-            conversion.SetOutputFormat(Xabe.FFmpeg.Format.webm); // Wider rage support
+            //conversion.SetOutputFormat(Xabe.FFmpeg.Format.webm); // Wider rage support
             conversion.SetFrameRate(fps);
-            conversion.SetPixelFormat(PixelFormat.rgb24);
+            conversion.SetPixelFormat(PixelFormat.yuv420p);
             conversion.SetOutput(fileName);
 
             await conversion.Start();
@@ -350,7 +350,7 @@ namespace ETHDINFKBot.Helpers
 
                 var gridSize = new GridSize(drawInfo.Bitmap, padding);
 
-                DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, $"Messages count");
+                DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLabels, labels.YAxisLabels, $"Messages count");
 
                 int xOffset = 0;
                 int rowIndex = -4; // workaround to use as many label space as possible
@@ -406,7 +406,7 @@ namespace ETHDINFKBot.Helpers
                         if (channelDB == null)
                             continue;
 
-                        // ingore this channel
+                        // ignore this channel
                         if (channelIds.Length > 0 && !channelIds.Contains(value.KeyId))
                             continue;
 
@@ -508,7 +508,7 @@ namespace ETHDINFKBot.Helpers
             HttpWebResponse response = null;
             var request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = "HEAD";
-            request.Timeout = 2000; // miliseconds
+            request.Timeout = 2000; // milliseconds
 
             try
             {

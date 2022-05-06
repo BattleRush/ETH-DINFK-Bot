@@ -42,15 +42,15 @@ using Discord.Interactions;
 namespace ETHDINFKBot
 {
 
-    class PlaceServer : WssServer
+    class PlaceServer : TcpServer
     {
-        public PlaceServer(SslContext context, IPAddress address, int port) : base(context, address, port) { }
+        public PlaceServer(IPAddress address, int port) : base(address, port) { }
 
-        protected override SslSession CreateSession() { return new PlaceSession(this); }
+        protected override TcpSession CreateSession() { return new PlaceSession(this); }
 
         protected override void OnError(SocketError error)
         {
-            Console.WriteLine($"Chat WebSocket server caught an error with code {error}");
+            Console.WriteLine($"Chat TCP server caught an error with code {error}");
         }
     }
 
@@ -60,6 +60,7 @@ namespace ETHDINFKBot
         private CommandService Commands;
 
         private IServiceProvider services;
+        private static InteractionService _interactionService;
         private static IConfiguration Configuration;
 
         public static long TotalEmotes { get; set; }
@@ -67,7 +68,7 @@ namespace ETHDINFKBot
         public static string CurrentPrefix { get; set; }
 
         // TODO Move settings to an object
-        public static bool TempDisableIncomming { get; set; }
+        public static bool TempDisableIncoming { get; set; }
 
         public static Dictionary<ulong, Question> CurrentActiveQuestion = new Dictionary<ulong, Question>();
         public static Dictionary<ulong, DateTime> CurrentDiscordOutOfJailTime = new Dictionary<ulong, DateTime>();
@@ -80,7 +81,8 @@ namespace ETHDINFKBot
 
         //private static List<BotChannelSetting> BotChannelSettings;
 
-        private static List<string> AllowedBotCommands;
+        private static List<string> AllowedBotCommands = new List<string>() { CurrentPrefix + "place setpixel ", CurrentPrefix + "place pixelverify " };
+        private static List<ulong> PlaceChannels = new List<ulong>() { 819966095070330950, 955751651942211604 };
 
         //public static WebSocketServer PlaceWebsocket;
         public static PlaceServer PlaceServer;
@@ -107,8 +109,6 @@ namespace ETHDINFKBot
 #if DEBUG
             CurrentPrefix = "dev.";
 #endif
-
-            AllowedBotCommands = new List<string>() { CurrentPrefix + "place setpixel ", CurrentPrefix + "place pixelverify " };
 
             try
             {
@@ -194,6 +194,7 @@ namespace ETHDINFKBot
                         ConnectionString_Full = Configuration.GetConnectionString("ConnectionString_Full").ToString(),
                         ConnectionString_ReadOnly = Configuration.GetConnectionString("ConnectionString_ReadOnly").ToString()
                     },
+
                     CDNPath = Configuration["CDNPath"],
                     CertFilePath = Configuration["CertFilePath"],
                     FFMpegPath = Configuration["FFMpegPath"],
@@ -203,6 +204,16 @@ namespace ETHDINFKBot
                         AppId = Configuration["Reddit:AppId"],
                         RefreshToken = Configuration["Reddit:RefreshToken"],
                         AppSecret = Configuration["Reddit:AppSecret"],
+                    },
+
+                    PostgreSQLSetting = new PostgreSQLSetting()
+                    {
+                        Host = Configuration["PostgreSQL:Host"],
+                        Port = Convert.ToInt32(Configuration["PostgreSQL:Port"]),
+                        OwnerUsername = Configuration["PostgreSQL:OwnerUsername"],
+                        OwnerPassword = Configuration["PostgreSQL:OwnerPassword"],
+                        DMDBUserUsername = Configuration["PostgreSQL:DMDBUserUsername"],
+                        DMDBUserPassword = Configuration["PostgreSQL:DMDBUserPassword"]
                     }
                 };
 
@@ -318,9 +329,11 @@ namespace ETHDINFKBot
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
+#if !DEBUG
                 string www = "/var/www/wss";
                 try
                 {
+                /*
                     //string www = @"C:\Temp\wss";
                     // Create and prepare a new SSL server context
                     var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
@@ -329,7 +342,12 @@ namespace ETHDINFKBot
                     PlaceServer = new PlaceServer(context, IPAddress.Any, 9000);
                     PlaceServer.AddStaticContent(www, "/place");
 
+                    PlaceServer.OptionKeepAlive = true;*/
+
+                    PlaceServer = new PlaceServer(IPAddress.Any, 9000);
                     PlaceServer.OptionKeepAlive = true;
+                    PlaceServer.OptionAcceptorBacklog = 8192;
+                    PlaceServer.OptionSendBufferSize = 10_000_000;
 
                     // Start the server
                     Console.Write("Server starting...");
@@ -340,23 +358,34 @@ namespace ETHDINFKBot
                 {
                     Console.Write("Error while starting WS: " + ex.ToString());
                 }
+#endif
             }
             else
             {
-#if false
-                string www = @"C:\Temp\wss";
-                // Create and prepare a new SSL server context
-                //var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
-                var context = new SslContext(SslProtocols.Tls12);
-                // Create a new WebSocket server
-                PlaceServer = new PlaceServer(context, IPAddress.Any, 9000);
-                PlaceServer.AddStaticContent(www, "/place");
+                try
+                {
 
-                // Start the server
-                Console.Write("Server starting...");
-                PlaceServer.Start();
-                Console.WriteLine("Done!");
-#endif
+                    //string www = @"C:\Temp\wss";
+                    // Create and prepare a new SSL server context
+                    //var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
+                    var context = new SslContext(SslProtocols.Tls12);
+                    // Create a new WebSocket server
+                    PlaceServer = new PlaceServer(IPAddress.Any, 9000);
+                    PlaceServer.OptionKeepAlive = true;
+                    PlaceServer.OptionAcceptorBacklog = 8192;
+                    //PlaceServer.OptionNoDelay = true;
+
+                    //PlaceServer.AddStaticContent(www, "/place");
+
+                    // Start the server
+                    Console.Write("Server starting...");
+                    PlaceServer.Start();
+                    Console.WriteLine("Done!");
+                }
+                catch (Exception ex)
+                {
+                    Console.Write("Error while starting WS: " + ex.ToString());
+                }
             }
 
 
@@ -393,35 +422,22 @@ namespace ETHDINFKBot
             // For user commands
             Client.UserCommandExecuted += UserCommandHandler;
 
-            Client.ButtonExecuted += Client_ButtonExecuted;
-            Client.SlashCommandExecuted += Client_SlashCommandExecuted;
+            //Client.ButtonExecuted += Client_ButtonExecuted;
+            //Client.SlashCommandExecuted += Client_SlashCommandExecuted;
+
             Client.ModalSubmitted += Client_ModalSubmitted;
-
-
-
-            await Client.LoginAsync(TokenType.Bot, token);
-            await Client.StartAsync();
-
-#if DEBUG
-            await Client.SetGameAsync($"DEV MODE");
-#else
-            //await Client.SetGameAsync($"with a neko");
-            TotalEmotes = DatabaseManager.EmoteDatabaseManager.TotalEmoteCount();
-            await Client.SetGameAsync($"{TotalEmotes} emotes", null, ActivityType.Watching);
-#endif
+            Client.InteractionCreated += Client_InteractionCreated;
 
             Services = new ServiceCollection()
                 .AddSingleton(Client)
                 //.AddSingleton<InteractiveService>()
                 .AddSingleton<DiscordSocketClient>()
                 .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
+                //.AddSingleton<CommandHandler>()
                 .BuildServiceProvider();
-
-
 
             Commands = new CommandService();
             await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), Services);
-
 
             CommandNames = new List<string>();
 
@@ -444,8 +460,42 @@ namespace ETHDINFKBot
             PlaceMultipixelHandler multipixelHandler = new PlaceMultipixelHandler();
             multipixelHandler.MultiPixelProcess();
 
+
+            // Here we can initialize the service that will register and execute our commands
+            //await Services.GetRequiredService<CommandHandler>().InitializeAsync();
+
+            await Client.LoginAsync(TokenType.Bot, token);
+            await Client.StartAsync();
+
+#if DEBUG
+            await Client.SetGameAsync($"DEV MODE");
+#else
+            //await Client.SetGameAsync($"with a neko");
+            TotalEmotes = DatabaseManager.EmoteDatabaseManager.TotalEmoteCount();
+            await Client.SetGameAsync($"{TotalEmotes} emotes", null, ActivityType.Watching);
+#endif
+
             // Block this task until the program is closed.
             await Task.Delay(-1);
+        }
+
+        private async Task Client_InteractionCreated(SocketInteraction arg)
+        {
+            try
+            {
+                // Create an execution context that matches the generic type parameter of your InteractionModuleBase<T> modules
+                var ctx = new SocketInteractionContext(Client, arg);
+                await _interactionService.ExecuteCommandAsync(ctx, Services);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+
+                // If a Slash Command execution fails it is most likely that the original interaction acknowledgement will persist. It is a good idea to delete the original
+                // response, or at least let the user know that something went wrong during the command execution.
+                if (arg.Type == InteractionType.ApplicationCommand)
+                    await arg.GetOriginalResponseAsync().ContinueWith(async (msg) => await msg.Result.DeleteAsync());
+            }
         }
 
         private Task Client_ModalSubmitted(SocketModal arg)
@@ -462,9 +512,10 @@ namespace ETHDINFKBot
 
         private async Task Client_ButtonExecuted(SocketMessageComponent arg)
         {
+            return;
             ButtonHandler buttonHandler = new ButtonHandler(arg);
             var result = await buttonHandler.Run();
-            arg.DeferAsync(true);
+            await arg.DeferAsync(false);
         }
 
         public async Task MessageCommandHandler(SocketMessageCommand arg)
@@ -483,7 +534,7 @@ namespace ETHDINFKBot
             if (result)
                 await arg.RespondAsync("Requested " + arg.CommandName, null, false, true);
             else
-                await arg.RespondAsync("Requested " + arg.CommandName + " failed. Likely you called the function in a channel the bot doesnt have permission to send this feature or an exception hapened.", null, false, true);
+                await arg.RespondAsync("Requested " + arg.CommandName + " failed. Likely you called the function in a channel the bot doesnt have permission to send this feature or an exception happened.", null, false, true);
         }
 
         private void ReloadChannelPositionLock(SocketGuild guild, bool delete, string channelName)
@@ -799,6 +850,9 @@ namespace ETHDINFKBot
             var commands = Services.GetRequiredService<InteractionService>();
             try
             {
+                _interactionService = new InteractionService(Client);
+                await _interactionService.AddModulesAsync(Assembly.GetEntryAssembly(), Services);
+
                 //var t = await commands.RegisterCommandsToGuildAsync(747752542741725244, true);
             }
             catch (Exception ex)
@@ -841,112 +895,7 @@ namespace ETHDINFKBot
 
             return Task.CompletedTask;
 
-            //if (!TempDisableIncomming)
-            //    return Task.CompletedTask;
-            //OnlyHereToTestMyBadCodingSkills
 
-            // todo config
-            /*
-
-                        var textChannel = guild.GetTextChannel(spamChannel);
-
-                        try
-                        {
-                            textChannel.SendMessageAsync("Starting DB Migration");
-
-
-                            MigrateSQLiteToMariaDB migration = new MigrateSQLiteToMariaDB();
-
-                            int count = migration.MigrateDiscordServers();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordServers");
-
-                            count = migration.MigrateDiscordChannels();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordChannels");
-
-                            count = migration.MigrateDiscordUsers();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordUsers");
-
-
-                            count = migration.MigrateDiscordMessages(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordMessagess");
-
-
-                            count = migration.MigrateDiscordEmotes(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordEmotes");
-
-
-                            count = migration.MigrateDiscordEmoteStatistics(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordEmoteStatistics");
-
-                            count = migration.MigrateDiscordEmoteHistory(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordEmoteHistory");
-
-                            count = migration.MigrateBannedLinks();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} BannedLinks");
-
-                            count = migration.MigrateCommandTypes();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} CommandTypes");
-
-                            count = migration.MigrateCommandStatistics();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} CommandStatistics");
-
-                            count = migration.MigrateDiscordRoles();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordRoles");
-
-                            count = migration.MigratePingHistory(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PingHistory");
-
-                            count = migration.MigratePingStatistics();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PingStatistics");
-
-                            count = migration.MigrateRantTypes();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RantTypes");
-
-                            count = migration.MigrateRantMessages();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RantMessages");
-
-                            count = migration.MigrateSavedMessages();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} SavedMessages");
-
-                            count = migration.MigratePlaceBoardPerformanceInfos();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardPerformanceInfos");
-
-                            count = migration.MigratePlaceBoardPixels(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardPixels");
-
-                            count = migration.MigratePlaceBoardDiscordUsers();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardDiscordUsers");
-
-                            count = migration.MigratePlaceBoardPixelHistory(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} PlaceBoardPixelHistory"); // (SKIPED) // TODO Convert snowflake id to datetime
-
-                            count = migration.MigrateSubredditInfos();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} SubredditInfos");
-
-                            count = migration.MigrateRedditPosts(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RedditPosts");
-
-                            count = migration.MigrateRedditImages(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} RedditImages");
-
-                            count = migration.MigrateBotChannelSettings();
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} BotChannelSettings");
-
-
-                            /*count = migration.MigrateDiscordMessages(textChannel);
-                            textChannel.SendMessageAsync($"Migrated {count.ToString("N0")} DiscordMessagess");
-                            */
-            /*
-                            textChannel.SendMessageAsync($"Migration done. Releasing DB.");
-                        }
-                        catch (Exception ex)
-                        {
-                            textChannel.SendMessageAsync(ex.ToString());
-                        }
-
-                        TempDisableIncomming = false;*/
-
-            //return Task.CompletedTask;
         }
 
         private Task Client_RoleCreated(SocketRole arg)
@@ -963,7 +912,7 @@ namespace ETHDINFKBot
             return Task.CompletedTask;
             // TODO check EditedTimestamp if first edit
 
-            if (TempDisableIncomming)
+            if (TempDisableIncoming)
                 return Task.CompletedTask;
 
             if (before.HasValue)
@@ -1011,7 +960,7 @@ namespace ETHDINFKBot
         private Task Client_MessageDeleted(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel)
         {
             return Task.CompletedTask;
-            /* if (TempDisableIncomming)
+            /* if (TempDisableIncoming)
                  return Task.CompletedTask;
 
              if (message.HasValue)
@@ -1083,7 +1032,7 @@ namespace ETHDINFKBot
         {
             try
             {
-                if (TempDisableIncomming)
+                if (TempDisableIncoming)
                     return;
 
                 IMessage currentMessage = null;
@@ -1246,7 +1195,16 @@ namespace ETHDINFKBot
 
         public async Task HandleCommandAsync(SocketMessage m)
         {
-            if (TempDisableIncomming)
+            // Ignore everyone but the owner in debug mode
+#if DEBUG
+            if (m.Author.Id != Program.ApplicationSetting.Owner && !m.Author.IsBot && m.Content.StartsWith(Program.CurrentPrefix))
+            {
+                //m.Channel.SendMessageAsync("I'll ignore you");
+                //return;
+            }
+#endif
+
+            if (TempDisableIncoming)
                 return;
 
             if (m is not SocketUserMessage msg)
@@ -1285,7 +1243,7 @@ namespace ETHDINFKBot
             }
 
             // ignore this channel -> high msg volume
-            if (msg.Channel.Id != 819966095070330950)
+            if (!PlaceChannels.Any(i => i == msg.Channel.Id))
             {
                 ulong channelId = msg.Channel.Id;
 
@@ -1434,7 +1392,7 @@ namespace ETHDINFKBot
 
 
 
-            if (!(m.Channel.Id == 819966095070330950 && AllowedBotCommands.Any(i => !m.Content.StartsWith(i))))
+            if (!(PlaceChannels.Any(i => i == m.Channel.Id) && AllowedBotCommands.Any(i => !m.Content.StartsWith(i))))
                 if (m.Author.IsBot) // make exception for place command
                     return;
 
@@ -1447,6 +1405,7 @@ namespace ETHDINFKBot
             int argPos = 0;
 
             // accept .dev only in dev mode
+
 
             if (!msg.HasStringPrefix(CurrentPrefix, ref argPos))
                 return;
@@ -1761,7 +1720,7 @@ Rebooting.........");
 
             await PrintProgressBar(m);
 
-            var initMsg = await m.Channel.SendMessageAsync("Starup done.");
+            var initMsg = await m.Channel.SendMessageAsync("Startup done.");
             await initMsg.ModifyAsync(msg => msg.Content = @"Initializing..");
             Thread.Sleep(2000);
 

@@ -1,5 +1,4 @@
 ﻿using Discord.WebSocket;
-using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;

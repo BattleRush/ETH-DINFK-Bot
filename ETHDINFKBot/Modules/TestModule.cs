@@ -19,6 +19,7 @@ using Discord.WebSocket;
 using ETHBot.DataLayer.Data.Discord;
 using ImageMagick;
 using ETHDINFKBot.Classes;
+using Microsoft.Data.Sqlite;
 
 namespace ETHDINFKBot.Modules
 {
@@ -26,6 +27,73 @@ namespace ETHDINFKBot.Modules
     public class TestModule : ModuleBase<SocketCommandContext>
     {
         private readonly ILogger _logger = new Logger<TestModule>(Program.Logger);
+
+        private class SocialCreditTransaction
+        {
+            public string Id { get; set; }
+            public string Name { get; set; }
+            public string DateTime { get; set; }
+
+
+        }
+
+        private class SocialCreditUser
+        {
+            public ulong Id { get; set; }
+            public string Name { get; set; }
+            public string ProfileImageUrl { get; set; }
+
+            public List<SocialCreditTransaction> Transactions { get; set; }
+        }
+
+        [Command("sc", RunMode = RunMode.Async)]
+        public async Task SocialCreditGraph()
+        {
+            var author = Context.Message.Author;
+            if (author.Id != Program.ApplicationSetting.Owner)
+            {
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
+            List<SocialCreditUser> users = new List<SocialCreditUser>();
+
+            using (var connection = new SqliteConnection("Data Source=C:\\AprilFoolsBot\\test.db"))
+            {
+                connection.Open();
+
+                var command = connection.CreateCommand();
+                command.CommandText =
+                @"SELECT * FROM DiscordUsers";
+                //command.Parameters.AddWithValue("$id", id);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var id = Convert.ToUInt64(reader.GetString(0));
+                        var name = reader.GetString(1);
+                        users.Add(new SocialCreditUser()
+                        {
+                            Id = id, Name = name,
+                            Transactions = new List<SocialCreditTransaction>() {  }
+                        });
+
+                    }
+                }
+            }
+
+            try
+            {
+                string fileName = await MovieHelper.GenerateMovieForMessages(Context.Guild.Id, 24 * 7, 30, -1, 15, true, true);
+                await Context.Channel.SendFileAsync(fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while creating movie");
+                await Context.Channel.SendMessageAsync(ex.ToString());
+            }
+        }
 
         [Command("movie", RunMode = RunMode.Async)]
         public async Task CreateMovie(bool stacked, int groupByHours, int fps, bool drawDots, params ulong[] channelIds)
@@ -61,7 +129,7 @@ namespace ETHDINFKBot.Modules
 
             try
             {
-                string fileName = await MovieHelper.GenerateMovieForMessages(Context.Guild.Id, 24, 30, -1, 2, true, true);
+                string fileName = await MovieHelper.GenerateMovieForMessages(Context.Guild.Id, 24, 30, -1, 1, true, true);
                 await Context.Channel.SendFileAsync(fileName);
             }
             catch (Exception ex)
@@ -177,7 +245,7 @@ namespace ETHDINFKBot.Modules
             var queryResult = await SQLHelper.GetQueryResults(null, sqlQuery, true, 10_000_000, true, true);
 
 
-            Context.Channel.SendMessageAsync($"Retreived data in {watch.ElapsedMilliseconds}ms");
+            Context.Channel.SendMessageAsync($"Retrieved data in {watch.ElapsedMilliseconds}ms");
 
 
             var parsedInfo = new ParsedGraphInfo()
@@ -278,7 +346,7 @@ namespace ETHDINFKBot.Modules
 
                     var gridSize = new GridSize(drawInfo.Bitmap, padding);
 
-                    DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLables, labels.YAxisLabels, $"Messages count");
+                    DrawingHelper.DrawGrid(drawInfo.Canvas, gridSize, padding, labels.XAxisLabels, labels.YAxisLabels, $"Messages count");
 
                     // TODO optimize some lines + move to draw helper
                     var dataPoints = parsedInfo.Info.Where(j => j.Key <= endTime).OrderBy(i => i.Key).ToDictionary(j => j.Key.DateTime, j => j.Value);

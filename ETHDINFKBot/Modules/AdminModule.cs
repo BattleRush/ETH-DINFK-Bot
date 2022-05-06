@@ -12,6 +12,7 @@ using ETHDINFKBot.Drawing;
 using ETHDINFKBot.Helpers;
 using ETHDINFKBot.Log;
 using ETHDINFKBot.Struct;
+using HtmlAgilityPack;
 using ICSharpCode.SharpZipLib.GZip;
 using ICSharpCode.SharpZipLib.Tar;
 using Microsoft.Extensions.Logging;
@@ -24,11 +25,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Globalization;
 
 namespace ETHDINFKBot.Modules
 {
@@ -82,16 +86,16 @@ namespace ETHDINFKBot.Modules
 
             //    foreach (SocketGuildUser user in allUsers)
             //    {
-            //        var targerUser = jsonUsers.SingleOrDefault(i => i.id == user.Id);
+            //        var targetUser = jsonUsers.SingleOrDefault(i => i.id == user.Id);
 
-            //        if (targerUser == null || targerUser.nick == user.Nickname)
+            //        if (targetUser == null || targetUser.nick == user.Nickname)
             //            continue;
 
             //        try
             //        {
             //            await user.ModifyAsync(i =>
             //            {
-            //                i.Nickname = targerUser.nick;
+            //                i.Nickname = targetUser.nick;
             //            });
 
             //            await Context.Channel.SendMessageAsync("Fixing " + user.Username, false);
@@ -109,8 +113,9 @@ namespace ETHDINFKBot.Modules
             //}
         }
 
-        [RequireOwner]
+        //[RequireOwner]
         [Command("help")]
+        [RequireUserPermission(GuildPermission.ManageChannels)]
         public async Task AdminHelp()
         {
             //var author = Context.Message.Author;
@@ -138,6 +143,7 @@ namespace ETHDINFKBot.Modules
             builder.AddField("admin kill", "Do I really need to explain this one");
             builder.AddField("admin cronjob <name>", "Manually start a CronJob");
             builder.AddField("admin blockemote <id> <block>", "Block an emote from being selectable");
+            builder.AddField("admin events", "Sync VIS Events");
 
             await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
@@ -162,6 +168,115 @@ namespace ETHDINFKBot.Modules
               assembly.GetTypes()
                       .Where(t => string.Equals(t.Namespace, nameSpace, StringComparison.Ordinal))
                       .ToArray();
+        }
+
+
+
+        [Command("events")]
+        [RequireUserPermission(GuildPermission.ManageChannels)]
+        public async Task SyncVisEvents()
+        {
+            try
+            {
+                var guild = Program.Client.GetGuild((Context.Channel as SocketGuildChannel).Guild.Id);
+
+                var activeEvents = await guild.GetEventsAsync();
+                await Context.Channel.SendMessageAsync($"Currently {activeEvents.Count} active");
+
+                // Download image from url
+                Image cover = new Image();
+                using (HttpClient client = new HttpClient())
+                {
+                    var response = await client.GetAsync($"https://vis.ethz.ch/en/events/");
+                    var contents = await response.Content.ReadAsStringAsync();
+
+                    var doc = new HtmlDocument();
+                    doc.LoadHtml(contents);
+
+                    string xPath = "//*[@class=\"card full-height\"]";
+                    HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes(xPath);
+
+                    foreach (var node in nodes)
+                    {
+                        string title = node.SelectSingleNode(".//h5")?.InnerText;
+
+                        if (title != null)
+                        {
+                            // This event is already created
+                            if (activeEvents.Any(i => i.Name == title))
+                                continue;
+
+                            bool startDateParsed = false;
+                            DateTime startDateTime = DateTime.Now;
+                            bool endDateParsed = false;
+                            DateTime endDateTime = DateTime.Now;
+
+                            var pNodes = node.SelectNodes(".//p");
+                            var imgNode = node.SelectSingleNode(".//img");
+
+                            var description = pNodes[1].InnerText;
+
+                            var eventLink = "https://vis.ethz.ch" + node.SelectSingleNode(".//a").Attributes["href"].Value;
+
+                            description = $"Link: {eventLink}{Environment.NewLine}{description}";
+
+                            string imgUrl = imgNode.Attributes["src"]?.Value;
+                            if (imgUrl.StartsWith("/static"))
+                                imgUrl = "https://vis.ethz.ch" + imgUrl;
+
+                            CultureInfo provider = CultureInfo.InvariantCulture;
+                            
+                            foreach (var pNode in pNodes)
+                            {
+                                if (pNode.InnerText.ToLower().Contains("event start time"))
+                                {
+                                    string dateTimeString = pNode.InnerText.Replace("Event start time", "").Trim();
+                                    startDateParsed = DateTime.TryParseExact(dateTimeString, "d.M.yyyy HH:mm", provider, 
+                                    DateTimeStyles.None, out startDateTime);
+
+                                    // CET/CEST to UTC
+                                    startDateTime = startDateTime.AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(startDateTime) ? -2 : -1);
+                                }
+                                else if (pNode.InnerText.ToLower().Contains("event end time"))
+                                {
+                                    string dateTimeString = pNode.InnerText.Replace("Event end time", "").Trim();
+                                    endDateParsed = DateTime.TryParseExact(dateTimeString, "d.M.yyyy HH:mm", provider, 
+                                    DateTimeStyles.None, out endDateTime);
+
+                                    // CET/CEST to UTC
+                                    endDateTime = endDateTime.AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(endDateTime) ? -2 : -1);
+                                }
+                            }
+
+                            // Either end or start date is not parsed
+                            if (!startDateParsed || !endDateParsed)
+                                continue;
+
+                            var stream = await client.GetStreamAsync(new Uri(WebUtility.HtmlDecode(imgUrl)));
+                            cover = new Image(stream);
+
+                            // Create Event
+                            var guildEvent = await guild.CreateEventAsync(
+                                title, 
+                                startTime: startDateTime, 
+                                GuildScheduledEventType.External, 
+                                description: description,
+                                endTime: endDateTime, 
+                                location: "VIS Event", 
+                                coverImage: cover
+                            );
+
+                            await Context.Channel.SendMessageAsync($"Created new VIS Event: {title}");
+                        }
+                    }
+                }
+
+                await Context.Channel.SendMessageAsync("Events synced");
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.ToString());
+            }
         }
 
         [Command("cronjob")]
@@ -229,14 +344,15 @@ namespace ETHDINFKBot.Modules
         }
 
         [Command("blockemote")]
+        [RequireUserPermission(GuildPermission.ManageChannels)]
         public async Task BlockEmote(ulong emoteId, bool blockStatus)
         {
             var author = Context.Message.Author;
-            if (author.Id != Program.ApplicationSetting.Owner)
-            {
-                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
-                return;
-            }
+            //if (author.Id != Program.ApplicationSetting.Owner)
+            //{
+            //await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+            //return;
+            //}
 
             var emoteInfo = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(emoteId);
             bool success = DatabaseManager.EmoteDatabaseManager.SetEmoteBlockStatus(emoteId, blockStatus);
@@ -245,9 +361,7 @@ namespace ETHDINFKBot.Modules
             {
                 // Also locally delete the file
                 if (File.Exists(emoteInfo.LocalPath))
-                {
-                    File.Delete(emoteInfo.LocalPath);
-                }
+                    File.Delete(emoteInfo.LocalPath); // TODO Redownload if the emote is unblocked
 
                 await Context.Channel.SendMessageAsync($"Successfully set block status of emote {emoteId} to: {blockStatus}", false);
             }
@@ -269,7 +383,7 @@ namespace ETHDINFKBot.Modules
 
             var allEmotes = DatabaseManager.EmoteDatabaseManager.GetEmotes().OrderBy(i => i.DiscordEmoteId).ToList(); // sort it to ensure they are chronologically in there
 
-            await Context.Channel.SendMessageAsync($"Successfully retreived {allEmotes.Count} emotes", false);
+            await Context.Channel.SendMessageAsync($"Successfully retrieved {allEmotes.Count} emotes", false);
 
             var emotesPath = Path.Combine(Program.ApplicationSetting.BasePath, "Emotes");
             var archivePath = Path.Combine(emotesPath, "Archive");
@@ -613,7 +727,7 @@ namespace ETHDINFKBot.Modules
 
                 var isLockEnabled = keyValueDBManager.Update<bool>("LockChannelPositions", lockChannels);
 
-                await Context.Message.Channel.SendMessageAsync($"Set Global Postion Lock to: {isLockEnabled}");
+                await Context.Message.Channel.SendMessageAsync($"Set Global Position Lock to: {isLockEnabled}");
 
                 if (isLockEnabled)
                 {
@@ -1347,7 +1461,7 @@ namespace ETHDINFKBot.Modules
                 foreach (var item in allStoredKeyValuePairs)
                 {
                     var line = $"{item.Key}:{item.Value}";
-                    if(text.Length + line.Length > 1975)
+                    if (text.Length + line.Length > 1975)
                     {
                         await Context.Channel.SendMessageAsync(text);
                         text = "";

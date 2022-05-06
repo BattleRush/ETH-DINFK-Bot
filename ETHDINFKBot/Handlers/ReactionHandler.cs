@@ -117,7 +117,8 @@ namespace ETHDINFKBot.Handlers
                     CreatedAt = emote.CreatedAt,
                     Blocked = false,
                     LastUpdatedAt = DateTime.Now, // todo chech changes
-                    LocalPath = null
+                    LocalPath = null,
+                    IsValid = true // TODO maybe set default as true from db?
                 };
 
                 DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(discordEmote, Message.Id, AddedReaction ? 1 : -1, true, SocketGuildReactionUser, false);
@@ -146,8 +147,8 @@ namespace ETHDINFKBot.Handlers
 
                 // Save the post link
 
-                /*          var user = DatabaseManager.GetDiscordUserById(arg1.Value.Author.Id); // Verify the user is created but should actually be available by this poitn
-                var saveBy = DatabaseManager.GetDiscordUserById(arg3.User.Value.Id); // Verify the user is created but should actually be available by this poitn
+                /*          var user = DatabaseManager.GetDiscordUserById(arg1.Value.Author.Id); // Verify the user is created but should actually be available by this point
+                var saveBy = DatabaseManager.GetDiscordUserById(arg3.User.Value.Id); // Verify the user is created but should actually be available by this point
                 */
                 /*
                 if (DatabaseManager.IsSaveMessage(Message.Id, SocketGuildReactionUser.Id))
@@ -252,7 +253,7 @@ https://cdn.discordapp.com/attachments/843957532380889098/914184155342995456/unk
                     builder.AddField("Message Author", $"{authorUsername}", true);
 
                     builder.AddField("Info", $"To save a message react with <:savethis:780179874656419880> to a message", false);
-                    builder.AddField("**Soon depricated info**", $"This feature will soon no longer work trough reactions. Please use the new Method: (right click) Message -> Apps -> Save Message", false);
+                    builder.AddField("**Soon deprecated info**", $"This feature will soon no longer work trough reactions. Please use the new Method: (right click) Message -> Apps -> Save Message", false);
 
                     builder.WithAuthor(SocketGuildReactionUser);
                     builder.WithCurrentTimestamp();
@@ -322,7 +323,7 @@ https://cdn.discordapp.com/attachments/843957532380889098/914184155342995456/unk
                             if (SocketGuildMessageUser != null)
                                 builder.WithAuthor(SocketGuildMessageUser);
 
-                            //add first attachement as thumbnail (if attachment is not picture, height == null) 
+                            //add first attachment as thumbnail (if attachment is not picture, height == null) 
                             if (Message.Attachments != null && Message.Attachments.FirstOrDefault()?.Height != null)
                             {
                                 builder.WithThumbnailUrl(Message.Attachments.First().Url);

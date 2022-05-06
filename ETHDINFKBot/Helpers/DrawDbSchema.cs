@@ -161,7 +161,7 @@ namespace ETHDINFKBot.Helpers
 
                     //Brush brush = new SolidBrush(Color.FromArgb(128, 137, 153, 162)); // TODO move above
 
-                    // TODO Find coresponding function
+                    // TODO Find corresponding function
                     //Canvas.FillRect(brush, new SKRect(LeftPadding + (TableWidth + LeftPadding) * (tableIndex % ColumnCount), TopPadding + countTable * RowHeight + currentHeight, TableWidth, RowHeight));
 
                     // Border
@@ -228,7 +228,7 @@ namespace ETHDINFKBot.Helpers
                     int tableHeight = dbTable.FieldInfos.Count * RowHeight;
                     currentRowMaxHeight = Math.Max(currentRowMaxHeight, tableHeight);
 
-                    if (field.IsForeignKey && !field.IsPrimaryKey)
+                    if (field.IsForeignKey /*&& !field.IsPrimaryKey*/ /*Disabled for PostgreSQL*/)
                     {
                         var tablePrimaryKeys = primaryKeys.Where(i => i.Key == field.ForeignKeyInfo.ToTable);
                         if (tablePrimaryKeys.Count() > 0)

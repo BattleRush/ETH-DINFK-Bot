@@ -51,6 +51,23 @@ namespace ETHDINFKBot.Data
             }
         }
 
+        public void ChangeValidStatus(ulong emoteId, bool valid)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    context.DiscordEmotes.Single(i => i.DiscordEmoteId == emoteId).IsValid = valid;
+                    context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return;
+            }
+        }
+
         public bool SetEmoteBlockStatus(ulong emoteId, bool blockStatus)
         {
             try
@@ -258,6 +275,30 @@ namespace ETHDINFKBot.Data
             {
                 _logger.LogError(ex, ex.Message);
                 return null;
+            }
+        }
+
+        public bool DeleteFavouriteEmote(ulong discordUserId, ulong discordEmoteId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var emoteFavRecord = context.FavouriteDiscordEmotes.SingleOrDefault(i => i.DiscordUserId == discordUserId && i.DiscordEmoteId == discordEmoteId);
+                    if(emoteFavRecord != null)
+                    {
+                        context.FavouriteDiscordEmotes.Remove(emoteFavRecord);
+                        context.SaveChanges();
+                        return true;
+                    }
+
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return false;
             }
         }
 

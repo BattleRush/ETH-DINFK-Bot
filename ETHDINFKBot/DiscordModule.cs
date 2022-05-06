@@ -26,11 +26,15 @@ using SkiaSharp;
 using CSharpMath.SkiaSharp;
 using System.Globalization;
 using System.Diagnostics;
-using Microsoft.Data.Sqlite;
 
 using ETHDINFKBot.Drawing;
 using System.Reflection;
 using TimeZoneConverter;
+using HtmlAgilityPack;
+using Google.Apis.CustomSearchAPI.v1;
+using Google.Apis.Services;
+using Google.Apis.CustomSearchAPI.v1.Data;
+using Google;
 
 namespace ETHDINFKBot
 {
@@ -244,10 +248,10 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.AddField("Rant", $"```{prefix}rant [ types | new) ]```", true);
             builder.AddField("SQL", $"```{prefix}sql (table info) | (query[d] <query>)```", true);
             builder.AddField("Emote Help for more info", $"```{prefix}emote help```");
-            builder.AddField("React (only this server emotes)", $"```{prefix}react <message_id> <emote_name>```", true);
+            builder.AddField("React (only this server's emotes)", $"```{prefix}react <message_id> <emote_name>```", true);
             builder.AddField("Space Min: 1 Max: 5", $"```{prefix}space [<amount>]```", true);
             builder.AddField("Space (for more commands)", $"```{prefix}space help```", true);
-            builder.AddField("WIP Command", $"```{prefix}messagegraph [all|lernphase|bp]```", true);
+            builder.AddField("WIP Command", $"```{prefix}messagegraph [all|lernphase|bp] {prefix}food```", true);
             builder.AddField("ETH DINFK Place", $"```Type '{prefix}place help' for more information```");
 
             /*builder.AddField("Write .study to force yourself away from discord", "```May contain spoilers to old exams! Once you receive the study role you will be only to chat for max of 15 mins at a time." + Environment.NewLine +
@@ -307,6 +311,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         [Summary("Returns info about the current user, or the user parameter, if one passed.")]
         public async Task GoogleSearch([Remainder] string searchString)
         {
+            await Context.Channel.SendMessageAsync("Temp disabled", false);
+
+            return; // Disabled for now
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
 
@@ -335,7 +342,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             foreach (var item in reply.Results.Take(3))
             {
-                builder.AddField(item.title, item.description + Environment.NewLine + item.url);
+                //builder.AddField(item.title, item.description + Environment.NewLine + item.url);
             }
 
             await Context.Channel.SendMessageAsync("", false, builder.Build());
@@ -510,22 +517,29 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             Context.Channel.SendMessageAsync(req.ImageUrl, false);
         }*/
 
-      
+
 
         [Command("react")]
         public async Task ReactEmote(ulong messageid, string emoteName)
         {
-            if (Context.Channel is SocketGuildChannel guildChannel)
+            try
             {
-                var emote = guildChannel.Guild.Emotes.FirstOrDefault(i => i.Name.ToLower().Contains(emoteName.ToLower()));
+                if (Context.Channel is SocketGuildChannel guildChannel)
+                {
+                    var emote = guildChannel.Guild.Emotes.FirstOrDefault(i => i.Name.ToLower().Contains(emoteName.ToLower()));
 
-                if (emote == null)
-                    return;
+                    if (emote == null)
+                        return;
 
-                var message = await Context.Channel.GetMessageAsync(messageid);
-                await message.AddReactionAsync(emote);
+                    var message = await Context.Channel.GetMessageAsync(messageid);
+                    await message.AddReactionAsync(emote);
+                }
+                await Context.Message.DeleteAsync();
             }
-            await Context.Message.DeleteAsync();
+            catch (Exception ex)
+            {
+                // TODO log
+            }
         }
 
         [Command("today")]
@@ -963,7 +977,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         [Command("rant")]
         public async Task Rant(string type = null, [Remainder] string content = "")
         {
-            // TODO perm check but for now open everwhere
+            // TODO perm check but for now open everywhere
             //Context.Channel.SendMessageAsync("Ask <@675445762900885515> or <@276462585690193921> or <@124603627833786370> why its disabled. Also ill fix it in the evening.");
 
 
@@ -1026,7 +1040,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 var guildChannel = (SocketGuildChannel)Context.Message.Channel;
 
                 bool successRant = DatabaseManager.AddRant(Context.Message.Id, Context.Message.Author.Id, guildChannel.Id, typeId, content);
-                await Context.Channel.SendMessageAsync($"Added rant for {type} Success: {successRant}", false);
+                await Context.Channel.SendMessageAsync($"Added rant Success: {successRant}", false);
             }
         }
 
@@ -1035,8 +1049,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             var rant = DatabaseManager.GetRandomRant(type);
             if (rant == null)
             {
-                await Context.Channel.SendMessageAsync($"No rant could be loaded for type {type} (To see all types write: '.rant types')." +
-                    $"If you are trying to add a rant type '.rant {type} <your actuall rant>'", false);
+                await Context.Channel.SendMessageAsync($"No rant could be loaded"); //for type {type} (To see all types write: '.rant types')." +
+                   // $"If you are trying to add a rant type '.rant {type} <your actual rant>'", false);
                 return;
             }
 
@@ -1051,7 +1065,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.WithColor(255, 0, 255);
 
             // Can cause NRE
-            if(byUser != null)
+            if (byUser != null)
                 builder.WithAuthor(byUser);
 
             builder.WithCurrentTimestamp();
@@ -1205,7 +1219,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 await Context.Message.DeleteAsync();
             }
 
-            var messages = await Context.Channel.GetMessagesAsync(100).FlattenAsync(); //defualt is 100
+            var messages = await Context.Channel.GetMessagesAsync(100).FlattenAsync(); //default is 100
             messages = messages.Where(i => i.Author.Id == fromUserToDelete).OrderByDescending(i => i.Id).Take(count);
             await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
         }
@@ -1265,7 +1279,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             }
 
 
-            var messages = Context.Channel.GetMessagesAsync(count).FlattenAsync(); //defualt is 100
+            var messages = Context.Channel.GetMessagesAsync(count).FlattenAsync(); //default is 100
 
             var messageCountDown = await Context.Channel.SendMessageAsync("https://media4.giphy.com/media/tBvPFCFQHSpEI/200.gif");
             await Context.Channel.SendMessageAsync($"Placing a tactical nuke KMN-{count}. Scheduled to detonate in 10 seconds.");
@@ -1286,6 +1300,263 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             await nuke.DeleteAsync();
             await nukeMsg.DeleteAsync();
         }
+
+
+
+
+        [Command("a")]
+        public async Task Food()
+        {
+            ///html/body/div[6]/section/div/section/div[2]/div[1]/div/div[2]/div/div/div/div/div/div/div/div/table/tbody[2]
+
+
+            //foreach (var menu in polymensaMenus)
+            //{
+            //    await Context.Channel.SendMessageAsync($"**Menu: {menu.Name} Description: {menu.Description} Price: {menu.Price}**");
+
+            //    var reply = new GoogleEngine().ImageSearch(menu.Description.Replace("\"", ""));
+            //    if (reply == "")
+            //        await Context.Channel.SendMessageAsync("Image not found");
+            //    else
+            //        await Context.Channel.SendMessageAsync(reply);
+            //}
+
+
+        }
+
+        // TODO Create helper method
+        // https://github.com/mono/SkiaSharp.Extended/issues/12
+        private float DrawTextArea(SKCanvas canvas, SKPaint paint, float x, float y, float maxWidth, float lineHeight, string text)
+        {
+            var spaceWidth = paint.MeasureText(" ");
+            var lines = text.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+            lines = lines.SelectMany(l => SplitLine(paint, maxWidth, l, spaceWidth)).ToArray();
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+                canvas.DrawText(line, x, y, paint);
+                y += lineHeight;
+            }
+
+            return y;
+        }
+        // TODO Create helper method
+        private string[] SplitLine(SKPaint paint, float maxWidth, string text, float spaceWidth)
+        {
+            var result = new List<string>();
+
+            var words = text.Split(new[] { " " }, StringSplitOptions.None);
+
+            var line = new StringBuilder();
+            float width = 0;
+            foreach (var word in words)
+            {
+                var wordWidth = paint.MeasureText(word);
+                var wordWithSpaceWidth = wordWidth + spaceWidth;
+                var wordWithSpace = word + " ";
+
+                if (width + wordWidth > maxWidth)
+                {
+                    result.Add(line.ToString());
+                    line = new StringBuilder(wordWithSpace);
+                    width = wordWithSpaceWidth;
+                }
+                else
+                {
+                    line.Append(wordWithSpace);
+                    width += wordWithSpaceWidth;
+                }
+            }
+
+            result.Add(line.ToString());
+
+            return result.ToArray();
+        }
+
+
+        public async Task SubmitImage()
+        {
+
+        }
+
+        [RequireOwner]
+        [Command("serverowner")]
+        public async Task Lukas()
+        {
+            await Context.Channel.SendMessageAsync("<@223932775474921472>");
+            await Context.Channel.SendMessageAsync("https://media.discordapp.net/attachments/768600365602963496/958082710100901988/ezgif.com-gif-maker.gif");
+        }
+
+        [Command("food")]
+        public async Task FoodB()
+        {
+            try
+            {
+                if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                    return;
+
+                var meal = MealTime.Lunch;
+
+                // TODO Do CET/CEST Switch
+                if (DateTime.Now.Hour >= 12)
+                    meal = MealTime.Dinner;
+
+                var restaurants = FoodHelper.GetCurrentMenu(meal, Language.English, Location.Zentrum);
+
+
+                int row = 0;
+
+                var padding = DrawingHelper.DefaultPadding;
+
+                padding.Left = 20;
+                padding.Top = 40;
+
+                int rowHeight = 300;
+                int colWidth = 200;
+
+                var paint = DrawingHelper.DefaultTextPaint;
+                paint.TextSize = 20;
+                paint.Color = new SKColor(128, 255, 64);
+
+                List<Stream> streams = new List<Stream>();
+
+                int maxMenus = restaurants.Max(i => i.Value.Count);
+                foreach (var restaurant in restaurants)
+                {
+
+                    var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(maxMenus*colWidth, 300);
+                    canvas.DrawText(meal.ToString(), new SKPoint(maxMenus*colWidth - 100, 25), paint);
+
+
+                    canvas.DrawText(restaurant.Key.ToString(), new SKPoint(padding.Left, padding.Top + row * rowHeight), DrawingHelper.TitleTextPaint); // TODO Correct paint?
+
+                    int column = 0;
+                    foreach (var menu in restaurant.Value)
+                    {
+                        canvas.DrawText(menu.Name, new SKPoint(padding.Left + column * colWidth, padding.Top + row * rowHeight + 20), DrawingHelper.DefaultTextPaint);
+                        int usedHeight = (int)DrawTextArea(canvas, DrawingHelper.DefaultTextPaint, padding.Left + column * colWidth, padding.Top + row * rowHeight + 40, 180, DrawingHelper.DefaultTextPaint.TextSize, menu.MultilineDescription);
+                        //canvas.DrawText(menu.Description, new SKPoint(, ), DrawingHelper.DefaultTextPaint);
+                        canvas.DrawText("CHF " + menu.Price.ToString("#,##0.00"), new SKPoint(padding.Left + column * colWidth, usedHeight + 10), DrawingHelper.DefaultTextPaint);
+
+                        try
+                        {
+                            // download the bytes
+                            byte[] img = null;
+                            using (var webClient = new WebClient())
+                            {
+                                img = webClient.DownloadData(menu.ImgUrl);
+                            }
+
+                            if (img != null)
+                            {
+                                // decode the bitmap stream
+                                var resourceBitmap = SKBitmap.Decode(img);
+
+                                if (resourceBitmap != null)
+                                {
+                                    var resizedBitmap = resourceBitmap.Resize(new SKSizeI(128, 128), SKFilterQuality.High); //Resize to the canvas
+                                    canvas.DrawBitmap(resizedBitmap, new SKPoint(padding.Left + column * colWidth, usedHeight + 20));
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+
+                        }
+
+
+                        column++;
+                    }
+
+
+                    /* await Context.Channel.SendMessageAsync($"**Menu: {menu.Name} Description: {menu.Description} Price: {menu.Price}**");
+
+                     if (!string.IsNullOrEmpty(menu.ImgUrl))
+                         await Context.Channel.SendMessageAsync(menu.ImgUrl);
+                    */
+
+                    
+
+                    streams.Add(CommonHelper.GetStream(bitmap));
+
+                    bitmap.Dispose();
+                    canvas.Dispose();
+
+                }
+
+                paint = DrawingHelper.DefaultTextPaint;
+                paint.TextSize = 20;
+                paint.Color = new SKColor(255, 32, 32);
+                //canvas.DrawText("THIS FEATURE IS IN ALPHA CURRENTLY", new SKPoint(padding.Left, bitmap.Height - 50), paint);
+                paint.TextSize = 16;
+                //canvas.DrawText("(Images are taken from google.com and may not represent the actual product)", new SKPoint(padding.Left, bitmap.Height - 30), paint);
+
+
+
+                // TODO send multiple attachments
+                foreach(var stream in streams)
+                    await Context.Channel.SendFileAsync(stream, "menu.png", $"");
+
+
+
+                //    // Create the service.
+                //    var service = new CustomSearchAPIService(new BaseClientService.Initializer
+                //    {
+                //        //ApplicationName = "Discovery Sample",
+                //        ApiKey = "",
+                //    });
+
+                //    // Run the request.
+                //    Console.WriteLine("Executing a list request...");
+                //    CseResource.ListRequest listRequest = new CseResource.ListRequest(service)
+                //    {
+                //        Cx = "",
+                //        Q = polymensaMenus[0].FirstLine,
+                //        Safe = CseResource.ListRequest.SafeEnum.Active,
+                //        SearchType = CseResource.ListRequest.SearchTypeEnum.Image,
+                //        Hl = "de"
+                //    };
+
+
+                //    try
+                //    {
+
+                //        Search search = listRequest.Execute();
+                //        // Display the results.
+                //        if (search.Items != null)
+                //        {
+                //            foreach (var api in search.Items)
+                //            {
+                //                Context.Channel.SendMessageAsync(api.Link);
+                //                Console.WriteLine(api.DisplayLink + " - " + api.Title);
+                //            }
+                //        }
+                //    }
+                //    catch (GoogleApiException e)
+                //    {
+                //        Console.WriteLine($"statuscode:{e.HttpStatusCode}");
+                //    }
+
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.ToString());
+
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
 
         //[Command("countdown2021")]
         //public async Task countdown2021()

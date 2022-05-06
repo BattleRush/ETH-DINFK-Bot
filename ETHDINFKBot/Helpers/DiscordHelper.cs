@@ -332,16 +332,18 @@ namespace ETHDINFKBot.Helpers
         }
 
 
-        public static (Dictionary<ulong, string> EmoteList, string textBlock, string Url, int TotalEmotesFound, int PageSize) SearchEmote(string search, ulong guildId, int page = 0, bool debug = false, int rows = 5, int columns = 10)
+        public static (Dictionary<ulong, string> EmoteList, List<bool> valid, string textBlock, string Url, int TotalEmotesFound, int PageSize) SearchEmote(string search, ulong guildId, int page = 0, bool debug = false, int rows = 5, int columns = 10)
         {
             string emoteText = "";
 
+            // TODO Unify into one object
             Dictionary<ulong, string> emoteList = new Dictionary<ulong, string>();
+            List<bool> valid = new List<bool>();
 
             Stopwatch watch = new Stopwatch();
             watch.Start();
 
-            var emotes = EmoteDBManager.Instance().GetEmotes(search); // TODO dont dowload the emote data before its further filtered
+            var emotes = EmoteDBManager.Instance().GetEmotes(search); // TODO dont download the emote data before its further filtered
             var guildEmotes = Program.Client.GetGuild(guildId).Emotes.ToList();
 
             int total = emotes.Count;
@@ -401,6 +403,7 @@ namespace ETHDINFKBot.Helpers
                 //text += emoteString;
                 emoteText += emoteString;
                 emoteList.Add(emote.DiscordEmoteId, emote.EmoteName);
+                valid.Add(emote.IsValid);
 
                 countEmotes++;
 
@@ -423,7 +426,7 @@ namespace ETHDINFKBot.Helpers
             emoteText = emoteText.Substring(0, Math.Min(emoteText.Length, 1990));
             emoteText += "```";
 
-            return (emoteList, emoteText, $"https://cdn.battlerush.dev/{fileName}", total, pageSize);
+            return (emoteList, valid, emoteText, $"https://cdn.battlerush.dev/{fileName}", total, pageSize);
         }
 
         // TODO alot of rework to do

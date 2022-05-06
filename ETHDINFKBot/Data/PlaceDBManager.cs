@@ -5,7 +5,6 @@ using ETHBot.DataLayer.Data.Fun;
 using ETHDINFKBot.Enums;
 using ETHDINFKBot.Helpers;
 using ETHDINFKBot.Modules;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MySqlConnector;
@@ -622,7 +621,7 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
 
                     //Console.WriteLine($"Send: {x}/{y} paint R:{color.R}|G:{color.G}|B:{color.B}");
 
-                    server.MulticastBinary(data, 0, 9);
+                    server.Multicast(data, 0, 9);
                 }
             }
             catch (Exception ex)

@@ -51,8 +51,8 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
             for (int i = 0; i < allNames.Count; i += 100)
             {
-                var items = allNames.Skip(i).Take(100);
-                await textChannel.SendMessageAsync($"{string.Join(", ", items)}", false);
+                //var items = allNames.Skip(i).Take(100);
+                //await textChannel.SendMessageAsync($"{string.Join(", ", items)}", false);
                 // Do something with 100 or remaining items
             }
 

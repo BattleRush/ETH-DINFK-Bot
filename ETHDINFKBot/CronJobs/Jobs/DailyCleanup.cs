@@ -35,7 +35,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
             {
                 DateTime oneWeekAgo = DateTime.Now.Add(toDeleteOlderThan);
                 ulong oneWeekAgoSnowflake = SnowflakeUtils.ToSnowflake(oneWeekAgo);
-                var oldMessages = await channel.GetMessagesAsync(oneWeekAgoSnowflake, Direction.Before, 100/*100 should be enought for a while*/).FlattenAsync();
+                var oldMessages = await channel.GetMessagesAsync(oneWeekAgoSnowflake, Direction.Before, 100/*100 should be enough for a while*/).FlattenAsync();
                 await channel.DeleteMessagesAsync(oldMessages);
 
             }
@@ -72,7 +72,7 @@ GROUP BY PH.FromDiscordUserId
 ORDER BY MAX(PH.DiscordMessageId)";
 
 
-            var queryResult = await SQLHelper.GetQueryResults(null, sqlQuery, true, 50, true);
+            var queryResult = await SQLHelper.GetQueryResults(null, sqlQuery, true, 5000, true);
 
             var utcNow = DateTime.UtcNow;
 
@@ -134,7 +134,9 @@ ORDER BY MAX(PH.DiscordMessageId)";
                     if (channel != null)
                     {
                         CleanUpOldMessages(channel, TimeSpan.FromDays(-7));
+#if !DEBUG
                         RemovePingHell();
+#endif
                     }
                 }
             }

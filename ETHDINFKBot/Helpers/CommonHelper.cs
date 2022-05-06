@@ -251,7 +251,7 @@ namespace ETHDINFKBot.Helpers
 
                             if (manager.IsImage())
                             {
-                                var imageInfos = manager.DownloadImage(Path.Combine(Program.ApplicationSetting.BasePath, "Reddit")); // TODO send path in contructor
+                                var imageInfos = manager.DownloadImage(Path.Combine(Program.ApplicationSetting.BasePath, "Reddit")); // TODO send path in constructor
 
                                 context.RedditImages.AddRange(imageInfos);
                                 context.SaveChanges();
