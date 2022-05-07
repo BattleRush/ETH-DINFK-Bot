@@ -311,9 +311,7 @@ namespace ETHDINFKBot.Helpers
                         builder.WithAuthor(byUser); // TODO Check User Download for offline users
 
                     // Show bigger avatar image
-                    StringBuilder stringBuilder = new StringBuilder(birthdayUser.AvatarUrl);
-                    stringBuilder.Replace("size=128", "size=512");
-                    builder.WithImageUrl(stringBuilder.toString());
+                    builder.WithImageUrl(birthdayUser.AvatarUrl.Replace("size=128", "size=512"));
                     
                     builder.WithTimestamp(SnowflakeUtils.FromSnowflake(birthdayUser.DiscordUserId)); // has to be in UTC
 
