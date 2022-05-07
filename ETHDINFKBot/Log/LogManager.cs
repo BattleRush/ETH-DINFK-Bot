@@ -126,32 +126,27 @@ namespace ETHDINFKBot.Log
                     //    }
                     //}
 
-                    /* Check if emotes have been added no longer needed */
-                    //long elapsedDownload = await DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(stat, message.Id, emote.Value, false, fromUser, isPreload);
-                    //if (elapsedDownload > 0)
-                        //anyDownload = true;
+                    long elapsedDownload = await DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(stat, message.Id, emote.Value, false, fromUser, isPreload);
+                    if (elapsedDownload > 0)
+                        anyDownload = true;
                 }
                 
-                /* DB time for emote add, no longer needed */
-                /* Still here because there is a TODO :) */
-                //if (anyDownload)
-                //{
-                    //Stopwatch stopwatch3 = Stopwatch.StartNew();
+                if (anyDownload)
+                {
+                    Stopwatch stopwatch3 = Stopwatch.StartNew();
                     // TODO dont hammer the db after each call (check if any new emotes have been added
-                    //long emoteCount = DatabaseManager.EmoteDatabaseManager.TotalEmoteCount();
-                    //if (Program.TotalEmotes != emoteCount)
-                    //{
-                        //Program.TotalEmotes = emoteCount;
+                    long emoteCount = DatabaseManager.EmoteDatabaseManager.TotalEmoteCount();
+                    if (Program.TotalEmotes != emoteCount)
+                    {
+                        Program.TotalEmotes = emoteCount;
                         // place pixels is now tracked all 5 mins
-                        //await Program.Client.SetGameAsync($"{Program.TotalEmotes} emotes", null, ActivityType.Watching);
-                    //}
+                        await Program.Client.SetGameAsync($"{Program.TotalEmotes} emotes", null, ActivityType.Watching);
+                    }
 
-                    //stopwatch3.Stop();
+                    stopwatch3.Stop();
 
-                    //if (message.Author.Id == 155419933998579713 && message.Tags.Count > 5)
-                        //message.Channel.SendMessageAsync($"{stopwatch3.ElapsedMilliseconds} ms (Emote count)");
-                //}
-
+                }
+                
                 /*
                 if (!listOfEmotes.Contains(tag.Value.Id))
                 {
