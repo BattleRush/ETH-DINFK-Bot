@@ -263,6 +263,10 @@ namespace ETHDINFKBot.Modules
                                 coverImage: cover
                             );
 
+                            ulong eventChannelId = 819864331192631346;
+                            var eventChannel = Context.Guild.GetTextChannel(eventChannelId);
+
+                            await eventChannel.SendMessageAsync($"https://discord.com/events/{Context.Guild.Id}/{guildEvent.EntityId}");
                             await Context.Channel.SendMessageAsync($"Created new VIS Event: {title}");
                         }
                     }
