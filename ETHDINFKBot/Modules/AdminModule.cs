@@ -221,6 +221,9 @@ namespace ETHDINFKBot.Modules
                             description = $"Link: {eventLink}{Environment.NewLine}{description}";
 
                             string imgUrl = imgNode.Attributes["src"]?.Value;
+                            if (imgUrl.StartsWith("/static"))
+                                imgUrl = "https://vis.ethz.ch" + imgUrl;
+
                             CultureInfo provider = CultureInfo.InvariantCulture;
                             
                             foreach (var pNode in pNodes)
