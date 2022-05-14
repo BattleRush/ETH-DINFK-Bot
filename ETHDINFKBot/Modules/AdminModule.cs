@@ -418,20 +418,20 @@ namespace ETHDINFKBot.Modules
                     });
                 }
 
-                var emoteFolders = Directory.GetDirectories(emotesPath);
+                //var emoteFolders = Directory.GetDirectories(emotesPath);
 
-                foreach (var emoteFolder in emoteFolders.ToList().OrderBy(i => i))
-                {
-                    // Needs to contain - else its not an active folder
-                    if (emoteFolder.Contains("-"))
-                    {
-                        string tarGZFile = $"{new DirectoryInfo(emoteFolder).Name}.tar.gz";
-                        CreateTarGZ(Path.Combine(archivePath, tarGZFile), emoteFolder);
-                    }
-                }
+                //foreach (var emoteFolder in emoteFolders.ToList().OrderBy(i => i))
+                //{
+                    //// Needs to contain - else its not an active folder
+                    //if (emoteFolder.Contains("-"))
+                    //{
+                        //string tarGZFile = $"{new DirectoryInfo(emoteFolder).Name}.tar.gz";
+                        //CreateTarGZ(Path.Combine(archivePath, tarGZFile), emoteFolder);
+                    //}
+                //}
 
-                var archiveFiles = Directory.GetFiles(archivePath);
-                await Context.Channel.SendMessageAsync($"Created {archiveFiles.Length} archives", false);
+                //var archiveFiles = Directory.GetFiles(archivePath);
+                //await Context.Channel.SendMessageAsync($"Created {archiveFiles.Length} archives", false);
 
                 // Send file infos
 
@@ -439,12 +439,12 @@ namespace ETHDINFKBot.Modules
                 var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
                 await Context.Channel.SendFileAsync(stream, "EmoteInfo.json", "Emote Infos");
 
-                foreach (var archiveFile in archiveFiles.ToList().OrderBy(i => i))
-                    await Context.Channel.SendFileAsync(archiveFile, new DirectoryInfo(archiveFile).Name);
+                //foreach (var archiveFile in archiveFiles.ToList().OrderBy(i => i))
+                //    await Context.Channel.SendFileAsync(archiveFile, new DirectoryInfo(archiveFile).Name);
 
                 // In the end clean up the archive folder again
-                if (Directory.Exists(archivePath))
-                    Directory.Delete(archivePath, true);
+                //if (Directory.Exists(archivePath))
+                //    Directory.Delete(archivePath, true);
 
                 await Context.Channel.SendMessageAsync($"Done", false);
 
