@@ -241,7 +241,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             builder.WithCurrentTimestamp();
             //builder.WithAuthor(author);
-            builder.AddField("Misc", $"```{prefix}help {prefix}version {prefix}source {prefix}stats {prefix}ping {prefix}first {prefix}today```", true);
+            builder.AddField("Misc", $"```{prefix}help {prefix}version {prefix}source {prefix}stats {prefix}ping {prefix}first {prefix}last {prefix}today```", true);
             builder.AddField("Search", $"```{prefix}google|duck <search term>```", true);
             //builder.AddField("Images", $"```{prefix}neko[avatar] {prefix}fox {prefix}waifu {prefix}baka {prefix}smug {prefix}holo {prefix}avatar {prefix}wallpaper```");
             builder.AddField("Reddit", $"```{prefix}r[p] <subreddit>|all```", true);
@@ -2327,43 +2327,30 @@ ORDER BY RANDOM() LIMIT 1
 
                 await Context.Channel.SendMessageAsync("", false, firstDailyEmbed.Build());
                 await Context.Channel.SendMessageAsync("", false, firstAfternoonEmbed.Build());
-
-
-
-
-
-
-                /*
-                var statText = DatabaseManager.GetTopEmojiStatisticByText(10);
-                var statTextBot = DatabaseManager.GetTopEmojiStatisticByBot(10);
-                var statTextOnce = DatabaseManager.GetTopEmojiStatisticByTextOnce(10);
-                var statTextReaction = DatabaseManager.GetTopEmojiStatisticByReaction(10);
-                //var statEmoji = DatabaseManager.ping(10);
-
-
-                EmbedBuilder builder = new EmbedBuilder();
-
-                builder.WithTitle("BattleRush's Helper Stats");
-                //builder.WithUrl("https://github.com/BattleRush/ETH-DINFK-Bot");
-
-                builder.WithColor(0, 100, 175);
-
-                // Profile image of top person -> to update
-                //builder.WithThumbnailUrl("https://cdn.discordapp.com/avatars/774276700557148170/62279315dd469126ca4e5ab89a5e802a.png");
-
-                builder.WithCurrentTimestamp();
-                builder.AddField("Top Emoji", GetRankingString(statTextOnce.Select(i => $"<{(i.Animated ? "a:" : ":") + i.EmojiName}:{i.EmojiId}> " + i.UsedInTextOnce)), true);
-                builder.AddField("Top Emoji (all)", GetRankingString(statText.Select(i => $"<{(i.Animated ? "a:" : ":") + i.EmojiName}:{i.EmojiId}> " + i.UsedInText)), true);
-                //builder.AddField("Top Emoji (from Bots)", GetRankingString(statTextBot.Select(i => $"<{(i.Animated ? "a:" : ":") + i.EmojiName}:{i.EmojiId}> " + i.UsedByBots)), true);
-                builder.AddField("Top Reactions", GetRankingString(statTextReaction.Select(i => $"<{(i.Animated ? "a:" : ":") + i.EmojiName}:{i.EmojiId}> " + i.UsedAsReaction)), true);
-                builder.AddField("Top Pinged Users", "TODO");
-
-                Context.Channel.SendMessageAsync("", false, builder.Build());*/
             }
             catch (Exception ex)
             {
                 await Context.Channel.SendMessageAsync(ex.ToString(), false);
             }
+        }
+        
+        
+        [Command("last")]
+        public async Task FirstPosterLeaderboard()
+        {
+            var author = Context.Message.Author;
+            var messageCount = DatabaseManager.GetDiscordMessagesPaged(count);
+        
+            EmbedBuilder builder = new EmbedBuilder();
+            
+            builder.WithTitle($"{author.Username} IS THE LAST POSTER");
+            builder.WithColor(0, 0, 255);
+            builder.WithDescription($"This is the {CommonHelper.DisplayWithSuffix(messageCount)} time you are the last poster.");
+
+            builder.WithAuthor(author);
+            builder.WithCurrentTimestamp();
+
+            Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
         [Command("cloud_gen")]
