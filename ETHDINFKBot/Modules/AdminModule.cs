@@ -201,7 +201,7 @@ namespace ETHDINFKBot.Modules
                     {
                         string title = node.SelectSingleNode(".//h5")?.InnerText;
                         // Ensure HTML is decoded properly
-                        title = HtmlDecode(title);
+                        title = HttpUtility.HtmlDecode(title);
 
                         if (title != null)
                         {
