@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.Commands;
 using Discord.Rest;
 using Discord.WebSocket;
@@ -2336,7 +2336,7 @@ ORDER BY RANDOM() LIMIT 1
         
         
         [Command("last")]
-        public async Task FirstPosterLeaderboard()
+        public async Task LastPoster()
         {
             var author = Context.Message.Author;
             var messageCount = DatabaseManager.GetDiscordMessagesPaged(count);
