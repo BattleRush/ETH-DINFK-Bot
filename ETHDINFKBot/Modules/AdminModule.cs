@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using ETHBot.DataLayer;
@@ -33,6 +33,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Globalization;
+using System.Web;
 
 namespace ETHDINFKBot.Modules
 {
@@ -199,6 +200,8 @@ namespace ETHDINFKBot.Modules
                     foreach (var node in nodes)
                     {
                         string title = node.SelectSingleNode(".//h5")?.InnerText;
+                        // Ensure HTML is decoded properly
+                        title = HtmlDecode(title);
 
                         if (title != null)
                         {
@@ -269,7 +272,7 @@ namespace ETHDINFKBot.Modules
                             ulong eventChannelId = 819864331192631346;
                             var eventChannel = Context.Guild.GetTextChannel(eventChannelId);
 
-                            await eventChannel.SendMessageAsync($"https://discord.com/events/{Context.Guild.Id}/{guildEvent.Id}");
+                            await eventChannel.SendMessageAsync($"{title}{Environment.NewLine}https://discord.com/events/{Context.Guild.Id}/{guildEvent.Id}");
                             await Context.Channel.SendMessageAsync($"Created new VIS Event: {title}");
                         }
                     }
