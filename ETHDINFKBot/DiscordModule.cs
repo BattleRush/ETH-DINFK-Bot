@@ -2339,7 +2339,7 @@ ORDER BY RANDOM() LIMIT 1
         public async Task LastPoster()
         {
             var author = Context.Message.Author;
-            var messageCount = DatabaseManager.GetDiscordMessagesPaged(count);
+            var messageCount = DatabaseManager.GetDiscordUserMessageCount(author.Id);
         
             EmbedBuilder builder = new EmbedBuilder();
             
