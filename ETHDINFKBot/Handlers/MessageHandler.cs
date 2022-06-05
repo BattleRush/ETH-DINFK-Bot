@@ -388,6 +388,7 @@ namespace ETHDINFKBot.Handlers
                     {
                         RestWebhook webhook = null;
                         DiscordWebhookClient webhookClient = null;
+
                         try
                         {
                             var channelWebhooks = await SocketTextChannel.GetWebhooksAsync();
@@ -405,10 +406,10 @@ namespace ETHDINFKBot.Handlers
 
                             webhook = channelWebhooks.SingleOrDefault(i => i.Name == "BattleRush's Helper"); // TODO Do over ApplicationId
 
-                            if (SocketThreadChannel == null)
-                                webhookClient = new DiscordWebhookClient(webhook.Id, webhook.Token);
-                            else
-                                webhookClient = new DiscordWebhookClient($"https://discord.com/api/webhooks/{webhook.Id}/{webhook.Token}?thread_id={SocketThreadChannel.Id}");
+                            //if (SocketThreadChannel == null)
+                            webhookClient = new DiscordWebhookClient(webhook.Id, webhook.Token);
+                            //else
+                            //    webhookClient = new DiscordWebhookClient($"https://discord.com/api/webhooks/{webhook.Id}/{webhook.Token}?thread_id={SocketThreadChannel.Id}");
 
                         }
                         catch (Exception ex)
@@ -432,7 +433,7 @@ namespace ETHDINFKBot.Handlers
                             // we can post the emote as it will be rendered out
                             //await SocketTextChannel.SendMessageAsync(emoteString);
                             if (webhookClient != null)
-                                await webhookClient.SendMessageAsync(emoteString, false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
+                                await webhookClient.SendMessageAsync(emoteString, false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl, threadId: SocketThreadChannel?.Id);
                             else
                                 await SocketMessage.Channel.SendMessageAsync(emoteString, false, null, null, null, new MessageReference(SocketMessage.ReferencedMessage?.Id));
                         }
@@ -450,7 +451,7 @@ namespace ETHDINFKBot.Handlers
                                 //
                                 if (webhookClient != null)
                                     //await webhookClient.SendFileAsync(emote.LocalPath, "", false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
-                                    await webhookClient.SendFileAsync(fileAttachment, "", false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
+                                    await webhookClient.SendFileAsync(fileAttachment, "", false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl, threadId: SocketThreadChannel?.Id);
                                 else
                                     await SocketMessage.Channel.SendFileAsync(emote.LocalPath, "", false, null, null, false, null, new MessageReference(SocketMessage.ReferencedMessage?.Id));
                             }
@@ -468,7 +469,7 @@ namespace ETHDINFKBot.Handlers
 
                                 if (webhookClient != null)
                                     //await webhookClient.SendFileAsync(stream, $"{emote.EmoteName}.png", "", false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
-                                    await webhookClient.SendFileAsync(fileAttachment, "", false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl);
+                                    await webhookClient.SendFileAsync(fileAttachment, "", false, null, SocketGuildUser.Nickname ?? SocketGuildUser.Username, avatarUrl, threadId: SocketThreadChannel?.Id);
                                 else
                                     await SocketMessage.Channel.SendFileAsync(stream, $"{emote.EmoteName}.png", "", false, null, null, false, null, new MessageReference(SocketMessage.ReferencedMessage?.Id));
                             }
