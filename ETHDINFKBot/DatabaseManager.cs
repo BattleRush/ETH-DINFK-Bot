@@ -79,6 +79,22 @@ namespace ETHDINFKBot
                 return null;
             }
         }
+        
+        public int GetDiscordUserMessageCount(ulong discordUserId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordMessages.Where(i => i.DiscordUserId == discordUserId).Count();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return -1;
+            }
+        }
 
         public List<DiscordUser> GetTopFirstDailyPosterDiscordUsers(int amount = 10)
         {

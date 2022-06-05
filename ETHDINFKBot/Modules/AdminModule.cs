@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using ETHBot.DataLayer;
@@ -33,6 +33,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Globalization;
+using System.Web;
 
 namespace ETHDINFKBot.Modules
 {
@@ -199,6 +200,8 @@ namespace ETHDINFKBot.Modules
                     foreach (var node in nodes)
                     {
                         string title = node.SelectSingleNode(".//h5")?.InnerText;
+                        // Ensure HTML is decoded properly
+                        title = HttpUtility.HtmlDecode(title);
 
                         if (title != null)
                         {
@@ -266,6 +269,10 @@ namespace ETHDINFKBot.Modules
                                 coverImage: cover
                             );
 
+                            ulong eventChannelId = 819864331192631346;
+                            var eventChannel = Context.Guild.GetTextChannel(eventChannelId);
+
+                            await eventChannel.SendMessageAsync($"{title}{Environment.NewLine}https://discord.com/events/{Context.Guild.Id}/{guildEvent.Id}");
                             await Context.Channel.SendMessageAsync($"Created new VIS Event: {title}");
                         }
                     }
@@ -414,20 +421,20 @@ namespace ETHDINFKBot.Modules
                     });
                 }
 
-                var emoteFolders = Directory.GetDirectories(emotesPath);
+                //var emoteFolders = Directory.GetDirectories(emotesPath);
 
-                foreach (var emoteFolder in emoteFolders.ToList().OrderBy(i => i))
-                {
-                    // Needs to contain - else its not an active folder
-                    if (emoteFolder.Contains("-"))
-                    {
-                        string tarGZFile = $"{new DirectoryInfo(emoteFolder).Name}.tar.gz";
-                        CreateTarGZ(Path.Combine(archivePath, tarGZFile), emoteFolder);
-                    }
-                }
+                //foreach (var emoteFolder in emoteFolders.ToList().OrderBy(i => i))
+                //{
+                    //// Needs to contain - else its not an active folder
+                    //if (emoteFolder.Contains("-"))
+                    //{
+                        //string tarGZFile = $"{new DirectoryInfo(emoteFolder).Name}.tar.gz";
+                        //CreateTarGZ(Path.Combine(archivePath, tarGZFile), emoteFolder);
+                    //}
+                //}
 
-                var archiveFiles = Directory.GetFiles(archivePath);
-                await Context.Channel.SendMessageAsync($"Created {archiveFiles.Length} archives", false);
+                //var archiveFiles = Directory.GetFiles(archivePath);
+                //await Context.Channel.SendMessageAsync($"Created {archiveFiles.Length} archives", false);
 
                 // Send file infos
 
@@ -435,12 +442,12 @@ namespace ETHDINFKBot.Modules
                 var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
                 await Context.Channel.SendFileAsync(stream, "EmoteInfo.json", "Emote Infos");
 
-                foreach (var archiveFile in archiveFiles.ToList().OrderBy(i => i))
-                    await Context.Channel.SendFileAsync(archiveFile, new DirectoryInfo(archiveFile).Name);
+                //foreach (var archiveFile in archiveFiles.ToList().OrderBy(i => i))
+                //    await Context.Channel.SendFileAsync(archiveFile, new DirectoryInfo(archiveFile).Name);
 
                 // In the end clean up the archive folder again
-                if (Directory.Exists(archivePath))
-                    Directory.Delete(archivePath, true);
+                //if (Directory.Exists(archivePath))
+                //    Directory.Delete(archivePath, true);
 
                 await Context.Channel.SendMessageAsync($"Done", false);
 

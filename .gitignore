@@ -3,6 +3,7 @@ appsettings.json
 bin
 obj
 .vs
+.vscode
 Plugins
 ExamQuestions
 PublishProfiles

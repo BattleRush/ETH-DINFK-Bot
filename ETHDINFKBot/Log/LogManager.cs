@@ -130,7 +130,7 @@ namespace ETHDINFKBot.Log
                     if (elapsedDownload > 0)
                         anyDownload = true;
                 }
-
+                
                 if (anyDownload)
                 {
                     Stopwatch stopwatch3 = Stopwatch.StartNew();
@@ -145,10 +145,8 @@ namespace ETHDINFKBot.Log
 
                     stopwatch3.Stop();
 
-                    if (message.Author.Id == 155419933998579713 && message.Tags.Count > 5)
-                        message.Channel.SendMessageAsync($"{stopwatch3.ElapsedMilliseconds} ms (Emote count)");
                 }
-
+                
                 /*
                 if (!listOfEmotes.Contains(tag.Value.Id))
                 {
