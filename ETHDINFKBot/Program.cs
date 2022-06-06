@@ -1184,7 +1184,7 @@ namespace ETHDINFKBot
                 }
             }
 
-            var spamChannel = client.GetGuild(Program.ApplicationSetting.BaseGuild).GetTextChannel(768600365602963496); // #spam
+            var spamChannel = Client.GetGuild(Program.ApplicationSetting.BaseGuild).GetTextChannel(768600365602963496); // #spam
 
             string randomGif = randomGifs[new Random().Next(randomGifs.Count)];
             await spamChannel.SendMessageAsync(randomGif);
