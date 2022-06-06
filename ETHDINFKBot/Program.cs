@@ -1184,13 +1184,15 @@ namespace ETHDINFKBot
                 }
             }
 
+            var spamChannel = client.GetGuild(Program.ApplicationSetting.BaseGuild).GetTextChannel(768600365602963496); // #spam
+
             string randomGif = randomGifs[new Random().Next(randomGifs.Count)];
-            await firstMessage.Channel.SendMessageAsync(randomGif);
-            await firstMessage.Channel.SendMessageAsync("", false, builder.Build());
+            await spamChannel.SendMessageAsync(randomGif);
+            await spamChannel.SendMessageAsync("", false, builder.Build());
 
             FirstDailyPostsCandidates = new List<SocketMessage>(); // Reset
 
-            DiscordHelper.DiscordUserBirthday(Client, Program.ApplicationSetting.BaseGuild, 768600365602963496, true); // on first daily post trigger birthday messages -> TODO maybe move to a cron job
+            DiscordHelper.DiscordUserBirthday(Client, Program.ApplicationSetting.BaseGuild, spamChannel.Id, true); // on first daily post trigger birthday messages -> TODO maybe move to a cron job
         }
 
         public async Task HandleCommandAsync(SocketMessage m)
