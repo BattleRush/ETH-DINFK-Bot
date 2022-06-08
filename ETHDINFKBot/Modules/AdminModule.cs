@@ -255,6 +255,10 @@ namespace ETHDINFKBot.Modules
                             if (!startDateParsed || !endDateParsed)
                                 continue;
 
+                            // Apperently VIS cant put end dates
+                            if (startDateTime == endDateTime)
+                                endDateTime = endDateTime.AddHours(1);
+
                             var stream = await client.GetStreamAsync(new Uri(WebUtility.HtmlDecode(imgUrl)));
                             cover = new Image(stream);
 
