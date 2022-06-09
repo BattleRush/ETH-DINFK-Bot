@@ -52,7 +52,7 @@ namespace ETHDINFKBot.Modules
 
         [Command("set"), Priority(1000)]
         public async Task SetEmoteFavourite(ulong emoteId, string name)
-        {          
+        {
             Context.Message.ReplyAsync("Disabled. Use emote fav and press the buttons");
             return;
 
@@ -299,63 +299,65 @@ namespace ETHDINFKBot.Modules
             if (!CommonHelper.AllowedToRun(BotPermissionType.EnableType2Commands, Context.Message.Channel.Id, Context.Message.Author.Id))
                 return;
 
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-
-            var author = Context.Message.Author;
-
-            if (search.Length < 2 && author.Id != Program.ApplicationSetting.Owner)
-            {
-                await Context.Channel.SendMessageAsync($"Search term needs to be atleast 2 characters long", false); // to prevent from db overload
-                return;
-            }
-
-
-            var emoteResult = DiscordHelper.SearchEmote(search, Context.Guild.Id, 0, debug);
-
-            watch.Stop();
-
-            int page = 0;
-
-            string desc = $"**Available({page * emoteResult.PageSize}-{Math.Min((page + 1) * emoteResult.PageSize, emoteResult.TotalEmotesFound)}/{emoteResult.TotalEmotesFound}) '{search}' emojis to use (Usage .<name>)**" + Environment.NewLine;
-
-
-            EmbedBuilder builder = new EmbedBuilder()
-            {
-                ImageUrl = emoteResult.Url,
-                Description = desc,
-                Color = Color.DarkRed,
-                Title = "Image full size",
-                Footer = new EmbedFooterBuilder()
-                {
-                    Text = $"{search}, Page: {page}, Debug: {debug}"
-                },
-                ThumbnailUrl = "https://cdn.battlerush.dev/bot_xmas.png",
-                Timestamp = DateTimeOffset.Now,
-                Url = emoteResult.Url,
-            };
-            builder.WithAuthor(Context.User);
-
-            //foreach (var item in emoteResult.Fields)
-            //    builder.AddField(item.Key, item.Value);
-
             try
             {
+                Stopwatch watch = new Stopwatch();
+                watch.Start();
+
+                var author = Context.Message.Author;
+
+                if (search.Length < 2 && author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync($"Search term needs to be atleast 2 characters long", false); // to prevent from db overload
+                    return;
+                }
+
+
+                var emoteResult = DiscordHelper.SearchEmote(search, Context.Guild.Id, 0, debug);
+
+                watch.Stop();
+
+                int page = 0;
+
+                string desc = $"**Available({page * emoteResult.PageSize}-{Math.Min((page + 1) * emoteResult.PageSize, emoteResult.TotalEmotesFound)}/{emoteResult.TotalEmotesFound}) '{search}' emojis to use (Usage .<name>)**" + Environment.NewLine;
+
+
+                EmbedBuilder builder = new EmbedBuilder()
+                {
+                    ImageUrl = emoteResult.Url,
+                    Description = desc,
+                    Color = Color.DarkRed,
+                    Title = "Image full size",
+                    Footer = new EmbedFooterBuilder()
+                    {
+                        Text = $"{search}, Page: {page}, Debug: {debug}"
+                    },
+                    ThumbnailUrl = "https://cdn.battlerush.dev/bot_xmas.png",
+                    Timestamp = DateTimeOffset.Now,
+                    Url = emoteResult.Url,
+                };
+                builder.WithAuthor(Context.User);
+
+                //foreach (var item in emoteResult.Fields)
+                //    builder.AddField(item.Key, item.Value);
+
+
                 // TODO create common place for button ids
                 var builderComponent = new ComponentBuilder()
                     .WithButton("Prev <", $"emote-get-prev-page-{search}-{page}-{debug}", ButtonStyle.Danger, null, null, page == 0)
                     .WithButton("> Next", $"emote-get-next-page-{search}-{page}-{debug}", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound); // TODO properly calc max page
-                                                                                                                                                                     //.WithButton("Row 1", "emote-get-row-1", ButtonStyle.Secondary, null, null, false, 1)
-                                                                                                                                                                     //.WithButton("Row 2", "emote-get-row-2", ButtonStyle.Secondary, null, null, false, 1)
-                                                                                                                                                                     //.WithButton("Row 3", "emote-get-row-3", ButtonStyle.Secondary, null, null, false, 1)
-                                                                                                                                                                     //.WithButton("Row 4", "emote-get-row-4", ButtonStyle.Secondary, null, null, false, 1)
-                                                                                                                                                                     //.WithButton("Row 5", "emote-get-row-5", ButtonStyle.Secondary, null, null, false, 1);
+                                                                                                                                                                                              //.WithButton("Row 1", "emote-get-row-1", ButtonStyle.Secondary, null, null, false, 1)
+                                                                                                                                                                                              //.WithButton("Row 2", "emote-get-row-2", ButtonStyle.Secondary, null, null, false, 1)
+                                                                                                                                                                                              //.WithButton("Row 3", "emote-get-row-3", ButtonStyle.Secondary, null, null, false, 1)
+                                                                                                                                                                                              //.WithButton("Row 4", "emote-get-row-4", ButtonStyle.Secondary, null, null, false, 1)
+                                                                                                                                                                                              //.WithButton("Row 5", "emote-get-row-5", ButtonStyle.Secondary, null, null, false, 1);
 
                 var msg2 = await Context.Channel.SendMessageAsync(emoteResult.textBlock, false, builder.Build(), null, null, null, builderComponent.Build());
+
             }
             catch (Exception ex)
             {
-
+                await Context.Channel.SendMessageAsync(ex.ToString(), false);
             }
         }
     }
