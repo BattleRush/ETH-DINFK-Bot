@@ -34,6 +34,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Globalization;
 using System.Web;
+using ETHBot.DataLayer.Data.Discord;
 
 namespace ETHDINFKBot.Modules
 {
@@ -389,6 +390,51 @@ namespace ETHDINFKBot.Modules
             public string AvatarUrl { get; set; }
             public bool IsBot { get; set; }
         }
+
+        [Command("userupdate")]
+        public async Task UserUpdate()
+        {
+            var author = Context.Message.Author;
+            if (author.Id != Program.ApplicationSetting.Owner)
+            {
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
+            var allUsers = DatabaseManager.Instance().GetDiscordUsers();
+
+            foreach (var user in allUsers)
+            {
+                try
+                {
+                    // Only users without pfp will be force updates
+                    if (!string.IsNullOrWhiteSpace(user.AvatarUrl))
+                        continue;
+
+                    var discordUser = Program.Client.GetUser(user.DiscordUserId);
+
+                    DatabaseManager.Instance().UpdateDiscordUser(new DiscordUser()
+                    {
+                        DiscordUserId = user.DiscordUserId,
+                        DiscriminatorValue = user.DiscriminatorValue,
+                        AvatarUrl = discordUser.GetAvatarUrl() ?? discordUser.GetDefaultAvatarUrl(), // If user has no custom avatar load the url for the default avatar
+                        IsBot = user.IsBot,
+                        IsWebhook = user.IsWebhook,
+                        Nickname = user.Nickname,
+                        Username = user.Username,
+                        JoinedAt = user.JoinedAt,
+                        FirstAfternoonPostCount = user.FirstAfternoonPostCount
+                    });
+
+                    Context.Message.Channel.SendMessageAsync($"Updated {user.Nickname ?? user.Username}");
+                }
+                catch (Exception ex)
+                {
+                    // Ignore
+                }
+            }
+        }
+
 
         [Command("userdump")]
         public async Task UserDump()
@@ -810,6 +856,8 @@ namespace ETHDINFKBot.Modules
                 }
             }
 
+
+
             [Command("preload")]
             public async Task PreloadOldMessages(ulong channelId, int count = 1000)
             {
@@ -853,7 +901,7 @@ namespace ETHDINFKBot.Modules
                             {
                                 DiscordUserId = user.Id,
                                 DiscriminatorValue = user.DiscriminatorValue,
-                                AvatarUrl = user.GetAvatarUrl(),
+                                AvatarUrl = user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl(), // If user has no custom avatar load the url for the default avatar
                                 IsBot = user.IsBot,
                                 IsWebhook = user.IsWebhook,
                                 Nickname = socketGuildUser?.Nickname,

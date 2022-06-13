@@ -1770,7 +1770,7 @@ If you violate the server rules your pixels will be removed.
                 builder.AddField($"JOB {job.PlaceMultipixelJobId}", $"```Created {job.CreatedAt} Total: {job.TotalPixels} Done: {pixelPainted} Status: {(MultipixelJobStatus)job.Status}```");
             }
 
-            builder.WithThumbnailUrl(Context.Message.Author.GetAvatarUrl());
+            builder.WithThumbnailUrl(Context.Message.Author.GetAvatarUrl() ?? Context.Message.Author.GetDefaultAvatarUrl());
             builder.WithAuthor(Context.Message.Author);
             builder.WithCurrentTimestamp();
 

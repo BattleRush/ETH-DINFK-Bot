@@ -413,6 +413,8 @@ namespace ETHDINFKBot
             Client.ChannelUpdated += Client_ChannelUpdated;
             Client.ChannelCreated += Client_ChannelCreated;
             Client.ChannelDestroyed += Client_ChannelDestroyed;
+            Client.JoinedGuild += Client_JoinedGuild;
+            Client.LeftGuild += Client_LeftGuild;
 
             Client.Log += Client_Log;
 
@@ -477,6 +479,20 @@ namespace ETHDINFKBot
 
             // Block this task until the program is closed.
             await Task.Delay(-1);
+        }
+
+
+        // TODO flag in db the users
+        private Task Client_LeftGuild(SocketGuild arg)
+        {
+            return Task.CompletedTask;
+            //throw new NotImplementedException();
+        }
+
+        private Task Client_JoinedGuild(SocketGuild arg)
+        {
+            return Task.CompletedTask;
+            //throw new NotImplementedException();
         }
 
         private async Task Client_InteractionCreated(SocketInteraction arg)
@@ -1118,7 +1134,7 @@ namespace ETHDINFKBot
             {
                 DiscordUserId = user.Id,
                 DiscriminatorValue = user.DiscriminatorValue,
-                AvatarUrl = user.GetAvatarUrl(),
+                AvatarUrl = user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl(), // If user has no custom avatar load the url for the default avatar
                 IsBot = user.IsBot,
                 IsWebhook = user.IsWebhook,
                 Nickname = user.Nickname,
@@ -1333,7 +1349,7 @@ namespace ETHDINFKBot
                     {
                         DiscordUserId = user.Id,
                         DiscriminatorValue = user.DiscriminatorValue,
-                        AvatarUrl = user.GetAvatarUrl(),
+                        AvatarUrl = user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl(), // If user has no custom avatar load the url for the default avatar
                         IsBot = user.IsBot,
                         IsWebhook = user.IsWebhook,
                         Nickname = user.Nickname,

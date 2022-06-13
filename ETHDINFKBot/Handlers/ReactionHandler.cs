@@ -81,7 +81,7 @@ namespace ETHDINFKBot.Handlers
             {
                 DiscordUserId = SocketGuildReactionUser.Id,
                 DiscriminatorValue = SocketGuildReactionUser.DiscriminatorValue,
-                AvatarUrl = SocketGuildReactionUser.GetAvatarUrl(),
+                AvatarUrl = SocketGuildReactionUser.GetAvatarUrl() ?? SocketGuildReactionUser.GetDefaultAvatarUrl(), // If user has no custom avatar load the url for the default avatar
                 IsBot = SocketGuildReactionUser.IsBot,
                 IsWebhook = SocketGuildReactionUser.IsWebhook,
                 Nickname = SocketGuildReactionUser.Nickname,

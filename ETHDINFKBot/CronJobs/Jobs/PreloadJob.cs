@@ -95,7 +95,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                         {
                             DiscordUserId = user.Id,
                             DiscriminatorValue = user.DiscriminatorValue,
-                            AvatarUrl = user.GetAvatarUrl(),
+                            AvatarUrl = user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl(), // If user has no custom avatar load the url for the default avatar
                             IsBot = user.IsBot,
                             IsWebhook = user.IsWebhook,
                             Nickname = socketGuildUser?.Nickname,

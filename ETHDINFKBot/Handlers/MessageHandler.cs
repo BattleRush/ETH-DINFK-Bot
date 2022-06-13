@@ -211,7 +211,7 @@ namespace ETHDINFKBot.Handlers
             {
                 DiscordUserId = SocketGuildUser.Id,
                 DiscriminatorValue = SocketGuildUser.DiscriminatorValue,
-                AvatarUrl = SocketGuildUser.GetAvatarUrl(),
+                AvatarUrl = SocketGuildUser.GetAvatarUrl() ?? SocketGuildUser.GetDefaultAvatarUrl(), // If user has no custom avatar load the url for the default avatar
                 IsBot = SocketGuildUser.IsBot,
                 IsWebhook = SocketGuildUser.IsWebhook,
                 Nickname = SocketGuildUser.Nickname,
@@ -424,7 +424,7 @@ namespace ETHDINFKBot.Handlers
 
                         string avatarUrl = SocketGuildUser.GetGuildAvatarUrl();
                         if (avatarUrl == null)
-                            avatarUrl = SocketGuildUser.GetAvatarUrl();
+                            avatarUrl = SocketGuildUser.GetAvatarUrl() ?? SocketGuildUser.GetDefaultAvatarUrl();
 
                         if (SocketGuild.Emotes.Any(i => i.Id == emote.DiscordEmoteId))
                         {
