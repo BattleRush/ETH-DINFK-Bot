@@ -433,6 +433,9 @@ namespace ETHDINFKBot.Modules
                     // Ignore
                 }
             }
+
+            Context.Message.Channel.SendMessageAsync($"Done");
+
         }
 
 
