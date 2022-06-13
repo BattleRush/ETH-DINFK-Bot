@@ -387,6 +387,7 @@ namespace ETHDINFKBot.Modules
             public ulong DiscordUserId { get; set; }
             public string DiscordUserName { get; set; }
             public string AvatarUrl { get; set; }
+            public bool IsBot { get; set; }
         }
 
         [Command("userdump")]
@@ -412,7 +413,8 @@ namespace ETHDINFKBot.Modules
                 discordUsersList.Add(new DiscordUserDump(){
                     DiscordUserId = user.DiscordUserId,
                     DiscordUserName = user.Nickname ?? user.Username,
-                    AvatarUrl = user.AvatarUrl
+                    AvatarUrl = user.AvatarUrl,
+                    IsBot = user.IsBot
                 });
             }
 
