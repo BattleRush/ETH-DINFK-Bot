@@ -1,4 +1,4 @@
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using ETHBot.DataLayer;
@@ -382,6 +382,45 @@ namespace ETHDINFKBot.Modules
             }
         }
 
+        class DiscordUserDump
+        {
+            public ulong DiscordUserId { get; set; }
+            public string DiscordUserName { get; set; }
+            public string AvatarUrl { get; set; }
+        }
+
+        [Command("userdump")]
+        public async Task UserDump()
+        {        
+            var author = Context.Message.Author;
+            if (author.Id != Program.ApplicationSetting.Owner)
+            {
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
+
+            var allUsers = DatabaseManager.Instance().GetDiscordUsers();
+
+            List<DiscordUserDump> discordUsersList = new List<DiscordUserDump>();
+
+            foreach (var user in allUsers)
+            {
+                if(string.IsNullOrWhiteSpace(user.AvatarUrl))
+                    continue;
+
+                discordUsersList.Add(new DiscordUserDump(){
+                    DiscordUserId = user.DiscordUserId,
+                    DiscordUserName = user.Nickname ?? user.Username,
+                    AvatarUrl = user.AvatarUrl
+                });
+            }
+
+            var json = JsonConvert.SerializeObject(discordUsersList, Formatting.Indented);
+            var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+            await Context.Channel.SendFileAsync(stream, "DiscordUsersList.json", "DiscordUsers");
+        }
+            
         [Command("emotedump")]
         public async Task EmoteDump()
         {
