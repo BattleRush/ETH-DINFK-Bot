@@ -41,7 +41,6 @@ using Discord.Interactions;
 
 namespace ETHDINFKBot
 {
-
     class PlaceServer : TcpServer
     {
         public PlaceServer(IPAddress address, int port) : base(address, port) { }
