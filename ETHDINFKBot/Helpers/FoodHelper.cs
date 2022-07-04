@@ -369,7 +369,10 @@ namespace ETHDINFKBot.Helpers
 
             if(mealTime == MealTime.Dinner)
             {
-                lunchUzh = new List<Restaurant>() { Restaurant.UZH_LowerMensa_Dinner };
+                lunchUzh = new List<Restaurant>() 
+                { 
+                    //Restaurant.UZH_LowerMensa_Dinner // Also disabled till mid September
+                };
             }
 
             var menus = new Dictionary<Restaurant, List<Menu>>();
