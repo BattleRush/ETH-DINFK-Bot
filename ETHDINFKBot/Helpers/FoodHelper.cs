@@ -362,7 +362,7 @@ namespace ETHDINFKBot.Helpers
             }
             var lunchUzh = new List<Restaurant>()
             {
-                Restaurant.UZH_UpperMensa,
+                //Restaurant.UZH_UpperMensa, // Disable till mid September 
                 Restaurant.UZH_LowerMensa,
                 //Restaurant.UZH_Lichthof_Rondel
             };
