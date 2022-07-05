@@ -450,10 +450,10 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
                 {
                     case "employee":
                     case "zvv":
-                    case "tvch":
+                    case "tpch":
                         break;
                     default:
-                        await Context.Channel.SendMessageAsync("Invalid DB name. Available: employee, zvv, tvch");
+                        await Context.Channel.SendMessageAsync("Invalid DB name. Available: employee, zvv, tpch");
 
                         return;
                 }
