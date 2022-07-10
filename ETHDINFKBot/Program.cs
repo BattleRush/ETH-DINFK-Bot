@@ -1380,9 +1380,11 @@ namespace ETHDINFKBot
                         "https://tenor.com/view/wow-fireworks-3d-gifs-artist-woohoo-gif-18062148"
                     };
 
+                    var spamChannel = Client.GetGuild(Program.ApplicationSetting.BaseGuild).GetTextChannel(768600365602963496); // #spam
+
                     //string randomGif = randomGifs[new Random().Next(randomGifs.Count)];
                     //await m.Channel.SendMessageAsync(randomGif);
-                    await m.Channel.SendMessageAsync("", false, builder.Build());
+                    await spamChannel.SendMessageAsync("", false, builder.Build());
 
                     // ONE TIME CODE TO BE DELETED
                     //if (firstPoster.DiscordUserId == 321022340412735509)
