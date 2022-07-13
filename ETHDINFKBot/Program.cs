@@ -190,6 +190,7 @@ namespace ETHDINFKBot
 
                     ConnectionStringsSetting = new ConnectionStringsSetting()
                     {
+                        // TODO Move Allow user varable setting to config
                         ConnectionString_Full = Configuration.GetConnectionString("ConnectionString_Full").ToString() + ";Allow User Variables=true;",
                         ConnectionString_ReadOnly = Configuration.GetConnectionString("ConnectionString_ReadOnly").ToString()
                     },
