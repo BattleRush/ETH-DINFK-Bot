@@ -423,11 +423,11 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
                     return;
 
                 // Allow the query to be send in a code block
-                query = query.Replace("`", "");
+                query = query.Trim('`');
                 
                 if(query.StartsWith("sql"))
                     query = query.Substring(3);
-`
+
                 if (ForbiddenQuery(query, Context.Message.Author.Id))
                     return;
 
@@ -471,7 +471,7 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
                     return;
 
                 // Allow the query to be send in a code block
-                query = query.Replace("`", "");
+                query = query.Trim('`');
                 
                 if(query.StartsWith("sql"))
                     query = query.Substring(3);
@@ -1089,10 +1089,10 @@ ORDER BY table_name DESC;", true, 50);
                 return;
 
             // Allow the query to be send in a code block
-            query = query.Replace("`", "");
+            commandSql = commandSql.Trim('`');
             
-            if(query.StartsWith("sql"))
-                query = query.Substring(3);
+            if(commandSql.StartsWith("sql"))
+                commandSql = commandSql.Substring(3);
                 
             if (ForbiddenQuery(commandSql, userId))
                 return;
@@ -1146,10 +1146,10 @@ ORDER BY table_name DESC;", true, 50);
                 return;
 
             // Allow the query to be send in a code block
-            query = query.Replace("`", "");
+            commandSql = commandSql.Trim('`');
             
-            if(query.StartsWith("sql"))
-                query = query.Substring(3);
+            if(commandSql.StartsWith("sql"))
+                commandSql = commandSql.Substring(3);
 
             if (ForbiddenQuery(commandSql, Context.Message.Author.Id))
                 return;
