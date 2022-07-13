@@ -423,7 +423,7 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
                     return;
 
                 // Allow the query to be send in a code block
-                query = query.Trim("`".ToCharArray());
+                query = query.Replace("`", "");
                 
                 if(query.StartsWith("sql"))
                     query = query.Substring(3);
@@ -471,7 +471,7 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
                     return;
 
                 // Allow the query to be send in a code block
-                query = query.Trim("`".ToCharArray());
+                query = query.Replace("`", "");
                 
                 if(query.StartsWith("sql"))
                     query = query.Substring(3);
@@ -1089,7 +1089,7 @@ ORDER BY table_name DESC;", true, 50);
                 return;
 
             // Allow the query to be send in a code block
-            query = query.Trim("`".ToCharArray());
+            query = query.Replace("`", "");
             
             if(query.StartsWith("sql"))
                 query = query.Substring(3);
@@ -1146,7 +1146,7 @@ ORDER BY table_name DESC;", true, 50);
                 return;
 
             // Allow the query to be send in a code block
-            query = query.Trim("`".ToCharArray());
+            query = query.Replace("`", "");
             
             if(query.StartsWith("sql"))
                 query = query.Substring(3);
