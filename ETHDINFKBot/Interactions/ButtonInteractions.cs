@@ -6,6 +6,7 @@ using ETHDINFKBot.Data;
 using ETHDINFKBot.Helpers;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -108,7 +109,8 @@ namespace ETHDINFKBot.Interactions
 
             EmbedBuilder builder = new EmbedBuilder()
             {
-                ImageUrl = emoteResult.Url,
+                //ImageUrl = emoteResult.Url,
+                ImageUrl = $"attachment://{emoteResult.Url}",
                 Description = desc,
                 Color = Color.DarkRed,
                 Title = "Image full size",
@@ -117,8 +119,8 @@ namespace ETHDINFKBot.Interactions
                     Text = searchTerm + " Page: " + page
                 },
                 ThumbnailUrl = "https://cdn.battlerush.dev/bot_xmas.png",
-                Timestamp = DateTimeOffset.Now,
-                Url = emoteResult.Url,
+                Timestamp = DateTimeOffset.Now
+                //Url = emoteResult.Url,
             };
             builder.WithAuthor(Context.Interaction.User);
 
@@ -130,8 +132,15 @@ namespace ETHDINFKBot.Interactions
                 .WithButton("Prev <", $"emote-get-prev-page-{searchTerm}-{page}-{debug}", ButtonStyle.Danger, null, null, page == 0)
                 .WithButton("> Next", $"emote-get-next-page-{searchTerm}-{page}-{debug}", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound); // TODO detect max page
 
-            
-            await message.Message.ModifyAsync(i => { i.Embed = builder.Build(); i.Content = emoteResult.textBlock; i.Components = builderComponent.Build(); });
+            FileAttachment attachment = new FileAttachment(Path.Combine(Program.ApplicationSetting.CDNPath, emoteResult.Url));
+            Optional<IEnumerable <FileAttachment>> attachments = new List<FileAttachment>() { attachment };
+
+            await message.Message.ModifyAsync(i => {
+                i.Attachments = attachments;
+                i.Embed = builder.Build(); 
+                i.Content = emoteResult.textBlock; 
+                i.Components = builderComponent.Build(); 
+            });
 
             //Context.Interaction.DeferAsync();
 
@@ -159,7 +168,8 @@ namespace ETHDINFKBot.Interactions
 
             EmbedBuilder builder = new EmbedBuilder()
             {
-                ImageUrl = emoteResult.Url,
+                //ImageUrl = emoteResult.Url,
+                ImageUrl = $"attachment://{emoteResult.Url}",
                 Description = desc,
                 Color = Color.DarkRed,
                 Title = "Image full size",
@@ -168,8 +178,8 @@ namespace ETHDINFKBot.Interactions
                     Text = searchTerm + " Page: " + page
                 },
                 ThumbnailUrl = "https://cdn.battlerush.dev/bot_xmas.png",
-                Timestamp = DateTimeOffset.Now,
-                Url = emoteResult.Url,
+                Timestamp = DateTimeOffset.Now
+                //Url = emoteResult.Url,
             };
             builder.WithAuthor(Context.Interaction.User);
 
@@ -206,7 +216,14 @@ namespace ETHDINFKBot.Interactions
                 builderComponent.WithButton("Prev <", $"emote-fav-get-prev-page-{searchTerm}-{page}", ButtonStyle.Danger, null, null, page == 0, row);
                 builderComponent.WithButton("> Next", $"emote-fav-get-next-page-{searchTerm}-{page}", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound, row);
 
-                await message.Message.ModifyAsync(i => { i.Embed = builder.Build(); i.Components = builderComponent.Build(); });
+                FileAttachment attachment = new FileAttachment(Path.Combine(Program.ApplicationSetting.CDNPath, emoteResult.Url));
+                Optional<IEnumerable<FileAttachment>> attachments = new List<FileAttachment>() { attachment };
+
+                await message.Message.ModifyAsync(i => {
+                    i.Attachments = attachments;
+                    i.Embed = builder.Build();
+                    i.Components = builderComponent.Build();
+                });
             }
             catch (HttpException ex)
             {
