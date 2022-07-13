@@ -428,7 +428,9 @@ namespace ETHDINFKBot.Helpers
             emoteText = emoteText.Substring(0, Math.Min(emoteText.Length, 1990));
             emoteText += "```";
 
-            return (emoteList, valid, emoteText, $"https://cdn.battlerush.dev/{fileName}", total, pageSize);
+
+            return (emoteList, valid, emoteText, $"attachment://{Path.Combine(Program.ApplicationSetting.CDNPath, fileName)}", total, pageSize);
+            //return (emoteList, valid, emoteText, $"https://cdn.battlerush.dev/{fileName}", total, pageSize);
         }
 
         // TODO alot of rework to do
