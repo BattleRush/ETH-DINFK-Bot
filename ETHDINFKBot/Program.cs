@@ -190,7 +190,7 @@ namespace ETHDINFKBot
 
                     ConnectionStringsSetting = new ConnectionStringsSetting()
                     {
-                        ConnectionString_Full = Configuration.GetConnectionString("ConnectionString_Full").ToString(),
+                        ConnectionString_Full = Configuration.GetConnectionString("ConnectionString_Full").ToString() + ";Allow User Variables=true;",
                         ConnectionString_ReadOnly = Configuration.GetConnectionString("ConnectionString_ReadOnly").ToString()
                     },
 
