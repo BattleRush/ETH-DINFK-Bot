@@ -429,7 +429,7 @@ namespace ETHDINFKBot.Helpers
             emoteText += "```";
 
 
-            return (emoteList, valid, emoteText, $"attachment://{Path.Combine(Program.ApplicationSetting.CDNPath, fileName)}", total, pageSize);
+            return (emoteList, valid, emoteText, fileName, total, pageSize);
             //return (emoteList, valid, emoteText, $"https://cdn.battlerush.dev/{fileName}", total, pageSize);
         }
 

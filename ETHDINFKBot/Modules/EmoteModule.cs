@@ -210,7 +210,7 @@ namespace ETHDINFKBot.Modules
             {
                 EmbedBuilder builder = new EmbedBuilder()
                 {
-                    ImageUrl = emoteResult.Url,
+                    ImageUrl = $"attachment://{emoteResult.Url}",
                     Description = desc,
                     Color = Color.DarkRed,
                     Title = "Image full size",
@@ -260,7 +260,8 @@ namespace ETHDINFKBot.Modules
                 builderComponent.WithButton("Prev <", $"emote-fav-get-prev-page-{search}-{page}", ButtonStyle.Danger, null, null, page == 0, row);
                 builderComponent.WithButton("> Next", $"emote-fav-get-next-page-{search}-{page}", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound, row);
 
-                var msg2 = await Context.Channel.SendMessageAsync("", false, builder.Build(), null, null, null, builderComponent.Build());
+                //var msg2 = await Context.Channel.SendMessageAsync("", false, builder.Build(), null, null, null, builderComponent.Build());
+                var msg2 = await Context.Channel.SendFileAsync(Path.Combine(Program.ApplicationSetting.CDNPath, emoteResult.Url), false, builder.Build(), null, null, null, builderComponent.Build());
             }
             catch (HttpException ex)
             {
