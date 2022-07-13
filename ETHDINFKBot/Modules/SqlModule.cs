@@ -262,11 +262,6 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
 
 
 
-
-
-
-
-
                 foreach (var item in DbTableInfos)
                 {
                     text += "**" + item.TableName + "**" + Environment.NewLine;
@@ -319,8 +314,6 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
             [Command("info")]
             public async Task TableInfoTables(string database)
             {
-
-
                 try
                 {
                     var dbInfos = await GetAllDBTableInfos(database);
@@ -328,8 +321,6 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
                     // TODO dispose with using
                     DrawDbSchema drawDbSchema = new DrawDbSchema(dbInfos);
                     drawDbSchema.DrawAllTables();
-
-
 
                     var stream = CommonHelper.GetStream(drawDbSchema.Bitmap);
                     await Context.Channel.SendFileAsync(stream, "test.png");
@@ -383,16 +374,12 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
 
                 }
 
-
-
                 List<string> dbNames = new List<string>()
                 {
                     "employee",
                     "zvv",
                     "tpch"
                 };
-
-
 
                 foreach (var dbName in dbNames)
                 {
@@ -435,10 +422,14 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
                 if (!CommonHelper.AllowedToRun(BotPermissionType.EnableType2Commands, Context.Message.Channel.Id, userId))
                     return;
 
+                // Allow the query to be send in a code block
+                query = query.Trim('`');
+                
+                if(query.StartsWith("sql"))
+                    query = query.Substring(3);
+`
                 if (ForbiddenQuery(query, Context.Message.Author.Id))
                     return;
-
-
 
                 if (ActiveSQLCommands.ContainsKey(userId) && ActiveSQLCommands[userId].AddSeconds(10) > DateTime.Now)
                 {
@@ -478,6 +469,12 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
 
                 if (!CommonHelper.AllowedToRun(BotPermissionType.EnableType2Commands, Context.Message.Channel.Id, userId))
                     return;
+
+                // Allow the query to be send in a code block
+                query = query.Trim('`');
+                
+                if(query.StartsWith("sql"))
+                    query = query.Substring(3);
 
                 if (ForbiddenQuery(query, Context.Message.Author.Id))
                     return;
@@ -1091,6 +1088,12 @@ ORDER BY table_name DESC;", true, 50);
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
 
+            // Allow the query to be send in a code block
+            query = query.Trim('`');
+            
+            if(query.StartsWith("sql"))
+                query = query.Substring(3);
+                
             if (ForbiddenQuery(commandSql, userId))
                 return;
 
@@ -1141,6 +1144,12 @@ ORDER BY table_name DESC;", true, 50);
 
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
+
+            // Allow the query to be send in a code block
+            query = query.Trim('`');
+            
+            if(query.StartsWith("sql"))
+                query = query.Substring(3);
 
             if (ForbiddenQuery(commandSql, Context.Message.Author.Id))
                 return;
