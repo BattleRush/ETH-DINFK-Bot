@@ -261,7 +261,7 @@ namespace ETHDINFKBot.Modules
                 builderComponent.WithButton("> Next", $"emote-fav-get-next-page-{search}-{page}", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound, row);
 
                 //var msg2 = await Context.Channel.SendMessageAsync("", false, builder.Build(), null, null, null, builderComponent.Build());
-                var msg2 = await Context.Channel.SendFileAsync(Path.Combine(Program.ApplicationSetting.CDNPath, emoteResult.Url), false, builder.Build(), null, null, null, builderComponent.Build());
+                var msg2 = await Context.Channel.SendFileAsync(Path.Combine(Program.ApplicationSetting.CDNPath, emoteResult.Url), "", false, builder.Build(), null, null, null, builderComponent.Build());
             }
             catch (HttpException ex)
             {
@@ -325,7 +325,7 @@ namespace ETHDINFKBot.Modules
 
                 EmbedBuilder builder = new EmbedBuilder()
                 {
-                    ImageUrl = emoteResult.Url,
+                    ImageUrl = $"attachment://{emoteResult.Url}",
                     Description = desc,
                     Color = Color.DarkRed,
                     Title = "Image full size",
@@ -353,7 +353,8 @@ namespace ETHDINFKBot.Modules
                                                                                                                                                                                               //.WithButton("Row 4", "emote-get-row-4", ButtonStyle.Secondary, null, null, false, 1)
                                                                                                                                                                                               //.WithButton("Row 5", "emote-get-row-5", ButtonStyle.Secondary, null, null, false, 1);
 
-                var msg2 = await Context.Channel.SendMessageAsync(emoteResult.textBlock, false, builder.Build(), null, null, null, builderComponent.Build());
+                //var msg2 = await Context.Channel.SendMessageAsync(emoteResult.textBlock, false, builder.Build(), null, null, null, builderComponent.Build());
+                var msg2 = await Context.Channel.SendFileAsync(Path.Combine(Program.ApplicationSetting.CDNPath, emoteResult.Url), emoteResult.textBlock, false, builder.Build(), null, null, null, builderComponent.Build());
 
             }
             catch (Exception ex)
