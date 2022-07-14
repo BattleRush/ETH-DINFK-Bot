@@ -145,7 +145,7 @@ namespace ETHDINFKBot.Helpers
                     menu.ImgUrl = GetImageFromGoole(menu.Description, "de");
 
                 if (menu.ImgUrl == "")
-                    menu.ImgUrl = "https://cdn.discordapp.com/avatars/153929916977643521/5d6e05d48ab1b0599aa801ac4aebc1ea.png";
+                    menu.ImgUrl = Program.Client.CurrentUser.GetAvatarUrl();
 
 
             }
@@ -308,7 +308,7 @@ namespace ETHDINFKBot.Helpers
                     menu.ImgUrl = GetImageFromGoole(menu.Description, "de");
 
                 if (menu.ImgUrl == "")
-                    menu.ImgUrl = "https://cdn.discordapp.com/avatars/153929916977643521/5d6e05d48ab1b0599aa801ac4aebc1ea.png";
+                    menu.ImgUrl = Program.Client.CurrentUser.GetAvatarUrl();
 
 
 

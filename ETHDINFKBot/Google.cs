@@ -123,7 +123,11 @@ namespace ETHDINFKBot
             {
 
                 if(cache.ContainsKey(query))
-                    return cache[query][0] ?? "";
+                {
+                    // Dont return the first see first non empty
+                    if(!string.IsNullOrWhiteSpace(cache[query][0]))
+                        return cache[query][0] ?? "";
+                }
 
                 string queryUrl = $"https://www.google.com/search?q={HttpUtility.UrlEncode(query.ToLower())}&start={start}&hl={lang}&gl={lang}&safe=active"; //Create The Query URL
                                                                                                                                                              //if (cache.ContainsKey(queryUrl)) //Check If This Query Has Already Been Sent
@@ -154,18 +158,32 @@ namespace ETHDINFKBot
                     {
                         Uri myUri = new Uri(link);
 
+                        if(myUri.Host == "")
+                        {
+                            string newLink = "https://example.com" + link;
+                            myUri = new Uri(newLink);
+                        }
+
                         string param1 = HttpUtility.ParseQueryString(myUri.Query).Get("imgurl");
-                        links.Add(param1 ?? "");
+
+                        if(!string.IsNullOrWhiteSpace(param1))
+                            links.Add(param1 ?? "");
                     }
                     catch (Exception ex)
                     {
                         // TODO See in which cases this happens 
                     }
                 }
+                
+                if(links.Count == 0)
+                    return ""; // No imgs found
 
                 //Save Cache If Enabled And The Response HTML Was Longer Than 1500 Characters (If It's Longer Than That, It Has Probably Gone Well)
                 if (response.Length > 1500 && cacheResponses)
                 {
+                    if(cache.ContainsKey(query))
+                        cache.Remove(query);
+
                     cache.Add(query, links.ToArray()); //Set The Cache
                     SaveCache(); //Save The Cache
                 }
