@@ -124,7 +124,8 @@ namespace ETHDINFKBot.Modules
 
             EmbedBuilder builder = new EmbedBuilder()
             {
-                ImageUrl = $"https://cdn.battlerush.dev/{fileName}",
+                //ImageUrl = $"https://cdn.battlerush.dev/{fileName}",
+                ImageUrl = $"attachment://{fileName}",
                 Description = "Your Favourited emotes",
                 Color = Color.DarkRed,
                 Title = "Image full size",
@@ -133,8 +134,9 @@ namespace ETHDINFKBot.Modules
                     Text = "" + " Page: " + -1
                 },
                 ThumbnailUrl = "https://cdn.battlerush.dev/bot_xmas.png",
-                Timestamp = DateTimeOffset.Now,
-                Url = $"https://cdn.battlerush.dev/{fileName}",
+                Timestamp = DateTimeOffset.Now
+                // = $"attachment://{fileName}"
+                //Url = $"https://cdn.battlerush.dev/{fileName}",
             };
             builder.WithAuthor(Context.User);
 
@@ -173,7 +175,7 @@ namespace ETHDINFKBot.Modules
             //builderComponent.WithButton("Prev <", $"emote-fav-get-prev-page-{search}-{page}", ButtonStyle.Danger, null, null, page == 0, row);
             //builderComponent.WithButton("> Next", $"emote-fav-get-next-page-{search}-{page}", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound, row);
 
-            var msg2 = await Context.Channel.SendMessageAsync("", false, builder.Build(), null, null, null, builderComponent.Build());
+            var msg2 = await Context.Channel.SendFileAsync(Path.Combine(Program.ApplicationSetting.CDNPath, fileName), text: "", embed: builder.Build(), components: builderComponent.Build());
         }
 
         [Command("favourite"), Priority(1000)]
@@ -219,8 +221,8 @@ namespace ETHDINFKBot.Modules
                         Text = search + " Page: " + page
                     },
                     ThumbnailUrl = "https://cdn.battlerush.dev/bot_xmas.png",
-                    Timestamp = DateTimeOffset.Now,
-                    Url = emoteResult.Url,
+                    Timestamp = DateTimeOffset.Now
+                    //Url = $"attachment://{emoteResult.Url}"
                 };
                 builder.WithAuthor(Context.User);
 
@@ -334,8 +336,8 @@ namespace ETHDINFKBot.Modules
                         Text = $"{search}, Page: {page}, Debug: {debug}"
                     },
                     ThumbnailUrl = "https://cdn.battlerush.dev/bot_xmas.png",
-                    Timestamp = DateTimeOffset.Now,
-                    Url = emoteResult.Url,
+                    Timestamp = DateTimeOffset.Now
+                    //Url = $"attachment://{emoteResult.Url}"
                 };
                 builder.WithAuthor(Context.User);
 
