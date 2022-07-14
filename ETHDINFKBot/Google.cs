@@ -124,7 +124,7 @@ namespace ETHDINFKBot
 
                 if(cache.ContainsKey(query))
                 {
-                    // Dont return the first see first non empty
+                    // TODO Dont return the first see first non empty
                     if(!string.IsNullOrWhiteSpace(cache[query][0]))
                         return cache[query][0] ?? "";
                 }
