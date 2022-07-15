@@ -59,7 +59,7 @@ namespace ETHDINFKBot.Handlers
                 // TODO Fix the correct setting from the calling method
                 channelSettings = CommonHelper.GetChannelSettingByThreadId(SocketThreadChannel.Id).Setting;
 
-                if(SocketThreadChannel.Id == 996746797236105236)
+                if(SocketThreadChannel?.Id == 996746797236105236)
                     return; // Disable this thread id
             }
 
