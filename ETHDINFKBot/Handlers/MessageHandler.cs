@@ -58,9 +58,6 @@ namespace ETHDINFKBot.Handlers
 
                 // TODO Fix the correct setting from the calling method
                 channelSettings = CommonHelper.GetChannelSettingByThreadId(SocketThreadChannel.Id).Setting;
-
-                if(SocketThreadChannel?.Id == 996746797236105236)
-                    return; // Disable this thread id
             }
 
             // Dont handle DM's
@@ -78,7 +75,7 @@ namespace ETHDINFKBot.Handlers
         // TODO do it in pararel 
         public async Task<bool> Run()
         {
-            if (SocketMessage.Author.IsWebhook || SocketGuildChannel == null)
+            if (SocketMessage.Author.IsWebhook || SocketGuildChannel == null || SocketThreadChannel?.Id == 996746797236105236)
                 return false; // slash commands are webhooks ???
 
             //AdministratorBait();
