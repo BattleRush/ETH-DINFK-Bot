@@ -82,6 +82,7 @@ namespace ETHDINFKBot
 
         private static List<string> AllowedBotCommands = new List<string>() { CurrentPrefix + "place setpixel ", CurrentPrefix + "place pixelverify " };
         private static List<ulong> PlaceChannels = new List<ulong>() { 819966095070330950, 955751651942211604 };
+        private static List<ulong> IgnoreThreads = new List<ulong>() { 996746797236105236 }; // Not used atm
 
         //public static WebSocketServer PlaceWebsocket;
         public static PlaceServer PlaceServer;

@@ -58,6 +58,9 @@ namespace ETHDINFKBot.Handlers
 
                 // TODO Fix the correct setting from the calling method
                 channelSettings = CommonHelper.GetChannelSettingByThreadId(SocketThreadChannel.Id).Setting;
+
+                if(SocketTextChannel.Id == 996746797236105236)
+                    return; // Disable this thread id
             }
 
             // Dont handle DM's
