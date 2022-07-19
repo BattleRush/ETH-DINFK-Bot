@@ -307,6 +307,12 @@ namespace ETHDINFKBot.Helpers
                 if (menu.ImgUrl == "")
                     menu.ImgUrl = GetImageFromGoole(menu.Description, "de");
 
+                // Incase the menu name is in english search as english
+                if (menu.ImgUrl == "")
+                    menu.ImgUrl = GetImageFromGoole(menu.FirstLine, "en");
+                if (menu.ImgUrl == "")
+                    menu.ImgUrl = GetImageFromGoole(menu.Description, "en");
+
                 if (menu.ImgUrl == "")
                     menu.ImgUrl = Program.Client.CurrentUser.GetAvatarUrl();
 
