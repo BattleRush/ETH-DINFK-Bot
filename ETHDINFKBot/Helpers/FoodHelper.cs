@@ -140,9 +140,15 @@ namespace ETHDINFKBot.Helpers
 
 
 
-                menu.ImgUrl = GetImageFromGoole(menu.FirstLine, "de");
+                menu.ImgUrl = GetImageFromGoogle(menu.FirstLine, "de");
                 if(menu.ImgUrl == "")
-                    menu.ImgUrl = GetImageFromGoole(menu.Description, "de");
+                    menu.ImgUrl = GetImageFromGoogle(menu.Description, "de");
+
+                // Incase the menu name is in english search as english
+                if (menu.ImgUrl == "")
+                    menu.ImgUrl = GetImageFromGoogle(menu.FirstLine, "en");
+                if (menu.ImgUrl == "")
+                    menu.ImgUrl = GetImageFromGoogle(menu.Description, "en");
 
                 if (menu.ImgUrl == "")
                     menu.ImgUrl = Program.Client.CurrentUser.GetAvatarUrl();
@@ -302,16 +308,16 @@ namespace ETHDINFKBot.Helpers
 
 
                 //menu.ImgUrl = "https://cdn.discordapp.com/avatars/153929916977643521/5d6e05d48ab1b0599aa801ac4aebc1ea.png";
-                menu.ImgUrl = GetImageFromGoole(menu.FirstLine, "de");
+                menu.ImgUrl = GetImageFromGoogle(menu.FirstLine, "de");
 
                 if (menu.ImgUrl == "")
-                    menu.ImgUrl = GetImageFromGoole(menu.Description, "de");
+                    menu.ImgUrl = GetImageFromGoogle(menu.Description, "de");
 
                 // Incase the menu name is in english search as english
                 if (menu.ImgUrl == "")
-                    menu.ImgUrl = GetImageFromGoole(menu.FirstLine, "en");
+                    menu.ImgUrl = GetImageFromGoogle(menu.FirstLine, "en");
                 if (menu.ImgUrl == "")
-                    menu.ImgUrl = GetImageFromGoole(menu.Description, "en");
+                    menu.ImgUrl = GetImageFromGoogle(menu.Description, "en");
 
                 if (menu.ImgUrl == "")
                     menu.ImgUrl = Program.Client.CurrentUser.GetAvatarUrl();
@@ -335,7 +341,7 @@ namespace ETHDINFKBot.Helpers
         }
 
 
-        private static string GetImageFromGoole(string text, string lang = "de")
+        private static string GetImageFromGoogle(string text, string lang = "de")
         {
             return Google.ImageSearch(text.Replace("\"", "").Trim(), lang: lang);
         }
