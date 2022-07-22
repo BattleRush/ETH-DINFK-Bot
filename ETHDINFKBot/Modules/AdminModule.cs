@@ -203,7 +203,7 @@ namespace ETHDINFKBot.Modules
                         string title = node.SelectSingleNode(".//h5")?.InnerText;
 
                         // Ensure HTML is decoded properly and trim any unecessary spaces
-                        title = HttpUtility.HtmlDecode(title).Trim();
+                        title = HttpUtility.HtmlDecode(title)?.Trim();
 
                         if (title != null)
                         {
