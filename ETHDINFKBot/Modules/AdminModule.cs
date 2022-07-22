@@ -201,8 +201,9 @@ namespace ETHDINFKBot.Modules
                     foreach (var node in nodes)
                     {
                         string title = node.SelectSingleNode(".//h5")?.InnerText;
-                        // Ensure HTML is decoded properly
-                        title = HttpUtility.HtmlDecode(title);
+
+                        // Ensure HTML is decoded properly and trim any unecessary spaces
+                        title = HttpUtility.HtmlDecode(title).Trim();
 
                         if (title != null)
                         {
