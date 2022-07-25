@@ -139,19 +139,27 @@ namespace ETHDINFKBot.Helpers
                 //var reply = new GoogleEngine().ImageSearch(menu.FirstLine.Replace("\"", "").Trim(), lang: "de");
 
                 // TODO Test if img resolves, if not use 2. result
-                menu.ImgUrl = GetImageFromGoogle(menu.Description, "de");
-                if (menu.ImgUrl == "")
-                    menu.ImgUrl = GetImageFromGoogle(menu.FirstLine, "de");
 
-                // Incase the menu name is in english search as english
-                if (menu.ImgUrl == "")
-                    menu.ImgUrl = GetImageFromGoogle(menu.Description, "en");
-                if (menu.ImgUrl == "")
-                    menu.ImgUrl = GetImageFromGoogle(menu.FirstLine, "en");
+                // 30% of the cases show sand because the food is dry as sand
+                if (menu.Description.ToLower().Contains("couscous") && new Random().Next(0, 10) < 3)
+                {
+                    menu.ImgUrl = GetImageFromGoogle("Desert Dune", "en");
+                }
+                else
+                {
+                    menu.ImgUrl = GetImageFromGoogle(menu.Description, "de");
+                    if (menu.ImgUrl == "")
+                        menu.ImgUrl = GetImageFromGoogle(menu.FirstLine, "de");
 
-                if (menu.ImgUrl == "")
-                    menu.ImgUrl = Program.Client.CurrentUser.GetAvatarUrl();
+                    // Incase the menu name is in english search as english
+                    if (menu.ImgUrl == "")
+                        menu.ImgUrl = GetImageFromGoogle(menu.Description, "en");
+                    if (menu.ImgUrl == "")
+                        menu.ImgUrl = GetImageFromGoogle(menu.FirstLine, "en");
 
+                    if (menu.ImgUrl == "")
+                        menu.ImgUrl = Program.Client.CurrentUser.GetAvatarUrl();
+                }
 
             }
 
