@@ -1,4 +1,4 @@
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.Rest;
 using Discord.WebSocket;
@@ -1452,10 +1452,26 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                             {
                                 // decode the bitmap stream
                                 var resourceBitmap = SKBitmap.Decode(img);
+                                int maxSize = 128;
 
                                 if (resourceBitmap != null)
                                 {
-                                    var resizedBitmap = resourceBitmap.Resize(new SKSizeI(128, 128), SKFilterQuality.High); //Resize to the canvas
+                                    int width = resourceBitmap.Width;
+                                    int height = resourceBitmap.Height;
+
+                                    if(width < height)
+                                    {
+                                        height = maxSize;
+                                        width = (int)((decimal)maxSize / height) * width;
+                                    }
+                                    else
+                                    {
+                                        
+                                        width = maxSize;
+                                        height = (int)((decimal)maxSize / width) * height;
+                                    }                              
+
+                                    var resizedBitmap = resourceBitmap.Resize(new SKSizeI(width, height), SKFilterQuality.High); //Resize to the canvas
                                     canvas.DrawBitmap(resizedBitmap, new SKPoint(padding.Left + column * colWidth, usedHeight + 20));
                                 }
                             }

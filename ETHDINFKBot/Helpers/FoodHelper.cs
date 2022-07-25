@@ -84,7 +84,7 @@ namespace ETHDINFKBot.Helpers
             string xPath = "//*[@class=\"scrollarea-content\"]";
 
             string lang = "de";
-            string dateString =  DateTime.Today.ToString("yyyy-MM-dd"); //"2022-03-25";
+            string dateString = DateTime.Today.ToString("yyyy-MM-dd"); //"2022-03-25";
 
             int polyMensaId = 12;
 
@@ -116,9 +116,10 @@ namespace ETHDINFKBot.Helpers
                     Name = childNodes[0].InnerText,
                     Price = decimal.Parse(childNodes[2].InnerText) // TODO fix formatting with the comma
                 };
-                
+
                 //Check if PolyMensa has menu with useless information
-                if (menu.Description == "Dieses Menu servieren wir Ihnen gerne bald wieder!") {
+                if (menu.Description == "Dieses Menu servieren wir Ihnen gerne bald wieder!")
+                {
                     continue;
                 }
 
@@ -137,18 +138,16 @@ namespace ETHDINFKBot.Helpers
 
                 //var reply = new GoogleEngine().ImageSearch(menu.FirstLine.Replace("\"", "").Trim(), lang: "de");
 
-
-
-
-                menu.ImgUrl = GetImageFromGoogle(menu.FirstLine, "de");
-                if(menu.ImgUrl == "")
-                    menu.ImgUrl = GetImageFromGoogle(menu.Description, "de");
+                // TODO Test if img resolves, if not use 2. result
+                menu.ImgUrl = GetImageFromGoogle(menu.Description, "de");
+                if (menu.ImgUrl == "")
+                    menu.ImgUrl = GetImageFromGoogle(menu.FirstLine, "de");
 
                 // Incase the menu name is in english search as english
                 if (menu.ImgUrl == "")
-                    menu.ImgUrl = GetImageFromGoogle(menu.FirstLine, "en");
-                if (menu.ImgUrl == "")
                     menu.ImgUrl = GetImageFromGoogle(menu.Description, "en");
+                if (menu.ImgUrl == "")
+                    menu.ImgUrl = GetImageFromGoogle(menu.FirstLine, "en");
 
                 if (menu.ImgUrl == "")
                     menu.ImgUrl = Program.Client.CurrentUser.GetAvatarUrl();
@@ -192,7 +191,7 @@ namespace ETHDINFKBot.Helpers
                         {
                             currentMenu.Name = child.InnerText.Split('|')[0];
                             // Sometimes the price is missing idk why
-                            currentMenu.Price = child.InnerText.Contains("|") ? decimal.Parse(child.InnerText.Split('|')[1].Split('/')[0].Replace("CHF","")) : 0;
+                            currentMenu.Price = child.InnerText.Contains("|") ? decimal.Parse(child.InnerText.Split('|')[1].Split('/')[0].Replace("CHF", "")) : 0;
                             // TODO Detect pricing
                             step++;
                         }
@@ -379,10 +378,10 @@ namespace ETHDINFKBot.Helpers
                 //Restaurant.UZH_Lichthof_Rondel
             };
 
-            if(mealTime == MealTime.Dinner)
+            if (mealTime == MealTime.Dinner)
             {
-                lunchUzh = new List<Restaurant>() 
-                { 
+                lunchUzh = new List<Restaurant>()
+                {
                     //Restaurant.UZH_LowerMensa_Dinner // Also disabled till mid September
                 };
             }
@@ -393,17 +392,17 @@ namespace ETHDINFKBot.Helpers
             {
                 menus.Add(Restaurant.ETH_Polymensa, GetPolymensaMenu(mealTime));
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
             }
-            
+
             foreach (var restaurant in lunchUzh)
             {
                 try
                 {
                     menus.Add(restaurant, GetUzhMenus(day, ToFriendlyString(restaurant)));
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                 }
             }
