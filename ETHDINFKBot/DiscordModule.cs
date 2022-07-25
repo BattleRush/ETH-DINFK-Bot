@@ -1461,12 +1461,12 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                                     if(width < height)
                                     {
-                                        width = (int)((decimal)maxSize / height) * width;
+                                        width = (int)(((decimal)maxSize / height) * width);
                                         height = maxSize;
                                     }
                                     else
                                     {
-                                        height = (int)((decimal)maxSize / width) * height;
+                                        height = (int)(((decimal)maxSize / width) * height);
                                         width = maxSize;
                                     }                              
 
