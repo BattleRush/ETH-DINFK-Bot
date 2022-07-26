@@ -14,7 +14,8 @@ namespace ETHDINFKBot.Helpers
         UZH_UpperMensa = 1,
         UZH_LowerMensa = 2,
         UZH_LowerMensa_Dinner = 3,
-        UZH_Lichthof_Rondel = 4
+        UZH_Lichthof_Rondel = 4,
+        UZH_Irchel = 5
     }
     public enum Location
     {
@@ -66,6 +67,8 @@ namespace ETHDINFKBot.Helpers
                     return "zentrum-mercato-abend";
                 case Restaurant.UZH_Lichthof_Rondel:
                     return "lichthof-rondell";
+                case Restaurant.UZH_irchel:
+                    return "mensa-uzh-irchel";
                 default:
                     return "unknown";
             }
@@ -383,6 +386,7 @@ namespace ETHDINFKBot.Helpers
             {
                 //Restaurant.UZH_UpperMensa, // Disable till mid September 
                 Restaurant.UZH_LowerMensa,
+                Restaurant.UZH_Irchel
                 //Restaurant.UZH_Lichthof_Rondel
             };
 
