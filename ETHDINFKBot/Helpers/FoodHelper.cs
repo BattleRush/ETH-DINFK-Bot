@@ -10,12 +10,15 @@ namespace ETHDINFKBot.Helpers
 {
     public enum Restaurant
     {
+        // TODO Reorganize ids
         ETH_Polymensa = 0,
+        ETH_ClausiusBar = 6,
         UZH_UpperMensa = 1,
         UZH_LowerMensa = 2,
         UZH_LowerMensa_Dinner = 3,
         UZH_Lichthof_Rondel = 4,
-        UZH_Irchel = 5
+        UZH_Irchel = 5,
+        ETH_Dozentenfoyer = 7
     }
     public enum Location
     {
@@ -82,14 +85,14 @@ namespace ETHDINFKBot.Helpers
             return null;
         }
 
-        private static List<Menu> GetPolymensaMenu(MealTime mealTime = MealTime.Lunch)
+        private static List<Menu> GetPolymensaMenu(MealTime mealTime = MealTime.Lunch, int id = 12)
         {
             string xPath = "//*[@class=\"scrollarea-content\"]";
 
             string lang = "de";
             string dateString = DateTime.Today.ToString("yyyy-MM-dd"); //"2022-03-25";
 
-            int polyMensaId = 12;
+            int polyMensaId = id;
 
             WebClient client = new WebClient();
             string html = client.DownloadString($"https://ethz.ch/de/campus/erleben/gastronomie-und-einkaufen/gastronomie/menueplaene/offerDay.html?language={lang}&id={polyMensaId}&date={dateString}");
@@ -402,7 +405,8 @@ namespace ETHDINFKBot.Helpers
 
             try
             {
-                menus.Add(Restaurant.ETH_Polymensa, GetPolymensaMenu(mealTime));
+                menus.Add(Restaurant.ETH_Polymensa, GetPolymensaMenu(mealTime, 12));
+                menus.Add(Restaurant.ETH_Dozentenfoyer, GetPolymensaMenu(mealTime, 6));
             }
             catch (Exception ex)
             {
