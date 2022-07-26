@@ -115,12 +115,17 @@ namespace ETHDINFKBot.Helpers
             {
                 var childNodes = child.ChildNodes.Where(i => i.Name == "td").ToList();
 
+                string priceString = childNodes[2].InnerText;
+
+                // Only for dozentenfoyer
+                if(priceString == "NaN")
+                    priceString = childNodes[3].InnerText;
 
                 var menu = new Menu()
                 {
                     Description = childNodes[1].InnerText,
                     Name = childNodes[0].InnerText,
-                    Price = decimal.Parse(childNodes[2].InnerText) // TODO fix formatting with the comma
+                    Price = decimal.Parse(priceString) // TODO fix formatting with the comma
                 };
 
                 //Check if PolyMensa has menu with useless information
