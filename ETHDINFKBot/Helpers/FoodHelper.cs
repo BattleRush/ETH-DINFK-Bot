@@ -219,7 +219,7 @@ namespace ETHDINFKBot.Helpers
                             // !i.Contains(":") to remove the not needed country of origin field 
                             var lines = child.InnerHtml.Trim().Split("<br>", StringSplitOptions.RemoveEmptyEntries).Where(i => !i.Contains(":")).ToList();
                             currentMenu.Description = string.Join("", lines.Take(lines.Count - 1));
-                            currentMenu.MultilineDescription = string.Join("\r\n", lines.Take(lines.Count - 1));// TODO check if atleast 2 lines to begin with
+                            currentMenu.MultilineDescription = string.Join("\r\n", lines/*.Take(lines.Count - 1)*/);// TODO check if atleast 2 lines to begin with
                             currentMenu.FirstLine = lines.FirstOrDefault(); // TODO check if atleast 2 lines to begin with
                             // TODO Detect pricing
                             step++;
