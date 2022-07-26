@@ -67,7 +67,7 @@ namespace ETHDINFKBot.Helpers
                     return "zentrum-mercato-abend";
                 case Restaurant.UZH_Lichthof_Rondel:
                     return "lichthof-rondell";
-                case Restaurant.UZH_irchel:
+                case Restaurant.UZH_Irchel:
                     return "mensa-uzh-irchel";
                 default:
                     return "unknown";
