@@ -104,7 +104,11 @@ namespace ETHDINFKBot.Helpers
 
             var mainNode = nodes[0];
             if (mealTime == MealTime.Dinner)
+            {
+                //if (nodes.Count == 1)
+                    //return new List<Menu>() { new Menu() { Description = "Index out of size" } };
                 mainNode = nodes[1];
+            }
 
             var node = mainNode.ChildNodes.First(i => i.Name == "table");
 
@@ -117,8 +121,8 @@ namespace ETHDINFKBot.Helpers
 
                 string priceString = childNodes[2].InnerText;
 
-                // Only for dozentenfoyer
-                if(priceString == "NaN")
+                // Only for dozentenfoyer (and they cant keep it consistent it seems)
+                if (priceString == "NaN" || priceString == "")
                     priceString = childNodes[3].InnerText;
 
                 var menu = new Menu()

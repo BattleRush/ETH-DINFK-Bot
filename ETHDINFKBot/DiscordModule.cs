@@ -1399,7 +1399,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 var meal = MealTime.Lunch;
 
                 // TODO Do CET/CEST Switch
-                if (DateTime.Now.Hour >= 12)
+                if (DateTime.UtcNow.Hour >= 12)
                     meal = MealTime.Dinner;
 
                 var restaurants = FoodHelper.GetCurrentMenu(meal, Language.English, Location.Zentrum);
