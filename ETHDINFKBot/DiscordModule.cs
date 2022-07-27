@@ -1426,6 +1426,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 int maxMenus = restaurants.Max(i => i.Value.Count);
                 foreach (var restaurant in restaurants)
                 {
+                    // Set max menus for now per restaurant
+                    maxMenus = restaurant.Value.Count;
 
                     var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(maxMenus * colWidth, rowHeight);
                     canvas.DrawText(meal.ToString(), new SKPoint(maxMenus * colWidth - 100, 25), paint);
