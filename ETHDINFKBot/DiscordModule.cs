@@ -1388,8 +1388,11 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             await Context.Channel.SendMessageAsync("https://media.discordapp.net/attachments/768600365602963496/958082710100901988/ezgif.com-gif-maker.gif");
         }
 
+        // Temp solution to cache results
+        static KeyValuePair<MealTime, Dictionary<Restaurant, List<Menu>>> CachedRestaurantInfos = new KeyValuePair<MealTime, Dictionary<Restaurant, List<Menu>>>(MealTime.Breakfast, null);
+
         [Command("food")]
-        public async Task FoodB()
+        public async Task FoodB(bool refresh = false)
         {
             try
             {
@@ -1402,8 +1405,16 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 if (DateTime.UtcNow.Hour >= 12)
                     meal = MealTime.Dinner;
 
-                var restaurants = FoodHelper.GetCurrentMenu(meal, Language.English, Location.Zentrum);
+                // Only allow bot owner to reload cache
+                var author = Context.Message.Author;
+                if (refresh && author.Id != Program.ApplicationSetting.Owner)
+                    refresh = false;
 
+                if (CachedRestaurantInfos.Key != meal || refresh)
+                {
+                    var restaurants = FoodHelper.GetCurrentMenu(meal, Language.English, Location.Zentrum);
+                    CachedRestaurantInfos = new KeyValuePair<MealTime, Dictionary<Restaurant, List<Menu>>>(meal, restaurants);
+                }
 
                 int row = 0;
 
@@ -1423,8 +1434,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                 List<Stream> streams = new List<Stream>();
 
-                int maxMenus = restaurants.Max(i => i.Value.Count);
-                foreach (var restaurant in restaurants)
+                int maxMenus = CachedRestaurantInfos.Value.Max(i => i.Value.Count);
+                foreach (var restaurant in CachedRestaurantInfos.Value)
                 {
                     // Set max menus for now per restaurant
                     maxMenus = restaurant.Value.Count;
