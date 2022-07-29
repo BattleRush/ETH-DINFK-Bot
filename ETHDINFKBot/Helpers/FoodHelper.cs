@@ -46,7 +46,11 @@ namespace ETHDINFKBot.Helpers
         public string FirstLine { get; set; }
         public decimal Price { get; set; }
         public bool IsVegan { get; set; }
+        public bool IsVegetarian { get; set; }
         public bool IsLocal { get; set; }
+        public bool IsBalanced { get; set; }
+        public bool IsGlutenFree { get; set; }
+        public bool IsLactoseFree { get; set; }
         public string ImgUrl { get; set; }
     }
 
@@ -206,6 +210,16 @@ namespace ETHDINFKBot.Helpers
             bool brHitOnce = false;
             foreach (var child in node.ChildNodes)
             {
+                // check why it didnt break the last menu
+                if(step > 0 && child.Name == "h3")
+                {
+                    menus.Add(currentMenu);
+                    currentMenu = new Menu();
+
+                    step = 0; // end here
+                }
+
+                // TODO rework parsing logic
                 switch (step)
                 {
                     case 0:
@@ -230,7 +244,7 @@ namespace ETHDINFKBot.Helpers
                         {
                             // !i.Contains(":") to remove the not needed country of origin field 
                             var lines = child.InnerHtml.Trim().Split("<br>", StringSplitOptions.RemoveEmptyEntries).Where(i => !i.Contains(":")).ToList();
-                            currentMenu.Description = string.Join("", lines.Take(lines.Count - 1));
+                            currentMenu.Description = string.Join("", lines/*.Take(lines.Count - 1)*/);
                             currentMenu.MultilineDescription = string.Join("\r\n", lines/*.Take(lines.Count - 1)*/);// TODO check if atleast 2 lines to begin with
                             currentMenu.FirstLine = lines.FirstOrDefault(); // TODO check if atleast 2 lines to begin with
                             // TODO Detect pricing
@@ -249,8 +263,18 @@ namespace ETHDINFKBot.Helpers
 
                             if (altValue == "vegan")
                                 currentMenu.IsVegan = true;
+                            else if (altValue == "vegetarian")
+                                currentMenu.IsVegetarian = true;
                             else if (altValue == "mni_ubp_local")
                                 currentMenu.IsLocal = true;
+                            else if (altValue == "mni_ebp_enjoy")
+                                currentMenu.IsBalanced = true;
+                                
+                            else if (altValue == "gluten todo")
+                                currentMenu.IsGlutenFree = true;
+                            else if (altValue == "lactose todo")
+                                currentMenu.IsLactoseFree = true;
+
                             // TODO Detect pricing
 
                         }
