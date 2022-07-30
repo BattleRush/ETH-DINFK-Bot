@@ -1456,7 +1456,17 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     foreach (var menu in restaurant.Value)
                     {
                         canvas.DrawText(menu.Name, new SKPoint(padding.Left + column * colWidth, padding.Top + row * rowHeight + 20), DrawingHelper.TitleTextPaint);
-                        int usedHeight = (int)DrawTextArea(canvas, DrawingHelper.MediumTextPaint, padding.Left + column * colWidth, padding.Top + row * rowHeight + 40, colWidth - 30, DrawingHelper.DefaultTextPaint.TextSize, menu.MultilineDescription);
+                        
+                        int usedHeight = (int)DrawTextArea(
+                            canvas, 
+                            DrawingHelper.MediumTextPaint, 
+                            padding.Left + column * colWidth, 
+                            padding.Top + row * rowHeight + 40, 
+                            colWidth - 30, 
+                            DrawingHelper.MediumTextPaint.TextSize, 
+                            menu.MultilineDescription
+                        );
+
                         //canvas.DrawText(menu.Description, new SKPoint(, ), DrawingHelper.DefaultTextPaint);
                         canvas.DrawText("CHF " + menu.Price.ToString("#,##0.00"), new SKPoint(padding.Left + column * colWidth, usedHeight + 10), DrawingHelper.TitleTextPaint);
 
