@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.Commands;
 using Discord.Rest;
 using Discord.WebSocket;
@@ -246,7 +246,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             //builder.AddField("Images", $"```{prefix}neko[avatar] {prefix}fox {prefix}waifu {prefix}baka {prefix}smug {prefix}holo {prefix}avatar {prefix}wallpaper```");
             builder.AddField("Reddit", $"```{prefix}r[p] <subreddit>|all```", true);
             builder.AddField("Rant", $"```{prefix}rant [ types | new) ]```", true);
-            builder.AddField("SQL", $"```{prefix}sql (table info) | (query[d] <query>)```", true);
+            builder.AddField("SQL", $"```{prefix}sql info | (table info) | (query[d] <query>) | dmdb help```", true);
             builder.AddField("Emote Help for more info", $"```{prefix}emote help```");
             builder.AddField("React (only this server's emotes)", $"```{prefix}react <message_id> <emote_name>```", true);
             builder.AddField("Space Min: 1 Max: 5", $"```{prefix}space [<amount>]```", true);
@@ -1050,7 +1050,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             if (rant == null)
             {
                 await Context.Channel.SendMessageAsync($"No rant could be loaded"); //for type {type} (To see all types write: '.rant types')." +
-                                                                                    // $"If you are trying to add a rant type '.rant {type} <your actual rant>'", false);
+                   // $"If you are trying to add a rant type '.rant {type} <your actual rant>'", false);
                 return;
             }
 
@@ -1335,7 +1335,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             for (int i = 0; i < lines.Length; i++)
             {
                 var line = lines[i];
-                canvas.DrawText(line.Replace("\r", "").Replace("\n", ""), x, y, paint);
+                canvas.DrawText(line, x, y, paint);
                 y += lineHeight;
             }
 
@@ -1388,11 +1388,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             await Context.Channel.SendMessageAsync("https://media.discordapp.net/attachments/768600365602963496/958082710100901988/ezgif.com-gif-maker.gif");
         }
 
-        // Temp solution to cache results
-        static KeyValuePair<MealTime, Dictionary<Restaurant, List<Menu>>> CachedRestaurantInfos = new KeyValuePair<MealTime, Dictionary<Restaurant, List<Menu>>>(MealTime.Breakfast, null);
-
         [Command("food")]
-        public async Task FoodB(bool refresh = false)
+        public async Task FoodB()
         {
             try
             {
@@ -1402,19 +1399,11 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 var meal = MealTime.Lunch;
 
                 // TODO Do CET/CEST Switch
-                if (DateTime.UtcNow.Hour >= 12)
+                if (DateTime.Now.Hour >= 12)
                     meal = MealTime.Dinner;
 
-                // Only allow bot owner to reload cache
-                var author = Context.Message.Author;
-                if (refresh && author.Id != Program.ApplicationSetting.Owner)
-                    refresh = false;
+                var restaurants = FoodHelper.GetCurrentMenu(meal, Language.English, Location.Zentrum);
 
-                if (CachedRestaurantInfos.Key != meal || refresh)
-                {
-                    var restaurants = FoodHelper.GetCurrentMenu(meal, Language.English, Location.Zentrum);
-                    CachedRestaurantInfos = new KeyValuePair<MealTime, Dictionary<Restaurant, List<Menu>>>(meal, restaurants);
-                }
 
                 int row = 0;
 
@@ -1423,10 +1412,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 padding.Left = 20;
                 padding.Top = 40;
 
-                int imgSize = 192;
-
-                int rowHeight = 165 + imgSize;
-                int colWidth = 50 + imgSize;
+                int rowHeight = 300;
+                int colWidth = 200;
 
                 var paint = DrawingHelper.DefaultTextPaint;
                 paint.TextSize = 20;
@@ -1434,25 +1421,23 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                 List<Stream> streams = new List<Stream>();
 
-                int maxMenus = CachedRestaurantInfos.Value.Max(i => i.Value.Count);
-                foreach (var restaurant in CachedRestaurantInfos.Value)
+                int maxMenus = restaurants.Max(i => i.Value.Count);
+                foreach (var restaurant in restaurants)
                 {
-                    // Set max menus for now per restaurant
-                    maxMenus = restaurant.Value.Count;
 
-                    var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(maxMenus * colWidth, rowHeight);
-                    canvas.DrawText(meal.ToString(), new SKPoint(maxMenus * colWidth - 100, 25), paint);
+                    var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(maxMenus*colWidth, 300);
+                    canvas.DrawText(meal.ToString(), new SKPoint(maxMenus*colWidth - 100, 25), paint);
 
 
-                    canvas.DrawText(restaurant.Key.ToString(), new SKPoint(padding.Left, padding.Top + row * rowHeight), DrawingHelper.LargeTextPaint); // TODO Correct paint?
+                    canvas.DrawText(restaurant.Key.ToString(), new SKPoint(padding.Left, padding.Top + row * rowHeight), DrawingHelper.TitleTextPaint); // TODO Correct paint?
 
                     int column = 0;
                     foreach (var menu in restaurant.Value)
                     {
-                        canvas.DrawText(menu.Name, new SKPoint(padding.Left + column * colWidth, padding.Top + row * rowHeight + 20), DrawingHelper.TitleTextPaint);
-                        int usedHeight = (int)DrawTextArea(canvas, DrawingHelper.MediumTextPaint, padding.Left + column * colWidth, padding.Top + row * rowHeight + 40, colWidth - 30, DrawingHelper.DefaultTextPaint.TextSize, menu.MultilineDescription);
+                        canvas.DrawText(menu.Name, new SKPoint(padding.Left + column * colWidth, padding.Top + row * rowHeight + 20), DrawingHelper.DefaultTextPaint);
+                        int usedHeight = (int)DrawTextArea(canvas, DrawingHelper.DefaultTextPaint, padding.Left + column * colWidth, padding.Top + row * rowHeight + 40, 180, DrawingHelper.DefaultTextPaint.TextSize, menu.MultilineDescription);
                         //canvas.DrawText(menu.Description, new SKPoint(, ), DrawingHelper.DefaultTextPaint);
-                        canvas.DrawText("CHF " + menu.Price.ToString("#,##0.00"), new SKPoint(padding.Left + column * colWidth, usedHeight + 10), DrawingHelper.TitleTextPaint);
+                        canvas.DrawText("CHF " + menu.Price.ToString("#,##0.00"), new SKPoint(padding.Left + column * colWidth, usedHeight + 10), DrawingHelper.DefaultTextPaint);
 
                         try
                         {
@@ -1470,21 +1455,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                                 if (resourceBitmap != null)
                                 {
-                                    int width = resourceBitmap.Width;
-                                    int height = resourceBitmap.Height;
-
-                                    if (width < height)
-                                    {
-                                        width = (int)(((decimal)imgSize / height) * width);
-                                        height = imgSize;
-                                    }
-                                    else
-                                    {
-                                        height = (int)(((decimal)imgSize / width) * height);
-                                        width = imgSize;
-                                    }
-
-                                    var resizedBitmap = resourceBitmap.Resize(new SKSizeI(width, height), SKFilterQuality.High); //Resize to the canvas
+                                    var resizedBitmap = resourceBitmap.Resize(new SKSizeI(128, 128), SKFilterQuality.High); //Resize to the canvas
                                     canvas.DrawBitmap(resizedBitmap, new SKPoint(padding.Left + column * colWidth, usedHeight + 20));
                                 }
                             }
@@ -1505,7 +1476,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                          await Context.Channel.SendMessageAsync(menu.ImgUrl);
                     */
 
-
+                    
 
                     streams.Add(CommonHelper.GetStream(bitmap));
 
@@ -1524,7 +1495,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
 
                 // TODO send multiple attachments
-                foreach (var stream in streams)
+                foreach(var stream in streams)
                     await Context.Channel.SendFileAsync(stream, "menu.png", $"");
 
 
@@ -2362,16 +2333,16 @@ ORDER BY RANDOM() LIMIT 1
                 await Context.Channel.SendMessageAsync(ex.ToString(), false);
             }
         }
-
-
+        
+        
         [Command("last")]
         public async Task LastPoster()
         {
             var author = Context.Message.Author;
             var messageCount = DatabaseManager.GetDiscordUserMessageCount(author.Id);
-
+        
             EmbedBuilder builder = new EmbedBuilder();
-
+            
             builder.WithTitle($"{author.Username} IS THE LAST POSTER");
             builder.WithColor(0, 0, 255);
             builder.WithDescription($"This is the {CommonHelper.DisplayWithSuffix(messageCount)} time you are the last poster.");
