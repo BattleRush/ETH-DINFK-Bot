@@ -1434,6 +1434,12 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                 List<Stream> streams = new List<Stream>();
 
+                if(CachedRestaurantInfos.Value == null || CachedRestaurantInfos.Value.Count == 0)
+                {
+                    await Context.Channel.SendMessageAsync("No food found");
+                    return;
+                }
+
                 int maxMenus = CachedRestaurantInfos.Value.Max(i => i.Value.Count);
                 foreach (var restaurant in CachedRestaurantInfos.Value)
                 {
