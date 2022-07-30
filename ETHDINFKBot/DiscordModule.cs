@@ -1436,7 +1436,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                 if(CachedRestaurantInfos.Value == null || CachedRestaurantInfos.Value.Count == 0)
                 {
-                    await Context.Channel.SendMessageAsync("No food found");
+                    CachedRestaurantInfos = new KeyValuePair<MealTime, Dictionary<Restaurant, List<Menu>>>(meal, new Dictionary<Restaurant, List<Menu>>());
+                    await Context.Channel.SendMessageAsync("No food found, go make your own food :(");
                     return;
                 }
 
