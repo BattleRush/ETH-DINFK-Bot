@@ -246,7 +246,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             //builder.AddField("Images", $"```{prefix}neko[avatar] {prefix}fox {prefix}waifu {prefix}baka {prefix}smug {prefix}holo {prefix}avatar {prefix}wallpaper```");
             builder.AddField("Reddit", $"```{prefix}r[p] <subreddit>|all```", true);
             builder.AddField("Rant", $"```{prefix}rant [ types | new) ]```", true);
-            builder.AddField("SQL", $"```{prefix}sql (table info) | (query[d] <query>)```", true);
+            builder.AddField("SQL", $"```{prefix}sql info | (table info) | (query[d] <query>) | dmdb help```", true);
             builder.AddField("Emote Help for more info", $"```{prefix}emote help```");
             builder.AddField("React (only this server's emotes)", $"```{prefix}react <message_id> <emote_name>```", true);
             builder.AddField("Space Min: 1 Max: 5", $"```{prefix}space [<amount>]```", true);
