@@ -1523,8 +1523,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     */
 
 
-
-                    streams.Add(CommonHelper.GetStream(bitmap));
+                    var stream = CommonHelper.GetStream(bitmap);
+                    if(stream != null)
+                        streams.Add(stream);
 
                     bitmap.Dispose();
                     canvas.Dispose();
