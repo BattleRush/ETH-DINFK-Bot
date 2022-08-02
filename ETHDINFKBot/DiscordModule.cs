@@ -246,7 +246,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             //builder.AddField("Images", $"```{prefix}neko[avatar] {prefix}fox {prefix}waifu {prefix}baka {prefix}smug {prefix}holo {prefix}avatar {prefix}wallpaper```");
             builder.AddField("Reddit", $"```{prefix}r[p] <subreddit>|all```", true);
             builder.AddField("Rant", $"```{prefix}rant [ types | new) ]```", true);
-            builder.AddField("SQL", $"```{prefix}sql (table info) | (query[d] <query>)```", true);
+            builder.AddField("SQL", $"```{prefix}sql info | (table info) | (query[d] <query>) | dmdb help```", true);
             builder.AddField("Emote Help for more info", $"```{prefix}emote help```");
             builder.AddField("React (only this server's emotes)", $"```{prefix}react <message_id> <emote_name>```", true);
             builder.AddField("Space Min: 1 Max: 5", $"```{prefix}space [<amount>]```", true);
@@ -1434,6 +1434,13 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                 List<Stream> streams = new List<Stream>();
 
+                if(CachedRestaurantInfos.Value == null || CachedRestaurantInfos.Value.Count == 0)
+                {
+                    CachedRestaurantInfos = new KeyValuePair<MealTime, Dictionary<Restaurant, List<Menu>>>(meal, new Dictionary<Restaurant, List<Menu>>());
+                    await Context.Channel.SendMessageAsync("No food found, go make your own food :(");
+                    return;
+                }
+
                 int maxMenus = CachedRestaurantInfos.Value.Max(i => i.Value.Count);
                 foreach (var restaurant in CachedRestaurantInfos.Value)
                 {
@@ -1450,7 +1457,17 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     foreach (var menu in restaurant.Value)
                     {
                         canvas.DrawText(menu.Name, new SKPoint(padding.Left + column * colWidth, padding.Top + row * rowHeight + 20), DrawingHelper.TitleTextPaint);
-                        int usedHeight = (int)DrawTextArea(canvas, DrawingHelper.MediumTextPaint, padding.Left + column * colWidth, padding.Top + row * rowHeight + 40, colWidth - 30, DrawingHelper.DefaultTextPaint.TextSize, menu.MultilineDescription);
+                        
+                        int usedHeight = (int)DrawTextArea(
+                            canvas, 
+                            DrawingHelper.MediumTextPaint, 
+                            padding.Left + column * colWidth, 
+                            padding.Top + row * rowHeight + 40, 
+                            colWidth - 30, 
+                            DrawingHelper.MediumTextPaint.TextSize, 
+                            menu.MultilineDescription
+                        );
+
                         //canvas.DrawText(menu.Description, new SKPoint(, ), DrawingHelper.DefaultTextPaint);
                         canvas.DrawText("CHF " + menu.Price.ToString("#,##0.00"), new SKPoint(padding.Left + column * colWidth, usedHeight + 10), DrawingHelper.TitleTextPaint);
 
@@ -1506,8 +1523,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     */
 
 
-
-                    streams.Add(CommonHelper.GetStream(bitmap));
+                    var stream = CommonHelper.GetStream(bitmap);
+                    if(stream != null)
+                        streams.Add(stream);
 
                     bitmap.Dispose();
                     canvas.Dispose();
