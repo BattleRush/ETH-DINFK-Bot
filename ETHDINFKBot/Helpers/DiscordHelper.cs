@@ -57,7 +57,7 @@ namespace ETHDINFKBot.Helpers
                 return false;
             }
 
-            string authorUsername = user.Username; // nickname?
+            string authorUsername = message?.Author?.Username ?? user.Username; // nickname?
 
             var link = $"https://discord.com/channels/{socketTextChannel.Guild.Id}/{socketTextChannel.Id}/{message.Id}";
 
@@ -75,7 +75,7 @@ namespace ETHDINFKBot.Helpers
             builder.AddField("User", message?.Author?.Username ?? "N/A", true);
             builder.AddField("DirectLink", $"[Link to the message]({link})");
 
-            builder.WithAuthor(user);
+            builder.WithAuthor(message?.Author ?? user);
             builder.WithCurrentTimestamp();
 
 
