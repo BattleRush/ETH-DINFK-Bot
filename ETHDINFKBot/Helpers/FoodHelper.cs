@@ -159,8 +159,8 @@ namespace ETHDINFKBot.Helpers
 
                 // TODO Test if img resolves, if not use 2. result
 
-                // 30% of the cases show sand because the food is dry as sand
-                if (menu.Description.ToLower().Contains("couscous") && new Random().Next(0, 10) < 3)
+                // 70% of the cases show sand because the food is legit dry as sand
+                if (menu.Description.ToLower().Contains("couscous") && new Random().Next(0, 10) < 7)
                 {
                     menu.ImgUrl = GetImageFromGoogle("Desert Dune", "en");
                 }
