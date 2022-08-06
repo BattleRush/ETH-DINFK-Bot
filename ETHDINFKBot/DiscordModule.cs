@@ -1390,6 +1390,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
         // Temp solution to cache results
         static KeyValuePair<MealTime, Dictionary<Restaurant, List<Menu>>> CachedRestaurantInfos = new KeyValuePair<MealTime, Dictionary<Restaurant, List<Menu>>>(MealTime.Breakfast, null);
+        static DateTimeOffset LastCacheUpdate = DateTimeOffset.MinValue;
 
         [Command("food")]
         public async Task FoodB(bool refresh = false)
@@ -1410,10 +1411,12 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 if (refresh && author.Id != Program.ApplicationSetting.Owner)
                     refresh = false;
 
-                if (CachedRestaurantInfos.Key != meal || refresh)
+                // Cache for max 2h or reload if requested by owner or if cache is outdated
+                if (CachedRestaurantInfos.Key != meal || refresh || DateTimeOffset.UtcNow - LastCacheUpdate > TimeSpan.FromHours(2))
                 {
                     var restaurants = FoodHelper.GetCurrentMenu(meal, Language.English, Location.Zentrum);
                     CachedRestaurantInfos = new KeyValuePair<MealTime, Dictionary<Restaurant, List<Menu>>>(meal, restaurants);
+                    LastCacheUpdate = DateTimeOffset.UtcNow;
                 }
 
                 int row = 0;
