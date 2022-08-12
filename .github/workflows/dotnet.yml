@@ -38,7 +38,7 @@ jobs:
     - name: Clear /tmp for more diskspace
       uses: garygrossgarten/github-action-ssh@release
       with:
-        command: find /tmp -type f -atime +10 -delete
+        command: sudo find /tmp -type f -atime +10 -delete
         host: ${{ secrets.REMOTE_HOST }}
         username: ${{ secrets.REMOTE_USER }}
         passphrase: ${{ secrets.REMOTE_SSH_PASSPHRASE }}
