@@ -35,6 +35,15 @@ jobs:
     - name: Dotnet Publish
       run: dotnet publish ETHDINFKBot -p:PublishSingleFile=true -r linux-x64 --self-contained false -c Release -o deploy
       
+    - name: Clear /tmp for more diskspace
+      uses: garygrossgarten/github-action-ssh@release
+      with:
+        command: find /tmp -type f -atime +10 -delete
+        host: ${{ secrets.REMOTE_HOST }}
+        username: ${{ secrets.REMOTE_USER }}
+        passphrase: ${{ secrets.REMOTE_SSH_PASSPHRASE }}
+        privateKey: ${{ secrets.REMOTE_SSH_KEY }}
+      
     - name: Copy via ssh
       uses: garygrossgarten/github-action-scp@v0.7.3
       with:
