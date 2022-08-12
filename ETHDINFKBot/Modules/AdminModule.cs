@@ -164,6 +164,31 @@ namespace ETHDINFKBot.Modules
             Process.GetCurrentProcess().Kill();
         }
 
+        [Command("reboot")]
+        public async Task AdminReboot()
+        {
+            var author = Context.Message.Author;
+            if (author.Id != Program.ApplicationSetting.Owner)
+            {
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
+            await Context.Channel.SendMessageAsync("Rebooting...", false);
+
+            try
+            {
+                ProcessStartInfo startInfo = new ProcessStartInfo() { FileName = "/bin/bash", Arguments = "sudo shutdown -r now", };
+                Process proc = new Process() { StartInfo = startInfo, };
+                proc.Start();
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.Message, false);
+            }
+
+        }
+
         private Type[] GetTypesInNamespace(Assembly assembly, string nameSpace)
         {
             return
@@ -230,13 +255,13 @@ namespace ETHDINFKBot.Modules
                                 imgUrl = "https://vis.ethz.ch" + imgUrl;
 
                             CultureInfo provider = CultureInfo.InvariantCulture;
-                            
+
                             foreach (var pNode in pNodes)
                             {
                                 if (pNode.InnerText.ToLower().Contains("event start time"))
                                 {
                                     string dateTimeString = pNode.InnerText.Replace("Event start time", "").Trim();
-                                    startDateParsed = DateTime.TryParseExact(dateTimeString, "d.M.yyyy HH:mm", provider, 
+                                    startDateParsed = DateTime.TryParseExact(dateTimeString, "d.M.yyyy HH:mm", provider,
                                     DateTimeStyles.None, out startDateTime);
 
                                     // CET/CEST to UTC
@@ -245,7 +270,7 @@ namespace ETHDINFKBot.Modules
                                 else if (pNode.InnerText.ToLower().Contains("event end time"))
                                 {
                                     string dateTimeString = pNode.InnerText.Replace("Event end time", "").Trim();
-                                    endDateParsed = DateTime.TryParseExact(dateTimeString, "d.M.yyyy HH:mm", provider, 
+                                    endDateParsed = DateTime.TryParseExact(dateTimeString, "d.M.yyyy HH:mm", provider,
                                     DateTimeStyles.None, out endDateTime);
 
                                     // CET/CEST to UTC
@@ -266,12 +291,12 @@ namespace ETHDINFKBot.Modules
 
                             // Create Event
                             var guildEvent = await guild.CreateEventAsync(
-                                title, 
-                                startTime: startDateTime, 
-                                GuildScheduledEventType.External, 
+                                title,
+                                startTime: startDateTime,
+                                GuildScheduledEventType.External,
                                 description: description,
-                                endTime: endDateTime, 
-                                location: "VIS Event", 
+                                endTime: endDateTime,
+                                location: "VIS Event",
                                 coverImage: cover
                             );
 
@@ -442,7 +467,7 @@ namespace ETHDINFKBot.Modules
 
         [Command("userdump")]
         public async Task UserDump()
-        {        
+        {
             var author = Context.Message.Author;
             if (author.Id != Program.ApplicationSetting.Owner)
             {
@@ -457,10 +482,11 @@ namespace ETHDINFKBot.Modules
 
             foreach (var user in allUsers)
             {
-                if(string.IsNullOrWhiteSpace(user.AvatarUrl))
+                if (string.IsNullOrWhiteSpace(user.AvatarUrl))
                     continue;
 
-                discordUsersList.Add(new DiscordUserDump(){
+                discordUsersList.Add(new DiscordUserDump()
+                {
                     DiscordUserId = user.DiscordUserId,
                     DiscordUserName = user.Nickname ?? user.Username,
                     AvatarUrl = user.AvatarUrl,
@@ -472,7 +498,7 @@ namespace ETHDINFKBot.Modules
             var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
             await Context.Channel.SendFileAsync(stream, "DiscordUsersList.json", "DiscordUsers");
         }
-            
+
         [Command("emotedump")]
         public async Task EmoteDump()
         {
@@ -520,12 +546,12 @@ namespace ETHDINFKBot.Modules
 
                 //foreach (var emoteFolder in emoteFolders.ToList().OrderBy(i => i))
                 //{
-                    //// Needs to contain - else its not an active folder
-                    //if (emoteFolder.Contains("-"))
-                    //{
-                        //string tarGZFile = $"{new DirectoryInfo(emoteFolder).Name}.tar.gz";
-                        //CreateTarGZ(Path.Combine(archivePath, tarGZFile), emoteFolder);
-                    //}
+                //// Needs to contain - else its not an active folder
+                //if (emoteFolder.Contains("-"))
+                //{
+                //string tarGZFile = $"{new DirectoryInfo(emoteFolder).Name}.tar.gz";
+                //CreateTarGZ(Path.Combine(archivePath, tarGZFile), emoteFolder);
+                //}
                 //}
 
                 //var archiveFiles = Directory.GetFiles(archivePath);
