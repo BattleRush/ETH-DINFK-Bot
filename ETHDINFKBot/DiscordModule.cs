@@ -1411,8 +1411,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 if (refresh && author.Id != Program.ApplicationSetting.Owner)
                     refresh = false;
 
-                // Cache for max 2h or reload if requested by owner or if cache is outdated
-                if (CachedRestaurantInfos.Key != meal || refresh || DateTimeOffset.UtcNow - LastCacheUpdate > TimeSpan.FromHours(2))
+                // Cache for max 8h or reload if requested by owner or if cache is outdated
+                if (CachedRestaurantInfos.Key != meal || refresh || DateTimeOffset.UtcNow - LastCacheUpdate > TimeSpan.FromHours(8))
                 {
                     var restaurants = FoodHelper.GetCurrentMenu(meal, Language.English, Location.Zentrum);
                     CachedRestaurantInfos = new KeyValuePair<MealTime, Dictionary<Restaurant, List<Menu>>>(meal, restaurants);
