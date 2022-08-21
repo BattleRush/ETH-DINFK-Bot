@@ -440,6 +440,7 @@ namespace ETHDINFKBot.Helpers
             {
                 menus.Add(Restaurant.ETH_Polymensa, GetPolymensaMenu(mealTime, 12));
                 menus.Add(Restaurant.ETH_Dozentenfoyer, GetPolymensaMenu(mealTime, 6));
+                menus.Add(Restaurant.ETH_ClausiusBar, GetPolymensaMenu(mealTime, 4));
             }
             catch (Exception ex)
             {
