@@ -601,13 +601,13 @@ WHERE
                     {
                         totalRows += rowCount;
                         rowCountString += $"{tableName} ({rowCount:N0}) {Math.Round(sizeInBytes / 1024d / 1024d, 2)} MB" + Environment.NewLine;
-                        dbSizeInBytes += sizeInBytes
+                        dbSizeInBytes += sizeInBytes;
 
                         // TODO propper splitting 
                         if (rowCountString.Length > 900)
                         {
                             builder.AddField("Row count", rowCountString.Length > 0 ? rowCountString : "n/a");
-                            rowCountString = 0;
+                            rowCountString = "";
                         }
                     }
                 }
