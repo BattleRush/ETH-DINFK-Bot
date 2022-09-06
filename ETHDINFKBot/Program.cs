@@ -41,11 +41,11 @@ using Discord.Interactions;
 
 namespace ETHDINFKBot
 {
-    class PlaceServer : TcpServer
+    class PlaceServer : WssServer
     {
-        public PlaceServer(IPAddress address, int port) : base(address, port) { }
+        public PlaceServer(SslContext context, IPAddress address, int port) : base(context, address, port) { }
 
-        protected override TcpSession CreateSession() { return new PlaceSession(this); }
+        protected override WssSession CreateSession() { return new PlaceSession(this); }
 
         protected override void OnError(SocketError error)
         {
@@ -346,8 +346,8 @@ namespace ETHDINFKBot
 
                     PlaceServer.OptionKeepAlive = true;
 
-                    PlaceServer = new PlaceServer(IPAddress.Any, 9000);
-                    PlaceServer.OptionKeepAlive = true;
+                    //PlaceServer = new PlaceServer(IPAddress.Any, 9000);
+                    //PlaceServer.OptionKeepAlive = true;
                     PlaceServer.OptionAcceptorBacklog = 8192;
                     PlaceServer.OptionSendBufferSize = 10_000_000;
 
@@ -372,7 +372,7 @@ namespace ETHDINFKBot
                     //var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
                     var context = new SslContext(SslProtocols.Tls12);
                     // Create a new WebSocket server
-                    PlaceServer = new PlaceServer(IPAddress.Any, 9000);
+                    //PlaceServer = new PlaceServer(IPAddress.Any, 9000); // TODO FOR DEBUG
                     PlaceServer.OptionKeepAlive = true;
                     PlaceServer.OptionAcceptorBacklog = 8192;
                     //PlaceServer.OptionNoDelay = true;
