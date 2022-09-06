@@ -1244,7 +1244,7 @@ If you violate the server rules your pixels will be removed.
                     var info = DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListAvg, new SKPaint() { Color = new SKColor(255, 0, 0) }, 6, "Avg in ms / min", 0, 0, true); //new Pen(System.Drawing.Color.LightGreen)
                     var info2 = DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListCount, new SKPaint() { Color = new SKColor(0, 255, 0) }, 6, "Count / min", 0, info.usedWidth, true); // new Pen(System.Drawing.Color.Yellow)
                     var info3 = DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListFailed, new SKPaint() { Color = new SKColor(0, 0, 255) }, 6, "Failed Count / min", 0, info.usedWidth + info2.usedWidth, true); // new Pen(System.Drawing.Color.DarkOrange)
-                    var info4 = DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListFailed, new SKPaint() { Color = new SKColor(255, 165, 0) }, 6, "Restard / Discord Gateaway reconnect", 0, info.usedWidth + info2.usedWidth + info3.usedWidth, false); // new Pen(System.Drawing.Color.DarkOrange)
+                    var info4 = DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointListFailed, new SKPaint() { Color = new SKColor(255, 165, 0) }, 6, "Restart / Discord Gateaway reconnect", 0, info.usedWidth + info2.usedWidth + info3.usedWidth, false); // new Pen(System.Drawing.Color.DarkOrange)
 
                     // TODO add methods to the drawing lib
                     if (listStartUpTimes.Count > 0)
