@@ -608,6 +608,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.AddField("Is Accepting", $"{ws.IsAccepting}", true);
             builder.AddField("Is Started", $"{ws.IsStarted}", true);
             builder.AddField("IP Endpoint", $"{ws.Endpoint}", true);
+            builder.AddField("Address", $"{ws.Address}", true);
             builder.AddField("Connected Sessions", $"{ws.ConnectedSessions}", true);
             builder.AddField("Bytes Pending", $"{ws.BytesPending.ToString("N0")}", true);
             builder.AddField("Bytes Received", $"{ws.BytesReceived.ToString("N0")}", true);

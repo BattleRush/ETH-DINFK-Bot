@@ -330,7 +330,7 @@ namespace ETHDINFKBot
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-#if !DEBUG
+//#if !DEBUG
                 string www = "/var/www/wss";
                 try
                 {
@@ -360,7 +360,7 @@ namespace ETHDINFKBot
                 {
                     Console.Write("Error while starting WS: " + ex.ToString());
                 }
-#endif
+//#endif
             }
             else
             {
