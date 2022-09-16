@@ -664,36 +664,43 @@ namespace ETHDINFKBot.Modules
             [Command("setup")]
             public async Task SetupFood()
             {
-                var author = Context.Message.Author;
-                if (author.Id != Program.ApplicationSetting.Owner)
+                try
                 {
-                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
-                    return;
-                }
-
-                var foodDBManager = FoodDBManager.Instance();
-
-                var sqlFilePath = Path.Combine("Data", "SQL", "RestaurantBaseSetup.sql");
-                string sqlFileContent = File.ReadAllText(sqlFilePath);
-
-                using (var connection = new MySqlConnection(Program.ApplicationSetting.ConnectionStringsSetting.ConnectionString_Full))
-                {
-                    using (var command = new MySqlCommand(sqlFileContent, connection))
+                    var author = Context.Message.Author;
+                    if (author.Id != Program.ApplicationSetting.Owner)
                     {
-                        try
+                        await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                        return;
+                    }
+
+                    var foodDBManager = FoodDBManager.Instance();
+
+                    var sqlFilePath = Path.Combine("Data", "SQL", "RestaurantBaseSetup.sql");
+                    string sqlFileContent = File.ReadAllText(sqlFilePath);
+
+                    using (var connection = new MySqlConnection(Program.ApplicationSetting.ConnectionStringsSetting.ConnectionString_Full))
+                    {
+                        using (var command = new MySqlCommand(sqlFileContent, connection))
                         {
-                            command.CommandTimeout = 5;
+                            try
+                            {
+                                command.CommandTimeout = 5;
 
-                            connection.Open();
+                                connection.Open();
 
-                            int rowsAffected = command.ExecuteNonQuery();
-                            await Context.Channel.SendMessageAsync($"Affected {rowsAffected} row(s)", false);
-                        }
-                        catch (Exception ex)
-                        {
+                                int rowsAffected = command.ExecuteNonQuery();
+                                await Context.Channel.SendMessageAsync($"Affected {rowsAffected} row(s)", false);
+                            }
+                            catch (Exception ex)
+                            {
 
+                            }
                         }
                     }
+                }
+                catch(Exception ex)
+                {
+                    await Context.Message.Channel.SendMessageAsync(ex.ToString());
                 }
             }
 
