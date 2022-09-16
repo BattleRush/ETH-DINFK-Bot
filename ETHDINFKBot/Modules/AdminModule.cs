@@ -693,7 +693,7 @@ namespace ETHDINFKBot.Modules
                             }
                             catch (Exception ex)
                             {
-
+                                await Context.Message.Channel.SendMessageAsync(ex.ToString());
                             }
                         }
                     }
