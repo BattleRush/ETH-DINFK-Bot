@@ -523,7 +523,8 @@ namespace ETHDINFKBot.Drawing
                     TextSize = TitleTextSize,
                     Color = WhiteColor,
                     TextEncoding = SKTextEncoding.Utf8,
-                    IsAntialias = true
+                    IsAntialias = true,
+                    FakeBoldText = true
                 };
             }
         }
@@ -538,7 +539,8 @@ namespace ETHDINFKBot.Drawing
                     TextSize = LargeTextSize,
                     Color = WhiteColor,
                     TextEncoding = SKTextEncoding.Utf8,
-                    IsAntialias = true
+                    IsAntialias = true,
+                    FakeBoldText = true
                 };
             }
         }

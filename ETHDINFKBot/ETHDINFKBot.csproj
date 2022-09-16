@@ -107,6 +107,54 @@
     <None Update="Images\Icons\fk.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Images\Icons\Food\Allergies\01.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Images\Icons\Food\Allergies\02.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Images\Icons\Food\Allergies\03.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Images\Icons\Food\Allergies\04.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Images\Icons\Food\Allergies\05.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Images\Icons\Food\Allergies\06.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Images\Icons\Food\Allergies\07.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Images\Icons\Food\Allergies\08.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Images\Icons\Food\Allergies\09.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Images\Icons\Food\Allergies\10.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Images\Icons\Food\Allergies\11.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Images\Icons\Food\Allergies\12.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Images\Icons\Food\Allergies\13.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Images\Icons\Food\Allergies\14.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Images\Icons\Food\balanced.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Images\Icons\Food\local.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Images\Icons\Food\vegan.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -156,7 +204,7 @@
 
   <ItemGroup>
     <Folder Include="ExamQuestions\" />
-    <Folder Include="Images\Icons\Food\" />
+    <Folder Include="Images\Icons\Food\Allergies\" />
   </ItemGroup>
     
 </Project>

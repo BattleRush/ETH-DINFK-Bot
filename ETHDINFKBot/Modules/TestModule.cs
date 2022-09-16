@@ -316,7 +316,7 @@ namespace ETHDINFKBot.Modules
                 for (int i = 2; i <= parsedInfo.Info.Count; i++)
                 {
                     if (i % 250 == 0)
-                        Context.Channel.SendMessageAsync($"Frame gen {i} out of {parsedInfo.Info.Count}");
+                        await Context.Channel.SendMessageAsync($"Frame gen {i} out of {parsedInfo.Info.Count}");
 
                     var startTime = parsedInfo.Info.Keys.Take(i).Min();
                     var endTime = parsedInfo.Info.Keys.Take(i).Max();
@@ -407,7 +407,7 @@ namespace ETHDINFKBot.Modules
             var author = Context.Message.Author;
             if (author.Id != Program.ApplicationSetting.Owner)
             {
-                Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 return;
             }
 

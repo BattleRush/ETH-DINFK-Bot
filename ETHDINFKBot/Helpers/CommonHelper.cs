@@ -62,6 +62,26 @@ namespace ETHDINFKBot.Helpers
             return false;
         }
 
+        public static DateTimeOffset UtcToLocalDateTime(this DateTimeOffset dateTimeOffset, TimeZoneInfo timezoneInfo)
+        {
+            return dateTimeOffset.Add(timezoneInfo.GetUtcOffset(dateTimeOffset));
+        }
+
+        public static DateTimeOffset LocalToUtcDateTime(this DateTimeOffset dateTimeOffset, TimeZoneInfo timezoneInfo)
+        {
+            return dateTimeOffset.Add(timezoneInfo.GetUtcOffset(dateTimeOffset).Negate());
+        }
+
+        public static DateTime UtcToLocalDateTime(this DateTime dateTime, TimeZoneInfo timezoneInfo)
+        {
+            return dateTime.Add(timezoneInfo.GetUtcOffset(dateTime));
+        }
+
+        public static DateTime LocalToUtcDateTime(this DateTime dateTime, TimeZoneInfo timezoneInfo)
+        {
+            return dateTime.Add(timezoneInfo.GetUtcOffset(dateTime).Negate());
+        }
+
         // https://stackoverflow.com/a/4423615/3144729
         public static string ToReadableString(TimeSpan span)
         {

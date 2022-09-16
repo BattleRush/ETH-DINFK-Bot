@@ -86,10 +86,10 @@ namespace ETHDINFKBot.Helpers
 
                                     var dbMenu = FoodDBManager.CreateMenu(svRestaurantMenu.Menu);
 
-                                    // Link menu with alergies
-                                    foreach (var alergyId in svRestaurantMenu.AlergyIds)
+                                    // Link menu with allergies
+                                    foreach (var allergyId in svRestaurantMenu.AllergyIds)
                                     {
-                                        FoodDBManager.CreateMenuAlergy(svRestaurantMenu.Menu.MenuId, alergyId);
+                                        FoodDBManager.CreateMenuAllergy(svRestaurantMenu.Menu.MenuId, allergyId);
                                     }
                                 }
                                 catch (Exception ex)
@@ -120,10 +120,10 @@ namespace ETHDINFKBot.Helpers
 
                                     var dbMenu = FoodDBManager.CreateMenu(uzhMenuInfo.Menu);
 
-                                    // Link menu with alergies
-                                    foreach (var alergyId in uzhMenuInfo.AlergyIds)
+                                    // Link menu with allergies
+                                    foreach (var allergyId in uzhMenuInfo.AllergyIds)
                                     {
-                                        FoodDBManager.CreateMenuAlergy(dbMenu.MenuId, alergyId);
+                                        FoodDBManager.CreateMenuAllergy(dbMenu.MenuId, allergyId);
                                     }
                                 }
                                 catch (Exception ex)
@@ -228,7 +228,7 @@ namespace ETHDINFKBot.Helpers
                 }*/
 
         // TODO Provide list of ids to search
-        public static List<(Menu Menu, List<int> AlergyIds)> GetSVRestaurantMenu(string link)
+        public static List<(Menu Menu, List<int> AllergyIds)> GetSVRestaurantMenu(string link)
         {
             try
             {
@@ -295,24 +295,24 @@ namespace ETHDINFKBot.Helpers
                     if (menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-labels\"]")?.InnerText.ToLower().Contains("vegan") == true)
                         currentMenu.IsVegan = true;
                    
-                    string alergiesString = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"allergen-info\"]")?.InnerText.Replace("\t", "").Trim() ?? "";
+                    string allergiesString = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"allergen-info\"]")?.InnerText.Replace("\t", "").Trim() ?? "";
 
-                    alergiesString = HttpUtility.HtmlDecode(alergiesString);
-                    if (alergiesString.Contains(":"))
-                        alergiesString = alergiesString.Split(":", StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? "";
+                    allergiesString = HttpUtility.HtmlDecode(allergiesString);
+                    if (allergiesString.Contains(":"))
+                        allergiesString = allergiesString.Split(":", StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? "";
 
-                    var alergyIdList = new List<int>();
+                    var allergyIdList = new List<int>();
 
-                    if (alergiesString.Contains(","))
+                    if (allergiesString.Contains(","))
                     {
-                        var alergyIds = alergiesString.Split(",", StringSplitOptions.RemoveEmptyEntries);
+                        var AllergyIds = allergiesString.Split(",", StringSplitOptions.RemoveEmptyEntries);
 
-                        foreach (var alergyIdString in alergyIds)
+                        foreach (var AllergyIdString in AllergyIds)
                         {
-                            if (int.TryParse(alergyIdString.Trim(), out int alergyId))
+                            if (int.TryParse(AllergyIdString.Trim(), out int AllergyId))
                             {
                                 // TODO Save the ids
-                                alergyIdList.Add(alergyId);
+                                allergyIdList.Add(AllergyId);
                             }
                             else
                             {
@@ -323,7 +323,7 @@ namespace ETHDINFKBot.Helpers
 
                     currentMenu.DateTime = DateTime.Now;//.AddDays(-1);
 
-                    menus.Add((currentMenu, alergyIdList));
+                    menus.Add((currentMenu, allergyIdList));
                 }
 
 
@@ -433,7 +433,7 @@ namespace ETHDINFKBot.Helpers
             return polymensaMenus;
         }
 
-        public static List<(Menu Menu, List<int> AlergyIds)> GetUzhMenus(string day, string mensa, Language language = Language.English)
+        public static List<(Menu Menu, List<int> AllergyIds)> GetUzhMenus(string day, string mensa, Language language = Language.English)
         {
             ///html/body/div[6]/section/div/section/div[2]/div[1]/div/div[2]/div/div/div/div/div/div/div/div/table/tbody[2]
             string xPath = "//*[@id=\"box-1\"]/ul/li/div/div/div";
@@ -576,78 +576,78 @@ namespace ETHDINFKBot.Helpers
                         }
                     }
 
-                    var alergyIds = new List<int>();
+                    var allergyIds = new List<int>();
 
-                    var alergyNode = menuDoc.DocumentNode.SelectNodes("//p").Last();
-                    if(alergyNode != null && alergyNode.InnerText.ToLower().Contains("allergikerinformationen"))
+                    var allergyNode = menuDoc.DocumentNode.SelectNodes("//p").Last();
+                    if(allergyNode != null && allergyNode.InnerText.ToLower().Contains("allergikerinformationen"))
                     {
-                        string alergiesString = alergyNode.InnerText.Trim();
-                        if (alergiesString.Contains(":"))
-                            alergiesString = alergiesString.Split(":", StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? "";
+                        string allergiesString = allergyNode.InnerText.Trim();
+                        if (allergiesString.Contains(":"))
+                            allergiesString = allergiesString.Split(":", StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? "";
 
-                        if (alergiesString.Contains(","))
+                        if (allergiesString.Contains(","))
                         {
-                            var alergyNames = alergiesString.Split(",", StringSplitOptions.RemoveEmptyEntries);
+                            var allergyNames = allergiesString.Split(",", StringSplitOptions.RemoveEmptyEntries);
 
 
-                            foreach (var alergyName in alergyNames)
+                            foreach (var AllergyName in allergyNames)
                             {
-                                switch (alergyName.Trim())
+                                switch (AllergyName.Trim())
                                 {
                                     case "Glutenhaltiges Getreide":
-                                        alergyIds.Add(1);
+                                        allergyIds.Add(1);
                                         break;
 
                                     case "Krebstiere":
-                                        alergyIds.Add(2);
+                                        allergyIds.Add(2);
                                         break;
 
                                     case "Eier":
-                                        alergyIds.Add(3);
+                                        allergyIds.Add(3);
                                         break;
 
                                     case "Fisch":
-                                        alergyIds.Add(4);
+                                        allergyIds.Add(4);
                                         break;
 
                                     case "Erdnüsse":
-                                        alergyIds.Add(5);
+                                        allergyIds.Add(5);
                                         break;
 
                                     case "Soja":
-                                        alergyIds.Add(6);
+                                        allergyIds.Add(6);
                                         break;
 
                                     case "Milch":
-                                        alergyIds.Add(7);
+                                        allergyIds.Add(7);
                                         break;
 
                                     case "Hartschalenobst (Nüsse)":
-                                        alergyIds.Add(8);
+                                        allergyIds.Add(8);
                                         break;
 
                                     case "Sellerie":
-                                        alergyIds.Add(9);
+                                        allergyIds.Add(9);
                                         break;
 
                                     case "Senf":
-                                        alergyIds.Add(10);
+                                        allergyIds.Add(10);
                                         break;
 
                                     case "Sesam":
-                                        alergyIds.Add(11);
+                                        allergyIds.Add(11);
                                         break;
 
                                     case "Schwefeldioxid und Sulfite":
-                                        alergyIds.Add(12);
+                                        allergyIds.Add(12);
                                         break;
 
                                     case "Lupine":
-                                        alergyIds.Add(13);
+                                        allergyIds.Add(13);
                                         break;
 
                                     case "Weichtiere":
-                                        alergyIds.Add(14);
+                                        allergyIds.Add(14);
                                         break;
 
 
@@ -659,11 +659,10 @@ namespace ETHDINFKBot.Helpers
                         }
                     }
 
-                    // TODO pass alergyIds for db
 
                     // TODO set permanent fix
                     currentMenu.DateTime = DateTime.Now;//.AddDays(-1);
-                    menus.Add((currentMenu, alergyIds));
+                    menus.Add((currentMenu, allergyIds));
                 }
                 catch (Exception ex)
                 {

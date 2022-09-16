@@ -607,9 +607,9 @@ namespace ETHBot.DataLayer.Migrations
                     b.ToTable("SavedMessages");
                 });
 
-            modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.Alergy", b =>
+            modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.Allergy", b =>
                 {
-                    b.Property<int>("AlergyId")
+                    b.Property<int>("AllergyId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
@@ -622,9 +622,9 @@ namespace ETHBot.DataLayer.Migrations
                     b.Property<string>("NameDE")
                         .HasColumnType("longtext");
 
-                    b.HasKey("AlergyId");
+                    b.HasKey("AllergyId");
 
-                    b.ToTable("Alergies");
+                    b.ToTable("Allergies");
                 });
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.DiscordUserFavouriteRestaturant", b =>
@@ -710,21 +710,21 @@ namespace ETHBot.DataLayer.Migrations
                     b.ToTable("Menus");
                 });
 
-            modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.MenuAlergy", b =>
+            modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.MenuAllergy", b =>
                 {
                     b.Property<int>("MenuId")
                         .HasColumnType("int")
                         .HasColumnOrder(0);
 
-                    b.Property<int>("AlergyId")
+                    b.Property<int>("AllergyId")
                         .HasColumnType("int")
                         .HasColumnOrder(1);
 
-                    b.HasKey("MenuId", "AlergyId");
+                    b.HasKey("MenuId", "AllergyId");
 
-                    b.HasIndex("AlergyId");
+                    b.HasIndex("AllergyId");
 
-                    b.ToTable("MenuAlergies");
+                    b.ToTable("MenuAllergies");
                 });
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.MenuImage", b =>
@@ -1457,11 +1457,11 @@ namespace ETHBot.DataLayer.Migrations
                     b.Navigation("Restaurant");
                 });
 
-            modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.MenuAlergy", b =>
+            modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.MenuAllergy", b =>
                 {
-                    b.HasOne("ETHBot.DataLayer.Data.ETH.Food.Alergy", "Alergy")
+                    b.HasOne("ETHBot.DataLayer.Data.ETH.Food.Allergy", "Allergy")
                         .WithMany()
-                        .HasForeignKey("AlergyId")
+                        .HasForeignKey("AllergyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1471,7 +1471,7 @@ namespace ETHBot.DataLayer.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Alergy");
+                    b.Navigation("Allergy");
 
                     b.Navigation("Menu");
                 });

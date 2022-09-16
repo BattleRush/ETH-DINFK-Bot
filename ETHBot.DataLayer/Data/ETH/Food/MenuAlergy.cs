@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ETHBot.DataLayer.Data.ETH.Food
 {
-    public class MenuAlergy
+    public class MenuAllergy
     {
         [Key, Column(Order = 0)]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
@@ -18,8 +18,8 @@ namespace ETHBot.DataLayer.Data.ETH.Food
 
         [Key, Column(Order = 1)]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        [ForeignKey("Alergy")]
-        public int AlergyId { get; set; }
-        public Alergy Alergy { get; set; }
+        [ForeignKey("Allergy")]
+        public int AllergyId { get; set; }
+        public Allergy Allergy { get; set; }
     }
 }

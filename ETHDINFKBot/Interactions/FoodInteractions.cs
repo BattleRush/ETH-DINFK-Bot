@@ -27,14 +27,14 @@ namespace ETHDINFKBot.Interactions
             var message = Context.Interaction as SocketMessageComponent;
             var user = Context.Interaction.User;
 
-
-            if (user.Id != 153929916977643521)
+            // TODO Find better solution for this
+            if (message.Message.Embeds.First().Author.Value.Name != $"{user.Username}#{user.Discriminator}")
             {
-                Context.Interaction.RespondAsync("Shush", ephemeral: true);
+                await Context.Interaction.RespondAsync($"This isnt your setting. Call it with **{Program.CurrentPrefix}food fav** to change your settings", ephemeral: true);
                 return;
             }
 
-            Context.Interaction.DeferAsync();
+            await Context.Interaction.DeferAsync();
 
             // TODO Check if updates successfull 
             if (int.TryParse(favChange, out int restaurantId))
@@ -70,6 +70,12 @@ namespace ETHDINFKBot.Interactions
                     case "vegan":
                         userMenuSetting.VeganPreference = !userMenuSetting.VeganPreference;
                         break;
+                    case "nutritions":
+                        userMenuSetting.FullNutritions = !userMenuSetting.FullNutritions;
+                        break;
+                    case "allergies":
+                        userMenuSetting.DisplayAllergies = !userMenuSetting.DisplayAllergies;
+                        break;
                     default:
                         break;
                 }
@@ -100,7 +106,9 @@ namespace ETHDINFKBot.Interactions
             try
             {
                 builderComponent.WithButton("Filter Vegetarian", $"food-fav-vegetarian", userMenuSetting.VegetarianPreference ? ButtonStyle.Primary : ButtonStyle.Danger, Emote.Parse($"<:food_vegetarian:1017751739648188487>"), null, false, 0);
-                builderComponent.WithButton("Filter Vegan", $"food-fav-vegan", userMenuSetting.VeganPreference ? ButtonStyle.Primary : ButtonStyle.Danger, Emote.Parse($"<:food_vegan:1017751741455937536>"), null, false, 0);
+                builderComponent.WithButton("Filter Vegan", $"food-fav-vegan", userMenuSetting.VeganPreference ? ButtonStyle.Primary : ButtonStyle.Danger, Emote.Parse($"<:food_vegan:1017751741455937536>"), null, false, 0); 
+                builderComponent.WithButton("Show all nutritions stats", $"food-fav-nutritions", userMenuSetting.FullNutritions ? ButtonStyle.Primary : ButtonStyle.Danger, null/*Emote.Parse($"<:food_vegan:1017751741455937536>")*/, null, false, 0); 
+                builderComponent.WithButton("Show Allergies", $"food-fav-allergies", userMenuSetting.DisplayAllergies ? ButtonStyle.Primary : ButtonStyle.Danger, null/*Emote.Parse($"<:food_vegan:1017751741455937536>")*/, null, false, 0);
 
                 var favedRestaurantIds = userFavRestaurants.Select(i => i.RestaurantId);
 

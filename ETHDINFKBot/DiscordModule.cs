@@ -554,7 +554,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             }
             catch (Exception ex)
             {
-                Context.Channel.SendMessageAsync(ex.ToString());
+                await Context.Channel.SendMessageAsync(ex.ToString());
                 _logger.LogError(ex, "Error while DiscordHelper.DiscordUserBirthday");
             }
         }
@@ -2121,7 +2121,7 @@ ORDER BY RANDOM() LIMIT 1
             builder.WithAuthor(author);
             builder.WithCurrentTimestamp();
 
-            Context.Channel.SendMessageAsync("", false, builder.Build());
+            await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
         [Command("cloud_gen")]

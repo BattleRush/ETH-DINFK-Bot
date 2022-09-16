@@ -13,9 +13,7 @@ namespace ETHDINFKBot
         {
             var author = Context.Message.Author;
 
-
-
-            Context.Channel.SendMessageAsync("", false);
+            await Context.Channel.SendMessageAsync("", false);
         }
 
         [Command("balance")]
@@ -29,9 +27,7 @@ namespace ETHDINFKBot
 
             var author = Context.Message.Author;
 
-
-
-            Context.Channel.SendMessageAsync("", false);
+            await Context.Channel.SendMessageAsync("", false);
         }
 
         [Command("loan")]
@@ -45,10 +41,7 @@ namespace ETHDINFKBot
 
             var author = Context.Message.Author;
 
-
-
-            Context.Channel.SendMessageAsync("", false);
+            await Context.Channel.SendMessageAsync("", false);
         }
-
     }
 }

@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 
 namespace ETHBot.DataLayer.Data.ETH.Food
 {
-    public class Alergy
+    public class Allergy
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int AlergyId { get; set; }
+        public int AllergyId { get; set; }
         public string Name { get; set; }
         public string NameDE { get; set; }
         public string ImagePath { get; set; }

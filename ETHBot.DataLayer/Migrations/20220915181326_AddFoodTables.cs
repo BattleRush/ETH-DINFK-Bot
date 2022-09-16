@@ -11,10 +11,10 @@ namespace ETHBot.DataLayer.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "Alergies",
+                name: "Allergies",
                 columns: table => new
                 {
-                    AlergyId = table.Column<int>(type: "int", nullable: false)
+                    AllergyId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     Name = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
@@ -25,7 +25,7 @@ namespace ETHBot.DataLayer.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Alergies", x => x.AlergyId);
+                    table.PrimaryKey("PK_Allergies", x => x.AllergyId);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -194,23 +194,23 @@ namespace ETHBot.DataLayer.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "MenuAlergies",
+                name: "MenuAllergies",
                 columns: table => new
                 {
                     MenuId = table.Column<int>(type: "int", nullable: false),
-                    AlergyId = table.Column<int>(type: "int", nullable: false)
+                    AllergyId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_MenuAlergies", x => new { x.MenuId, x.AlergyId });
+                    table.PrimaryKey("PK_MenuAllergies", x => new { x.MenuId, x.AllergyId });
                     table.ForeignKey(
-                        name: "FK_MenuAlergies_Alergies_AlergyId",
-                        column: x => x.AlergyId,
-                        principalTable: "Alergies",
-                        principalColumn: "AlergyId",
+                        name: "FK_MenuAllergies_Allergies_AllergyId",
+                        column: x => x.AllergyId,
+                        principalTable: "Allergies",
+                        principalColumn: "AllergyId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_MenuAlergies_Menus_MenuId",
+                        name: "FK_MenuAllergies_Menus_MenuId",
                         column: x => x.MenuId,
                         principalTable: "Menus",
                         principalColumn: "MenuId",
@@ -224,9 +224,9 @@ namespace ETHBot.DataLayer.Migrations
                 column: "DiscordUserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MenuAlergies_AlergyId",
-                table: "MenuAlergies",
-                column: "AlergyId");
+                name: "IX_MenuAllergies_AllergyId",
+                table: "MenuAllergies",
+                column: "AllergyId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Menus_MenuImageId",
@@ -250,7 +250,7 @@ namespace ETHBot.DataLayer.Migrations
                 name: "DiscordUserFavouriteRestaturants");
 
             migrationBuilder.DropTable(
-                name: "MenuAlergies");
+                name: "MenuAllergies");
 
             migrationBuilder.DropTable(
                 name: "MenuUserSettings");
@@ -259,7 +259,7 @@ namespace ETHBot.DataLayer.Migrations
                 name: "RestaurantOpeningTimes");
 
             migrationBuilder.DropTable(
-                name: "Alergies");
+                name: "Allergies");
 
             migrationBuilder.DropTable(
                 name: "Menus");

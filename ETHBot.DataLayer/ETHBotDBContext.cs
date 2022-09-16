@@ -102,10 +102,10 @@ namespace ETHBot.DataLayer
 
 
 
-        public DbSet<Alergy> Alergies { get; set; }
+        public DbSet<Allergy> Allergies { get; set; }
         public DbSet<DiscordUserFavouriteRestaturant> DiscordUserFavouriteRestaturants { get; set; }
         public DbSet<Menu> Menus { get; set; }
-        public DbSet<MenuAlergy> MenuAlergies { get; set; }
+        public DbSet<MenuAllergy> MenuAllergies { get; set; }
         public DbSet<MenuImage> MenuImages { get; set; }
         public DbSet<MenuUserSetting> MenuUserSettings { get; set; }
         public DbSet<Restaurant> Restaurants { get; set; }

@@ -24,7 +24,7 @@ namespace ETHDINFKBot.Interactions
 
             DatabaseManager.Instance().DeleteInDmSavedMessage(t.Message.Id);
             await t.Message.DeleteAsync();
-            Context.Interaction.DeferAsync();
+            await Context.Interaction.DeferAsync();
         }
 
         [ComponentInteraction("emote-fav-*")]
@@ -38,14 +38,14 @@ namespace ETHDINFKBot.Interactions
 //.AddComponents(new List<IMessageComponent>() { menuBuilder.Build() }, 0)
 .AddTextInput($"Name for {emote.EmoteName}", "custom-emote-name", placeholder: emote.EmoteName, required: true);
 
-            Context.Interaction.RespondWithModalAsync(mb.Build());
-            Context.Interaction.DeferAsync();
+            await Context.Interaction.RespondWithModalAsync(mb.Build());
+            await Context.Interaction.DeferAsync();
         }
 
         [ComponentInteraction("emote-del-*")]
         public async Task DeleteFavEmote(string id)
         {
-            Context.Interaction.DeferAsync();
+            await Context.Interaction.DeferAsync();
             
             var emote = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(ulong.Parse(id));
 
@@ -55,37 +55,36 @@ namespace ETHDINFKBot.Interactions
 //.AddComponents(new List<IMessageComponent>() { menuBuilder.Build() }, 0)
 .AddTextInput($"Confirm delete by typing \"DELETE\"", "custom-emote-name-delete", placeholder: "DELETE", required: true);
 
-            Context.Interaction.RespondWithModalAsync(mb.Build());
-            
+            await Context.Interaction.RespondWithModalAsync(mb.Build());         
         }
 
 
         [ComponentInteraction("emote-get-prev-page-*-*-*")]
         public async Task EmoteGetPrevPage(string searchTerm, string page, string debug)
         {
-            Context.Interaction.DeferAsync();
-            EmoteGetPage(-1, searchTerm, Convert.ToInt32(page), Convert.ToBoolean(debug));
+            await Context.Interaction.DeferAsync();
+            await EmoteGetPage(-1, searchTerm, Convert.ToInt32(page), Convert.ToBoolean(debug));
         }
 
         [ComponentInteraction("emote-get-next-page-*-*-*")]
         public async Task EmoteGetNextPage(string searchTerm, string page, string debug)
         {
-            Context.Interaction.DeferAsync();
-            EmoteGetPage(1, searchTerm, Convert.ToInt32(page), Convert.ToBoolean(debug));
+            await Context.Interaction.DeferAsync();
+            await EmoteGetPage(1, searchTerm, Convert.ToInt32(page), Convert.ToBoolean(debug));
         }
 
         [ComponentInteraction("emote-fav-get-prev-page-*-*")]
         public async Task EmoteFavGetPrevPage(string searchTerm, string page)
         {
-            Context.Interaction.DeferAsync();
-            FavEmoteGetPage(-1, searchTerm, Convert.ToInt32(page));
+            await Context.Interaction.DeferAsync();
+            await FavEmoteGetPage(-1, searchTerm, Convert.ToInt32(page));
         }
 
         [ComponentInteraction("emote-fav-get-next-page-*-*")]
         public async Task EmoteFavGetNextPage(string searchTerm, string page)
         {
-            Context.Interaction.DeferAsync();
-            FavEmoteGetPage(1, searchTerm, Convert.ToInt32(page));
+            await Context.Interaction.DeferAsync();
+            await FavEmoteGetPage(1, searchTerm, Convert.ToInt32(page));
         }
 
         private async Task<bool> EmoteGetPage(int dir, string searchTerm, int page, bool debug, int rows = 5, int columns = 10)
@@ -94,7 +93,7 @@ namespace ETHDINFKBot.Interactions
             var user = Context.Interaction.User;
             if (message.Message.Embeds.First().Author.Value.Name != $"{user.Username}#{user.Discriminator}")
             {
-                Context.Interaction.RespondAsync("You did not invoke this message.", null, false, true);
+                await Context.Interaction.RespondAsync("You did not invoke this message.", null, false, true);
                 //Context.Interaction.DeferAsync();
                 return false;
             }
@@ -153,7 +152,7 @@ namespace ETHDINFKBot.Interactions
             var user = Context.Interaction.User;
             if (message.Message.Embeds.First().Author.Value.Name != $"{user.Username}#{user.Discriminator}")
             {
-                Context.Interaction.RespondAsync("You did not invoke this message.", null, false, true);
+                await Context.Interaction.RespondAsync("You did not invoke this message.", null, false, true);
                 //Context.Interaction.DeferAsync();
                 return false;
             }

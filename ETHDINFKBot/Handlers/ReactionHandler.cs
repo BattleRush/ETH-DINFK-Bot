@@ -121,7 +121,7 @@ namespace ETHDINFKBot.Handlers
                     IsValid = true // TODO maybe set default as true from db?
                 };
 
-                DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(discordEmote, Message.Id, AddedReaction ? 1 : -1, true, SocketGuildReactionUser, false);
+                await DatabaseManager.EmoteDatabaseManager.ProcessDiscordEmote(discordEmote, Message.Id, AddedReaction ? 1 : -1, true, SocketGuildReactionUser, false);
                 //Program.GlobalStats.EmojiInfoUsage.Single(i => i.EmojiId == emote.Id).UsedAsReaction++;
             }
             catch (Exception ex)
@@ -143,7 +143,7 @@ namespace ETHDINFKBot.Handlers
         {
             if (reactionEmote.Id == DiscordEmotes["savethis"] && !SocketGuildReactionUser.IsBot)
             {
-                DiscordHelper.SaveMessage(SocketTextChannel, SocketGuildReactionUser, Message, false);
+                await DiscordHelper.SaveMessage(SocketTextChannel, SocketGuildReactionUser, Message, false);
 
                 // Save the post link
 

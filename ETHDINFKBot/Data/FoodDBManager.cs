@@ -73,6 +73,31 @@ namespace ETHDINFKBot.Data
             return restaurant;
         }
 
+        public string GetMenuAllergiesString(Menu menu, bool en = true)
+        {
+            using (ETHBotDBContext context = new ETHBotDBContext())
+            {
+                var menuAllergyIds = context.MenuAllergies.Where(i => i.Menu == menu).Select(i => i.AllergyId).ToList();
+                var Allergies = context.Allergies.Where(i => menuAllergyIds.Contains(i.AllergyId));
+
+                string AllergyString = string.Join(", ", Allergies.Select(i => i.Name));
+                if (!en)
+                    AllergyString = string.Join(", ", Allergies.Select(i => i.NameDE));
+
+                return AllergyString;
+            }
+
+            return "";
+        }
+
+        public List<int> GetMenuAllergyIds(Menu menu, bool en = true)
+        {
+            using (ETHBotDBContext context = new ETHBotDBContext())
+            {
+                return context.MenuAllergies.Where(i => i.Menu == menu).Select(i => i.AllergyId).ToList();
+            }
+        }
+
         public bool DeleteRestaurant(Restaurant restaurant)
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
@@ -99,11 +124,11 @@ namespace ETHDINFKBot.Data
             {
                 try
                 {
-                    return context.Menus.Where(i => i.DateTime.Date == datetime.Date).ToList();;
+                    return context.Menus.Where(i => i.DateTime.Date == datetime.Date).ToList(); ;
                 }
                 catch (Exception ex)
                 {
-                    
+
                 }
             }
 
@@ -116,11 +141,11 @@ namespace ETHDINFKBot.Data
             {
                 try
                 {
-                    // Clear any menu alergies first
-                    var menuAlregies = context.MenuAlergies.Where(i => i.MenuId == menu.MenuId);
+                    // Clear any menu Allergies first
+                    var menuAlregies = context.MenuAllergies.Where(i => i.MenuId == menu.MenuId);
                     if (menuAlregies.Any())
                     {
-                        context.MenuAlergies.RemoveRange(menuAlregies);
+                        context.MenuAllergies.RemoveRange(menuAlregies);
                         context.SaveChanges();
                     }
 
@@ -142,14 +167,14 @@ namespace ETHDINFKBot.Data
         }
 
 
-        public Alergy CreateAlergy(Alergy alergy)
+        public Allergy CreateAllergy(Allergy Allergy)
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
                 try
                 {
-                    if (!context.Alergies.Any(i => i.AlergyId == alergy.AlergyId))
-                        context.Alergies.Add(alergy);
+                    if (!context.Allergies.Any(i => i.AllergyId == Allergy.AllergyId))
+                        context.Allergies.Add(Allergy);
 
                     context.SaveChanges();
                 }
@@ -159,20 +184,20 @@ namespace ETHDINFKBot.Data
                 }
             }
 
-            return alergy;
+            return Allergy;
         }
 
 
-        public bool CreateMenuAlergy(int menuId, int alergyId)
+        public bool CreateMenuAllergy(int menuId, int AllergyId)
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
                 try
                 {
-                    context.MenuAlergies.Add(new MenuAlergy()
+                    context.MenuAllergies.Add(new MenuAllergy()
                     {
                         MenuId = menuId,
-                        AlergyId = alergyId
+                        AllergyId = AllergyId
                     });
 
                     context.SaveChanges();
@@ -406,6 +431,13 @@ namespace ETHDINFKBot.Data
                 return context.MenuUserSettings.SingleOrDefault(i => i.DiscordUserId == discordUserId);
             }
         }
+        public List<Allergy> GetAllergies()
+        {
+            using (ETHBotDBContext context = new ETHBotDBContext())
+            {
+                return context.Allergies.ToList();
+            }
+        }
 
         public MenuUserSetting UpdateUserFoodSettings(MenuUserSetting menuUserSetting)
         {
@@ -423,6 +455,8 @@ namespace ETHDINFKBot.Data
                     // Update record
                     dbMenuUserSetting.VegetarianPreference = menuUserSetting.VegetarianPreference;
                     dbMenuUserSetting.VeganPreference = menuUserSetting.VeganPreference;
+                    dbMenuUserSetting.FullNutritions = menuUserSetting.FullNutritions;
+                    dbMenuUserSetting.DisplayAllergies = menuUserSetting.DisplayAllergies;
                     context.SaveChanges();
                 }
             }

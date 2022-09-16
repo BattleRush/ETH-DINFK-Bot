@@ -71,7 +71,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                 return response;
             }
 
-            LogManager logManager = new LogManager(dbManager); // rework
+            LogManager logManager = new(dbManager); // rework
             //int success = 0;
             //int tags = 0;
             //int newUsers = 0;
@@ -192,7 +192,6 @@ namespace ETHDINFKBot.CronJobs.Jobs
                     {
                         var channel = item.GetTextChannel(botChannelSetting.DiscordChannelId);
 
-
                         if (botChannelSetting != null && ((BotPermissionType)botChannelSetting?.ChannelPermissionFlags).HasFlag(BotPermissionType.Read))
                         {
                             if (channel != null)
@@ -299,7 +298,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                     if (result.Length > 1500)
                     {
-                        textChannel.SendMessageAsync(result.Substring(0, Math.Min(2000, result.Length)));
+                        await textChannel.SendMessageAsync(result.Substring(0, Math.Min(2000, result.Length)));
                         result = "";
                     }
                 }
@@ -307,7 +306,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
             if (result.Length > 0)
             {
-                textChannel.SendMessageAsync(result.Substring(0, Math.Min(2000, result.Length))); 
+                await textChannel.SendMessageAsync(result.Substring(0, Math.Min(2000, result.Length))); 
             }
 
 

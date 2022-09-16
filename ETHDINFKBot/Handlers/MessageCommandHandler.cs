@@ -50,11 +50,11 @@ namespace ETHDINFKBot.Handlers
         {
             try
             {
-                DiscordHelper.SaveMessage(SocketTextChannel, SocketGuildUser, SocketMessage, true);
+                await DiscordHelper.SaveMessage(SocketTextChannel, SocketGuildUser, SocketMessage, true);
             }
             catch (Exception ex)
             {
-                SocketTextChannel.SendMessageAsync(ex.Message);
+                await SocketTextChannel.SendMessageAsync(ex.Message);
             }
 
             return true;

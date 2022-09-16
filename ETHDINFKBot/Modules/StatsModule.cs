@@ -25,8 +25,8 @@ namespace ETHDINFKBot.Modules
             public async Task AllStats()
             {
                 // TODO MEssage that its posting all
-                MessagesStats();
-                EmoteStats();
+                await MessagesStats();
+                await EmoteStats();
             }
 
             [Command("messages")]
@@ -47,7 +47,7 @@ namespace ETHDINFKBot.Modules
             public async Task EmoteStats()
             {
                 var embed = StatsHelper.GetMostEmoteUsed(DateTime.Now.AddDays(-1), DateTime.Now, 15);
-                Context.Channel.SendMessageAsync("", false, embed.Build());
+                await Context.Channel.SendMessageAsync("", false, embed.Build());
             }
             // messages
             // reactions
@@ -68,8 +68,8 @@ namespace ETHDINFKBot.Modules
             public async Task AllStats()
             {
                 // TODO MEssage that its posting all
-                MessagesStats();
-                EmoteStats();
+                await MessagesStats();
+                await EmoteStats();
             }
 
             [Command("messages")]
@@ -90,12 +90,10 @@ namespace ETHDINFKBot.Modules
             public async Task EmoteStats()
             {
                 var embed = StatsHelper.GetMostEmoteUsed(DateTime.Now.AddDays(-7), DateTime.Now, 15);
-                Context.Channel.SendMessageAsync("", false, embed.Build());
+                await Context.Channel.SendMessageAsync("", false, embed.Build());
             }
-
-
-
         }
+
         [Group("monthly")]
         public class MonthlyStats : ModuleBase<SocketCommandContext>
         {
@@ -103,8 +101,8 @@ namespace ETHDINFKBot.Modules
             public async Task AllStats()
             {
                 // TODO MEssage that its posting all
-                MessagesStats();
-                EmoteStats();
+                await MessagesStats();
+                await EmoteStats();
             }
 
             [Command("messages")]
@@ -125,7 +123,7 @@ namespace ETHDINFKBot.Modules
             public async Task EmoteStats()
             {
                 var embed = StatsHelper.GetMostEmoteUsed(DateTime.Now.AddMonths(-1), DateTime.Now, 15);
-                Context.Channel.SendMessageAsync("", false, embed.Build());
+                await Context.Channel.SendMessageAsync("", false, embed.Build());
             }
         }
 
@@ -133,13 +131,12 @@ namespace ETHDINFKBot.Modules
         public class YearlyStats : ModuleBase<SocketCommandContext>
         {
 
-
             [Command("all")]
             public async Task AllStats()
             {
                 // TODO MEssage that its posting all
-                MessagesStats();
-                EmoteStats();
+                await MessagesStats();
+                await EmoteStats();
             }
 
             [Command("messages")]
@@ -160,11 +157,8 @@ namespace ETHDINFKBot.Modules
             public async Task EmoteStats()
             {
                 var embed = StatsHelper.GetMostEmoteUsed(DateTime.Now.AddYears(-1), DateTime.Now, 15);
-                Context.Channel.SendMessageAsync("", false, embed.Build());
+                await Context.Channel.SendMessageAsync("", false, embed.Build());
             }
-
-
-
         }
 
         [Group("all")]
@@ -176,8 +170,8 @@ namespace ETHDINFKBot.Modules
             public async Task AllStats()
             {
                 // TODO MEssage that its posting all
-                MessagesStats();
-                EmoteStats();
+                await MessagesStats();
+                await EmoteStats();
             }
 
             [Command("messages")]
@@ -198,16 +192,8 @@ namespace ETHDINFKBot.Modules
             public async Task EmoteStats()
             {
                 var embed = StatsHelper.GetMostEmoteUsed(DateTime.Now.AddYears(-1), DateTime.Now, 15);
-                Context.Channel.SendMessageAsync("", false, embed.Build());
+                await Context.Channel.SendMessageAsync("", false, embed.Build());
             }
-
-
-
-
         }
-
-
-
-
     }
 }

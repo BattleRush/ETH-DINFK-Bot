@@ -329,7 +329,7 @@ namespace ETHDINFKBot.Helpers
             }
             catch (Exception ex)
             {
-                spamChannel.SendMessageAsync(ex.ToString()); // Send error message for today command
+                await spamChannel.SendMessageAsync(ex.ToString()); // Send error message for today command
             }
         }
 

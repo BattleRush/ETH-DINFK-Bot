@@ -20,6 +20,7 @@ namespace ETHBot.DataLayer.Data.ETH.Food
         public bool VegetarianPreference { get; set; }
         public bool VeganPreference { get; set; }
 
-        //public bool FullNutritions { get; set; }
+        public bool FullNutritions { get; set; }
+        public bool DisplayAllergies { get; set; }
     }
 }
