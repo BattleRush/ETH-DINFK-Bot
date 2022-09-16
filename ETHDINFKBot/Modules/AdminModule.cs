@@ -637,7 +637,7 @@ namespace ETHDINFKBot.Modules
             {
                 var author = Context.Message.Author;
                 var guildUser = Context.Message.Author as SocketGuildUser;
-                if (!(author.Id == ETHDINFKBot.Program.ApplicationSetting.Owner || !guildUser.GuildPermissions.ManageChannels))
+                if (!(author.Id == ETHDINFKBot.Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels))
                 {
                     await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -747,7 +747,7 @@ namespace ETHDINFKBot.Modules
             {
                 var author = Context.Message.Author;
                 var guildUser = Context.Message.Author as SocketGuildUser;
-                if (!(author.Id == ETHDINFKBot.Program.ApplicationSetting.Owner || !guildUser.GuildPermissions.ManageChannels))
+                if (!(author.Id == ETHDINFKBot.Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels))
                 {
                     await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -788,7 +788,7 @@ Total todays menus: {allTodaysMenus.Count}");
             {
                 var author = Context.Message.Author;
                 var guildUser = Context.Message.Author as SocketGuildUser;
-                if (!(author.Id == ETHDINFKBot.Program.ApplicationSetting.Owner || !guildUser.GuildPermissions.ManageChannels))
+                if (!(author.Id == ETHDINFKBot.Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels))
                 {
                     await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
