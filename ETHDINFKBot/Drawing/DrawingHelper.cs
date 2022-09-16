@@ -524,7 +524,7 @@ namespace ETHDINFKBot.Drawing
                     Color = WhiteColor,
                     TextEncoding = SKTextEncoding.Utf8,
                     IsAntialias = true,
-                    FakeBoldText = true
+                    FakeBoldText = false
                 };
             }
         }
@@ -540,7 +540,7 @@ namespace ETHDINFKBot.Drawing
                     Color = WhiteColor,
                     TextEncoding = SKTextEncoding.Utf8,
                     IsAntialias = true,
-                    FakeBoldText = true
+                    FakeBoldText = false
                 };
             }
         }

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
@@ -682,18 +683,18 @@ namespace ETHDINFKBot.Helpers
         public static MenuImage GetImageForFood(Menu menu)
         {
             // First query german then english
-            var menuImage = GetImageForFood(menu, "de");
+            var menuImage = GetImageForFood(menu, "de").Result;
             if (menuImage == null)
-                menuImage = GetImageForFood(menu, "en");
+                menuImage = GetImageForFood(menu, "en").Result;
 
             return menuImage;
         }
 
         // TODO Decide on the order for different mensas
-        private static MenuImage GetImageForFood(Menu menu, string language)
+        private static async Task<MenuImage> GetImageForFood(Menu menu, string language)
         {
             List<string> images = new List<string>();
-
+            HttpClient client = new HttpClient();
             var dbImages = FoodDBManager.GetMenuImages(menu.Description, language);
             if (dbImages.Count > 0)
             {
@@ -702,7 +703,27 @@ namespace ETHDINFKBot.Helpers
             else
             {
                 var imageLinks = GetImageFromGoogle(menu.Description, language);
-                dbImages = FoodDBManager.CreateMenuImages(imageLinks, menu.Description, language);
+
+                // TODO handle images which get invalidated after a while
+                var successfullyResolvedImages = new List<string>();
+                foreach (var menuImageUrl in imageLinks)
+                {
+                    try
+                    {
+                        var imageResponse = await client.GetAsync(menuImageUrl);
+                        if (imageResponse.IsSuccessStatusCode)
+                        {
+                            successfullyResolvedImages.Add(menuImageUrl);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // TODO Log?
+                    }
+                }
+
+                
+                dbImages = FoodDBManager.CreateMenuImages(successfullyResolvedImages, menu.Description, language);
 
                 if (dbImages.Count > 0)
                     return dbImages.First();

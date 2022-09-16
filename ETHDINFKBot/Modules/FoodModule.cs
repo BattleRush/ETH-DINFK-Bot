@@ -37,16 +37,17 @@ namespace ETHDINFKBot.Modules
 
         // Temp solution to cache results
         static FoodDBManager FoodDBManager = FoodDBManager.Instance();
-        private SKBitmap GetFoodImage(Menu menu, int imgSize = 192)
+        private (SKBitmap Bitmap, int ImageId) GetFoodImage(Menu menu, int imgSize = 192)
         {
             try
             {
                 using (var webClient = new WebClient())
                 {
+                    // TODO Fallback if the image cant be resolved
                     var menuImg = FoodDBManager.GetBestMenuImage(menu.MenuImageId ?? -1);
                     var imgBytes = webClient.DownloadData(menuImg?.MenuImageUrl ?? Program.Client.CurrentUser.GetAvatarUrl());
                     if (imgBytes == null)
-                        return null;
+                        return (null, -1);
 
                     var bitmap = SKBitmap.Decode(imgBytes);
                     if (bitmap != null)
@@ -67,24 +68,32 @@ namespace ETHDINFKBot.Modules
 
                         var resizedBitmap = bitmap.Resize(new SKSizeI(width, height), SKFilterQuality.High); //Resize to the canvas
 
-                        return resizedBitmap;
+                        return (resizedBitmap, menuImg?.MenuImageId ?? -1);
                     }
                     // TODO decide which image to return here
-                    return null;
+                    return (null, -1);
                 }
             }
             catch (Exception ex)
             {
-                return null;
+                return (null, -1);
             }
         }
-        private (int UsedWidth, int UsedHeight) DrawMenu(SKCanvas canvas, Menu menu, int left, int top, int colWidth, MenuUserSetting menuUserSettings)
+        private (int UsedWidth, int UsedHeight) DrawMenu(SKCanvas canvas, Menu menu, int left, int top, int colWidth, MenuUserSetting menuUserSettings, int favRestaurantCount, bool debug)
         {
             var foodImage = GetFoodImage(menu);
 
             int usedHeight = 0;
 
-            canvas.DrawText(menu.Name, new SKPoint(left, top), DrawingHelper.TitleTextPaint);
+            string menuName = menu.Name;
+
+            if (debug)
+                menuName += $" (Id: {menu.MenuId})";
+
+            var titleFont = DrawingHelper.TitleTextPaint;
+            titleFont.FakeBoldText = true;
+
+            canvas.DrawText(menuName, new SKPoint(left, top), titleFont);
             usedHeight += 20;
 
             usedHeight += (int)DrawingHelper.DrawTextArea(
@@ -122,7 +131,7 @@ namespace ETHDINFKBot.Modules
             }
 
             usedHeight += 5;
-            canvas.DrawText("CHF " + menu.Amount.ToString("#,##0.00"), new SKPoint(left, usedHeight), DrawingHelper.TitleTextPaint);
+            canvas.DrawText("CHF " + menu.Amount.ToString("#,##0.00"), new SKPoint(left, usedHeight), titleFont);
             usedHeight += 15;
 
 
@@ -174,7 +183,7 @@ namespace ETHDINFKBot.Modules
                         allergyIconOffset++;
                     }
 
-                    if(allergyIconOffset > 0)
+                    if (allergyIconOffset > 0)
                         usedHeight += 40;
                 }
             }
@@ -213,6 +222,12 @@ namespace ETHDINFKBot.Modules
                 iconOffset++;
             }
 
+            if (menuUserSettings == null && favRestaurantCount == 0)
+            {
+                // User hasnt favourited any menu preference or locations 
+                // TODO draw hint on image?
+            }
+
             // TODO Icons for these 2 or are these even provided
             /*
             if (menu.IsGlutenFree ?? false)
@@ -234,26 +249,53 @@ namespace ETHDINFKBot.Modules
             if (iconOffset > 0)
                 usedHeight += 40;
 
-            if (foodImage != null)
+            if (foodImage.Bitmap != null)
             {
-                canvas.DrawBitmap(foodImage, new SKPoint(left, usedHeight));
-                usedHeight += foodImage.Height + 20; // Add 20 to bottom padding
+                canvas.DrawBitmap(foodImage.Bitmap, new SKPoint(left, usedHeight));
+                if (debug)
+                {
+                    SKColor shadowColor = new SKColor(0, 0, 0, 128); 
+
+                    var debugImageIdFont = DrawingHelper.LargeTextPaint;
+                    debugImageIdFont.FakeBoldText = true;
+                    debugImageIdFont.BlendMode = SKBlendMode.Overlay;
+                    debugImageIdFont.BlendMode = SKBlendMode.Xor;
+                    debugImageIdFont.BlendMode = SKBlendMode.Screen;
+   
+                    //debugImageIdFont.BlendMode = SKBlendMode.SoftLight;
+                    //debugImageIdFont.BlendMode = SKBlendMode.SrcIn;
+                    //debugImageIdFont.IsLinearText = true;
+
+                    SKPaint shadowPaint = new SKPaint()
+                    {
+                        Color = shadowColor,
+                        //BlendMode = SKBlendMode.SoftLight
+                    };
+
+                    canvas.DrawRect(left, usedHeight, foodImage.Bitmap.Width, 40, shadowPaint);
+
+                    //debugImageIdFont.ImageFilter = SKImageFilter.CreateDropShadow(2, 2, 4, 4, shadowColor);
+                    canvas.DrawText("ImageId: " + foodImage.ImageId, new SKPoint(left + 7, usedHeight + 25), debugImageIdFont);
+                }
+
+                usedHeight += foodImage.Bitmap.Height + 20; // Add 20 to bottom padding
             }
 
             return (colWidth, usedHeight);
         }
 
-        private Dictionary<ETHBot.DataLayer.Data.ETH.Food.Restaurant, List<Menu>> GetDefaultMenuList(MealTime mealtime, MenuUserSetting userSettings)
+        private Dictionary<Restaurant, List<Menu>> GetDefaultMenuList(MealTime mealtime, MenuUserSetting userSettings)
         {
-            var currentMenus = new Dictionary<ETHBot.DataLayer.Data.ETH.Food.Restaurant, List<Menu>>();
+            var currentMenus = new Dictionary<Restaurant, List<Menu>>();
 
-            var defaultLunchRestaurants = new List<ETHBot.DataLayer.Data.ETH.Food.Restaurant>()
+            var defaultLunchRestaurants = new List<Restaurant>()
             {
                 FoodDBManager.GetRestaurantByName("ETH Polymensa (Lunch)"),
                 FoodDBManager.GetRestaurantByName("UZH Zentrum Lower Mensa (Lunch)")
+                // TODO Add Upper mensa when semester starts
             };
 
-            var defaultDinnerRestaurants = new List<ETHBot.DataLayer.Data.ETH.Food.Restaurant>()
+            var defaultDinnerRestaurants = new List<Restaurant>()
             {
                 FoodDBManager.GetRestaurantByName("ETH Polymensa (Dinner)"),
                 FoodDBManager.GetRestaurantByName("UZH Zentrum Lower Mensa (Dinner)")
@@ -285,7 +327,7 @@ namespace ETHDINFKBot.Modules
 
         [Command("food")]
         [Priority(1)]
-        public async Task DrawFoowImages(string time = "")
+        public async Task DrawFoowImages(string time = "", bool debug = false)
         {
             try
             {
@@ -304,11 +346,12 @@ namespace ETHDINFKBot.Modules
                 else if (time.ToLower() == "dinner")
                     meal = MealTime.Dinner;
 
-                // Only allow bot owner to reload cache
                 var author = Context.Message.Author;
-
-
                 var userId = author.Id;
+
+                // Only allow bot owner go into debug mode
+                if (userId != Program.ApplicationSetting.Owner)
+                    debug = false;
 
                 var userFavRestaurants = FoodDBManager.GetUsersFavouriteRestaurants(userId);
                 var userSettings = FoodDBManager.GetUserFoodSettings(userId);
@@ -348,14 +391,18 @@ namespace ETHDINFKBot.Modules
                     }
                 }
 
-                if(currentMenus.Count == 0)
+                if (currentMenus.Count == 0)
                 {
-                    if(userFavRestaurants.Count == 0)
-                        await Context.Message.Channel.SendMessageAsync("No menus found, likely there are none available today :(", messageReference: new MessageReference(Context.Message.Id));
+                    string weekendString = "";
+                    if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday || DateTime.Now.DayOfWeek == DayOfWeek.Sunday)
+                        weekendString = Environment.NewLine + "Also remember its weekend :D";
+
+                    if (userFavRestaurants.Count == 0)
+                        await Context.Message.Channel.SendMessageAsync("No menus found, likely there are none available today :(" + weekendString, messageReference: new MessageReference(Context.Message.Id));
                     else
                         await Context.Message.Channel.SendMessageAsync(@$"No menus found, likely that you haven't favourited any restaurants for the current meal time: **{meal}**
-Type **{Program.CurrentPrefix}food fav** to see your current food settings and change them.
-It is also likely that there are no menus currently available today", messageReference: new MessageReference(Context.Message.Id));
+Type **{Program.CurrentPrefix}food fav** to see your current food settings and to also change them.
+It is also likely that there are no menus currently available today." + weekendString, messageReference: new MessageReference(Context.Message.Id));
 
                     return;
                 }
@@ -381,6 +428,9 @@ It is also likely that there are no menus currently available today", messageRef
 
                 int maxMenus = currentMenus.Count == 0 ? 0 : currentMenus.Values.Max(i => i.Count);
 
+                var largeFont = DrawingHelper.LargeTextPaint;
+                largeFont.FakeBoldText = true;
+
                 foreach (var restaurant in currentMenus)
                 {
                     int maxUsedHeight = 0;
@@ -396,8 +446,11 @@ It is also likely that there are no menus currently available today", messageRef
 
 
                     int currentTop = 0;
+                    string restaurantName = restaurant.Key.Name;
+                    if (debug)
+                        restaurantName += $" (Id: {restaurant.Key.RestaurantId})";
 
-                    canvas.DrawText(restaurant.Key.Name, new SKPoint(padding.Left, padding.Top + currentTop), DrawingHelper.LargeTextPaint); // TODO Correct paint?
+                    canvas.DrawText(restaurantName, new SKPoint(padding.Left, padding.Top + currentTop), largeFont); // TODO Correct paint?
 
                     currentTop += 25;
 
@@ -417,7 +470,7 @@ It is also likely that there are no menus currently available today", messageRef
 
                     foreach (var menu in restaurant.Value)
                     {
-                        (int usedWidth, int usedHeight) = DrawMenu(canvas, menu, padding.Left + column * colWidth, padding.Top + currentTop, colWidth, userSettings);
+                        (int usedWidth, int usedHeight) = DrawMenu(canvas, menu, padding.Left + column * colWidth, padding.Top + currentTop, colWidth, userSettings, userFavRestaurants.Count, debug);
 
                         currentWidth += usedWidth;
 
@@ -478,7 +531,12 @@ It is also likely that there are no menus currently available today", messageRef
                 if (attachments.Count > 0)
                     await Context.Channel.SendFilesAsync(attachments, messageReference: new MessageReference(Context.Message.Id));
 
-
+                if (userSettings == null && userFavRestaurants.Count == 0 && new Random().Next(1, 5) == 1)
+                {
+                    // User hasnt favourited any menu preference or locations 
+                    // Show hint in 20% of the cases
+                    await Context.Channel.SendMessageAsync($"You haven't set any menu preferences or any favourite mensa location. You can do this with {Program.CurrentPrefix}food fav", messageReference: new MessageReference(Context.Message.Id));
+                }
 
                 //    // Create the service.
                 //    var service = new CustomSearchAPIService(new BaseClientService.Initializer
@@ -546,7 +604,7 @@ It is also likely that there are no menus currently available today", messageRef
                 builder.AddField($"{Program.CurrentPrefix}food help", "This message :)");
                 builder.AddField($"{Program.CurrentPrefix}food <lunch|dinner>", $"Retreived food info. If the user has no settings then default mensas are retreived.{Environment.NewLine}" +
                     $"Optional: Time parameter 'lunch' or 'dinner'. If its not provided then the bot send currently appropriate menus depending on the time of day.");
-                builder.AddField($"{Program.CurrentPrefix}food fav", $"Edit your favourite restaurants and food preferences which are used when the user calls {Program.CurrentPrefix}food");
+                builder.AddField($"{Program.CurrentPrefix}food fav {Program.CurrentPrefix}food settings", $"Edit your favourite restaurants and food preferences which are used when the user calls {Program.CurrentPrefix}food");
                 builder.AddField($"{Program.CurrentPrefix}food allergies", "Informations about the Allergy icons");
                 builder.AddField($"{Program.CurrentPrefix}admin food help", "For admins");
 
@@ -559,13 +617,16 @@ It is also likely that there are no menus currently available today", messageRef
             {
                 var pathToAllergyImages = Path.Combine(Program.ApplicationSetting.BasePath, "Images", "Icons", "Food", "Allergies");
 
-                var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(600, 660);
+                var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(650, 650);
 
 
                 var Allergies = FoodDBManager.GetAllergies();
 
                 int usedHeight = 20; // padding
                 int left = 20;
+
+                var largeFont = DrawingHelper.LargeTextPaint;
+                largeFont.FakeBoldText = true;
 
                 foreach (var Allergy in Allergies)
                 {
@@ -579,7 +640,7 @@ It is also likely that there are no menus currently available today", messageRef
                     canvas.DrawBitmap(AllergyBitmap, new SKPoint(left, usedHeight));
 
 
-                    canvas.DrawText($"{Allergy.Name} / {Allergy.NameDE}", new SKPoint(left + 50, usedHeight + 28), DrawingHelper.LargeTextPaint);
+                    canvas.DrawText($"{Allergy.Name} / {Allergy.NameDE}", new SKPoint(left + 50, usedHeight + 28), largeFont);
 
                     usedHeight += 44;
                 }
@@ -590,6 +651,7 @@ It is also likely that there are no menus currently available today", messageRef
             }
 
             [Command("fav")]
+            [Alias("settings")]
             [Priority(10)]
             public async Task FoodSettings()
             {
@@ -603,7 +665,7 @@ It is also likely that there are no menus currently available today", messageRef
 
 
                 if (userMenuSetting == null)
-                    userMenuSetting = new ETHBot.DataLayer.Data.ETH.Food.MenuUserSetting();
+                    userMenuSetting = new MenuUserSetting();
 
                 // Get Current settings
                 // Get Current faved restaurants
