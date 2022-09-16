@@ -675,7 +675,7 @@ namespace ETHDINFKBot.Modules
 
                     var foodDBManager = FoodDBManager.Instance();
 
-                    var sqlFilePath = Path.Combine("Data", "SQL", "RestaurantBaseSetup.sql");
+                    var sqlFilePath = Path.Combine(Program.ApplicationSetting.BasePath, "Data", "SQL", "RestaurantBaseSetup.sql");
                     string sqlFileContent = File.ReadAllText(sqlFilePath);
 
                     using (var connection = new MySqlConnection(Program.ApplicationSetting.ConnectionStringsSetting.ConnectionString_Full))

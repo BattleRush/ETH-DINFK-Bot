@@ -156,7 +156,7 @@ namespace ETHDINFKBot.Modules
                 {
                     // Icons version
 
-                    var pathToAllergyImages = Path.Combine("Images", "Icons", "Food", "Allergies");
+                    var pathToAllergyImages = Path.Combine(Program.ApplicationSetting.BasePath, "Images", "Icons", "Food", "Allergies");
 
                     var allergyIds = FoodDBManager.GetMenuAllergyIds(menu);
 
@@ -181,7 +181,7 @@ namespace ETHDINFKBot.Modules
 
             // Insert if is vegan or vegetarian
             // TODO Load those bitmaps in an aux method
-            var pathToImage = Path.Combine("Images", "Icons", "Food");
+            var pathToImage = Path.Combine(Program.ApplicationSetting.BasePath, "Images", "Icons", "Food");
 
             // TODO Rework icon code
             int iconOffset = 0;
@@ -377,7 +377,7 @@ It is also likely that there are no menus currently available today", messageRef
 
                 List<Stream> streams = new List<Stream>();
 
-                var pathToImage = Path.Combine("Images", "Icons", "Food");
+                var pathToImage = Path.Combine(Program.ApplicationSetting.BasePath, "Images", "Icons", "Food");
 
                 int maxMenus = currentMenus.Count == 0 ? 0 : currentMenus.Values.Max(i => i.Count);
 
@@ -557,7 +557,7 @@ It is also likely that there are no menus currently available today", messageRef
             [Priority(10)]
             public async Task FoodAllergyInfo()
             {
-                var pathToAllergyImages = Path.Combine("Images", "Icons", "Food", "Allergies");
+                var pathToAllergyImages = Path.Combine(Program.ApplicationSetting.BasePath, "Images", "Icons", "Food", "Allergies");
 
                 var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(600, 660);
 
