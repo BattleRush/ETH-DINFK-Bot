@@ -12,6 +12,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
+using ETHBot.DataLayer.Data.ETH.Food;
 
 namespace ETHBot.DataLayer
 {
@@ -98,6 +99,18 @@ namespace ETHBot.DataLayer
 
         public DbSet<BotStartUpTime> BotStartUpTimes { get; set; }
         public DbSet<StoredKeyValuePair> StoredKeyValuePairs { get; set; }
+
+
+
+        public DbSet<Allergy> Allergies { get; set; }
+        public DbSet<DiscordUserFavouriteRestaturant> DiscordUserFavouriteRestaturants { get; set; }
+        public DbSet<Menu> Menus { get; set; }
+        public DbSet<MenuAllergy> MenuAllergies { get; set; }
+        public DbSet<MenuImage> MenuImages { get; set; }
+        public DbSet<MenuUserSetting> MenuUserSettings { get; set; }
+        public DbSet<Restaurant> Restaurants { get; set; }
+        public DbSet<RestaurantOpeningTime> RestaurantOpeningTimes { get; set; }
+
 
         /*
 

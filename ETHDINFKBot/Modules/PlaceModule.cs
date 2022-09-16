@@ -388,7 +388,7 @@ If you violate the server rules your pixels will be removed.
             var author = Context.Message.Author;
             if (author.Id != Program.ApplicationSetting.Owner)
             {
-                Context.Channel.SendMessageAsync("You aren't allowed to run this command.", false);
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command.", false);
                 return;
             }
 
@@ -400,7 +400,7 @@ If you violate the server rules your pixels will be removed.
             else
                 await Program.Client.SetGameAsync($" an active place", null, ActivityType.Watching);
 
-            Context.Channel.SendMessageAsync($"Set lock to {LockedBoard}", false);
+            await Context.Channel.SendMessageAsync($"Set lock to {LockedBoard}", false);
         }
 
 
@@ -410,7 +410,7 @@ If you violate the server rules your pixels will be removed.
             var author = Context.Message.Author;
             if (author.Id != Program.ApplicationSetting.Owner)
             {
-                Context.Channel.SendMessageAsync("You really thought you could run this, huh?", false);
+                await Context.Channel.SendMessageAsync("You really thought you could run this, huh?", false);
                 return;
             }
 
@@ -418,7 +418,7 @@ If you violate the server rules your pixels will be removed.
 
             var boardPixels = dbManager.RemovePixels(discordUserId, mins, x, x + xSize, y, y + ySize);
 
-            Context.Channel.SendMessageAsync($"Found {boardPixels} by {discordUserId} in the last {mins} which have been deleted", false);
+            await Context.Channel.SendMessageAsync($"Found {boardPixels} by {discordUserId} in the last {mins} which have been deleted", false);
         }
 
 
@@ -683,7 +683,7 @@ If you violate the server rules your pixels will be removed.
             var author = Context.Message.Author;
             if (author.Id != Program.ApplicationSetting.Owner)
             {
-                Context.Channel.SendMessageAsync("You aren't allowed to run this command || Yes this is because someone likes to spam db heavy commands ||", false);
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command || Yes this is because someone likes to spam db heavy commands ||", false);
                 return;
             }
 
@@ -1028,13 +1028,13 @@ If you violate the server rules your pixels will be removed.
         [Command("history")]
         public async Task PixelHistory(int x, int y)
         {
-            PixelHistoryTask(x, y, null); // TODO by person if not all?
+            await PixelHistoryTask(x, y, null); // TODO by person if not all?
         }
 
         [Command("history")]
         public async Task PixelHistory(string all)
         {
-            PixelHistoryTask(-1, -1, all); // TODO by person if not all?
+            await PixelHistoryTask(-1, -1, all); // TODO by person if not all?
         }
 
         public async Task PixelHistoryTask(int x = -1, int y = -1, string all = null)
@@ -1197,7 +1197,7 @@ If you violate the server rules your pixels will be removed.
         [Command("perf")]
         public async Task PlacePerf(int lastSize = 1440)
         {
-            PlacePerf(true, lastSize);
+            await PlacePerf(true, lastSize);
         }
 
         [Command("perf")]
@@ -1602,14 +1602,14 @@ If you violate the server rules your pixels will be removed.
                     }
                     else
                     {
-                        Context.Channel.SendMessageAsync($"REJECTED UNABLE_TO_CREATE_USER <@{userId}>");
+                        await Context.Channel.SendMessageAsync($"REJECTED UNABLE_TO_CREATE_USER <@{userId}>");
                         return;
                     }
                 }
 
                 if (!discordUser.AllowedPlaceMultipixel)
                 {
-                    Context.Channel.SendMessageAsync($"REJECTED NOT_VERIFIED <@{userId}>");
+                    await Context.Channel.SendMessageAsync($"REJECTED NOT_VERIFIED <@{userId}>");
                     return;
                 }
 
@@ -1619,7 +1619,7 @@ If you violate the server rules your pixels will be removed.
                 if (activeJobs.Count > 0)
                 {
                     // User is still in lock mode -> cancel
-                    Context.Channel.SendMessageAsync($"REJECTED ACTIVE_JOB_AVAILABLE <@{userId}>");
+                    await Context.Channel.SendMessageAsync($"REJECTED ACTIVE_JOB_AVAILABLE <@{userId}>");
                     return;
                 }
 
@@ -1693,16 +1693,16 @@ If you violate the server rules your pixels will be removed.
                     validInstructions.Add(singleInstruction);
                 }
 
-                Context.Channel.SendMessageAsync($"VERIFIED_{validInstructions.Count}/{instructions.Count}_INSTRUCTIONS <@{userId}>");
+                await Context.Channel.SendMessageAsync($"VERIFIED_{validInstructions.Count}/{instructions.Count}_INSTRUCTIONS <@{userId}>");
 
                 if (validInstructions.Count == 0)
                 {
-                    Context.Channel.SendMessageAsync($"CANCELED_NO_VALID_INSTRUCTIONS {instructions.Count} <@{userId}>");
+                    await Context.Channel.SendMessageAsync($"CANCELED_NO_VALID_INSTRUCTIONS {instructions.Count} <@{userId}>");
                     return;
                 }
 
                 var newJob = placeDBManager.CreatePlaceMultipixelJob(placeDiscordUser.PlaceDiscordUserId, validInstructions.Count);
-                Context.Channel.SendMessageAsync($"CREATED_JOB_{newJob.PlaceMultipixelJobId} <@{userId}>");
+                await Context.Channel.SendMessageAsync($"CREATED_JOB_{newJob.PlaceMultipixelJobId} <@{userId}>");
 
                 placeDBManager.UpdatePlaceMultipixelJobStatus(newJob.PlaceMultipixelJobId, MultipixelJobStatus.Importing);
 
@@ -1720,8 +1720,8 @@ If you violate the server rules your pixels will be removed.
 
                 placeDBManager.UpdatePlaceMultipixelJobStatus(newJob.PlaceMultipixelJobId, MultipixelJobStatus.Ready);
 
-                Context.Channel.SendMessageAsync($"JOB_{newJob.PlaceMultipixelJobId}_SETREADY_{packetCount}_PACKETS <@{userId}>");
-                Context.Channel.SendMessageAsync($"It may take up to 100 seconds for your job to go to ACTIVE status. Check with {Program.CurrentPrefix}place viewmultipixel your job status.");
+                await Context.Channel.SendMessageAsync($"JOB_{newJob.PlaceMultipixelJobId}_SETREADY_{packetCount}_PACKETS <@{userId}>");
+                await Context.Channel.SendMessageAsync($"It may take up to 100 seconds for your job to go to ACTIVE status. Check with {Program.CurrentPrefix}place viewmultipixel your job status.");
             }
             catch (Exception ex)
             {
@@ -1736,7 +1736,7 @@ If you violate the server rules your pixels will be removed.
             var placeDiscordUser = placeDBManager.GetPlaceDiscordUserByDiscordUserId(Context.Message.Author.Id);
             if (placeDiscordUser == null)
             {
-                Context.Channel.SendMessageAsync($"User has no jobs created.");
+                await Context.Channel.SendMessageAsync($"User has no jobs created.");
                 return;
             }
 
@@ -1775,7 +1775,7 @@ If you violate the server rules your pixels will be removed.
             builder.WithAuthor(Context.Message.Author);
             builder.WithCurrentTimestamp();
 
-            Context.Channel.SendMessageAsync("", false, builder.Build());
+            await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
 
@@ -1790,15 +1790,15 @@ If you violate the server rules your pixels will be removed.
 
             if (job.PlaceDiscordUserId != placeDiscordUser.PlaceDiscordUserId || job.Status > (int)MultipixelJobStatus.Active)
             {
-                Context.Channel.SendMessageAsync($"You can only cancel your own jobs and if they are in the active state.");
+                await Context.Channel.SendMessageAsync($"You can only cancel your own jobs and if they are in the active state.");
                 return;
             }
 
             var success = placeDBManager.UpdatePlaceMultipixelJobStatus(job.PlaceMultipixelJobId, MultipixelJobStatus.Canceled);
             if (success)
-                Context.Channel.SendMessageAsync($"Canceled the job. It may still continue the current job for up to 100 seconds.");
+                await Context.Channel.SendMessageAsync($"Canceled the job. It may still continue the current job for up to 100 seconds.");
             else
-                Context.Channel.SendMessageAsync($"Error while canceling job.");
+                await Context.Channel.SendMessageAsync($"Error while canceling job.");
         }
     }
     public class PlacePixelPerfEntry

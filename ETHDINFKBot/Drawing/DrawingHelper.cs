@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace ETHDINFKBot.Drawing
 {
@@ -403,6 +404,55 @@ namespace ETHDINFKBot.Drawing
             return croppedBitmap;
         }
 
+        // https://github.com/mono/SkiaSharp.Extended/issues/12
+        public static float DrawTextArea(SKCanvas canvas, SKPaint paint, float x, float y, float maxWidth, float lineHeight, string text)
+        {
+            var spaceWidth = paint.MeasureText(" ");
+            var lines = text.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+            lines = lines.SelectMany(l => SplitLine(paint, maxWidth, l, spaceWidth)).ToArray();
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+                canvas.DrawText(line.Replace("\r", "").Replace("\n", ""), x, y, paint);
+                y += lineHeight;
+            }
+
+            return y;
+        }
+
+        public static string[] SplitLine(SKPaint paint, float maxWidth, string text, float spaceWidth)
+        {
+            var result = new List<string>();
+
+            var words = text.Split(new[] { " " }, StringSplitOptions.None);
+
+            var line = new StringBuilder();
+            float width = 0;
+            foreach (var word in words)
+            {
+                var wordWidth = paint.MeasureText(word);
+                var wordWithSpaceWidth = wordWidth + spaceWidth;
+                var wordWithSpace = word + " ";
+
+                if (width + wordWidth > maxWidth)
+                {
+                    result.Add(line.ToString());
+                    line = new StringBuilder(wordWithSpace);
+                    width = wordWithSpaceWidth;
+                }
+                else
+                {
+                    line.Append(wordWithSpace);
+                    width += wordWithSpaceWidth;
+                }
+            }
+
+            result.Add(line.ToString());
+
+            return result.ToArray();
+        }
+
         public static async void SaveToDisk(string fileName, SKBitmap bitmap)
         {
             using (var data = bitmap.Encode(SKEncodedImageFormat.Png, 80))
@@ -473,7 +523,8 @@ namespace ETHDINFKBot.Drawing
                     TextSize = TitleTextSize,
                     Color = WhiteColor,
                     TextEncoding = SKTextEncoding.Utf8,
-                    IsAntialias = true
+                    IsAntialias = true,
+                    FakeBoldText = true
                 };
             }
         }
@@ -488,7 +539,8 @@ namespace ETHDINFKBot.Drawing
                     TextSize = LargeTextSize,
                     Color = WhiteColor,
                     TextEncoding = SKTextEncoding.Utf8,
-                    IsAntialias = true
+                    IsAntialias = true,
+                    FakeBoldText = true
                 };
             }
         }

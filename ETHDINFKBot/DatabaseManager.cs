@@ -1057,7 +1057,10 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.BotStartUpTimes.Max(i => i.StartUpTime);
+                    if(context.BotStartUpTimes.Count() > 0)
+                        return context.BotStartUpTimes.Max(i => i.StartUpTime);
+                    else
+                        return DateTime.MinValue;
                 }
             }
             catch (Exception ex)

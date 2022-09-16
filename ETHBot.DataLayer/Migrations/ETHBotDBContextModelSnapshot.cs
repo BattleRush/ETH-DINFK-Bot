@@ -16,7 +16,7 @@ namespace ETHBot.DataLayer.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.2")
+                .HasAnnotation("ProductVersion", "6.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.BotChannelSetting", b =>
@@ -605,6 +605,253 @@ namespace ETHBot.DataLayer.Migrations
                     b.ToTable("SavedMessages");
                 });
 
+            modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.Allergy", b =>
+                {
+                    b.Property<int>("AllergyId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("ImagePath")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("NameDE")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("AllergyId");
+
+                    b.ToTable("Allergies");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.DiscordUserFavouriteRestaturant", b =>
+                {
+                    b.Property<int>("RestaurantId")
+                        .HasColumnType("int")
+                        .HasColumnOrder(0);
+
+                    b.Property<ulong>("DiscordUserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnOrder(1);
+
+                    b.HasKey("RestaurantId", "DiscordUserId");
+
+                    b.HasIndex("DiscordUserId");
+
+                    b.ToTable("DiscordUserFavouriteRestaturants");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.Menu", b =>
+                {
+                    b.Property<int>("MenuId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<double>("Amount")
+                        .HasColumnType("double");
+
+                    b.Property<int>("Calories")
+                        .HasColumnType("int");
+
+                    b.Property<double>("Carbohydrates")
+                        .HasColumnType("double");
+
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("longtext");
+
+                    b.Property<double>("Fat")
+                        .HasColumnType("double");
+
+                    b.Property<bool?>("IsBalanced")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool?>("IsGlutenFree")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool?>("IsLactoseFree")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool?>("IsLocal")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool?>("IsVegan")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool?>("IsVegetarian")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int?>("MenuImageId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("longtext");
+
+                    b.Property<double>("Protein")
+                        .HasColumnType("double");
+
+                    b.Property<int>("RestaurantId")
+                        .HasColumnType("int");
+
+                    b.Property<double>("Salt")
+                        .HasColumnType("double");
+
+                    b.HasKey("MenuId");
+
+                    b.HasIndex("MenuImageId");
+
+                    b.HasIndex("RestaurantId");
+
+                    b.ToTable("Menus");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.MenuAllergy", b =>
+                {
+                    b.Property<int>("MenuId")
+                        .HasColumnType("int")
+                        .HasColumnOrder(0);
+
+                    b.Property<int>("AllergyId")
+                        .HasColumnType("int")
+                        .HasColumnOrder(1);
+
+                    b.HasKey("MenuId", "AllergyId");
+
+                    b.HasIndex("AllergyId");
+
+                    b.ToTable("MenuAllergies");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.MenuImage", b =>
+                {
+                    b.Property<int>("MenuImageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Available")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("ImageSearchTerm")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Language")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("ManualUpload")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("MenuImageUrl")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.HasKey("MenuImageId");
+
+                    b.ToTable("MenuImages");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.MenuUserSetting", b =>
+                {
+                    b.Property<ulong>("DiscordUserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<bool>("DisplayAllergies")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("FullNutritions")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("VeganPreference")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("VegetarianPreference")
+                        .HasColumnType("tinyint(1)");
+
+                    b.HasKey("DiscordUserId");
+
+                    b.ToTable("MenuUserSettings");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.Restaurant", b =>
+                {
+                    b.Property<int>("RestaurantId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("AdditionalInternalName")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("HasMenu")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("InternalName")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("IsOpen")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTimeOffset>("LastUpdate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Location")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MenuUrl")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("OffersDinner")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("OffersLunch")
+                        .HasColumnType("tinyint(1)");
+
+                    b.HasKey("RestaurantId");
+
+                    b.ToTable("Restaurants");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.RestaurantOpeningTime", b =>
+                {
+                    b.Property<int>("RestaurantOpeningTimeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<TimeOnly>("From")
+                        .HasColumnType("time(6)");
+
+                    b.Property<int>("MealType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RestaurantId")
+                        .HasColumnType("int");
+
+                    b.Property<TimeOnly>("Until")
+                        .HasColumnType("time(6)");
+
+                    b.Property<int>("Weekday")
+                        .HasColumnType("int");
+
+                    b.HasKey("RestaurantOpeningTimeId");
+
+                    b.HasIndex("RestaurantId");
+
+                    b.ToTable("RestaurantOpeningTimes");
+                });
+
             modelBuilder.Entity("ETHBot.DataLayer.Data.Fun.FavouriteDiscordEmote", b =>
                 {
                     b.Property<ulong>("DiscordEmoteId")
@@ -1176,6 +1423,83 @@ namespace ETHBot.DataLayer.Migrations
                     b.Navigation("DiscordMessage");
 
                     b.Navigation("SavedByDiscordUser");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.DiscordUserFavouriteRestaturant", b =>
+                {
+                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordUser", "DiscordUser")
+                        .WithMany()
+                        .HasForeignKey("DiscordUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ETHBot.DataLayer.Data.ETH.Food.Restaurant", "Restaurant")
+                        .WithMany()
+                        .HasForeignKey("RestaurantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DiscordUser");
+
+                    b.Navigation("Restaurant");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.Menu", b =>
+                {
+                    b.HasOne("ETHBot.DataLayer.Data.ETH.Food.MenuImage", "MenuImage")
+                        .WithMany()
+                        .HasForeignKey("MenuImageId");
+
+                    b.HasOne("ETHBot.DataLayer.Data.ETH.Food.Restaurant", "Restaurant")
+                        .WithMany()
+                        .HasForeignKey("RestaurantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MenuImage");
+
+                    b.Navigation("Restaurant");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.MenuAllergy", b =>
+                {
+                    b.HasOne("ETHBot.DataLayer.Data.ETH.Food.Allergy", "Allergy")
+                        .WithMany()
+                        .HasForeignKey("AllergyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ETHBot.DataLayer.Data.ETH.Food.Menu", "Menu")
+                        .WithMany()
+                        .HasForeignKey("MenuId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Allergy");
+
+                    b.Navigation("Menu");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.MenuUserSetting", b =>
+                {
+                    b.HasOne("ETHBot.DataLayer.Data.Discord.DiscordUser", "DiscordUser")
+                        .WithMany()
+                        .HasForeignKey("DiscordUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DiscordUser");
+                });
+
+            modelBuilder.Entity("ETHBot.DataLayer.Data.ETH.Food.RestaurantOpeningTime", b =>
+                {
+                    b.HasOne("ETHBot.DataLayer.Data.ETH.Food.Restaurant", "Restaurant")
+                        .WithMany()
+                        .HasForeignKey("RestaurantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Restaurant");
                 });
 
             modelBuilder.Entity("ETHBot.DataLayer.Data.Fun.FavouriteDiscordEmote", b =>

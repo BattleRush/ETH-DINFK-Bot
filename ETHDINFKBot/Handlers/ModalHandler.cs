@@ -30,7 +30,7 @@ namespace ETHDINFKBot.Handlers
             var emoteId = Convert.ToUInt64(discordEmoteId);
             var discordEmote = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(emoteId);
 
-            Context.Interaction.DeferAsync();
+            await Context.Interaction.DeferAsync();
 
             if (discordEmote == null)
             {
@@ -55,8 +55,8 @@ namespace ETHDINFKBot.Handlers
         {
             var emoteId = Convert.ToUInt64(discordEmoteId);
             string name = modal.CustomEmoteName.Replace("`", ""); // Dont allow people to escape the code blocks
-            
-            Context.Interaction.DeferAsync();
+
+            await Context.Interaction.DeferAsync();
 
             if (!name.All(Char.IsLetterOrDigit))
             {

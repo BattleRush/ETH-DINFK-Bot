@@ -35,6 +35,8 @@ using System.Threading.Tasks;
 using System.Globalization;
 using System.Web;
 using ETHBot.DataLayer.Data.Discord;
+using MySqlConnector;
+using ETHBot.DataLayer.Data.ETH.Food;
 
 namespace ETHDINFKBot.Modules
 {
@@ -160,9 +162,10 @@ namespace ETHDINFKBot.Modules
                 return;
             }
 
-            Context.Channel.SendMessageAsync("I'll be back!", false);
+            await Context.Channel.SendMessageAsync("I'll be back!", false);
             Process.GetCurrentProcess().Kill();
         }
+
 
         [Command("reboot")]
         public async Task AdminReboot()
@@ -364,7 +367,7 @@ namespace ETHDINFKBot.Modules
                         var logger = Program.Logger.CreateLogger<DailyCleanup>();
 
                         var job = new DailyCleanup(config, logger);
-                        job.StartAsync(token);
+                        await job.StartAsync(token);
                         break;
 
                     /* TODO Add more jobs if needed*/
@@ -452,7 +455,7 @@ namespace ETHDINFKBot.Modules
                         FirstAfternoonPostCount = user.FirstAfternoonPostCount
                     });
 
-                    Context.Message.Channel.SendMessageAsync($"Updated {user.Nickname ?? user.Username}");
+                    await Context.Message.Channel.SendMessageAsync($"Updated {user.Nickname ?? user.Username}");
                 }
                 catch (Exception ex)
                 {
@@ -460,7 +463,7 @@ namespace ETHDINFKBot.Modules
                 }
             }
 
-            Context.Message.Channel.SendMessageAsync($"Done");
+            await Context.Message.Channel.SendMessageAsync($"Done");
 
         }
 
@@ -624,6 +627,151 @@ namespace ETHDINFKBot.Modules
             }
         }
 
+        [Group("food")]
+        public class FoodAdminModule : ModuleBase<SocketCommandContext>
+        {
+            private static FoodDBManager FoodDBManager = FoodDBManager.Instance();
+
+            [Command("help")]
+            public async Task AdminHelp()
+            {
+                var author = Context.Message.Author;
+                var guildUser = Context.Message.Author as SocketGuildUser;
+                if (!(author.Id != ETHDINFKBot.Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels))
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                EmbedBuilder builder = new EmbedBuilder();
+
+                builder.WithTitle("Admin Help (Admin only)");
+
+                builder.WithColor(0, 0, 255);
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
+
+                builder.WithCurrentTimestamp();
+                builder.AddField($"{Program.CurrentPrefix}admin food help", "This message :)");
+                builder.AddField($"{Program.CurrentPrefix}admin food setup", "Sets Default values for Tables Restaurant and Allergies");
+                builder.AddField($"{Program.CurrentPrefix}admin food clear", "Clears today menus");
+                builder.AddField($"{Program.CurrentPrefix}admin food load", "Loads todays menus");
+                builder.AddField($"{Program.CurrentPrefix}admin food status", "Returns current menus status");
+
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
+            }
+
+            // TODO move this somewhere else or create insert script to check if all inserted
+            [Command("setup")]
+            public async Task SetupFood()
+            {
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                var foodDBManager = FoodDBManager.Instance();
+
+                var sqlFilePath = Path.Combine("Data", "SQL", "RestaurantBaseSetup.sql");
+                string sqlFileContent = File.ReadAllText(sqlFilePath);
+
+                using (var connection = new MySqlConnection(Program.ApplicationSetting.ConnectionStringsSetting.ConnectionString_Full))
+                {
+                    using (var command = new MySqlCommand(sqlFileContent, connection))
+                    {
+                        try
+                        {
+                            command.CommandTimeout = 5;
+
+                            connection.Open();
+
+                            int rowsAffected = command.ExecuteNonQuery();
+                            await Context.Channel.SendMessageAsync($"Affected {rowsAffected} row(s)", false);
+                        }
+                        catch (Exception ex)
+                        {
+
+                        }
+                    }
+                }
+            }
+
+            [Command("clear")]
+            public async Task ClearFood()
+            {
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                //var allRestaurants = FoodDBManager.GetAllRestaurants();
+
+                var allMenus = FoodDBManager.GetMenusByDay(DateTime.Now);
+                if (allMenus.Count > 0)
+                    await Context.Channel.SendMessageAsync($"Deleting {allMenus.Count} menu(s)", false);
+
+                foreach (var menu in allMenus)
+                    FoodDBManager.DeleteMenu(menu);
+
+                await Context.Channel.SendMessageAsync("Done clear", false);
+            }
+
+            [Command("load", RunMode = RunMode.Async)]
+            public async Task LoadFood()
+            {
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                await ClearFood(); // Ensure deleted
+                FoodHelper.LoadMenus();
+
+                await Context.Channel.SendMessageAsync("Done load", false);
+            }
+
+            [Command("status", RunMode = RunMode.Async)]
+            public async Task StatusFood()
+            {
+                var author = Context.Message.Author;
+                var guildUser = Context.Message.Author as SocketGuildUser;
+                if (!(author.Id != ETHDINFKBot.Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels))
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                EmbedBuilder builder = new EmbedBuilder();
+
+                builder.WithTitle("Food status");
+
+                builder.WithColor(0, 0, 255);
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
+
+                builder.WithCurrentTimestamp();
+                builder.WithAuthor(author);
+
+                var allRestaurants = FoodDBManager.GetAllRestaurants();
+                var allTodaysMenus = FoodDBManager.GetMenusByDay(DateTime.Now);
+
+                builder.WithDescription(@$"Total restaurants: {allRestaurants.Count}
+Total todays menus: {allTodaysMenus.Count}");
+
+                foreach (var restaurant in allRestaurants)
+                {
+                    var todaysMenus = FoodDBManager.GetMenusFromRestaurant(restaurant.RestaurantId, DateTime.Now);
+                    builder.AddField(restaurant.Name, $"{todaysMenus.Count()} menu(s)" + Environment.NewLine + String.Join(", ", todaysMenus.Select(i => $"{i.Name} **{i.Amount} CHF**")));
+                }
+
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
+            }
+        }
+
 
         [Group("rant")]
         public class RantAdminModule : ModuleBase<SocketCommandContext>
@@ -633,7 +781,7 @@ namespace ETHDINFKBot.Modules
             {
                 var author = Context.Message.Author;
                 var guildUser = Context.Message.Author as SocketGuildUser;
-                if (author.Id != ETHDINFKBot.Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels)
+                if (!(author.Id != ETHDINFKBot.Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels))
                 {
                     await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
@@ -878,7 +1026,7 @@ namespace ETHDINFKBot.Modules
                             Program.ChannelPositions.Add(new ChannelOrderInfo() { ChannelId = channel.Id, ChannelName = channel.Name, CategoryId = category.Id, CategoryName = category.Name, Position = channel.Position });
 
 
-                    Context.Message.Channel.SendMessageAsync($"Saved ordering for: {Program.ChannelPositions.Count}");
+                    await Context.Message.Channel.SendMessageAsync($"Saved ordering for: {Program.ChannelPositions.Count}");
                 }
                 else
                 {
@@ -897,7 +1045,7 @@ namespace ETHDINFKBot.Modules
                 var author = Context.Message.Author;
                 if (author.Id != Program.ApplicationSetting.Owner)
                 {
-                    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
                 }
                 var dbManager = DatabaseManager.Instance();
@@ -966,13 +1114,13 @@ namespace ETHDINFKBot.Modules
                             if (newMessage && message.Tags.Count > 0)
                             {
                                 tags += message.Tags.Count;
-                                logManager.ProcessEmojisAndPings(message.Tags, message.Author.Id, message as SocketMessage, message.Author as SocketGuildUser);
+                                await logManager.ProcessEmojisAndPings(message.Tags, message.Author.Id, message as SocketMessage, message.Author as SocketGuildUser);
                             }
                         }
                     }
                     watch.Stop();
 
-                    Context.Channel.SendMessageAsync($"Processed {messagesFromMsg.Count()} Added: {success} TagsCount: {tags} From: {SnowflakeUtils.FromSnowflake(messagesFromMsg.First()?.Id ?? 1)} To: {SnowflakeUtils.FromSnowflake(messagesFromMsg.Last()?.Id ?? 1)}" +
+                    await Context.Channel.SendMessageAsync($"Processed {messagesFromMsg.Count()} Added: {success} TagsCount: {tags} From: {SnowflakeUtils.FromSnowflake(messagesFromMsg.First()?.Id ?? 1)} To: {SnowflakeUtils.FromSnowflake(messagesFromMsg.Last()?.Id ?? 1)}" +
                         $" New Users: {newUsers} In: {watch.ElapsedMilliseconds}ms", false);
                 }
                 catch (Exception ex)
@@ -1005,7 +1153,7 @@ namespace ETHDINFKBot.Modules
                 var author = Context.Message.Author;
                 if (!(author.Id == Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels))
                 {
-                    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
                 }
 
@@ -1042,7 +1190,7 @@ namespace ETHDINFKBot.Modules
                         }
 
 
-                        Context.Channel.SendMessageAsync("", false, builder.Build());
+                        await Context.Channel.SendMessageAsync("", false, builder.Build());
 
                     }
                     else
@@ -1206,7 +1354,7 @@ namespace ETHDINFKBot.Modules
                     {
 
                         DatabaseManager.Instance().UpdateChannelSetting(guildChannel.Id, flag);
-                        Context.Channel.SendMessageAsync($"Set flag {flag} for channel {guildChannel.Name}", false);
+                        await Context.Channel.SendMessageAsync($"Set flag {flag} for channel {guildChannel.Name}", false);
                     }
                     else
                     {
@@ -1225,7 +1373,7 @@ namespace ETHDINFKBot.Modules
                 var author = Context.Message.Author;
                 if (author.Id != Program.ApplicationSetting.Owner)
                 {
-                    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
                 }
 
@@ -1236,7 +1384,7 @@ namespace ETHDINFKBot.Modules
                     foreach (var item in channels)
                     {
                         DatabaseManager.Instance().UpdateChannelSetting(item.DiscordChannelId, flag, 0, 0, true);
-                        Context.Channel.SendMessageAsync($"Set flag {flag} for channel {item.ChannelName}", false);
+                        await Context.Channel.SendMessageAsync($"Set flag {flag} for channel {item.ChannelName}", false);
                     }
                 }
             }
@@ -1269,7 +1417,7 @@ namespace ETHDINFKBot.Modules
                 inlineString = inlineString.Trim() + "```";
                 builder.AddField("BotPermissionType", inlineString);
 
-                Context.Channel.SendMessageAsync("", false, builder.Build());
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
         }
 
@@ -1282,7 +1430,7 @@ namespace ETHDINFKBot.Modules
                 var author = Context.Message.Author;
                 if (author.Id != Program.ApplicationSetting.Owner)
                 {
-                    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
                 }
 
@@ -1298,7 +1446,7 @@ namespace ETHDINFKBot.Modules
                 builder.AddField("admin place help", "This message :)");
                 builder.AddField("admin place verify <user> <true|false>", "Used to verify user for multipixel feature");
 
-                Context.Channel.SendMessageAsync("", false, builder.Build());
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
 
             [Command("verify")]
@@ -1307,7 +1455,7 @@ namespace ETHDINFKBot.Modules
                 var author = Context.Message.Author;
                 if (author.Id != Program.ApplicationSetting.Owner)
                 {
-                    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
                 }
 
@@ -1382,12 +1530,12 @@ namespace ETHDINFKBot.Modules
                 var author = Context.Message.Author;
                 if (author.Id != Program.ApplicationSetting.Owner)
                 {
-                    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
                 }
 
                 DatabaseManager.Instance().BanSubreddit(subredditName);
-                Context.Channel.SendMessageAsync("Banned " + subredditName, false);
+                await Context.Channel.SendMessageAsync("Banned " + subredditName, false);
 
             }
 
@@ -1397,18 +1545,18 @@ namespace ETHDINFKBot.Modules
                 var author = Context.Message.Author;
                 if (author.Id != Program.ApplicationSetting.Owner)
                 {
-                    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
                 }
 
                 var subreddits = DatabaseManager.Instance().GetSubredditsByStatus();
                 if (subreddits.Count > 0)
                 {
-                    Context.Channel.SendMessageAsync($"{subreddits.First().SubredditName} is currently running. Try again later", false);
+                    await Context.Channel.SendMessageAsync($"{subreddits.First().SubredditName} is currently running. Try again later", false);
                     return;
                 }
                 // TODO check if no scraper is active
-                Context.Channel.SendMessageAsync($"Started {subredditName} please wait :)", false);
+                await Context.Channel.SendMessageAsync($"Started {subredditName} please wait :)", false);
 
                 if (subredditName.ToLower() == "all")
                 {
@@ -1416,23 +1564,23 @@ namespace ETHDINFKBot.Modules
 
                     var allNames = allSubreddits.Select(i => i.SubredditName).ToList();
 
-                    Context.Channel.SendMessageAsync($"Starting", false);
+                    await Context.Channel.SendMessageAsync($"Starting", false);
 
                     for (int i = 0; i < allNames.Count; i += 100)
                     {
                         var items = allNames.Skip(i).Take(100);
-                        Context.Channel.SendMessageAsync($"{string.Join(", ", items)}", false);
+                        await Context.Channel.SendMessageAsync($"{string.Join(", ", items)}", false);
                         // Do something with 100 or remaining items
                     }
 
-                    Context.Channel.SendMessageAsync($"Please wait :)", false);
+                    await Context.Channel.SendMessageAsync($"Please wait :)", false);
 
 
-                    Task.Factory.StartNew(() => CommonHelper.ScrapReddit(allNames, Context.Channel));
+                    await Task.Factory.StartNew(() => CommonHelper.ScrapReddit(allNames, Context.Channel));
                 }
                 else
                 {
-                    Task.Factory.StartNew(() => CommonHelper.ScrapReddit(subredditName, Context.Channel));
+                    await Task.Factory.StartNew(() => CommonHelper.ScrapReddit(subredditName, Context.Channel));
                 }
             }
 
@@ -1443,12 +1591,12 @@ namespace ETHDINFKBot.Modules
 
                 foreach (var subreddit in subreddits)
                 {
-                    Context.Channel.SendMessageAsync($"{subreddit.SubredditName} is active", false);
+                    await Context.Channel.SendMessageAsync($"{subreddit.SubredditName} is active", false);
                 }
 
                 if (subreddits.Count == 0)
                 {
-                    Context.Channel.SendMessageAsync($"No subreddits are currently active", false);
+                    await Context.Channel.SendMessageAsync($"No subreddits are currently active", false);
                 }
             }
 
@@ -1458,7 +1606,7 @@ namespace ETHDINFKBot.Modules
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
                     SubredditManager subManager = new SubredditManager(subredditName, reddit, context);
-                    Context.Channel.SendMessageAsync($"{subManager.SubredditName} was added to the list", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
+                    await Context.Channel.SendMessageAsync($"{subManager.SubredditName} was added to the list", false); // NSFW: {subManager.SubredditInfo.IsNSFW}
                 }
             }
 

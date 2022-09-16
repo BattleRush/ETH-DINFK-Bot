@@ -146,6 +146,7 @@ namespace ETHDINFKBot
                        // TODO adjust for summer time in CET/CEST
                        services.AddCronJob<StartAllSubredditsJobs>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 * * *"; });// 4 am utc -> 5 am cet
 
+                       services.AddCronJob<FoodFetchJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 20 * *"; }); // At 4:20 UTC fetch current day menus
                        // TODO adjust for summer time in CET/CEST
                        //services.AddCronJob<GitPullMessageJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 21 * * TUE"; });// 22 CET each Tuesday
 
@@ -330,7 +331,7 @@ namespace ETHDINFKBot
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-//#if !DEBUG
+#if !DEBUG
                 string www = "/var/www/wss";
                 try
                 {
@@ -360,7 +361,7 @@ namespace ETHDINFKBot
                 {
                     Console.Write("Error while starting WS: " + ex.ToString());
                 }
-//#endif
+#endif
             }
             else
             {
@@ -373,15 +374,15 @@ namespace ETHDINFKBot
                     var context = new SslContext(SslProtocols.Tls12);
                     // Create a new WebSocket server
                     //PlaceServer = new PlaceServer(IPAddress.Any, 9000); // TODO FOR DEBUG
-                    PlaceServer.OptionKeepAlive = true;
-                    PlaceServer.OptionAcceptorBacklog = 8192;
+                    //PlaceServer.OptionKeepAlive = true;
+                    //PlaceServer.OptionAcceptorBacklog = 8192;
                     //PlaceServer.OptionNoDelay = true;
 
                     //PlaceServer.AddStaticContent(www, "/place");
 
                     // Start the server
                     Console.Write("Server starting...");
-                    PlaceServer.Start();
+                    //PlaceServer.Start();
                     Console.WriteLine("Done!");
                 }
                 catch (Exception ex)
