@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ETHBot.DataLayer.Migrations
 {
     [DbContext(typeof(ETHBotDBContext))]
-    [Migration("20220916134513_AddFoodNutritionAndAAllergiesUserSetting")]
+    [Migration("20220916134513_AddFoodNutritionAndAllergiesUserSetting")]
     partial class AddFoodNutritionAndAllergiesUserSetting
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
