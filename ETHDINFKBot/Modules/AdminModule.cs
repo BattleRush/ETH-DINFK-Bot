@@ -35,6 +35,8 @@ using System.Threading.Tasks;
 using System.Globalization;
 using System.Web;
 using ETHBot.DataLayer.Data.Discord;
+using MySqlConnector;
+using ETHBot.DataLayer.Data.ETH.Food;
 
 namespace ETHDINFKBot.Modules
 {
@@ -163,6 +165,7 @@ namespace ETHDINFKBot.Modules
             Context.Channel.SendMessageAsync("I'll be back!", false);
             Process.GetCurrentProcess().Kill();
         }
+
 
         [Command("reboot")]
         public async Task AdminReboot()
@@ -624,6 +627,114 @@ namespace ETHDINFKBot.Modules
             }
         }
 
+        [Group("food")]
+        public class FoodAdminModule : ModuleBase<SocketCommandContext>
+        {
+            private static FoodDBManager FoodDBManager = FoodDBManager.Instance();
+
+            [Command("help")]
+            public async Task AdminHelp()
+            {
+                var author = Context.Message.Author;
+                var guildUser = Context.Message.Author as SocketGuildUser;
+                if (!(author.Id != ETHDINFKBot.Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels))
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                EmbedBuilder builder = new EmbedBuilder();
+
+                builder.WithTitle("Admin Help (Admin only)");
+
+                builder.WithColor(0, 0, 255);
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
+
+                builder.WithCurrentTimestamp();
+                builder.AddField("admin food help", "This message :)");
+                builder.AddField("admin food setup", "Sets Default values for Tables Restaurant and Alergies");
+                builder.AddField("admin food clear", "Clears today menus");
+                builder.AddField("admin food load", "Loads todays menus");
+                builder.AddField("admin food status", "Returns current menus status");
+
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
+            }
+
+            // TODO move this somewhere else or create insert script to check if all inserted
+            [Command("setup")]
+            public async Task SetupFood()
+            {
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                var foodDBManager = FoodDBManager.Instance();
+
+                var sqlFilePath = Path.Combine("Data", "SQL", "RestaurantBaseSetup.sql");
+                string sqlFileContent = File.ReadAllText(sqlFilePath);
+
+                using (var connection = new MySqlConnection(Program.ApplicationSetting.ConnectionStringsSetting.ConnectionString_Full))
+                {
+                    using (var command = new MySqlCommand(sqlFileContent, connection))
+                    {
+                        try
+                        {
+                            command.CommandTimeout = 5;
+
+                            connection.Open();
+
+                            int rowsAffected = command.ExecuteNonQuery();
+                            await Context.Channel.SendMessageAsync($"Affected {rowsAffected}row(s)", false);
+                        }
+                        catch (Exception ex)
+                        {
+
+                        }
+                    }
+                }
+            }
+
+            [Command("clear")]
+            public async Task ClearFood()
+            {
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                //var allRestaurants = FoodDBManager.GetAllRestaurants();
+
+                var allMenus = FoodDBManager.GetMenusByDay(DateTime.Now);
+                await Context.Channel.SendMessageAsync($"Deleting {allMenus.Count} menu(s)", false);
+
+                foreach (var menu in allMenus)
+                    FoodDBManager.DeleteMenu(menu);
+
+                await Context.Channel.SendMessageAsync("Done", false);
+            }
+
+            [Command("load")]
+            public async Task LoadFood()
+            {
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                ClearFood(); // Ensure deleted
+                FoodHelper.LoadMenus();
+
+                await Context.Channel.SendMessageAsync("Done", false);
+            }
+        }
+
 
         [Group("rant")]
         public class RantAdminModule : ModuleBase<SocketCommandContext>
@@ -633,7 +744,7 @@ namespace ETHDINFKBot.Modules
             {
                 var author = Context.Message.Author;
                 var guildUser = Context.Message.Author as SocketGuildUser;
-                if (author.Id != ETHDINFKBot.Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels)
+                if (!(author.Id != ETHDINFKBot.Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels))
                 {
                     await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;

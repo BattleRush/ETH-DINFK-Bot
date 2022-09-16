@@ -1,0 +1,27 @@
+﻿INSERT INTO alergies VALUES (1, 'Cereals containing gluten', 'Glutenhaltiges Getreide', NULL) ON DUPLICATE KEY UPDATE AlergyId = AlergyId;
+INSERT INTO alergies VALUES (2, 'Crustacean', 'Krebstiere', NULL) ON DUPLICATE KEY UPDATE AlergyId = AlergyId;
+INSERT INTO alergies VALUES (3, 'Eggs', 'Eier', NULL) ON DUPLICATE KEY UPDATE AlergyId = AlergyId;
+INSERT INTO alergies VALUES (4, 'Fish', 'Fisch', NULL) ON DUPLICATE KEY UPDATE AlergyId = AlergyId;
+INSERT INTO alergies VALUES (5, 'Peanuts', 'Erdnüsse', NULL) ON DUPLICATE KEY UPDATE AlergyId = AlergyId;
+INSERT INTO alergies VALUES (6, 'Soya', 'Soja', NULL) ON DUPLICATE KEY UPDATE AlergyId = AlergyId;
+INSERT INTO alergies VALUES (7, 'Milk', 'Milch', NULL) ON DUPLICATE KEY UPDATE AlergyId = AlergyId;
+INSERT INTO alergies VALUES (8, 'Nuts', 'Hartschalenobst (Nüsse)', NULL) ON DUPLICATE KEY UPDATE AlergyId = AlergyId;
+INSERT INTO alergies VALUES (9, 'Celery', 'Sellerie', NULL) ON DUPLICATE KEY UPDATE AlergyId = AlergyId;
+INSERT INTO alergies VALUES (10, 'Mustard', 'Senf', NULL) ON DUPLICATE KEY UPDATE AlergyId = AlergyId;
+INSERT INTO alergies VALUES (11, 'Sesame', 'Sesam', NULL) ON DUPLICATE KEY UPDATE AlergyId = AlergyId;
+INSERT INTO alergies VALUES (12, 'Sulphur dioxide and sulphite', 'Schwefeldioxid und Sulfite', NULL) ON DUPLICATE KEY UPDATE AlergyId = AlergyId;
+INSERT INTO alergies VALUES (13, 'Lupines', 'Lupine', NULL) ON DUPLICATE KEY UPDATE AlergyId = AlergyId;
+INSERT INTO alergies VALUES (14, 'Mollusc', 'Weichtiere', NULL) ON DUPLICATE KEY UPDATE AlergyId = AlergyId;
+
+INSERT INTO restaurants VALUES (1, 'ETH Polymensa (Lunch)', 'https://ethz.ch/en/campus/getting-to-know/cafes-restaurants-shops/gastronomy/restaurants-and-cafeterias/zentrum/mensa-polyterrasse/_jcr_content/par/fullwidthimage/image.imageformat.fullwidth.289773918.jpg', 'https://polyterrasse.sv-restaurant.ch/en/menu/noon/', '12', 'mensa-polyterrasse', 1, 0, 1, 1, '0001-01-01 00:00:00.000000', 1) ON DUPLICATE KEY UPDATE RestaurantId = RestaurantId;
+INSERT INTO restaurants VALUES (2, 'ETH Polymensa (Diner)', 'https://ethz.ch/en/campus/getting-to-know/cafes-restaurants-shops/gastronomy/restaurants-and-cafeterias/zentrum/mensa-polyterrasse/_jcr_content/par/fullwidthimage/image.imageformat.fullwidth.289773918.jpg', 'https://polyterrasse.sv-restaurant.ch/en/menu/evening/', '12', 'mensa-polyterrasse', 0, 1, 1, 1, '0001-01-01 00:00:00.000000', 1) ON DUPLICATE KEY UPDATE RestaurantId = RestaurantId;
+INSERT INTO restaurants VALUES (3, 'ETH Clausiusbar', 'todo', 'https://clausiusbar.sv-restaurant.ch/en/menu/', '4', 'clausiusbar', 1, 0, 1, 1, '0001-01-01 00:00:00.000000', 1) ON DUPLICATE KEY UPDATE RestaurantId = RestaurantId;
+INSERT INTO restaurants VALUES (4, 'ETH Dozentenfoyer', 'todo', 'https://dozentenfoyer-eth.sv-restaurant.ch/de/menuplan/', '6', 'dozentenfoyer', 1, 0, 1, 1, '0001-01-01 00:00:00.000000', 1) ON DUPLICATE KEY UPDATE RestaurantId = RestaurantId;
+INSERT INTO restaurants VALUES (5, 'ETH Foodlab', 'todo', 'https://foodlab-eth.sv-restaurant.ch/de/menuplan/', '28', 'food-lab', 1, 0, 1, 1, '0001-01-01 00:00:00.000000', 1) ON DUPLICATE KEY UPDATE RestaurantId = RestaurantId;
+INSERT INTO restaurants VALUES (6, 'ETH food market - green day', 'todo', 'https://foodmarket-eth.sv-restaurant.ch/en/menus-foodmarket/green-day/', '19', 'food-market-green-day', 1, 0, 1, 1, '0001-01-01 00:00:00.000000', 2) ON DUPLICATE KEY UPDATE RestaurantId = RestaurantId;
+INSERT INTO restaurants VALUES (7, 'ETH food market - grill & bbq', 'todo', 'https://foodmarket-eth.sv-restaurant.ch/en/menus-foodmarket/grill-bbq/', '20', 'food-market-grill-bbq', 1, 0, 1, 1, '0001-01-01 00:00:00.000000', 2) ON DUPLICATE KEY UPDATE RestaurantId = RestaurantId;
+INSERT INTO restaurants VALUES (8, 'ETH food market - pizza & pasta', 'todo', 'https://foodmarket-eth.sv-restaurant.ch/en/menus-foodmarket/pizza-pasta/', '19', 'food-market-pizza-pasta', 1, 0, 1, 1, '0001-01-01 00:00:00.000000', 2) ON DUPLICATE KEY UPDATE RestaurantId = RestaurantId;
+INSERT INTO restaurants VALUES (9, 'UZH Zentrum Lower Mensa (Lunch)', '', 'https://www.mensa.uzh.ch/de/menueplaene/zentrum-mercato/DAY.html', 'zentrum-mercato', NULL, 1, 0, 1, 1, '0001-01-01 00:00:00.000000', 3) ON DUPLICATE KEY UPDATE RestaurantId = RestaurantId;
+INSERT INTO restaurants VALUES (10, 'UZH Zentrum Lower Mensa (Diner)', '', 'https://www.mensa.uzh.ch/de/menueplaene/zentrum-mercato-abend/DAY.html', 'zentrum-mercato-abend', NULL, 0, 1, 1, 1, '0001-01-01 00:00:00.000000', 3) ON DUPLICATE KEY UPDATE RestaurantId = RestaurantId;
+INSERT INTO restaurants VALUES (11, 'UZH Rämi 59', '', 'https://www.mensa.uzh.ch/de/menueplaene/raemi59/DAY.html', 'raemi59', NULL, 1, 0, 1, 1, '0001-01-01 00:00:00.000000', 3) ON DUPLICATE KEY UPDATE RestaurantId = RestaurantId;
+INSERT INTO restaurants VALUES (12, 'UZH Mensa Irchel', '', 'https://www.mensa.uzh.ch/de/menueplaene/mensa-uzh-irchel/DAY.html', 'mensa-uzh-irchel', NULL, 1, 0, 1, 1, '0001-01-01 00:00:00.000000', 4) ON DUPLICATE KEY UPDATE RestaurantId = RestaurantId;

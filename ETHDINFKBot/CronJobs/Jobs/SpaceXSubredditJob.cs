@@ -33,6 +33,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
         public override Task DoWork(CancellationToken cancellationToken)
         {
+            // TODO FIX
             try
             {
                 if (Program.Client == null)
@@ -40,6 +41,9 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                 _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
                 var guild = Program.Client.GetGuild(GuildId);
+                if (guild == null)
+                    return Task.CompletedTask;
+
                 var textChannel = guild.GetTextChannel(ChannelId);
 
                 var dbManager = DatabaseManager.Instance();

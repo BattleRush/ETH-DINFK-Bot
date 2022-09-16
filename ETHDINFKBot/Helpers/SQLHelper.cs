@@ -179,20 +179,43 @@ namespace ETHDINFKBot.Helpers
 
                                         switch (type)
                                         {
+                                            case "System.Int32":
+                                                fieldString = reader.GetInt32(i).ToString();
+                                                break;
+
                                             case "System.Int64":
                                                 fieldString = reader.GetInt64(i).ToString();
                                                 break;
 
                                             case "System.String":
-                                                fieldString = reader.GetValue(i).ToString()?.Replace("`", "");
+                                                fieldString = reader.GetValue(i).ToString();
+                                                break;
+
+                                            case "System.Boolean":
+                                                fieldString = reader.GetBoolean(i).ToString();
+                                                break;
+
+                                            case "System.DateTime":
+                                                fieldString = reader.GetDateTime(i).ToString();
+                                                break;
+
+                                            case "System.Decimal":
+                                                fieldString = reader.GetDecimal(i).ToString();
+                                                break;
+
+                                            case "System.Double":
+                                                fieldString = reader.GetDecimal(i).ToString();
                                                 break;
 
                                             default:
                                                 //fieldString = $"{type} is unknown";
-                                                fieldString = reader.GetValue(i).ToString()?.Replace("`", "");
+                                                fieldString = reader.GetValue(i).ToString();
 
                                                 break;
                                         }
+
+                                        // Prevent escaping from code blocks -> TODO in queryd allow it
+                                        fieldString = fieldString?.Replace("`", "").Trim();
 
                                         currentContentLength += fieldString.Length;
                                         row.Add(fieldString);

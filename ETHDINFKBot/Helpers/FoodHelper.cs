@@ -1,30 +1,18 @@
-﻿using HtmlAgilityPack;
+﻿using ETHBot.DataLayer.Data.Enums;
+using ETHBot.DataLayer.Data.ETH.Food;
+using ETHDINFKBot.Data;
+using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace ETHDINFKBot.Helpers
 {
-    public enum Restaurant
-    {
-        // TODO Reorganize ids
-        ETH_Polymensa = 0,
-        ETH_ClausiusBar = 6,
-        UZH_UpperMensa = 1,
-        UZH_LowerMensa = 2,
-        UZH_LowerMensa_Dinner = 3,
-        UZH_Lichthof_Rondel = 4,
-        UZH_Irchel = 5,
-        ETH_Dozentenfoyer = 7
-    }
-    public enum Location
-    {
-        Zentrum = 0,
-        Hoengg = 1
-    }
 
     public enum MealTime
     {
@@ -32,61 +20,319 @@ namespace ETHDINFKBot.Helpers
         Lunch = 1,
         Dinner = 2
     }
+
     public enum Language
     {
         English = 0,
         German = 1
     }
-
-    public class Menu
-    {
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public string MultilineDescription { get; set; }
-        public string FirstLine { get; set; }
-        public decimal Price { get; set; }
-        public bool IsVegan { get; set; }
-        public bool IsVegetarian { get; set; }
-        public bool IsLocal { get; set; }
-        public bool IsBalanced { get; set; }
-        public bool IsGlutenFree { get; set; }
-        public bool IsLactoseFree { get; set; }
-        public string ImgUrl { get; set; }
-    }
+    /*
+        public class Menu
+        {
+            public string Name { get; set; }
+            public string Description { get; set; }
+            public string MultilineDescription { get; set; }
+            public string FirstLine { get; set; }
+            public decimal Price { get; set; }
+            public bool IsVegan { get; set; }
+            public bool IsVegetarian { get; set; }
+            public bool IsLocal { get; set; }
+            public bool IsBalanced { get; set; }
+            public bool IsGlutenFree { get; set; }
+            public bool IsLactoseFree { get; set; }
+            public string ImgUrl { get; set; }
+        }*/
 
     public static class FoodHelper
     {
         private static GoogleEngine Google = new GoogleEngine();
 
+        private static FoodDBManager FoodDBManager = FoodDBManager.Instance();
 
-
-        public static string ToFriendlyString(this Restaurant restaurant)
+        public static void LoadMenus()
         {
-            switch (restaurant)
+            var avilableRestaurants = FoodDBManager.GetAllRestaurants();
+
+            foreach (var restaurant in avilableRestaurants)
             {
-                case Restaurant.ETH_Polymensa:
-                    return "12";
-                case Restaurant.UZH_UpperMensa:
-                    return "zentrum-mensa";
-                case Restaurant.UZH_LowerMensa:
-                    return "zentrum-mercato";
-                case Restaurant.UZH_LowerMensa_Dinner:
-                    return "zentrum-mercato-abend";
-                case Restaurant.UZH_Lichthof_Rondel:
-                    return "lichthof-rondell";
-                case Restaurant.UZH_Irchel:
-                    return "mensa-uzh-irchel";
-                default:
-                    return "unknown";
+                if (restaurant.IsOpen)
+                {
+                    //await Context.Channel.SendMessageAsync($"Processing {restaurant.Name}");
+
+                    List<Menu> menu = new List<Menu>();
+                    switch (restaurant.Location)
+                    {
+                        case RestaurantLocation.None:
+                            break;
+
+                        // SV Restaurant handler
+                        case RestaurantLocation.ETH_Zentrum:
+                        case RestaurantLocation.ETH_Hoengg:
+
+                            var svRestaurantMenuInfos = FoodHelper.GetSVRestaurantMenu(restaurant.MenuUrl);
+                            //await Context.Channel.SendMessageAsync($"Found for {restaurant.Name}: {svRestaurantMenuInfos.Count} menus");
+
+                            foreach (var svRestaurantMenu in svRestaurantMenuInfos)
+                            {
+                                try
+                                {
+                                    svRestaurantMenu.Menu.RestaurantId = restaurant.RestaurantId;// Link the menu to restaurant
+
+                                    var menuImage = FoodHelper.GetImageForFood(svRestaurantMenu.Menu);
+
+                                    // Set image
+                                    if (menuImage != null)
+                                        svRestaurantMenu.Menu.MenuImageId = menuImage.MenuImageId;
+
+                                    var dbMenu = FoodDBManager.CreateMenu(svRestaurantMenu.Menu);
+
+                                    // Link menu with alergies
+                                    foreach (var alergyId in svRestaurantMenu.AlergyIds)
+                                    {
+                                        FoodDBManager.CreateMenuAlergy(svRestaurantMenu.Menu.MenuId, alergyId);
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+
+                                }
+                            }
+                            break;
+
+                        // ZFV Restaurant handler
+                        case RestaurantLocation.UZH_Zentrum:
+                        case RestaurantLocation.UZH_Irchel:
+
+                            var uzhMenuInfos = FoodHelper.GetUzhMenus(FoodHelper.GetUZHDayOfTheWeek(), restaurant.InternalName);
+                            //await Context.Channel.SendMessageAsync($"Found for {restaurant.Name}: {uzhMenuInfos.Count} menus");
+
+                            foreach (var uzhMenuInfo in uzhMenuInfos)
+                            {
+                                try
+                                {
+                                    uzhMenuInfo.Menu.RestaurantId = restaurant.RestaurantId;// Link the menu to restaurant
+
+                                    var menuImage = FoodHelper.GetImageForFood(uzhMenuInfo.Menu);
+
+                                    // Set image
+                                    if (menuImage != null)
+                                        uzhMenuInfo.Menu.MenuImageId = menuImage.MenuImageId;
+
+                                    var dbMenu = FoodDBManager.CreateMenu(uzhMenuInfo.Menu);
+
+                                    // Link menu with alergies
+                                    foreach (var alergyId in uzhMenuInfo.AlergyIds)
+                                    {
+                                        FoodDBManager.CreateMenuAlergy(dbMenu.MenuId, alergyId);
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+
+                                }
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+
+                }
+                else
+                {
+                    //await Context.Channel.SendMessageAsync($"{restaurant.Name} is closed");
+                }
             }
+            //await Context.Channel.SendMessageAsync($"Done");
+
         }
 
 
 
+
+
+
+        /*
+                public static List<ETHBot.DataLayer.Data.ETH.Food.Restaurant> FetchETHRestaurant()
+                {
+                    List<ETHBot.DataLayer.Data.ETH.Food.Restaurant> allRestaurants = new List<ETHBot.DataLayer.Data.ETH.Food.Restaurant>();
+
+                    try
+                    {
+                        string ethRestaurantsListLink = "https://ethz.ch/en/campus/getting-to-know/cafes-restaurants-shops/gastronomy/restaurants-and-cafeterias/";
+
+                        Dictionary<int, string> ethRestaurantLocations = new Dictionary<int, string>();
+                        ethRestaurantLocations.Add(1, "zentrum.html");
+                        ethRestaurantLocations.Add(2, "hoenggerberg.html");
+
+                        foreach (var location in ethRestaurantLocations)
+                        {
+                            WebClient client = new WebClient();
+                            string html = client.DownloadString(ethRestaurantsListLink + location.Value);
+
+
+                            var allrestaurantsReturned = HandleEthRestaurantLocationInfo(html, location.Key);
+                            allRestaurants.AddRange(allrestaurantsReturned);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        int i = 1;
+                    }
+
+                    return allRestaurants;
+                }
+
+                private static List<ETHBot.DataLayer.Data.ETH.Food.Restaurant> HandleEthRestaurantLocationInfo(string html, int locationId)
+                {
+                    string xPath = "//a[@class='eth-link has-icon-before']";
+                    string baseUrl = "https://ethz.ch";
+
+                    var doc = new HtmlDocument();
+                    doc.LoadHtml(html);
+
+                    HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes(xPath);
+
+                    WebClient client = new WebClient();
+                    List<ETHBot.DataLayer.Data.ETH.Food.Restaurant> restaurants = new List<ETHBot.DataLayer.Data.ETH.Food.Restaurant>();
+
+                    foreach (var node in nodes)
+                    {
+                        string link = node.Attributes["href"].Value;
+
+                        if(!link.StartsWith("http"))
+                            link = baseUrl + link;
+
+                        string htmlRestaurant = client.DownloadString(link);
+
+                        var restaurant = HandleEthRestaurant(htmlRestaurant, locationId);
+                        restaurants.Add(restaurant);
+                    }
+
+                    return restaurants;
+                }
+
+                private static ETHBot.DataLayer.Data.ETH.Food.Restaurant HandleEthRestaurant(string html, int locationId)
+                {
+                    var doc = new HtmlDocument();
+                    doc.LoadHtml(html);
+
+                    ETHBot.DataLayer.Data.ETH.Food.Restaurant currentRestaurant = new ETHBot.DataLayer.Data.ETH.Food.Restaurant();
+
+                    currentRestaurant.Name = doc.DocumentNode.SelectSingleNode("//h1[@class='donthyphenate']").InnerText;
+                    currentRestaurant.Location = locationId;
+                    // TODO opening times parsing
+                    // TODO check if it has benus
+
+
+                    return currentRestaurant;
+                }*/
+
         // TODO Provide list of ids to search
-        private static List<Menu> GetPolymensaMenus(MealTime mealTime = MealTime.Lunch, Language language = Language.English, int id = 12)
+        public static List<(Menu Menu, List<int> AlergyIds)> GetSVRestaurantMenu(string link)
         {
-            return null;
+            try
+            {
+                WebClient client = new WebClient();
+                string html = client.DownloadString(link);
+
+                var doc = new HtmlDocument();
+                doc.LoadHtml(html);
+
+                var dateNode = doc.DocumentNode.SelectSingleNode("//*[@for=\"mp-tab1\"]");
+
+                var dateString = dateNode.InnerText.Replace("\t", "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+                // [0] has day Mo, Di
+                // [1] has the date
+
+
+                var menuMainNode = doc.DocumentNode.SelectSingleNode("//*[@id=\"menu-plan-tab1\"]");
+
+
+                var menusDoc = new HtmlDocument();
+                menusDoc.LoadHtml(menuMainNode.InnerHtml);
+
+                var menuItems = menusDoc.DocumentNode.SelectNodes("//*[@class=\"menu-item\"]");
+                List<(Menu, List<int>)> menus = new List<(Menu, List<int>)>();
+
+                foreach (var item in menuItems)
+                {
+                    var menuDoc = new HtmlDocument();
+                    menuDoc.LoadHtml(item.InnerHtml);
+
+                    Menu currentMenu = new Menu();
+
+                    currentMenu.Name = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menuline\"]")?.InnerText;
+
+                    string title = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-title\"]").InnerText;
+                    title = HttpUtility.HtmlDecode(title);
+
+                    bool isClausiusBar = false; // Clausius bar uses no proper food titles
+                    if (currentMenu.Name == null)
+                    {
+                        isClausiusBar = true;
+                        currentMenu.Name = title;
+                    }
+
+                    string description = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-description\"]").InnerText;
+
+                    currentMenu.Description = description;
+                    if (!isClausiusBar)
+                        currentMenu.Description = title + Environment.NewLine + description;
+
+                    var priceString = menuDoc.DocumentNode.SelectNodes("//*[@class=\"price\"]").FirstOrDefault()?.InnerText.Replace("\t", "") ?? "";
+                    double price = -1;
+                    if (priceString.Contains("STUD"))
+                    {
+                        // TODO Exception handling
+                        price = double.Parse(priceString.Split('\n', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(), NumberStyles.Any, CultureInfo.InvariantCulture);
+                    }
+                    currentMenu.Amount = price; // TODO Dozentenfoyer has no student prices
+
+                    if (menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-labels\"]")?.InnerText.ToLower().Contains("vegetarian") == true)
+                        currentMenu.IsVegetarian = true;
+
+                    if (menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-labels\"]")?.InnerText.ToLower().Contains("vegan") == true)
+                        currentMenu.IsVegan = true;
+                   
+                    string alergiesString = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"allergen-info\"]")?.InnerText.Replace("\t", "").Trim() ?? "";
+
+                    alergiesString = HttpUtility.HtmlDecode(alergiesString);
+                    if (alergiesString.Contains(":"))
+                        alergiesString = alergiesString.Split(":", StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? "";
+
+                    var alergyIdList = new List<int>();
+
+                    if (alergiesString.Contains(","))
+                    {
+                        var alergyIds = alergiesString.Split(",", StringSplitOptions.RemoveEmptyEntries);
+
+                        foreach (var alergyIdString in alergyIds)
+                        {
+                            if (int.TryParse(alergyIdString.Trim(), out int alergyId))
+                            {
+                                // TODO Save the ids
+                                alergyIdList.Add(alergyId);
+                            }
+                            else
+                            {
+
+                            }
+                        }
+                    }
+
+                    currentMenu.DateTime = DateTime.Now;//.AddDays(-1);
+
+                    menus.Add((currentMenu, alergyIdList));
+                }
+
+
+                return menus;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
 
         private static List<Menu> GetPolymensaMenu(MealTime mealTime = MealTime.Lunch, int id = 12)
@@ -110,7 +356,7 @@ namespace ETHDINFKBot.Helpers
             if (mealTime == MealTime.Dinner)
             {
                 //if (nodes.Count == 1)
-                    //return new List<Menu>() { new Menu() { Description = "Index out of size" } };
+                //return new List<Menu>() { new Menu() { Description = "Index out of size" } };
                 mainNode = nodes[1];
             }
 
@@ -133,7 +379,7 @@ namespace ETHDINFKBot.Helpers
                 {
                     Description = childNodes[1].InnerText,
                     Name = childNodes[0].InnerText,
-                    Price = decimal.Parse(priceString) // TODO fix formatting with the comma
+                    Amount = double.Parse(priceString) // TODO fix formatting with the comma
                 };
 
                 //Check if PolyMensa has menu with useless information
@@ -144,8 +390,8 @@ namespace ETHDINFKBot.Helpers
 
                 var lines = childNodes[1].ChildNodes.Where(i => i.Name == "strong" || i.Name == "#text").Select(i => i.InnerText.Replace("\"", "")).ToList();
                 menu.Description = string.Join(" ", lines);
-                menu.MultilineDescription = string.Join("\r\n", lines);// TODO check if atleast 2 lines to begin with
-                menu.FirstLine = lines.First(); // TODO check if atleast 2 lines to begin with
+                //menu.MultilineDescription = string.Join("\r\n", lines);// TODO check if atleast 2 lines to begin with
+                //menu.FirstLine = lines.First(); // TODO check if atleast 2 lines to begin with
 
                 polymensaMenus.Add(menu);
             }
@@ -159,6 +405,8 @@ namespace ETHDINFKBot.Helpers
 
                 // TODO Test if img resolves, if not use 2. result
 
+
+                /*
                 // 70% of the cases show sand because the food is legit dry as sand
                 if (menu.Description.ToLower().Contains("couscous") && new Random().Next(0, 10) < 7)
                 {
@@ -178,14 +426,14 @@ namespace ETHDINFKBot.Helpers
 
                     if (menu.ImgUrl == "")
                         menu.ImgUrl = Program.Client.CurrentUser.GetAvatarUrl();
-                }
+                }*/
 
             }
 
             return polymensaMenus;
         }
 
-        private static List<Menu> GetUzhMenus(string day, string mensa, Language language = Language.English)
+        public static List<(Menu Menu, List<int> AlergyIds)> GetUzhMenus(string day, string mensa, Language language = Language.English)
         {
             ///html/body/div[6]/section/div/section/div[2]/div[1]/div/div[2]/div/div/div/div/div/div/div/div/table/tbody[2]
             string xPath = "//*[@id=\"box-1\"]/ul/li/div/div/div";
@@ -203,63 +451,51 @@ namespace ETHDINFKBot.Helpers
             HtmlNode node = doc.DocumentNode.SelectSingleNode(xPath);
 
 
-            List<Menu> menus = new List<Menu>();
-            Menu currentMenu = new Menu();
+            List<(Menu, List<int>)> menus = new List<(Menu, List<int>)>();
+
 
             int step = 0;
             bool brHitOnce = false;
-            foreach (var child in node.ChildNodes)
+
+            string allMenuHtml = node.InnerHtml;
+
+            var menuHtmlList = allMenuHtml.Split("<h3>").Skip(1); // First entry is just a new line;
+
+            foreach (var menuHtml in menuHtmlList)
             {
-                // check why it didnt break the last menu
-                if(step > 0 && child.Name == "h3")
+                Menu currentMenu = new Menu();
+
+                try
                 {
-                    menus.Add(currentMenu);
-                    currentMenu = new Menu();
+                    var menuDoc = new HtmlDocument();
+                    menuDoc.LoadHtml("<h3>" + menuHtml); // Add h3 tag as it got removed by split
 
-                    step = 0; // end here
-                }
+                    var titleNode = menuDoc.DocumentNode.SelectSingleNode("//h3");
 
-                // TODO rework parsing logic
-                switch (step)
-                {
-                    case 0:
-                        // Detect Type/Price
-                        if (child.Name == "h3")
+                    currentMenu.Name = titleNode.InnerText.Split('|').FirstOrDefault()?.Trim();
+
+                    if (currentMenu.Name == "News")
+                        continue; // Non valid entry
+
+                    string priceField = titleNode.InnerText.Split('|').LastOrDefault()?.Trim().Replace("CHF", "");
+                    currentMenu.Amount = double.Parse(priceField.Split('/').First(), NumberStyles.Any, CultureInfo.InvariantCulture);
+
+                    var descriptionNode = menuDoc.DocumentNode.SelectSingleNode("//p[1]");
+                    var descriptionLines = descriptionNode.InnerHtml
+                        .Trim()
+                        .Split("<br>", StringSplitOptions.RemoveEmptyEntries)
+                        .Where(i => !i.Contains(":")) // These lines usually contain info about meat country of origin
+                        .Select(i => i.Trim())
+                        .ToList();
+
+                    currentMenu.Description = string.Join(Environment.NewLine, descriptionLines/*.Take(lines.Count - 1)*/);
+
+                    var images = menuDoc.DocumentNode.SelectNodes("//img");
+                    if (images != null)
+                    {
+                        foreach (var image in images)
                         {
-                            currentMenu.Name = child.InnerText.Split('|')[0];
-                            // Sometimes the price is missing idk why
-                            currentMenu.Price = child.InnerText.Contains("|") ? decimal.Parse(child.InnerText.Split('|')[1].Split('/')[0].Replace("CHF", "")) : 0;
-                            // TODO Detect pricing
-                            step++;
-                        }
-                        else
-                        {
-
-                        }
-
-                        break;
-                    case 1:
-                        // Detect Description
-                        if (child.Name == "p")
-                        {
-                            // !i.Contains(":") to remove the not needed country of origin field 
-                            var lines = child.InnerHtml.Trim().Split("<br>", StringSplitOptions.RemoveEmptyEntries).Where(i => !i.Contains(":")).ToList();
-                            currentMenu.Description = string.Join("", lines/*.Take(lines.Count - 1)*/);
-                            currentMenu.MultilineDescription = string.Join("\r\n", lines/*.Take(lines.Count - 1)*/);// TODO check if atleast 2 lines to begin with
-                            currentMenu.FirstLine = lines.FirstOrDefault(); // TODO check if atleast 2 lines to begin with
-                            // TODO Detect pricing
-                            step++;
-                        }
-                        else
-                        {
-
-                        }
-
-                        break;
-                    case 2:
-                        if (child.Name == "img")
-                        {
-                            var altValue = child.GetAttributeValue("alt", "");
+                            var altValue = image.GetAttributeValue("alt", "");
 
                             if (altValue == "vegan")
                                 currentMenu.IsVegan = true;
@@ -269,131 +505,241 @@ namespace ETHDINFKBot.Helpers
                                 currentMenu.IsLocal = true;
                             else if (altValue == "mni_ebp_enjoy")
                                 currentMenu.IsBalanced = true;
-                                
+
                             else if (altValue == "gluten todo")
                                 currentMenu.IsGlutenFree = true;
                             else if (altValue == "lactose todo")
                                 currentMenu.IsLactoseFree = true;
+                        }
+                    }
 
-                            // TODO Detect pricing
+                    var tables = menuDoc.DocumentNode.SelectNodes("//table");
+                    if (tables != null)
+                    {
+                        foreach (var table in tables)
+                        {
+                            var tableDoc = new HtmlDocument();
+                            tableDoc.LoadHtml(table.InnerHtml);
 
-                        }
-                        else if (child.Name == "#text")
-                        {
-                            // #text is usually filler
-                            // TODO If br hit twice go to next step
-                        }
-                        else if (child.Name == "br" && !brHitOnce)
-                        {
-                            // #text is usually filler
-                            // TODO If br hit twice go to next step
-                            brHitOnce = true;
-                        }
-                        else
-                        {
-                            // We no longer encounter images go to next step
-                            step++;
-                        }
-                        break;
-                    case 3:
-                        if (child.Name == "table")
-                        {
-                            // Nutritions
-                            step++;
-                        }
-                        else
-                        {
-                            // 
 
+                            if (tableDoc.DocumentNode.InnerText.ToLower().Contains("kcal"))
+                            {
+
+                                var tableCells = tableDoc.DocumentNode.SelectNodes("//td");
+
+                                // TODO CHECK TOTAL AMOUNT OF CELLS
+                                // 6 total rows
+                                // 0 = header
+                                // 1 = kcal
+                                // 2 = protein
+                                // 3 = fat
+                                // 4 = carbohydrates
+                                // 5 = salt
+
+                                // TODO check if this works properly try catch if it fails
+                                var caloriesText = tableCells[1].InnerText;
+
+                                //.SelectSingleNode("//table/tbody/tr[2]/td[2]");
+                                //string innerHtmlCalories = tableRows.InnerText;
+
+                                if (caloriesText.Contains("("))
+                                {
+                                    int start = caloriesText.IndexOf("(");
+                                    int end = caloriesText.IndexOf(" kcal");
+                                    caloriesText = caloriesText.Substring(start + 1, end - start - 1);
+
+                                    int.TryParse(caloriesText, out int caloriesAmount);
+                                    currentMenu.Calories = caloriesAmount;
+                                }
+
+                                var proteinText = tableCells[3].InnerText.Trim().Replace("g", "");
+                                var fatText = tableCells[5].InnerText.Trim().Replace("g", "");
+                                var carbohydratesText = tableCells[7].InnerText.Trim().Replace("g", "");
+                                var saltText = tableCells[9].InnerText.Trim().Replace("g", "");
+
+                                // TODO change int to decimal
+
+                                if (double.TryParse(proteinText, NumberStyles.Any, CultureInfo.InvariantCulture, out double proteinAmount))
+                                    currentMenu.Protein = proteinAmount;
+
+                                if (double.TryParse(fatText, NumberStyles.Any, CultureInfo.InvariantCulture, out double fatAmount))
+                                    currentMenu.Fat = fatAmount;
+
+                                if (double.TryParse(carbohydratesText, NumberStyles.Any, CultureInfo.InvariantCulture, out double carbsAmount))
+                                    currentMenu.Carbohydrates = carbsAmount;
+
+                                if (double.TryParse(saltText, NumberStyles.Any, CultureInfo.InvariantCulture, out double saltAmount))
+                                    currentMenu.Salt = saltAmount;
+
+
+                            }
                         }
-                        break;
-                    case 4:
-                        if (child.Name == "table")
+                    }
+
+                    var alergyIds = new List<int>();
+
+                    var alergyNode = menuDoc.DocumentNode.SelectNodes("//p").Last();
+                    if(alergyNode != null && alergyNode.InnerText.ToLower().Contains("allergikerinformationen"))
+                    {
+                        string alergiesString = alergyNode.InnerText.Trim();
+                        if (alergiesString.Contains(":"))
+                            alergiesString = alergiesString.Split(":", StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? "";
+
+                        if (alergiesString.Contains(","))
                         {
-                            // Balance
-                            step++;
+                            var alergyNames = alergiesString.Split(",", StringSplitOptions.RemoveEmptyEntries);
+
+
+                            foreach (var alergyName in alergyNames)
+                            {
+                                switch (alergyName.Trim())
+                                {
+                                    case "Glutenhaltiges Getreide":
+                                        alergyIds.Add(1);
+                                        break;
+
+                                    case "Krebstiere":
+                                        alergyIds.Add(2);
+                                        break;
+
+                                    case "Eier":
+                                        alergyIds.Add(3);
+                                        break;
+
+                                    case "Fisch":
+                                        alergyIds.Add(4);
+                                        break;
+
+                                    case "Erdnüsse":
+                                        alergyIds.Add(5);
+                                        break;
+
+                                    case "Soja":
+                                        alergyIds.Add(6);
+                                        break;
+
+                                    case "Milch":
+                                        alergyIds.Add(7);
+                                        break;
+
+                                    case "Hartschalenobst (Nüsse)":
+                                        alergyIds.Add(8);
+                                        break;
+
+                                    case "Sellerie":
+                                        alergyIds.Add(9);
+                                        break;
+
+                                    case "Senf":
+                                        alergyIds.Add(10);
+                                        break;
+
+                                    case "Sesam":
+                                        alergyIds.Add(11);
+                                        break;
+
+                                    case "Schwefeldioxid und Sulfite":
+                                        alergyIds.Add(12);
+                                        break;
+
+                                    case "Lupine":
+                                        alergyIds.Add(13);
+                                        break;
+
+                                    case "Weichtiere":
+                                        alergyIds.Add(14);
+                                        break;
+
+
+                                    default:
+                                        int i = 1;
+                                        break; // Shouldt enter TODO catch
+                                }
+                            }
                         }
-                        else
-                        {
-                            // 
+                    }
 
-                        }
-                        break;
-                    case 5:
-                        if (child.Name == "p")
-                        {
-                            // Alergies
+                    // TODO pass alergyIds for db
 
-                            menus.Add(currentMenu);
-                            currentMenu = new Menu();
-
-                            step = 0; // end here
-                        }
-                        else
-                        {
-                            // 
-
-                        }
-                        break;
-
-                    default:
-                        break;
+                    // TODO set permanent fix
+                    currentMenu.DateTime = DateTime.Now;//.AddDays(-1);
+                    menus.Add((currentMenu, alergyIds));
                 }
-
-
-            }
-
-
-            foreach (var menu in menus)
-            {
-                //break;
-                //await Context.Channel.SendMessageAsync($"**Menu: {menu.Description} Description: {menu.Name} IsVegan:{menu.IsVegan} IsLocal:{menu.IsLocal} Price: {menu.Price}**");
-
-                //var reply = new GoogleEngine().ImageSearch(menu.FirstLine.Replace("\"", "").Trim(), lang: "de");
-
-
-
-                //menu.ImgUrl = "https://cdn.discordapp.com/avatars/153929916977643521/5d6e05d48ab1b0599aa801ac4aebc1ea.png";
-                menu.ImgUrl = GetImageFromGoogle(menu.FirstLine, "de");
-
-                if (menu.ImgUrl == "")
-                    menu.ImgUrl = GetImageFromGoogle(menu.Description, "de");
-
-                // Incase the menu name is in english search as english
-                if (menu.ImgUrl == "")
-                    menu.ImgUrl = GetImageFromGoogle(menu.FirstLine, "en");
-                if (menu.ImgUrl == "")
-                    menu.ImgUrl = GetImageFromGoogle(menu.Description, "en");
-
-                if (menu.ImgUrl == "")
-                    menu.ImgUrl = Program.Client.CurrentUser.GetAvatarUrl();
-
-
-
-
-                //if (reply == "")
-                //await Context.Channel.SendMessageAsync("Image not found");
-                //else
-                //await Context.Channel.SendMessageAsync(reply);
-
-
-
-
-
-
+                catch (Exception ex)
+                {
+                    // TODO log these errors
+                }
             }
 
             return menus;
         }
 
-
-        private static string GetImageFromGoogle(string text, string lang = "de")
+        private static List<string> GetImageFromGoogle(string text, string lang = "de")
         {
             return Google.ImageSearch(text.Replace("\"", "").Trim(), lang: lang);
         }
 
-        public static Dictionary<Restaurant, List<Menu>> GetCurrentMenu(MealTime mealTime = MealTime.Lunch, Language language = Language.English, Location location = Location.Zentrum)
+
+        public static MenuImage GetImageForFood(Menu menu)
         {
+            // First query german then english
+            var menuImage = GetImageForFood(menu, "de");
+            if (menuImage == null)
+                menuImage = GetImageForFood(menu, "en");
+
+            return menuImage;
+        }
+
+        // TODO Decide on the order for different mensas
+        private static MenuImage GetImageForFood(Menu menu, string language)
+        {
+            List<string> images = new List<string>();
+
+            var dbImages = FoodDBManager.GetMenuImages(menu.Description, language);
+            if (dbImages.Count > 0)
+            {
+                return dbImages.First();
+            }
+            else
+            {
+                var imageLinks = GetImageFromGoogle(menu.Description, language);
+                dbImages = FoodDBManager.CreateMenuImages(imageLinks, menu.Description, language);
+
+                if (dbImages.Count > 0)
+                    return dbImages.First();
+            }
+
+            // Search with description without first line
+            // Only first line
+
+            /*
+            dbImages = FoodDBManager.GetMenuImages(menu.Name, language);
+            if (dbImages.Count > 0)
+            {
+                return dbImages.First();
+            }
+            else
+            {
+                var imageLinks = GetImageFromGoogle(menu.Name, language);
+                dbImages = FoodDBManager.CreateMenuImages(imageLinks, menu.Name, language);
+
+                if (dbImages.Count > 0)
+                    return dbImages.First();
+            }*/
+
+
+
+            return null;
+        }
+
+        /*private static string GetImageFromGoogle(string text, string lang = "de")
+        {
+            return Google.ImageSearch(text.Replace("\"", "").Trim(), lang: lang).FirstOrDefault();
+        }*/
+
+        public static string GetUZHDayOfTheWeek()
+        {
+            //return "freitag";
             string day = "montag";
 
             switch (DateTime.Now.DayOfWeek)
@@ -418,48 +764,10 @@ namespace ETHDINFKBot.Helpers
                     day = "n/a";
                     break;
             }
-            var lunchUzh = new List<Restaurant>()
-            {
-                //Restaurant.UZH_UpperMensa, // Disable till mid September 
-                Restaurant.UZH_LowerMensa,
-                Restaurant.UZH_Irchel
-                //Restaurant.UZH_Lichthof_Rondel
-            };
 
-            if (mealTime == MealTime.Dinner)
-            {
-                lunchUzh = new List<Restaurant>()
-                {
-                    //Restaurant.UZH_LowerMensa_Dinner // Also disabled till mid September
-                };
-            }
-
-            var menus = new Dictionary<Restaurant, List<Menu>>();
-
-            try
-            {
-                menus.Add(Restaurant.ETH_Polymensa, GetPolymensaMenu(mealTime, 12));
-                menus.Add(Restaurant.ETH_Dozentenfoyer, GetPolymensaMenu(mealTime, 6));
-                menus.Add(Restaurant.ETH_ClausiusBar, GetPolymensaMenu(mealTime, 4));
-            }
-            catch (Exception ex)
-            {
-            }
-
-            foreach (var restaurant in lunchUzh)
-            {
-                try
-                {
-                    menus.Add(restaurant, GetUzhMenus(day, ToFriendlyString(restaurant)));
-                }
-                catch (Exception ex)
-                {
-                }
-            }
-
-
-            return menus;
+            return day;
         }
+      
 
     }
 }

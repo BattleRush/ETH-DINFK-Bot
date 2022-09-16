@@ -107,7 +107,7 @@ namespace ETHDINFKBot
             }
         }
 
-        public string ImageSearch(string query, int start = 0, string lang = "en")
+        public List<string> ImageSearch(string query, int start = 0, string lang = "en")
         {
             //Try To Load The Cache If Caching Is Enabled And A Cache Has Not Been Loaded Yet
             try
@@ -126,7 +126,7 @@ namespace ETHDINFKBot
                 {
                     // TODO Dont return the first see first non empty
                     if(!string.IsNullOrWhiteSpace(cache[query][0]))
-                        return cache[query][0] ?? "";
+                        return cache[query].ToList() ?? new List<string>();
                 }
 
                 string queryUrl = $"https://www.google.com/search?q={HttpUtility.UrlEncode(query.ToLower())}&start={start}&hl={lang}&gl={lang}&safe=active"; //Create The Query URL
@@ -142,13 +142,13 @@ namespace ETHDINFKBot
 
                 var imageDiv = doc.DocumentNode.SelectNodes("//*[@class=\"idg8be\"]");
                 if (imageDiv == null)
-                    return "";
+                    return new List<string>();
 
                 var hrefs = imageDiv[0].SelectNodes("a").Select(i => i.GetAttributeValue("href", string.Empty));
                 string validImage = "";
 
                 if(hrefs.Count() == 0)
-                    return ""; // only if more than one was found proceed
+                    return new List<string>(); // only if more than one was found proceed
 
                 var links = new List<string>();
 
@@ -176,7 +176,7 @@ namespace ETHDINFKBot
                 }
                 
                 if(links.Count == 0)
-                    return ""; // No imgs found
+                    return new List<string>(); // No imgs found
 
                 //Save Cache If Enabled And The Response HTML Was Longer Than 1500 Characters (If It's Longer Than That, It Has Probably Gone Well)
                 if (response.Length > 1500 && cacheResponses)
@@ -188,7 +188,7 @@ namespace ETHDINFKBot
                     SaveCache(); //Save The Cache
                 }
 
-                return links[0];
+                return links;
 
                 /*
                 foreach (HtmlNode node in divs) //Loop Through All Nodes In The Div Array
@@ -255,9 +255,9 @@ namespace ETHDINFKBot
             }
             catch (Exception ex)
             {
-                return ""; //Return Null On Error
+                return new List<string>(); //Return Null On Error
             }
-            return "";
+            return new List<string>();
         }
 
         //Search Multiple Pages
