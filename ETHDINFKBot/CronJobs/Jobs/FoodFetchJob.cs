@@ -15,9 +15,9 @@ namespace ETHDINFKBot.CronJobs.Jobs
     {
         private readonly ulong GeneralChatId = DiscordHelper.DiscordChannels["spam"]; // todo config?
         private readonly ILogger<FoodFetchJob> _logger;
-        private readonly string Name = "DailyStatsJob";
+        private readonly string Name = "FoodFetchJob";
 
-        public FoodFetchJob(IScheduleConfig<DailyStatsJob> config, ILogger<FoodFetchJob> logger)
+        public FoodFetchJob(IScheduleConfig<FoodFetchJob> config, ILogger<FoodFetchJob> logger)
             : base(config.CronExpression, config.TimeZoneInfo)
         {
             _logger = logger;
@@ -32,7 +32,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
         public override Task DoWork(CancellationToken cancellationToken)
         {
             _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
-            Console.WriteLine("Run DailyStatsJob");
+            Console.WriteLine("Run FoodFetchJob");
 
             // TODO Maybe send update message if the fetch was successfull
             Stopwatch watch = new Stopwatch();
