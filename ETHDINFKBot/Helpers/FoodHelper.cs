@@ -71,6 +71,9 @@ namespace ETHDINFKBot.Helpers
                         case RestaurantLocation.ETH_Hoengg:
 
                             var svRestaurantMenuInfos = FoodHelper.GetSVRestaurantMenu(restaurant.MenuUrl);
+
+                            if (svRestaurantMenuInfos == null)
+                                continue;
                             //await Context.Channel.SendMessageAsync($"Found for {restaurant.Name}: {svRestaurantMenuInfos.Count} menus");
 
                             foreach (var svRestaurantMenu in svRestaurantMenuInfos)
@@ -104,7 +107,10 @@ namespace ETHDINFKBot.Helpers
                         case RestaurantLocation.UZH_Zentrum:
                         case RestaurantLocation.UZH_Irchel:
 
-                            var uzhMenuInfos = FoodHelper.GetUzhMenus(FoodHelper.GetUZHDayOfTheWeek(), restaurant.InternalName);
+                            var uzhMenuInfos = FoodHelper.GetUzhMenus(FoodHelper.GetUZHDayOfTheWeek(), restaurant.InternalName); 
+                            
+                            if (uzhMenuInfos == null)
+                                continue;
                             //await Context.Channel.SendMessageAsync($"Found for {restaurant.Name}: {uzhMenuInfos.Count} menus");
 
                             foreach (var uzhMenuInfo in uzhMenuInfos)
@@ -243,6 +249,9 @@ namespace ETHDINFKBot.Helpers
 
                 var dateString = dateNode.InnerText.Replace("\t", "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
+                if (dateString.Contains(".") && dateString.First().Split('.').First() != DateTime.Now.Day.ToString())
+                    return null; // The day is not correct likely a sunday showing monday menus
+
                 // [0] has day Mo, Di
                 // [1] has the date
 
@@ -283,17 +292,25 @@ namespace ETHDINFKBot.Helpers
 
                     var priceString = menuDoc.DocumentNode.SelectNodes("//*[@class=\"price\"]").FirstOrDefault()?.InnerText.Replace("\t", "") ?? "";
                     double price = -1;
+
+
                     if (priceString.Contains("STUD"))
                     {
                         // TODO Exception handling
                         price = double.Parse(priceString.Split('\n', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(), NumberStyles.Any, CultureInfo.InvariantCulture);
                     }
+                    else
+                    {
+                        // Dozentenfoyer (works same as above case maybe the check isnt needed for now)
+                        price = double.Parse(priceString.Split('\n', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(), NumberStyles.Any, CultureInfo.InvariantCulture);
+                    }
+
                     currentMenu.Amount = price; // TODO Dozentenfoyer has no student prices
 
-                    if (menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-labels\"]")?.InnerText.ToLower().Contains("vegetarian") == true)
+                    if (menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-labels\"]")?.InnerHtml.ToLower().Contains("vegetarian") == true)
                         currentMenu.IsVegetarian = true;
 
-                    if (menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-labels\"]")?.InnerText.ToLower().Contains("vegan") == true)
+                    if (menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-labels\"]")?.InnerHtml.ToLower().Contains("vegan") == true)
                         currentMenu.IsVegan = true;
                    
                     string allergiesString = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"allergen-info\"]")?.InnerText.Replace("\t", "").Trim() ?? "";
