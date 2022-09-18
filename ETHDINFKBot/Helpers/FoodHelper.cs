@@ -249,8 +249,8 @@ namespace ETHDINFKBot.Helpers
                 var dateNode = doc.DocumentNode.SelectSingleNode("//*[@for=\"mp-tab1\"]");
                 var dateString = dateNode.InnerText.Replace("\t", "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
-                //if (dateString.Last().Contains(".") && dateString.Last().Split('.').First().Trim() != DateTime.Now.Day.ToString())
-                //.    return null; // The day is not correct likely a sunday showing monday menus
+                if (dateString.Last().Contains(".") && dateString.Last().Split('.').First().Trim() != DateTime.Now.Day.ToString())
+                    return null; // The day is not correct likely a sunday showing monday menus
 
                 // [0] has day Mo, Di
                 // [1] has the date
