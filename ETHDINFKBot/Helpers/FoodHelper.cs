@@ -50,13 +50,16 @@ namespace ETHDINFKBot.Helpers
 
         private static FoodDBManager FoodDBManager = FoodDBManager.Instance();
 
-        public static void LoadMenus()
+        public static void LoadMenus(int restaurantId = -1)
         {
             var avilableRestaurants = FoodDBManager.GetAllRestaurants();
             Google = new GoogleEngine(); // TODO Better reset
 
             foreach (var restaurant in avilableRestaurants)
             {
+                if (restaurantId > -1 && restaurant.RestaurantId != restaurantId)
+                    continue; // Skip this restaurant
+
                 if (restaurant.IsOpen)
                 {
                     //await Context.Channel.SendMessageAsync($"Processing {restaurant.Name}");

@@ -118,13 +118,16 @@ namespace ETHDINFKBot.Data
             return true;
         }
 
-        public List<Menu> GetMenusByDay(DateTime datetime)
+        public List<Menu> GetMenusByDay(DateTime datetime, int restaurantId = -1)
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
                 try
                 {
-                    return context.Menus.Where(i => i.DateTime.Date == datetime.Date).ToList(); ;
+                    if(restaurantId < 0)
+                        return context.Menus.Where(i => i.DateTime.Date == datetime.Date).ToList();
+                    else
+                        return context.Menus.Where(i => i.DateTime.Date == datetime.Date && i.RestaurantId == restaurantId).ToList();
                 }
                 catch (Exception ex)
                 {

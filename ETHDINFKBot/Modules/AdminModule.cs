@@ -653,8 +653,8 @@ namespace ETHDINFKBot.Modules
                 builder.WithCurrentTimestamp();
                 builder.AddField($"{Program.CurrentPrefix}admin food help", "This message :)");
                 builder.AddField($"{Program.CurrentPrefix}admin food setup", "Sets Default values for Tables Restaurant and Allergies");
-                builder.AddField($"{Program.CurrentPrefix}admin food clear", "Clears today menus");
-                builder.AddField($"{Program.CurrentPrefix}admin food load", "Loads todays menus");
+                builder.AddField($"{Program.CurrentPrefix}admin food clear <id>", "Clears today menus");
+                builder.AddField($"{Program.CurrentPrefix}admin food load <id>", "Loads todays menus");
                 builder.AddField($"{Program.CurrentPrefix}admin food status", "Returns current menus status");
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
@@ -705,7 +705,7 @@ namespace ETHDINFKBot.Modules
             }
 
             [Command("clear")]
-            public async Task ClearFood()
+            public async Task ClearFood(int restaurantId = -1)
             {
                 var author = Context.Message.Author;
                 if (author.Id != Program.ApplicationSetting.Owner)
@@ -716,7 +716,7 @@ namespace ETHDINFKBot.Modules
 
                 //var allRestaurants = FoodDBManager.GetAllRestaurants();
 
-                var allMenus = FoodDBManager.GetMenusByDay(DateTime.Now);
+                var allMenus = FoodDBManager.GetMenusByDay(DateTime.Now, restaurantId);
                 if (allMenus.Count > 0)
                     await Context.Channel.SendMessageAsync($"Deleting {allMenus.Count} menu(s)", false);
 
@@ -727,7 +727,7 @@ namespace ETHDINFKBot.Modules
             }
 
             [Command("load", RunMode = RunMode.Async)]
-            public async Task LoadFood()
+            public async Task LoadFood(int restaurantId = -1)
             {
                 var author = Context.Message.Author;
                 if (author.Id != Program.ApplicationSetting.Owner)
@@ -736,8 +736,8 @@ namespace ETHDINFKBot.Modules
                     return;
                 }
 
-                await ClearFood(); // Ensure deleted
-                FoodHelper.LoadMenus();
+                await ClearFood(restaurantId); // Ensure deleted
+                FoodHelper.LoadMenus(restaurantId);
 
                 await Context.Channel.SendMessageAsync("Done load", false);
             }
