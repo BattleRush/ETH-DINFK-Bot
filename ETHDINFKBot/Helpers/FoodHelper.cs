@@ -53,6 +53,7 @@ namespace ETHDINFKBot.Helpers
         public static void LoadMenus()
         {
             var avilableRestaurants = FoodDBManager.GetAllRestaurants();
+            Google = new GoogleEngine(); // TODO Better reset
 
             foreach (var restaurant in avilableRestaurants)
             {
@@ -246,11 +247,10 @@ namespace ETHDINFKBot.Helpers
                 doc.LoadHtml(html);
 
                 var dateNode = doc.DocumentNode.SelectSingleNode("//*[@for=\"mp-tab1\"]");
-
                 var dateString = dateNode.InnerText.Replace("\t", "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
-                if (dateString.First().Contains(".") && dateString.First().Split('.').First().Trim() != DateTime.Now.Day.ToString())
-                    return null; // The day is not correct likely a sunday showing monday menus
+                //if (dateString.Last().Contains(".") && dateString.Last().Split('.').First().Trim() != DateTime.Now.Day.ToString())
+                //.    return null; // The day is not correct likely a sunday showing monday menus
 
                 // [0] has day Mo, Di
                 // [1] has the date
@@ -693,7 +693,7 @@ namespace ETHDINFKBot.Helpers
 
         private static List<string> GetImageFromGoogle(string text, string lang = "de")
         {
-            return Google.ImageSearch(text.Replace("\"", "").Trim(), lang: lang);
+            return Google.ImageSearch(text.Replace("\"", "").Trim(), lang: lang).Result;
         }
 
 
@@ -720,6 +720,14 @@ namespace ETHDINFKBot.Helpers
             else
             {
                 var imageLinks = GetImageFromGoogle(menu.Description, language);
+                if (imageLinks.Count == 0)
+                    imageLinks = GetImageFromGoogle(menu.Name + " " + menu.Description, language);
+                if (imageLinks.Count == 0)
+                    imageLinks = GetImageFromGoogle(menu.Description, language);
+                if (imageLinks.Count == 0 && menu.Description.Contains(","))
+                    imageLinks = GetImageFromGoogle(menu.Description.Split(",").First(), language);
+                //if (imageLinks.Count == 0 && menu.Description.Contains(","))
+                //    imageLinks = GetImageFromGoogle(menu.Name + " " + menu.Description.Split(",").First(), language);
 
                 // TODO handle images which get invalidated after a while
                 var successfullyResolvedImages = new List<string>();
@@ -738,6 +746,8 @@ namespace ETHDINFKBot.Helpers
                         // TODO Log?
                     }
                 }
+
+                System.Threading.Thread.Sleep(TimeSpan.FromSeconds(10));
 
                 // TODO If description starts with "mit" then maybe also add name infront
                 

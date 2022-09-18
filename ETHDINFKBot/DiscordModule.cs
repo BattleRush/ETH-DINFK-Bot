@@ -322,7 +322,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             LogManager.ProcessMessage(userInfo, BotMessageType.Search);
 
-            var reply = new GoogleEngine().Search(searchString);
+            var reply = await new GoogleEngine().Search(searchString);
 
             EmbedBuilder builder = new EmbedBuilder();
 
