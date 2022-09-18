@@ -146,7 +146,7 @@ namespace ETHDINFKBot
                        // TODO adjust for summer time in CET/CEST
                        services.AddCronJob<StartAllSubredditsJobs>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 * * *"; });// 4 am utc -> 5 am cet
 
-                       services.AddCronJob<FoodFetchJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 20 * *"; }); // At 4:20 UTC fetch current day menus
+                       services.AddCronJob<FoodFetchJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"20 4 * * *"; }); // At 4:20 UTC fetch current day menus
                        // TODO adjust for summer time in CET/CEST
                        //services.AddCronJob<GitPullMessageJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 21 * * TUE"; });// 22 CET each Tuesday
 
