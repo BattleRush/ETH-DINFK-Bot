@@ -866,7 +866,12 @@ namespace ETHDINFKBot
                 Console.WriteLine(json);
 
                 //Spam channel
-                await guild.GetTextChannel(768600365602963496).SendMessageAsync(json);
+                await guild.GetTextChannel(768600365602963496)?.SendMessageAsync(json);
+            }
+            catch (Exception ex)
+            {
+                //Spam channel
+                await guild.GetTextChannel(768600365602963496)?.SendMessageAsync("Ex: " + ex.ToString());
             }
 
             var commands = Services.GetRequiredService<InteractionService>();
@@ -880,7 +885,7 @@ namespace ETHDINFKBot
             catch (Exception ex)
             {
                 //Spam channel
-                await guild.GetTextChannel(768600365602963496).SendMessageAsync("Add modules: " + ex.ToString());
+                await guild.GetTextChannel(768600365602963496)?.SendMessageAsync("Add modules: " + ex.ToString());
             }
         }
 
