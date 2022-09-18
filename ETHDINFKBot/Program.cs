@@ -864,6 +864,9 @@ namespace ETHDINFKBot
 
                 // You can send this error somewhere or just print it to the console, for this example we're just going to print it.
                 Console.WriteLine(json);
+
+                //Spam channel
+                await guild.GetTextChannel(768600365602963496).SendMessageAsync(json);
             }
 
             var commands = Services.GetRequiredService<InteractionService>();
@@ -876,9 +879,9 @@ namespace ETHDINFKBot
             }
             catch (Exception ex)
             {
-
+                //Spam channel
+                await guild.GetTextChannel(768600365602963496).SendMessageAsync("Add modules: " + ex.ToString());
             }
-
         }
 
 
