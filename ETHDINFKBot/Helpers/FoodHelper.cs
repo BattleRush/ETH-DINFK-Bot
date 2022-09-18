@@ -249,7 +249,7 @@ namespace ETHDINFKBot.Helpers
 
                 var dateString = dateNode.InnerText.Replace("\t", "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
-                if (dateString.Contains(".") && dateString.First().Split('.').First() != DateTime.Now.Day.ToString())
+                if (dateString.First().Contains(".") && dateString.First().Split('.').First().Trim() != DateTime.Now.Day.ToString())
                     return null; // The day is not correct likely a sunday showing monday menus
 
                 // [0] has day Mo, Di
@@ -277,8 +277,8 @@ namespace ETHDINFKBot.Helpers
                     string title = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-title\"]").InnerText;
                     title = HttpUtility.HtmlDecode(title);
 
-                    bool isClausiusBar = false; // Clausius bar uses no proper food titles
-                    if (currentMenu.Name == null)
+                    bool isClausiusBar = false; // Clausius bar uses no proper food titles or just a broken menu which sv restaurant doesnt care about
+                    if (string.IsNullOrWhiteSpace(currentMenu.Name))
                     {
                         isClausiusBar = true;
                         currentMenu.Name = title;
@@ -739,6 +739,7 @@ namespace ETHDINFKBot.Helpers
                     }
                 }
 
+                // TODO If description starts with "mit" then maybe also add name infront
                 
                 dbImages = FoodDBManager.CreateMenuImages(successfullyResolvedImages, menu.Description, language);
 
