@@ -135,9 +135,9 @@ namespace ETHDINFKBot
 
             ChromeDriver driver;
 
-            #if DEBUG
+#if DEBUG
             driver = new ChromeDriver(options);
-#elif
+#else
             driver = new ChromeDriver(Program.ApplicationSetting.BasePath, options);
 #endif
             driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromMilliseconds(1000);
