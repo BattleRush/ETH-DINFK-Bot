@@ -132,6 +132,7 @@ namespace ETHDINFKBot
             ChromeOptions options = new ChromeOptions();
             options.AddArguments("--headless");
             options.AddArguments("--disable-gpu");
+            options.AddArguments("--disable-dev-shm-usage");
 
             ChromeDriver driver;
 
