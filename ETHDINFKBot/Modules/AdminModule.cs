@@ -77,7 +77,7 @@ namespace ETHDINFKBot.Modules
                 }
 
                 GoogleEngine google = new GoogleEngine();
-                var results = await google.GetSearchResultBySelenium("test string", 0, "de");
+                var results = await google.GetSearchResultBySelenium("ETH Zürich", 0, "de");
                 if (results != null && results.Count > 0)
                     await Context.Channel.SendMessageAsync(string.Join(Environment.NewLine, results));
                 else

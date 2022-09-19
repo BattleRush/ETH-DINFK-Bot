@@ -470,6 +470,8 @@ It is also likely that there are no menus currently available today." + weekendS
 
                                     if (currentTitleTop < currentTop)
                                         currentTitleTop = currentTop;
+                                    else
+                                        currentTop = currentTitleTop;
                                 }
                                 else
                                 {
