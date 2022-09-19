@@ -776,10 +776,12 @@ namespace ETHDINFKBot.Modules
 
                 if (key == "restaurant")
                 {
+                    await Context.Channel.SendMessageAsync($"Loading images for RestaurantId: {id}", false);
                     menus = FoodDBManager.GetMenusByDay(DateTime.Now, id);
                 }
                 else if (key == "menu")
                 {
+                    await Context.Channel.SendMessageAsync($"Loading images for MenuId: {id}", false);
                     var menu = FoodDBManager.GetMenusById(id);
                     menus.Add(menu);
                 }
@@ -788,17 +790,23 @@ namespace ETHDINFKBot.Modules
                     await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 }
 
-
-                foreach (var menu in menus)
+                try
                 {
-                    if (menu.MenuImageId.HasValue)
-                        continue; // We dont need to research this image
+                    foreach (var menu in menus)
+                    {
+                        if (menu.MenuImageId.HasValue)
+                            continue; // We dont need to research this image
 
-                    var menuImage = FoodHelper.GetImageForFood(menu, true);
-                    await Context.Channel.SendMessageAsync($"Got ImageId: {menuImage?.MenuImageId ?? -1} for Menu: {menu.MenuId}", false);
+                        var menuImage = FoodHelper.GetImageForFood(menu, true);
+                        await Context.Channel.SendMessageAsync($"Got ImageId: {menuImage?.MenuImageId ?? -1} for Menu: {menu.MenuId}", false);
 
-                    if (menuImage != null)
-                        FoodDBManager.SetImageIdForMenu(menu.MenuId, menuImage.MenuImageId);
+                        if (menuImage != null)
+                            FoodDBManager.SetImageIdForMenu(menu.MenuId, menuImage.MenuImageId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await Context.Channel.SendMessageAsync(ex.ToString(), false);
                 }
 
                 //await ClearFood(restaurantId); // Ensure deleted

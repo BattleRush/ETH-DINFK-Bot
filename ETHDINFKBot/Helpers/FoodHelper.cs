@@ -716,18 +716,18 @@ namespace ETHDINFKBot.Helpers
         {
             List<string> images = new List<string>();
             HttpClient client = new HttpClient();
-            var dbImages = FoodDBManager.GetMenuImages(menu.Description, language);
+
+            string searchTerm = menu.Description;
+            if (searchTerm.StartsWith("mit"))
+                searchTerm = menu.Name + " " + menu.Description;
+
+            var dbImages = FoodDBManager.GetMenuImages(searchTerm, language);
             if (dbImages.Count > 0)
             {
                 return dbImages.First();
             }
             else
-            {
-                string searchTerm = menu.Description;
-
-                if(searchTerm.StartsWith("mit"))
-                    searchTerm = menu.Name + " " + menu.Description;
-                
+            {              
                 var imageLinks = GetImageFromGoogle(searchTerm, language);
 
                 // This is to fix ratelimit hits
@@ -736,6 +736,12 @@ namespace ETHDINFKBot.Helpers
                     if (imageLinks.Count == 0 && !menu.Description.StartsWith("mit"))
                     {
                         searchTerm = menu.Name + " " + menu.Description;
+
+                        // Check db first
+                        dbImages = FoodDBManager.GetMenuImages(searchTerm, language);
+                        if (dbImages.Count > 0)
+                            return dbImages.First();
+
                         imageLinks = GetImageFromGoogle(searchTerm, language);
                     }
                    
@@ -749,12 +755,24 @@ namespace ETHDINFKBot.Helpers
                     if (imageLinks.Count == 0 && menu.Description.Contains("\n"))
                     {
                         searchTerm = menu.Description.Split("\n").First();
+
+                        // Check db first
+                        dbImages = FoodDBManager.GetMenuImages(searchTerm, language);
+                        if (dbImages.Count > 0)
+                            return dbImages.First();
+
                         imageLinks = GetImageFromGoogle(searchTerm, language);
                     }
 
                     if (imageLinks.Count == 0 && menu.Description.Contains(","))
                     {
                         searchTerm = menu.Description.Split(",").First();
+
+                        // Check db first
+                        dbImages = FoodDBManager.GetMenuImages(searchTerm, language);
+                        if (dbImages.Count > 0)
+                            return dbImages.First();
+
                         imageLinks = GetImageFromGoogle(searchTerm, language);
                     }
                 }
