@@ -700,18 +700,18 @@ namespace ETHDINFKBot.Helpers
         }
 
 
-        public static MenuImage GetImageForFood(Menu menu)
+        public static MenuImage GetImageForFood(Menu menu, bool fullSearch = false)
         {
             // First query german then english
-            var menuImage = GetImageForFood(menu, "de").Result;
-            if (menuImage == null)
-                menuImage = GetImageForFood(menu, "en").Result;
+            var menuImage = GetImageForFood(menu, "de", fullSearch).Result;
+            //if (menuImage == null)
+            //    menuImage = GetImageForFood(menu, "en").Result;
 
             return menuImage;
         }
 
         // TODO Decide on the order for different mensas
-        private static async Task<MenuImage> GetImageForFood(Menu menu, string language)
+        private static async Task<MenuImage> GetImageForFood(Menu menu, string language, bool fullSearch = false)
         {
             List<string> images = new List<string>();
             HttpClient client = new HttpClient();
@@ -722,13 +722,24 @@ namespace ETHDINFKBot.Helpers
             }
             else
             {
+                string searchTerm = menu.Description;
+
+                if(searchTerm.StartsWith("mit"))
+                    searchTerm = menu.Name + " " + menu.Description;
+                
                 var imageLinks = GetImageFromGoogle(menu.Description, language);
-                if (imageLinks.Count == 0)
-                    imageLinks = GetImageFromGoogle(menu.Name + " " + menu.Description, language);
-                if (imageLinks.Count == 0)
-                    imageLinks = GetImageFromGoogle(menu.Description, language);
-                if (imageLinks.Count == 0 && menu.Description.Contains(","))
-                    imageLinks = GetImageFromGoogle(menu.Description.Split(",").First(), language);
+
+                // This is to fix ratelimit hits
+                if (!fullSearch)
+                {
+                    if (imageLinks.Count == 0 && !menu.Description.StartsWith("mit"))
+                        imageLinks = GetImageFromGoogle(menu.Name + " " + menu.Description, language);
+                    if (imageLinks.Count == 0)
+                        imageLinks = GetImageFromGoogle(menu.Description, language);
+                    if (imageLinks.Count == 0 && menu.Description.Contains(","))
+                        imageLinks = GetImageFromGoogle(menu.Description.Split(",").First(), language);
+                }
+
                 //if (imageLinks.Count == 0 && menu.Description.Contains(","))
                 //    imageLinks = GetImageFromGoogle(menu.Name + " " + menu.Description.Split(",").First(), language);
 

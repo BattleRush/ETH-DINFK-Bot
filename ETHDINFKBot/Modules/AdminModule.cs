@@ -655,7 +655,8 @@ namespace ETHDINFKBot.Modules
                 builder.AddField($"{Program.CurrentPrefix}admin food setup", "Sets Default values for Tables Restaurant and Allergies");
                 builder.AddField($"{Program.CurrentPrefix}admin food clear <id>", "Clears today menus");
                 builder.AddField($"{Program.CurrentPrefix}admin food load <id>", "Loads todays menus");
-                builder.AddField($"{Program.CurrentPrefix}admin food status", "Returns current menus status");
+                builder.AddField($"{Program.CurrentPrefix}admin food image <restaurant|menu> <id> <full>", "Runs a websearch to replace images");
+                builder.AddField($"{Program.CurrentPrefix}admin food status <debug>", "Returns current menus status");
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
@@ -742,8 +743,53 @@ namespace ETHDINFKBot.Modules
                 await Context.Channel.SendMessageAsync("Done load", false);
             }
 
+            [Command("image", RunMode = RunMode.Async)]
+            public async Task LoadImage(string key, int id, bool full = true)
+            {
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                List<Menu> menus = new List<Menu>();
+
+                if (key == "restaurant")
+                {
+                    menus = FoodDBManager.GetMenusByDay(DateTime.Now, id);
+                }
+                else if (key == "menu")
+                {
+                    var menu = FoodDBManager.GetMenusById(id);
+                    menus.Add(menu);
+                }
+                else
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                }
+
+
+                foreach (var menu in menus)
+                {
+                    if (menu.MenuImageId.HasValue)
+                        continue; // We dont need to research this image
+
+                    var menuImage = FoodHelper.GetImageForFood(menu, true);
+                    await Context.Channel.SendMessageAsync($"Got ImageId: {menuImage?.MenuImageId ?? -1} for Menu: {menu.MenuImageId}", false);
+
+                    if (menuImage != null)
+                        FoodDBManager.SetImageIdForMenu(menu.MenuId, menuImage.MenuImageId);
+                }
+
+                //await ClearFood(restaurantId); // Ensure deleted
+                //FoodHelper.LoadMenus(restaurantId);
+
+                await Context.Channel.SendMessageAsync("Done load", false);
+            }
+
             [Command("status", RunMode = RunMode.Async)]
-            public async Task StatusFood()
+            public async Task StatusFood(bool debug = false)
             {
                 var author = Context.Message.Author;
                 var guildUser = Context.Message.Author as SocketGuildUser;
@@ -772,7 +818,11 @@ Total todays menus: {allTodaysMenus.Count}");
                 foreach (var restaurant in allRestaurants)
                 {
                     var todaysMenus = FoodDBManager.GetMenusFromRestaurant(restaurant.RestaurantId, DateTime.Now);
-                    builder.AddField(restaurant.Name, $"{todaysMenus.Count()} menu(s)" + Environment.NewLine + String.Join(", ", todaysMenus.Select(i => $"{i.Name} **{i.Amount} CHF**")));
+
+                    if(debug)
+                        builder.AddField(restaurant.Name, $"{todaysMenus.Count()} menu(s)" + Environment.NewLine + String.Join(", ", todaysMenus.Select(i => $"{i.Name} **{i.Amount} CHF**")));
+                    else
+                        builder.AddField($"{restaurant.Name} ({restaurant.RestaurantId})", $"{todaysMenus.Count()} menu(s)" + Environment.NewLine + String.Join(", ", todaysMenus.Select(i => $"{i.Name} **{i.Amount} CHF ({i.MenuId}/{i.MenuImageId ?? -1})**")));
                 }
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());

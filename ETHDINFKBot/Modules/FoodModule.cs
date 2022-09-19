@@ -531,11 +531,12 @@ It is also likely that there are no menus currently available today." + weekendS
                 if (attachments.Count > 0)
                     await Context.Channel.SendFilesAsync(attachments, messageReference: new MessageReference(Context.Message.Id));
 
-                if (userSettings == null && userFavRestaurants.Count == 0 && new Random().Next(1, 5) == 1)
+                if (userFavRestaurants.Count == 0)
                 {
                     // User hasnt favourited any menu preference or locations 
-                    // Show hint in 20% of the cases
-                    await Context.Channel.SendMessageAsync($"You haven't set any menu preferences or any favourite mensa location. You can do this with {Program.CurrentPrefix}food fav", messageReference: new MessageReference(Context.Message.Id));
+                    // Always show this hint
+                    await Context.Channel.SendMessageAsync($"You haven't set any favourite mensa location. The bot will show you a default view only (Polymensa and UZH Zentrum Mensa).{Environment.NewLine}" +
+                        $"You can do this with {Program.CurrentPrefix}food fav", messageReference: new MessageReference(Context.Message.Id));
                 }
 
                 //    // Create the service.

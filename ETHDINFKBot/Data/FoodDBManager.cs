@@ -124,7 +124,7 @@ namespace ETHDINFKBot.Data
             {
                 try
                 {
-                    if(restaurantId < 0)
+                    if (restaurantId < 0)
                         return context.Menus.Where(i => i.DateTime.Date == datetime.Date).ToList();
                     else
                         return context.Menus.Where(i => i.DateTime.Date == datetime.Date && i.RestaurantId == restaurantId).ToList();
@@ -132,6 +132,23 @@ namespace ETHDINFKBot.Data
                 catch (Exception ex)
                 {
 
+                }
+            }
+
+            return null;
+        }
+
+        public Menu GetMenusById(int menuId)
+        {
+            using (ETHBotDBContext context = new ETHBotDBContext())
+            {
+                try
+                {
+                    return context.Menus.SingleOrDefault(i => i.MenuId == menuId);
+                }
+                catch (Exception ex)
+                {
+                    return null;
                 }
             }
 
@@ -366,6 +383,29 @@ namespace ETHDINFKBot.Data
             {
                 return null;
             }
+        }
+
+        public bool SetImageIdForMenu(int menuId, int imageId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var dbMenu = context.Menus.SingleOrDefault(i => i.MenuId == menuId);
+
+                    if (dbMenu != null)
+                    {
+                        dbMenu.MenuImageId = imageId;
+                        context.SaveChanges();
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+            return false;
         }
 
         public Menu UpdateMenu(Menu menu)

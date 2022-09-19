@@ -166,11 +166,11 @@ namespace ETHDINFKBot
                 if (response.RequestMessage.RequestUri.ToString().Contains("sorry"))
                 {
                     // Likely a ratelimit was hit
-                    System.Threading.Thread.Sleep(100_000);
+                    System.Threading.Thread.Sleep(TimeSpan.FromSeconds(2));
                     return new List<string>();
                 }
 
-                System.Threading.Thread.Sleep(15_000); // Sleep for 10 sec to prevent error 429
+                System.Threading.Thread.Sleep(TimeSpan.FromSeconds(2));
 
                 var doc = new HtmlAgilityPack.HtmlDocument(); //Create An HTML Document From The Downloaded HTML
                 doc.LoadHtml(responseString); //Load The Downloaded HTML

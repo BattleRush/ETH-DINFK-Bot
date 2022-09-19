@@ -849,6 +849,7 @@ namespace ETHDINFKBot
 
             try
             {
+                //Client.BulkOverwriteGlobalApplicationCommandsAsync
                 // Now that we have our builder, we can call the BulkOverwriteApplicationCommandAsync to make our context commands. Note: this will overwrite all your previous commands with this array.
                 await guild.BulkOverwriteApplicationCommandAsync(new ApplicationCommandProperties[]
                 {
