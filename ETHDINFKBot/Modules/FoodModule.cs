@@ -336,9 +336,9 @@ namespace ETHDINFKBot.Modules
 
                 var meal = MealTime.Lunch;
 
-                var searchDate = DateTime.UtcNow; /// Make it passable by param
+                var searchDate = DateTime.UtcNow.UtcToLocalDateTime(Program.TimeZoneInfo); /// Make it passable by param
 
-                if (searchDate.UtcToLocalDateTime(Program.TimeZoneInfo).Hour >= 14)
+                if (searchDate.Hour >= 14)
                     meal = MealTime.Dinner;
 
                 if (time.ToLower() == "lunch")
@@ -431,11 +431,11 @@ It is also likely that there are no menus currently available today." + weekendS
                 var largeFont = DrawingHelper.LargeTextPaint;
                 largeFont.FakeBoldText = true;
 
-                bool mergeMode = true; // TODO maybe setting or autodetect
+                bool mergeMode = userSettings?.VegetarianPreference == true || userSettings?.VeganPreference == true; // TODO maybe setting or autodetect
 
                 if (mergeMode)
                 {
-                    int maxPages = 6;
+                    int maxPages = 4;
 
                     int totalMenus = currentMenus.Count == 0 ? 0 : currentMenus.Sum(i => i.Value.Count);
                     int maxColumns = Math.Max(3, totalMenus / maxPages);
