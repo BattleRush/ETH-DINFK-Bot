@@ -67,20 +67,27 @@ namespace ETHDINFKBot.Modules
         [Command("image")]
         public async Task IMgaeTest()
         {
-            var author = Context.Message.Author;
-            if (author.Id != Program.ApplicationSetting.Owner)
+            try
             {
-                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
-                return;
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                GoogleEngine google = new GoogleEngine();
+                var results = await google.GetSearchResultBySelenium("test string", 0, "de");
+                if (results != null && results.Count > 0)
+                    await Context.Channel.SendMessageAsync(string.Join(Environment.NewLine, results));
+                else
+                    await Context.Channel.SendMessageAsync("No results found", false);
+
             }
-
-            GoogleEngine google = new GoogleEngine();
-            var results = await google.GetSearchResultBySelenium("test string", 0, "de");
-            if(results != null && results.Count > 0)
-                await Context.Channel.SendMessageAsync(string.Join(Environment.NewLine, results));
-            else 
-                await Context.Channel.SendMessageAsync("No results found", false);
-
+            catch(Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.ToString(), false);
+            }
         }
 
         [Command("renameback")]
