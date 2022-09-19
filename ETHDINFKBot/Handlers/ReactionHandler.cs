@@ -143,126 +143,18 @@ namespace ETHDINFKBot.Handlers
         {
             if (reactionEmote.Id == DiscordEmotes["savethis"] && !SocketGuildReactionUser.IsBot)
             {
-                await DiscordHelper.SaveMessage(SocketTextChannel, SocketGuildReactionUser, Message, false);
-
-                // Save the post link
-
-                /*          var user = DatabaseManager.GetDiscordUserById(arg1.Value.Author.Id); // Verify the user is created but should actually be available by this point
-                var saveBy = DatabaseManager.GetDiscordUserById(arg3.User.Value.Id); // Verify the user is created but should actually be available by this point
-                */
-                /*
-                if (DatabaseManager.IsSaveMessage(Message.Id, SocketGuildReactionUser.Id))
+                try
                 {
-                    // dont allow double saves
-                    return;
+                    await DiscordHelper.SaveMessage(SocketTextChannel, SocketGuildReactionUser, Message, false);
                 }
-
-                if (SocketGuildMessageUser == null)
-                    return; // Likely a DM reaction
-
-                string authorUsername = SocketGuildMessageUser.Nickname ?? SocketGuildMessageUser.Username;
-
-                var link = $"https://discord.com/channels/{SocketGuild.Id}/{SocketGuildChannel.Id}/{Message.Id}";
-                IUserMessage msg = null;
-                if (!string.IsNullOrWhiteSpace(Message.Content))
+                catch (Exception ex)
                 {
-                    DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, Message.Content, false);
+                    var ownerUser = Program.Client.GetUser(Program.ApplicationSetting.Owner);
+                    if(ownerUser != null)
+                        await ownerUser.SendMessageAsync($"{SocketGuildReactionUser.Username} tried to save {Message.Id} " + ex.ToString());
 
-                    if (Message.Content.Length > 1750)
-                    {
-                        // the message is too big to send with other content
-                        // Send a DM to the user
-                        msg = await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
-                            $"Direct link: [{SocketGuild.Name}/{SocketGuildChannel.Name}/by {authorUsername}] <{link}>");
-
-                        // Send a DM to the user
-                        msg = await SocketGuildReactionUser.SendMessageAsync(Message.Content);
-                    }
-                    else
-                    {
-                        // Send a DM to the user
-                        msg = await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
-                            $"{Message.Content} {Environment.NewLine}" +
-                            $"Direct link: [{SocketGuild.Name}/{SocketGuildChannel.Name}/by {authorUsername}] <{link}>");
-                    }
+                    //Message.Channel.SendMessageAsync("Failed to save the message. Discord returned: " + ex.Message);
                 }
-
-                // Save embeds only from bots (as users cant send them directly)
-                if (Message.Author.IsBot)
-                {
-                    foreach (var item in Message.Embeds)
-                    {
-                        DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, "Embed: " + item.ToString(), false);
-                        msg = await SocketGuildReactionUser.SendMessageAsync("", false, (Embed)item);
-                    }
-                }
-
-                foreach (var item in Message.Attachments)
-                {
-                    DatabaseManager.SaveMessage(Message.Id, SocketGuildMessageUser.Id, SocketGuildReactionUser.Id, link, item.Url, false);
-
-                    msg = await SocketGuildReactionUser.SendMessageAsync($"Saved post from {SocketGuildMessageUser.Username}:{Environment.NewLine}" +
-                        $"{item.Url} {Environment.NewLine}" +
-                        $"Direct link: [{SocketGuild.Name}/{SocketGuildChannel.Name}/by {authorUsername}] <{link}>");
-                }*/
-
-
-
-                // Only temp until the function is disabled
-                /*
-                msg = await SocketGuildReactionUser.SendMessageAsync(@$"⚠⚠⚠ **IMPORTANT ⚠⚠⚠
-Please use the new method to save messages. 
-Save via reactions will be disabled in the near future. 
-See in the image bellow how to use the new method to save messages.
-(right click) Message -> Apps -> Save Message** 
-https://cdn.discordapp.com/attachments/843957532380889098/914184155342995456/unknown.png");
-
-                // Be nice and add buttons
-                var builderComponent = new ComponentBuilder().WithButton("Delete Message", "delete-saved-message-id", ButtonStyle.Danger);
-
-                var messageToDelete = await msg.Channel.GetMessagesAsync(500).FlattenAsync();
-                if (messageToDelete != null)
-                {
-                    foreach (var item in messageToDelete)
-                    {
-                        if (item.Components.Count == 0)
-                        {
-                            try
-                            {
-                                // can only edit own messages
-                                if (item.Author.IsBot)
-                                    await msg.Channel.ModifyMessageAsync(item.Id, i => i.Components = builderComponent.Build());
-                            }
-                            catch (Exception ex)
-                            {
-
-                            }
-                        }
-                    }
-                }
-
-
-                if (((BotPermissionType)ChannelSettings?.ChannelPermissionFlags).HasFlag(BotPermissionType.SaveMessage))
-                {
-                    EmbedBuilder builder = new EmbedBuilder();
-
-                    builder.WithTitle($"A message was saved");
-                    builder.WithColor(0, 128, 255);
-
-                    builder.AddField("Message Link", $"[Message]({link})", true);
-                    builder.AddField("Message Author", $"{authorUsername}", true);
-
-                    builder.AddField("Info", $"To save a message react with <:savethis:780179874656419880> to a message", false);
-                    builder.AddField("**Soon deprecated info**", $"This feature will soon no longer work trough reactions. Please use the new Method: (right click) Message -> Apps -> Save Message", false);
-
-                    builder.WithAuthor(SocketGuildReactionUser);
-                    builder.WithCurrentTimestamp();
-
-
-                    var saveMessage = await SocketTextChannel.SendMessageAsync("", false, builder.Build());
-
-                    DiscordHelper.DeleteMessage(saveMessage, TimeSpan.FromSeconds(45));
-                }*/
             }
         }
 
