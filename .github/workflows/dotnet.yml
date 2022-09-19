@@ -75,6 +75,15 @@ jobs:
         passphrase: ${{ secrets.REMOTE_SSH_PASSPHRASE }}
         privateKey: ${{ secrets.REMOTE_SSH_KEY }}
         
+    - name: CHMOD the executable
+      uses: garygrossgarten/github-action-ssh@release
+      with:
+        command: chmod +x ${{ secrets.REMOTE_TARGET }}/chromedriver
+        host: ${{ secrets.REMOTE_HOST }}
+        username: ${{ secrets.REMOTE_USER }}
+        passphrase: ${{ secrets.REMOTE_SSH_PASSPHRASE }}
+        privateKey: ${{ secrets.REMOTE_SSH_KEY }}
+        
     - name: Declare variables
       id: vars
       shell: bash
