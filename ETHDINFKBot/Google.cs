@@ -133,7 +133,13 @@ namespace ETHDINFKBot
             options.AddArguments("--headless");
             options.AddArguments("--disable-gpu");
 
-            var driver = new ChromeDriver(options); 
+            ChromeDriver driver;
+
+            #if DEBUG
+            driver = new ChromeDriver(options);
+#elif
+            driver = new ChromeDriver(Program.ApplicationSetting.BasePath, options);
+#endif
             driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromMilliseconds(1000);
             driver.Navigate().GoToUrl("https://images.google.com/?hl={lang}&gl={lang}&safe=active");
 
