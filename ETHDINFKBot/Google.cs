@@ -130,15 +130,17 @@ namespace ETHDINFKBot
         public async Task<List<string>> GetSearchResultBySelenium(string query, int start = 0, string lang = "en")
         {
             ChromeOptions options = new ChromeOptions();
-            options.AddArguments("--headless");
-            options.AddArguments("--disable-gpu");
-            options.AddArguments("--disable-dev-shm-usage");
-
             ChromeDriver driver;
 
 #if DEBUG
+            options.AddArguments("--headless");
+            options.AddArguments("--disable-gpu");
             driver = new ChromeDriver(options);
 #else
+            options.AddArguments("--no-sandbox");
+            options.AddArguments("--headless");
+            options.AddArguments("--disable-gpu");
+            options.AddArguments("--disable-dev-shm-usage");
             driver = new ChromeDriver(Program.ApplicationSetting.BasePath, options);
 #endif
             driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromMilliseconds(1000);
