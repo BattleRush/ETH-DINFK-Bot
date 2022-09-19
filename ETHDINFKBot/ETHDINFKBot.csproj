@@ -11,9 +11,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <NoWarn>1701;1702;80001</NoWarn>
+    <DefineConstants>$(DefineConstants)TRACE;_PUBLISH_CHROMEDRIVER</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <NoWarn>1701;1702;80001</NoWarn>
+    <DefineConstants>$(DefineConstants)TRACE;_PUBLISH_CHROMEDRIVER</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
