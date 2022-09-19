@@ -334,9 +334,13 @@ namespace ETHDINFKBot.Modules
                 //if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 //    return;
 
+
+
                 var meal = MealTime.Lunch;
 
                 var searchDate = DateTime.UtcNow.UtcToLocalDateTime(Program.TimeZoneInfo); /// Make it passable by param
+                if (searchDate.Hour < 6)
+                    await Context.Message.Channel.SendMessageAsync("You are here too early. The menus will be loading during the night. Come back in the morning. Good night <:sleep:851469700453367838>", messageReference: new MessageReference(Context.Message.Id));
 
                 if (searchDate.Hour >= 14)
                     meal = MealTime.Dinner;
