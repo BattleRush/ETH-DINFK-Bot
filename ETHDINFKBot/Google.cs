@@ -1,5 +1,7 @@
 ﻿using HtmlAgilityPack;
 using Newtonsoft.Json;
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -125,6 +127,144 @@ namespace ETHDINFKBot
             }
         }
 
+        public async Task<List<string>> GetSearchResultBySelenium(string query, int start = 0, string lang = "en")
+        {
+            ChromeOptions options = new ChromeOptions();
+            options.AddArguments("--headless");
+            options.AddArguments("--disable-gpu");
+
+            var driver = new ChromeDriver(options); 
+            driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromMilliseconds(1000);
+            driver.Navigate().GoToUrl("https://images.google.com/?hl={lang}&gl={lang}&safe=active");
+
+            var buttons = driver.FindElements(By.TagName("button"));
+
+            foreach (var button in buttons)
+            {
+                // Find the accept all cookies button
+                // TODO English text check
+                if (button.Text.ToLower().StartsWith("alle") || button.Text.ToLower().StartsWith("accept"))
+                {
+                    button.Click();
+                }
+            }
+
+            var title = driver.Title;
+
+            var inputs = driver.FindElements(By.TagName("input"));
+            foreach (var input in inputs)
+            {
+                try
+                {
+                    var inputLabel = ((OpenQA.Selenium.WebElement)(input)).ComputedAccessibleLabel;
+                    // Find the accept all cookies button
+                    // TODO English text check
+                    if (inputLabel.ToLower().StartsWith("suche") || inputLabel.ToLower().StartsWith("search"))
+                    {
+                        ///button.Click();
+                        input.SendKeys(query);
+                        input.SendKeys(Keys.Return);
+                    }
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+
+            var images = driver.FindElements(By.XPath("//a[@href]"));
+
+            var root = (OpenQA.Selenium.WebElement)(driver.FindElement(By.XPath("html")));
+            var rootHtml = root.GetAttribute("innerHTML");
+
+            bool googleImages = true;
+            List<string> imageUrls = new List<string>();
+            int maxCount = 5;
+            foreach (var image in images)
+            {
+                try
+                {
+                    // TODO Check if this filter is correct
+                    if (image.GetAttribute("href").Contains("google"))
+                        continue;
+
+                    /*if (image.GetAttribute("href").Contains("imgurl"))
+                        imageUrls.Add("");*/
+
+                    if (imageUrls.Count < maxCount)
+                    {
+                        //image.Click();
+                        WebElement parent = (OpenQA.Selenium.WebElement)image.FindElement(By.XPath("../a"));
+                        WebElement parent2 = (OpenQA.Selenium.WebElement)image.FindElement(By.XPath("../.."));
+                        WebElement parent3 = (OpenQA.Selenium.WebElement)image.FindElement(By.XPath("../../.."));
+
+                        var parentHref = parent.GetAttribute("href");
+                        var parentHref2 = parent2.GetAttribute("href");
+                        var parentHref3 = parent3.GetAttribute("href");
+
+                        var innerHtml = parent.GetAttribute("innerHTML");
+                        var innerHtml2 = parent2.GetAttribute("innerHTML");
+                        var innerHtml3 = parent3.GetAttribute("innerHTML");
+
+                        var imageHtml = image.GetAttribute("innerHTML");
+
+                        parent.Click();
+                        var currentTitle = driver.Title;
+                        if(!currentTitle.Contains("Google Search"))
+                        {
+                            driver.Close();
+                        }
+                        System.Threading.Thread.Sleep(1000);
+
+                        var newImageLinks = driver.FindElements(By.XPath("//a[@href]"));
+                        foreach (var newImageLink in newImageLinks)
+                        {
+                            string url = newImageLink.GetAttribute("href");
+                            //Console.WriteLine(url);
+                            if (url.Contains("imgurl")/*/ && image.GetAttribute("href").EndsWith(".jpg") && image.GetAttribute("href").EndsWith(".png")*/)
+                            {
+                                Uri myUriCustom = new Uri(url);
+
+                                if (myUriCustom.Host == "")
+                                {
+                                    url = "https://example.com" + url;
+                                    myUriCustom = new Uri(url);
+                                }
+                                var newLink = HttpUtility.ParseQueryString(myUriCustom.Query).Get("imgurl");
+                                if (!imageUrls.Contains(newLink))
+                                    imageUrls.Add(newLink);
+                            }
+                        }
+
+                        //var candidateLinks = newImageLinks.Where(i => i.GetAttribute("href").Contains("imgurl")).Select(i => i.GetAttribute("href"));
+
+                        if (parentHref == null)
+                            continue;
+                        Uri myUri = new Uri(parentHref);
+
+                        if (myUri.Host == "")
+                        {
+                            parentHref = "https://example.com" + parentHref;
+                            myUri = new Uri(parentHref);
+                        }
+
+                        var newLinkDirect = HttpUtility.ParseQueryString(myUri.Query).Get("imgurl");
+                        if (!imageUrls.Contains(newLinkDirect) && string.IsNullOrWhiteSpace(newLinkDirect))
+                            imageUrls.Add(newLinkDirect);
+                    }
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+
+            //var links = images.Select(i => i.GetAttribute("href")).ToList();
+
+            driver.Quit();
+
+
+            return imageUrls;
+        }
+
         public async Task<List<string>> ImageSearch(string query, int start = 0, string lang = "en")
         {
             //Try To Load The Cache If Caching Is Enabled And A Cache Has Not Been Loaded Yet
@@ -170,7 +310,7 @@ namespace ETHDINFKBot
                     return new List<string>();
                 }
 
-                System.Threading.Thread.Sleep(TimeSpan.FromSeconds(2));
+                System.Threading.Thread.Sleep(TimeSpan.FromSeconds(1));
 
                 var doc = new HtmlAgilityPack.HtmlDocument(); //Create An HTML Document From The Downloaded HTML
                 doc.LoadHtml(responseString); //Load The Downloaded HTML
@@ -179,7 +319,13 @@ namespace ETHDINFKBot
 
                 var imageDiv = doc.DocumentNode.SelectNodes("//*[@class=\"idg8be\"]");
                 if (imageDiv == null)
+                {
+                    // Fallback no specific div found
+                    var imgNodes = doc.DocumentNode.SelectNodes("//img");
+
                     return new List<string>();
+                }
+
 
                 var hrefs = imageDiv[0].SelectNodes("a").Select(i => i.GetAttributeValue("href", string.Empty));
                 string validImage = "";
@@ -232,7 +378,7 @@ namespace ETHDINFKBot
                 {
                     if (node.Attributes.Count == 1 && node.Attributes[0].Value == "ZINbbc xpd O9g5cc uUPGi") //Check If The Node Has The Class "ZINbbc"
                     {
-                        
+
 
                         if (node.FirstChild.GetClasses().Contains("kCrYT")) //Check If The Node Has The Class "jfp3ef"
                         {

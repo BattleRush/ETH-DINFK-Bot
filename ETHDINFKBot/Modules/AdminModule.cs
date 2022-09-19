@@ -64,6 +64,25 @@ namespace ETHDINFKBot.Modules
     [Group("admin")]
     public class AdminModule : ModuleBase<SocketCommandContext>
     {
+        [Command("image")]
+        public async Task IMgaeTest()
+        {
+            var author = Context.Message.Author;
+            if (author.Id != Program.ApplicationSetting.Owner)
+            {
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
+            GoogleEngine google = new GoogleEngine();
+            var results = await google.GetSearchResultBySelenium("test string", 0, "de");
+            if(results != null && results.Count > 0)
+                await Context.Channel.SendMessageAsync(string.Join(Environment.NewLine, results));
+            else 
+                await Context.Channel.SendMessageAsync("No results found", false);
+
+        }
+
         [Command("renameback")]
         public async Task Test()
         {
@@ -776,7 +795,7 @@ namespace ETHDINFKBot.Modules
                         continue; // We dont need to research this image
 
                     var menuImage = FoodHelper.GetImageForFood(menu, true);
-                    await Context.Channel.SendMessageAsync($"Got ImageId: {menuImage?.MenuImageId ?? -1} for Menu: {menu.MenuImageId}", false);
+                    await Context.Channel.SendMessageAsync($"Got ImageId: {menuImage?.MenuImageId ?? -1} for Menu: {menu.MenuId}", false);
 
                     if (menuImage != null)
                         FoodDBManager.SetImageIdForMenu(menu.MenuId, menuImage.MenuImageId);
@@ -819,7 +838,7 @@ Total todays menus: {allTodaysMenus.Count}");
                 {
                     var todaysMenus = FoodDBManager.GetMenusFromRestaurant(restaurant.RestaurantId, DateTime.Now);
 
-                    if(debug)
+                    if(!debug)
                         builder.AddField(restaurant.Name, $"{todaysMenus.Count()} menu(s)" + Environment.NewLine + String.Join(", ", todaysMenus.Select(i => $"{i.Name} **{i.Amount} CHF**")));
                     else
                         builder.AddField($"{restaurant.Name} ({restaurant.RestaurantId})", $"{todaysMenus.Count()} menu(s)" + Environment.NewLine + String.Join(", ", todaysMenus.Select(i => $"{i.Name} **{i.Amount} CHF ({i.MenuId}/{i.MenuImageId ?? -1})**")));

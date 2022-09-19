@@ -254,14 +254,14 @@ namespace ETHDINFKBot.Modules
                 canvas.DrawBitmap(foodImage.Bitmap, new SKPoint(left, usedHeight));
                 if (debug)
                 {
-                    SKColor shadowColor = new SKColor(0, 0, 0, 128); 
+                    SKColor shadowColor = new SKColor(0, 0, 0, 128);
 
                     var debugImageIdFont = DrawingHelper.LargeTextPaint;
                     debugImageIdFont.FakeBoldText = true;
                     debugImageIdFont.BlendMode = SKBlendMode.Overlay;
                     debugImageIdFont.BlendMode = SKBlendMode.Xor;
                     debugImageIdFont.BlendMode = SKBlendMode.Screen;
-   
+
                     //debugImageIdFont.BlendMode = SKBlendMode.SoftLight;
                     //debugImageIdFont.BlendMode = SKBlendMode.SrcIn;
                     //debugImageIdFont.IsLinearText = true;
@@ -431,87 +431,184 @@ It is also likely that there are no menus currently available today." + weekendS
                 var largeFont = DrawingHelper.LargeTextPaint;
                 largeFont.FakeBoldText = true;
 
-                foreach (var restaurant in currentMenus)
+                bool mergeMode = true; // TODO maybe setting or autodetect
+
+                if (mergeMode)
                 {
+                    int maxPages = 6;
+
+                    int totalMenus = currentMenus.Count == 0 ? 0 : currentMenus.Sum(i => i.Value.Count);
+                    int maxColumns = Math.Max(3, totalMenus / maxPages);
+
+                    // TODO Title max chars 
+                    var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(2_000, 2_000);
+                    int currentColumn = 0;
+
                     int maxUsedHeight = 0;
-                    int maxUsedWidth = 0;
-
-                    if (restaurant.Value.Count == 0)
-                        continue;
-
-                    // Set max menus for now per restaurant
-                    maxMenus = restaurant.Value.Count;
-
-                    var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(1_000, 2_000);
-
-
-                    int currentTop = 0;
-                    string restaurantName = restaurant.Key.Name;
-                    if (debug)
-                        restaurantName += $" (Id: {restaurant.Key.RestaurantId})";
-
-                    canvas.DrawText(restaurantName, new SKPoint(padding.Left, padding.Top + currentTop), largeFont); // TODO Correct paint?
-
-                    currentTop += 25;
-
-                    int column = 0;
-                    int row = 0;
-
                     int currentWidth = 0;
-
-                    int maxColumnCount = Math.Min(3, maxMenus);
-
-                    // Limit to 2 rows max
-                    if (maxMenus > 3)
-                        maxColumnCount = (int)Math.Ceiling(maxMenus / 2m);
-
-
-                    canvas.DrawText(meal.ToString(), new SKPoint(maxColumnCount * colWidth - 75, 35), paint);
-
-                    foreach (var menu in restaurant.Value)
+                    int currentTitleTop = 0;
+                    try
                     {
-                        (int usedWidth, int usedHeight) = DrawMenu(canvas, menu, padding.Left + column * colWidth, padding.Top + currentTop, colWidth, userSettings, userFavRestaurants.Count, debug);
-
-                        currentWidth += usedWidth;
-
-                        if (maxUsedHeight < usedHeight)
-                            maxUsedHeight = usedHeight;
-
-                        if (maxUsedWidth < currentWidth)
-                            maxUsedWidth = currentWidth;
-
-                        column++;
-
-                        if (column >= maxColumnCount)
+                        foreach (var restaurant in currentMenus)
                         {
-                            row++;
-                            column = 0;
-                            currentTop = maxUsedHeight - 20;
-                            ///maxUsedHeight = 0; TODO Reset per row
-                            currentWidth = 0;
+                            foreach (var menu in restaurant.Value)
+                            {
+                                if (currentColumn == 0)
+                                    (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(2_000, 2_000);
+
+                                int currentTop = 0;
+                                string restaurantName = restaurant.Key.Name;
+                                if (debug)
+                                    restaurantName += $" (Id: {restaurant.Key.RestaurantId})";
+
+
+                                // Display restaurant name if new row started or if new restaurant
+                                if (currentColumn == 0 || restaurant.Value.IndexOf(menu) == 0)
+                                {
+                                    currentTop = (int)DrawingHelper.DrawTextArea(canvas, largeFont, padding.Left + currentColumn * colWidth, padding.Top + currentTop, colWidth - 30, largeFont.TextSize, restaurantName);
+                                    currentTop -= 35;
+
+                                    if (currentTitleTop < currentTop)
+                                        currentTitleTop = currentTop;
+                                }
+                                else
+                                {
+                                    currentTop = currentTitleTop;
+                                }
+
+                                //canvas.DrawText(meal.ToString(), new SKPoint(1/*TODO which value here maybe in the end*/ * colWidth - 75, 35), paint);
+
+
+                                (int usedWidth, int usedHeight) = DrawMenu(canvas, menu, padding.Left + currentColumn * colWidth, padding.Top + currentTop, colWidth, userSettings, userFavRestaurants.Count, debug);
+
+                                currentWidth += usedWidth;
+
+                                if (maxUsedHeight < usedHeight)
+                                    maxUsedHeight = usedHeight;
+
+
+                                currentColumn++;
+                                if (currentColumn >= maxColumns)
+                                {
+                                    // TODO currentWidth sometimes has wrong values
+                                    bitmap = DrawingHelper.CropImage(bitmap, new SKRect(0, 0, currentWidth, maxUsedHeight));
+
+                                    var stream = CommonHelper.GetStream(bitmap);
+                                    if (stream != null)
+                                        streams.Add(stream);
+
+                                    bitmap.Dispose();
+                                    canvas.Dispose();
+
+                                    currentColumn = 0;
+                                    maxUsedHeight = 0;
+                                    currentWidth = 0;
+                                    currentTitleTop = 0;
+                                }
+                            }
+                        }
+
+                        if (currentColumn > 0)
+                        {
+                            bitmap = DrawingHelper.CropImage(bitmap, new SKRect(0, 0, currentWidth, maxUsedHeight));
+                            // TODO Crop last one and change this logic here
+                            var stream = CommonHelper.GetStream(bitmap);
+                            if (stream != null)
+                                streams.Add(stream);
+
+
+                            bitmap.Dispose();
+                            canvas.Dispose();
                         }
                     }
+                    catch (Exception ex)
+                    {
+                    }
+                }
+                else
+                {
+                    foreach (var restaurant in currentMenus)
+                    {
+                        int maxUsedHeight = 0;
+                        int maxUsedWidth = 0;
 
-                    //maxUsedHeight += 20; // Bottom padding
+                        if (restaurant.Value.Count == 0)
+                            continue;
 
-                    /* await Context.Channel.SendMessageAsync($"**Menu: {menu.Name} Description: {menu.Description} Price: {menu.Price}**");
+                        // Set max menus for now per restaurant
+                        maxMenus = restaurant.Value.Count;
 
-                     if (!string.IsNullOrEmpty(menu.ImgUrl))
-                         await Context.Channel.SendMessageAsync(menu.ImgUrl);
-                    */
-                    bitmap = DrawingHelper.CropImage(bitmap, new SKRect(0, 0, maxUsedWidth, maxUsedHeight));
+                        var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(1_000, 2_000);
 
 
-                    var stream = CommonHelper.GetStream(bitmap);
-                    if (stream != null)
-                        streams.Add(stream);
+                        int currentTop = 0;
+                        string restaurantName = restaurant.Key.Name;
+                        if (debug)
+                            restaurantName += $" (Id: {restaurant.Key.RestaurantId})";
 
-                    if (streams.Count >= 5)
-                        break; // Limit to 5 max
+                        canvas.DrawText(restaurantName, new SKPoint(padding.Left, padding.Top + currentTop), largeFont); // TODO Correct paint?
 
-                    bitmap.Dispose();
-                    canvas.Dispose();
+                        currentTop += 25;
 
+                        int column = 0;
+                        int row = 0;
+
+                        int currentWidth = 0;
+
+                        int maxColumnCount = Math.Min(3, maxMenus);
+
+                        // Limit to 2 rows max
+                        if (maxMenus > 3)
+                            maxColumnCount = (int)Math.Ceiling(maxMenus / 2m);
+
+
+                        canvas.DrawText(meal.ToString(), new SKPoint(maxColumnCount * colWidth - 75, 35), paint);
+
+                        foreach (var menu in restaurant.Value)
+                        {
+                            (int usedWidth, int usedHeight) = DrawMenu(canvas, menu, padding.Left + column * colWidth, padding.Top + currentTop, colWidth, userSettings, userFavRestaurants.Count, debug);
+
+                            currentWidth += usedWidth;
+
+                            if (maxUsedHeight < usedHeight)
+                                maxUsedHeight = usedHeight;
+
+                            if (maxUsedWidth < currentWidth)
+                                maxUsedWidth = currentWidth;
+
+                            column++;
+
+                            if (column >= maxColumnCount)
+                            {
+                                row++;
+                                column = 0;
+                                currentTop = maxUsedHeight - 20;
+                                ///maxUsedHeight = 0; TODO Reset per row
+                                currentWidth = 0;
+                            }
+                        }
+
+                        //maxUsedHeight += 20; // Bottom padding
+
+                        /* await Context.Channel.SendMessageAsync($"**Menu: {menu.Name} Description: {menu.Description} Price: {menu.Price}**");
+
+                         if (!string.IsNullOrEmpty(menu.ImgUrl))
+                             await Context.Channel.SendMessageAsync(menu.ImgUrl);
+                        */
+                        bitmap = DrawingHelper.CropImage(bitmap, new SKRect(0, 0, maxUsedWidth, maxUsedHeight));
+
+
+                        var stream = CommonHelper.GetStream(bitmap);
+                        if (stream != null)
+                            streams.Add(stream);
+
+                        if (streams.Count >= 5)
+                            break; // Limit to 5 max
+
+                        bitmap.Dispose();
+                        canvas.Dispose();
+
+                    }
                 }
 
                 paint = DrawingHelper.DefaultTextPaint;
@@ -536,7 +633,7 @@ It is also likely that there are no menus currently available today." + weekendS
                     // User hasnt favourited any menu preference or locations 
                     // Always show this hint
                     await Context.Channel.SendMessageAsync($"You haven't set any favourite mensa location. The bot will show you a default view only (Polymensa and UZH Zentrum Mensa).{Environment.NewLine}" +
-                        $"You can do this with {Program.CurrentPrefix}food fav", messageReference: new MessageReference(Context.Message.Id));
+                        $"You can adjust this with {Program.CurrentPrefix}food fav", messageReference: new MessageReference(Context.Message.Id));
                 }
 
                 //    // Create the service.

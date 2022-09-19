@@ -94,7 +94,7 @@ namespace ETHDINFKBot.Data
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
-                return context.MenuAllergies.Where(i => i.Menu == menu).Select(i => i.AllergyId).ToList();
+                return context.MenuAllergies.Where(i => i.MenuId == menu.MenuImageId).Select(i => i.AllergyId).ToList();
             }
         }
 

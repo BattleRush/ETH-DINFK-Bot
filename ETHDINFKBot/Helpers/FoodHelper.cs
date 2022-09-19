@@ -696,7 +696,8 @@ namespace ETHDINFKBot.Helpers
 
         private static List<string> GetImageFromGoogle(string text, string lang = "de")
         {
-            return Google.ImageSearch(text.Replace("\"", "").Trim(), lang: lang).Result;
+            //return Google.ImageSearch(text.Replace("\"", "").Replace("\"n", "").Trim(), lang: lang).Result;
+            return Google.GetSearchResultBySelenium(text.Replace("\"", "").Replace("\"n", " ").Trim(), lang: lang).Result;
         }
 
 
@@ -727,17 +728,35 @@ namespace ETHDINFKBot.Helpers
                 if(searchTerm.StartsWith("mit"))
                     searchTerm = menu.Name + " " + menu.Description;
                 
-                var imageLinks = GetImageFromGoogle(menu.Description, language);
+                var imageLinks = GetImageFromGoogle(searchTerm, language);
 
                 // This is to fix ratelimit hits
-                if (!fullSearch)
+                if (fullSearch)
                 {
                     if (imageLinks.Count == 0 && !menu.Description.StartsWith("mit"))
-                        imageLinks = GetImageFromGoogle(menu.Name + " " + menu.Description, language);
-                    if (imageLinks.Count == 0)
-                        imageLinks = GetImageFromGoogle(menu.Description, language);
+                    {
+                        searchTerm = menu.Name + " " + menu.Description;
+                        imageLinks = GetImageFromGoogle(searchTerm, language);
+                    }
+                   
+                    /*if (imageLinks.Count == 0)
+                    {
+                        searchTerm = menu.Name + " " + menu.Description;
+                        imageLinks = GetImageFromGoogle(searchTerm, language);
+                    }*/
+
+                    // Try only first line
+                    if (imageLinks.Count == 0 && menu.Description.Contains("\n"))
+                    {
+                        searchTerm = menu.Description.Split("\n").First();
+                        imageLinks = GetImageFromGoogle(searchTerm, language);
+                    }
+
                     if (imageLinks.Count == 0 && menu.Description.Contains(","))
-                        imageLinks = GetImageFromGoogle(menu.Description.Split(",").First(), language);
+                    {
+                        searchTerm = menu.Description.Split(",").First();
+                        imageLinks = GetImageFromGoogle(searchTerm, language);
+                    }
                 }
 
                 //if (imageLinks.Count == 0 && menu.Description.Contains(","))
@@ -765,7 +784,7 @@ namespace ETHDINFKBot.Helpers
 
                 // TODO If description starts with "mit" then maybe also add name infront
                 
-                dbImages = FoodDBManager.CreateMenuImages(successfullyResolvedImages, menu.Description, language);
+                dbImages = FoodDBManager.CreateMenuImages(successfullyResolvedImages, searchTerm, language);
 
                 if (dbImages.Count > 0)
                     return dbImages.First();
