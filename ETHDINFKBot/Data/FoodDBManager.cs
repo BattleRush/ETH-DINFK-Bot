@@ -340,7 +340,7 @@ namespace ETHDINFKBot.Data
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.Menus.Where(i => i.RestaurantId == restaurantId && i.DateTime.Day == datetime.Day).ToList();
+                    return context.Menus.Where(i => i.RestaurantId == restaurantId && i.DateTime.Date == datetime.Date).ToList();
                 }
             }
             catch (Exception ex)
