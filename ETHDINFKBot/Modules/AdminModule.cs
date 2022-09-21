@@ -84,7 +84,7 @@ namespace ETHDINFKBot.Modules
                     await Context.Channel.SendMessageAsync("No results found", false);
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 await Context.Channel.SendMessageAsync(ex.ToString(), false);
             }
@@ -725,7 +725,7 @@ namespace ETHDINFKBot.Modules
                         }
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     await Context.Message.Channel.SendMessageAsync(ex.ToString());
                 }
@@ -750,9 +750,39 @@ namespace ETHDINFKBot.Modules
                 foreach (var menu in allMenus)
                     FoodDBManager.DeleteMenu(menu);
 
-                await Context.Channel.SendMessageAsync("Done clear", false);
+                await Context.Channel.SendMessageAsync($"Done clear for: {restaurantId}", false);
             }
 
+            // TODO allow load mode for all restaurants with no menus today
+            [Command("fix", RunMode = RunMode.Async)]
+            public async Task FixFood()
+            {
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                var allRestaurants = FoodDBManager.GetAllRestaurants();
+
+                foreach (var restaurant in allRestaurants)
+                {
+                    if (!restaurant.IsOpen)
+                        continue;
+
+                    var allMenus = FoodDBManager.GetMenusByDay(DateTime.Now, restaurant.RestaurantId);
+                    if (allMenus.Count == 0)
+                    {
+                        await ClearFood(restaurant.RestaurantId); // Ensure but likely empty anyway
+                        FoodHelper.LoadMenus(restaurant.RestaurantId);
+
+                        await Context.Channel.SendMessageAsync($"Done load for: {restaurant.RestaurantId}", false);
+                    }
+                }
+            }
+
+            // TODO allow load mode for all restaurants with no menus today
             [Command("load", RunMode = RunMode.Async)]
             public async Task LoadFood(int restaurantId = -1)
             {
@@ -766,7 +796,7 @@ namespace ETHDINFKBot.Modules
                 await ClearFood(restaurantId); // Ensure deleted
                 FoodHelper.LoadMenus(restaurantId);
 
-                await Context.Channel.SendMessageAsync("Done load", false);
+                await Context.Channel.SendMessageAsync($"Done load for: {restaurantId}", false);
             }
 
             [Command("image", RunMode = RunMode.Async)]
@@ -853,7 +883,7 @@ Total todays menus: {allTodaysMenus.Count}");
                 {
                     var todaysMenus = FoodDBManager.GetMenusFromRestaurant(restaurant.RestaurantId, DateTime.Now);
 
-                    if(!debug)
+                    if (!debug)
                         builder.AddField(restaurant.Name, $"{todaysMenus.Count()} menu(s)" + Environment.NewLine + String.Join(", ", todaysMenus.Select(i => $"{i.Name} **{i.Amount} CHF**")));
                     else
                         builder.AddField($"{restaurant.Name} ({restaurant.RestaurantId})", $"{todaysMenus.Count()} menu(s)" + Environment.NewLine + String.Join(", ", todaysMenus.Select(i => $"{i.Name} **{i.Amount} CHF ({i.MenuId}/{i.MenuImageId ?? -1})**")));

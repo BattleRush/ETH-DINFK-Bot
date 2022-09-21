@@ -717,9 +717,14 @@ namespace ETHDINFKBot.Helpers
             List<string> images = new List<string>();
             HttpClient client = new HttpClient();
 
-            string searchTerm = menu.Description;
+            string description = menu.Description;
+
+            // Clean up description
+            // TODO
+
+            string searchTerm = description;
             if (searchTerm.StartsWith("mit"))
-                searchTerm = menu.Name + " " + menu.Description;
+                searchTerm = menu.Name + " " + description;
 
             searchTerm = searchTerm.Replace("\"", "").Replace("\"n", " ").Trim();
             var dbImages = FoodDBManager.GetMenuImages(searchTerm, language);
@@ -734,9 +739,9 @@ namespace ETHDINFKBot.Helpers
                 // This is to fix ratelimit hits
                 if (fullSearch)
                 {
-                    if (imageLinks.Count == 0 && !menu.Description.StartsWith("mit"))
+                    if (imageLinks.Count == 0 && !description.StartsWith("mit"))
                     {
-                        searchTerm = menu.Name + " " + menu.Description;
+                        searchTerm = menu.Name + " " + description;
                         searchTerm = searchTerm.Replace("\"", "").Replace("\"n", " ").Trim();
                         // Check db first
                         dbImages = FoodDBManager.GetMenuImages(searchTerm, language);
@@ -753,9 +758,9 @@ namespace ETHDINFKBot.Helpers
                     }*/
 
                     // Try only first line
-                    if (imageLinks.Count == 0 && menu.Description.Contains("\n"))
+                    if (imageLinks.Count == 0 && description.Contains("\n"))
                     {
-                        searchTerm = menu.Description.Split("\n").First();
+                        searchTerm = description.Split("\n").First();
                         searchTerm = searchTerm.Replace("\"", "").Replace("\"n", " ").Trim();
                         // Check db first
                         dbImages = FoodDBManager.GetMenuImages(searchTerm, language);
@@ -765,9 +770,9 @@ namespace ETHDINFKBot.Helpers
                         imageLinks = GetImageFromGoogle(searchTerm, language);
                     }
 
-                    if (imageLinks.Count == 0 && menu.Description.Contains(","))
+                    if (imageLinks.Count == 0 && description.Contains(","))
                     {
-                        searchTerm = menu.Description.Split(",").First();
+                        searchTerm = description.Split(",").First();
                         searchTerm = searchTerm.Replace("\"", "").Replace("\"n", " ").Trim();
                         // Check db first
                         dbImages = FoodDBManager.GetMenuImages(searchTerm, language);

@@ -148,6 +148,13 @@ namespace ETHDINFKBot.Handlers
             if (SocketGuildChannel == null)
                 return false;
 
+            if(SocketGuildChannel is SocketForumChannel socketForumChannel)
+            {
+                // Forum group
+                //1019663716804997192
+            }
+
+
             // Ensure CategoryChannel is created
             await CreateDiscordChannelCategoryDBEntry();
 
