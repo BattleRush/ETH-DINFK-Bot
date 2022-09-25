@@ -244,7 +244,18 @@ namespace ETHDINFKBot.Helpers
             try
             {
                 WebClient client = new WebClient();
-                string html = client.DownloadString(link);
+
+                string html = "";
+
+                try
+                {
+                    html = client.DownloadString(link);
+                }
+                catch (Exception ex)
+                {
+                    // TODO Log
+                    return null; // Likely a HTTP Error
+                }
 
                 var doc = new HtmlDocument();
                 doc.LoadHtml(html);
@@ -366,7 +377,18 @@ namespace ETHDINFKBot.Helpers
             int polyMensaId = id;
 
             WebClient client = new WebClient();
-            string html = client.DownloadString($"https://ethz.ch/de/campus/erleben/gastronomie-und-einkaufen/gastronomie/menueplaene/offerDay.html?language={lang}&id={polyMensaId}&date={dateString}");
+
+            string html = "";
+
+            try
+            {
+                html = client.DownloadString($"https://ethz.ch/de/campus/erleben/gastronomie-und-einkaufen/gastronomie/menueplaene/offerDay.html?language={lang}&id={polyMensaId}&date={dateString}");
+            }
+            catch (Exception ex)
+            {
+                // TODO Log
+                return null; // Likely a HTTP Error
+            }
 
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
@@ -462,10 +484,19 @@ namespace ETHDINFKBot.Helpers
             // day = "freitag";
             //string mensa = "zentrum-mercato";
 
-
             WebClient client = new WebClient();
-            string html = client.DownloadString($"https://www.mensa.uzh.ch/de/menueplaene/{mensa}/{day}.html");
+            string html = "";
 
+            try
+            {
+                html = client.DownloadString($"https://www.mensa.uzh.ch/de/menueplaene/{mensa}/{day}.html");
+            }
+            catch (Exception ex)
+            {
+                // TODO Log
+                return null; // Likely a HTTP Error
+            }
+            
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
 
@@ -865,8 +896,10 @@ namespace ETHDINFKBot.Helpers
                     day = "freitag";
                     break;
                 case DayOfWeek.Saturday:
+                    day = "samstag";
+                    break;
                 case DayOfWeek.Sunday:
-                    day = "n/a";
+                    day = "sonntag";
                     break;
             }
 
