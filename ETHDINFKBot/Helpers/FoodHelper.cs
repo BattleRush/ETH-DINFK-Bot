@@ -50,7 +50,7 @@ namespace ETHDINFKBot.Helpers
 
         private static FoodDBManager FoodDBManager = FoodDBManager.Instance();
 
-        public static void LoadMenus(int restaurantId = -1)
+        public static void LoadMenus(int restaurantId = -1, bool fixOnly = false)
         {
             var avilableRestaurants = FoodDBManager.GetAllRestaurants();
             Google = new GoogleEngine(); // TODO Better reset
@@ -62,6 +62,13 @@ namespace ETHDINFKBot.Helpers
 
                 if (restaurant.IsOpen)
                 {
+                    if (fixOnly)
+                    {               
+                        var allMenus = FoodDBManager.GetMenusByDay(DateTime.Now, restaurant.RestaurantId);
+                        if (allMenus.Count != 0)
+                            continue; // We have some menus loaded do not reload
+                    }
+
                     //await Context.Channel.SendMessageAsync($"Processing {restaurant.Name}");
 
                     List<Menu> menu = new List<Menu>();
@@ -748,14 +755,9 @@ namespace ETHDINFKBot.Helpers
             List<string> images = new List<string>();
             HttpClient client = new HttpClient();
 
-            string description = menu.Description;
-
-            // Clean up description
-            // TODO
-
-            string searchTerm = description;
+            string searchTerm = menu.Description;
             if (searchTerm.StartsWith("mit"))
-                searchTerm = menu.Name + " " + description;
+                searchTerm = menu.Name + " " + menu.Description;
 
             searchTerm = searchTerm.Replace("\"", "").Replace("\"n", " ").Trim();
             var dbImages = FoodDBManager.GetMenuImages(searchTerm, language);
@@ -770,9 +772,9 @@ namespace ETHDINFKBot.Helpers
                 // This is to fix ratelimit hits
                 if (fullSearch)
                 {
-                    if (imageLinks.Count == 0 && !description.StartsWith("mit"))
+                    if (imageLinks.Count == 0 && !menu.Description.StartsWith("mit"))
                     {
-                        searchTerm = menu.Name + " " + description;
+                        searchTerm = menu.Name + " " + menu.Description;
                         searchTerm = searchTerm.Replace("\"", "").Replace("\"n", " ").Trim();
                         // Check db first
                         dbImages = FoodDBManager.GetMenuImages(searchTerm, language);
@@ -789,9 +791,9 @@ namespace ETHDINFKBot.Helpers
                     }*/
 
                     // Try only first line
-                    if (imageLinks.Count == 0 && description.Contains("\n"))
+                    if (imageLinks.Count == 0 && menu.Description.Contains("\n"))
                     {
-                        searchTerm = description.Split("\n").First();
+                        searchTerm = menu.Description.Split("\n").First();
                         searchTerm = searchTerm.Replace("\"", "").Replace("\"n", " ").Trim();
                         // Check db first
                         dbImages = FoodDBManager.GetMenuImages(searchTerm, language);
@@ -801,9 +803,9 @@ namespace ETHDINFKBot.Helpers
                         imageLinks = GetImageFromGoogle(searchTerm, language);
                     }
 
-                    if (imageLinks.Count == 0 && description.Contains(","))
+                    if (imageLinks.Count == 0 && menu.Description.Contains(","))
                     {
-                        searchTerm = description.Split(",").First();
+                        searchTerm = menu.Description.Split(",").First();
                         searchTerm = searchTerm.Replace("\"", "").Replace("\"n", " ").Trim();
                         // Check db first
                         dbImages = FoodDBManager.GetMenuImages(searchTerm, language);

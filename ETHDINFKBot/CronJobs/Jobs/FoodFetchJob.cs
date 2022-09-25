@@ -37,15 +37,16 @@ namespace ETHDINFKBot.CronJobs.Jobs
             // TODO Maybe send update message if the fetch was successfull
             Stopwatch watch = new Stopwatch();
             watch.Start();
-            FoodHelper.LoadMenus();
+            FoodHelper.LoadMenus(-1, true);
             watch.Stop();
 
             var guild = Program.Client.GetGuild(Program.ApplicationSetting.BaseGuild);
             var spamChannel = guild.GetTextChannel(GeneralChatId);
-            if (spamChannel != null)
-            {
+            
+            // Message only if it took longer than 10 seconds -> some load happened
+            if (spamChannel != null && watch.ElapsedMilliseconds > 10_000)
                 spamChannel.SendMessageAsync($"Loaded menus in {watch.ElapsedMilliseconds}ms");
-            }
+
             return Task.CompletedTask;
         }
 

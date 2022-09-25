@@ -438,7 +438,9 @@ It is also likely that there are no menus currently available today." + weekendS
                 var largeFont = DrawingHelper.LargeTextPaint;
                 largeFont.FakeBoldText = true;
 
-                bool mergeMode = userSettings?.VegetarianPreference == true || userSettings?.VeganPreference == true; // TODO maybe setting or autodetect
+                bool mergeMode = userSettings?.VegetarianPreference == true 
+                                || userSettings?.VeganPreference == true
+                                || currentMenus.Count() > 5;      
 
                 if (mergeMode)
                 {
