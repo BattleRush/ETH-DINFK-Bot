@@ -691,7 +691,7 @@ It is also likely that there are no menus currently available today." + weekendS
                 // TODO check if the error code can be extracted from the exception directly
                 if(ex.Message.Contains("50035"))
                 {
-                    await Context.Channel.SendMessageAsync($"Think ya funny <@{Context.Message.Author.id}>");
+                    await Context.Channel.SendMessageAsync($"Think ya funny <@{Context.Message.Author.Id}>?");
                 }
                 else
                 {
