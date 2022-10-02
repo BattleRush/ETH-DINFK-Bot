@@ -344,7 +344,7 @@ namespace ETHDINFKBot
                     //string www = @"C:\Temp\wss";
                     // Create and prepare a new SSL server context
                     // TO REGENERATE "sudo openssl pkcs12 -export -out battlerush.dev.pfx -inkey privkey.pem -in fullchain.pem"
-                    var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
+                    var context = new SslContext(SslProtocols.Tls13, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx"), ""));
                     //var context = new SslContext(SslProtocols.Tls12);
 
                     // Create a new WebSocket server
