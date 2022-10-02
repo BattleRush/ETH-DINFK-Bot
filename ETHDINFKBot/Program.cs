@@ -38,10 +38,11 @@ using System.Diagnostics;
 using Discord.Net;
 using ETHDINFKBot.Classes;
 using Discord.Interactions;
+using WebSocketSharp.Server;
 
 namespace ETHDINFKBot
 {
-    class PlaceServer : WsServer
+   /* class PlaceServer : WsServer
     {
         public PlaceServer(IPAddress address, int port) : base(address, port) { }
 
@@ -51,7 +52,7 @@ namespace ETHDINFKBot
         {
             Console.WriteLine($"Chat TCP server caught an error with code {error}");
         }
-    }
+    }*/
 
     class Program
     {
@@ -87,7 +88,7 @@ namespace ETHDINFKBot
         private static List<ulong> IgnoreThreads = new List<ulong>() { 996746797236105236 }; // Not used atm
 
         //public static WebSocketServer PlaceWebsocket;
-        public static PlaceServer PlaceServer;
+        public static WebSocketServer PlaceServer;
 
 
         // Used for restoring channel ordering (TODO Maybe move that info into the DB?)
@@ -349,21 +350,28 @@ namespace ETHDINFKBot
                     //var context = new SslContext(SslProtocols.Tls12);
 
                     // Create a new WebSocket server
-                    PlaceServer = new PlaceServer(IPAddress.Any, 9000);
+                    //PlaceServer = new PlaceServer(IPAddress.Any, 9000);
                     //PlaceServer.AddStaticContent(www);
 
-                    PlaceServer.OptionKeepAlive = true;
+                    //PlaceServer.OptionKeepAlive = true;
 
                     //PlaceServer = new PlaceServer(IPAddress.Any, 9000);
                     //PlaceServer.OptionKeepAlive = true;
-                    PlaceServer.OptionAcceptorBacklog = 8192;
-                    PlaceServer.OptionSendBufferSize = 1_000_000;
+                    //PlaceServer.OptionAcceptorBacklog = 8192;
+                    //PlaceServer.OptionSendBufferSize = 1_000_000;
 
                     _logger.LogInformation("Server starting...");
                     // Start the server
-                    PlaceServer.Start();
+                    //PlaceServer.Start();
                     Console.WriteLine("Done!");
+
+                    PlaceServer = new WebSocketServer(9000);
+                    PlaceServer.AddWebSocketService<Websocket>("/");
+                    PlaceServer.Start();
                     _logger.LogInformation("Server started");
+
+
+
                 }
                 catch (Exception ex)
                 {

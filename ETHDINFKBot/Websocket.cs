@@ -11,30 +11,34 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using WebSocketSharp;
+using WebSocketSharp.Server;
 //using WebSocketSharp;
 //using WebSocketSharp.Server;
 
 namespace ETHDINFKBot
 {
-    public class PlaceSession : WsSession
-    {
-        public PlaceSession(WsServer server) : base(server) {
-            int i = 1;
+   // public class PlaceSession : WsSession
+    //{
+        public class Websocket : WebSocketBehavior
+        {
+        //    public PlaceSession(WsServer server) : base(server) {
+        //    int i = 1;
         
-        }
-        public override void OnWsConnected(HttpRequest request)
+        //}
+        /*public override void OnWsConnected(HttpRequest request)
         {
             Console.WriteLine($"Chat WebSocket session with Id {Id} connected!");
 
             // Send invite message
             string message = "Hello from WebSocket chat! Please send a message or '!' to disconnect the client!";
-            SendTextAsync(message);
+            //SendBinary(message);
         }
 
         public override void OnWsDisconnected()
         {
             Console.WriteLine($"Chat WebSocket session with Id {Id} disconnected!");
-        }
+        }*/
 
         public void SendPixel(short x, short y, SKColor color)
         {
@@ -323,10 +327,14 @@ namespace ETHDINFKBot
         //    Console.WriteLine($"Chat TCP session with Id {Id} disconnected!");
         //}
 
-        public override void OnWsReceived(byte[] buffer, long offset, long size)
+        //public override void OnWsReceived(byte[] buffer, long offset, long size)
+        //{
+            protected override void OnMessage(MessageEventArgs e)
         {
+            var buffer = e.RawData;
+            int offset = 0;
             var data = buffer.Skip(Convert.ToInt32(offset)).ToArray();
-
+            Console.WriteLine("received data");
             byte packetId = data[0];
 
             try
@@ -335,20 +343,20 @@ namespace ETHDINFKBot
                 {
                     case MessageEnum.FullImage_Request:
                         var fullImageBytes = GetFullImageResponse();
-                        Send(fullImageBytes, 0, fullImageBytes.Length);
+                        Send(fullImageBytes);
                         break;
 
                     case MessageEnum.TotalPixelCount_Request:
                         var totalPixelCountResponse = GetTotalPixelCount();
                         byte[] dataReturn = new byte[offset + totalPixelCountResponse.Length];
 
-                        Send(totalPixelCountResponse, 0, totalPixelCountResponse.Length);
+                        Send(totalPixelCountResponse);
                         break;
 
                     case MessageEnum.TotalChunksAvailable_Request:
                         var totalChunkResponse = GetTotalChunks();
 
-                        Send(totalChunkResponse, 0, totalChunkResponse.Length);
+                        Send(totalChunkResponse);
                         break;
 
                     case MessageEnum.GetChunk_Request:
@@ -358,7 +366,7 @@ namespace ETHDINFKBot
 
                         var chunkBytes = GetChunk(chunkId);
 
-                        Send(chunkBytes, 0, chunkBytes.Length);
+                        Send(chunkBytes);
 
                         //Console.WriteLine("SEND GetChunk_Request");
                         break;
@@ -366,7 +374,7 @@ namespace ETHDINFKBot
                     case MessageEnum.GetUsers_Request:
                         var userBytes = GetFullUserInfos();
 
-                        Send(userBytes, 0, userBytes.Length);
+                        Send(userBytes);
                         break;
 
                     case MessageEnum.GetUserProfileImage_Request:
@@ -375,7 +383,7 @@ namespace ETHDINFKBot
                         short userId = BitConverter.ToInt16(userIdBytes, 0);
                         var userImageBytes = GetUserImageBytes(userId);
 
-                        Send(userImageBytes, 0, userImageBytes.Length);
+                        Send(userImageBytes);
                         break;
 
                     case MessageEnum.FullImage_Response:

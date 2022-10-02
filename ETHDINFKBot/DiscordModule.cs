@@ -605,14 +605,14 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
             builder.WithCurrentTimestamp();
-            builder.AddField("Is Accepting", $"{ws.IsAccepting}", true);
-            builder.AddField("Is Started", $"{ws.IsStarted}", true);
-            builder.AddField("IP Endpoint", $"{ws.Endpoint}", true);
+            builder.AddField("Is Accepting", $"{ws.IsListening}", true);
+            builder.AddField("Is Secure", $"{ws.IsSecure}", true);
+            //builder.AddField("IP Endpoint", $"{ws.Address}", true);
             builder.AddField("Address", $"{ws.Address}", true);
-            builder.AddField("Connected Sessions", $"{ws.ConnectedSessions}", true);
-            builder.AddField("Bytes Pending", $"{ws.BytesPending.ToString("N0")}", true);
-            builder.AddField("Bytes Received", $"{ws.BytesReceived.ToString("N0")}", true);
-            builder.AddField("Bytes Sent", $"{ws.BytesSent.ToString("N0")}", true);
+            //builder.AddField("Connected Sessions", $"{ws.ConnectedSessions}", true);
+            //builder.AddField("Bytes Pending", $"{ws.BytesPending.ToString("N0")}", true);
+            //builder.AddField("Bytes Received", $"{ws.BytesReceived.ToString("N0")}", true);
+            //builder.AddField("Bytes Sent", $"{ws.BytesSent.ToString("N0")}", true);
 
             await Context.Channel.SendMessageAsync("", false, builder.Build());
         }

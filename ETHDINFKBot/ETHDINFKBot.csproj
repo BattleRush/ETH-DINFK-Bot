@@ -60,6 +60,7 @@
     <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="2.88.2" />
     <PackageReference Include="TheMulti0.DuckSharp" Version="1.0.2" />
     <PackageReference Include="TimeZoneConverter" Version="6.0.1" />
+    <PackageReference Include="websocketsharp.core" Version="1.0.0" />
     <PackageReference Include="Xabe.FFmpeg" Version="5.2.0" />
   </ItemGroup>
 

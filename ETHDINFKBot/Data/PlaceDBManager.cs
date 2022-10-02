@@ -8,6 +8,7 @@ using ETHDINFKBot.Modules;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MySqlConnector;
+using NetCoreServer;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -621,7 +622,10 @@ WHERE XPos > {xStart} AND XPos < {xEnd} AND YPos > {yStart} AND YPos < {yEnd}";
 
                     //Console.WriteLine($"Send: {x}/{y} paint R:{color.R}|G:{color.G}|B:{color.B}");
 
-                    server.Multicast(data, 0, 9);
+                    //((WsServer)server).MulticastBinary(data, 0, 9);
+                    server.WebSocketServices.Broadcast(data);
+                    //((WsServer)server).MulticastText("Hello");
+                    //((WsServer)server).MulticastPing("ping");
                 }
             }
             catch (Exception ex)
