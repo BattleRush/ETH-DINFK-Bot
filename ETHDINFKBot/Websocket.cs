@@ -329,12 +329,12 @@ namespace ETHDINFKBot
 
         //public override void OnWsReceived(byte[] buffer, long offset, long size)
         //{
-            protected override void OnMessage(MessageEventArgs e)
+        protected override void OnMessage(MessageEventArgs e)
         {
             var buffer = e.RawData;
             int offset = 0;
             var data = buffer.Skip(Convert.ToInt32(offset)).ToArray();
-            Console.WriteLine("received data");
+            //Console.WriteLine("received data");
             byte packetId = data[0];
 
             try
