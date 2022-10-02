@@ -55,6 +55,8 @@ namespace ETHDINFKBot
 
     class Program
     {
+        private readonly ILogger _logger = new Logger<Program>(Program.Logger);
+
         public static DiscordSocketClient Client;
         private CommandService Commands;
 
@@ -333,7 +335,7 @@ namespace ETHDINFKBot
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-#if !DEBUG
+//#if !DEBUG
                 string www = "/var/www/wss";
                 try
                 {
@@ -354,16 +356,18 @@ namespace ETHDINFKBot
                     PlaceServer.OptionAcceptorBacklog = 8192;
                     PlaceServer.OptionSendBufferSize = 10_000_000;
 
+                    _logger.LogInformation("Server starting...");
                     // Start the server
-                    Console.Write("Server starting...");
                     PlaceServer.Start();
                     Console.WriteLine("Done!");
+                    _logger.LogInformation("Server started");
                 }
                 catch (Exception ex)
                 {
-                    Console.Write("Error while starting WS: " + ex.ToString());
+                    _logger.LogInformation("WS Error: " + ex.ToString());
+                    ///Console.Write("Error while starting WS: " + ex.ToString());
                 }
-#endif
+//#endif
             }
             else
             {
