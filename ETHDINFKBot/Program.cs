@@ -349,7 +349,7 @@ namespace ETHDINFKBot
 
                     // Create a new WebSocket server
                     PlaceServer = new PlaceServer(context, IPAddress.Any, 9000);
-                    PlaceServer.AddStaticContent(www, "/place");
+                    PlaceServer.AddStaticContent(www);
 
                     PlaceServer.OptionKeepAlive = true;
 
