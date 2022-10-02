@@ -16,9 +16,9 @@ using System.Threading.Tasks;
 
 namespace ETHDINFKBot
 {
-    public class PlaceSession : SslSession
+    public class PlaceSession : WssSession
     {
-        public PlaceSession(SslServer server) : base(server) {
+        public PlaceSession(WssServer server) : base(server) {
             int i = 1;
         
         }
