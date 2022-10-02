@@ -22,6 +22,19 @@ namespace ETHDINFKBot
             int i = 1;
         
         }
+        public override void OnWsConnected(HttpRequest request)
+        {
+            Console.WriteLine($"Chat WebSocket session with Id {Id} connected!");
+
+            // Send invite message
+            string message = "Hello from WebSocket chat! Please send a message or '!' to disconnect the client!";
+            SendTextAsync(message);
+        }
+
+        public override void OnWsDisconnected()
+        {
+            Console.WriteLine($"Chat WebSocket session with Id {Id} disconnected!");
+        }
 
         public void SendPixel(short x, short y, SKColor color)
         {
@@ -296,21 +309,21 @@ namespace ETHDINFKBot
 
 
 
-        protected override void OnConnected()
-        {
-            Console.WriteLine($"Chat TCP session with Id {Id} connected!");
+        //protected override void OnConnected()
+        //{
+        //    Console.WriteLine($"Chat TCP session with Id {Id} connected!");
 
-            // Send invite message
-            string message = "Hello from TCP chat! Please send a message or '!' to disconnect the client!";
-            //SendAsync(message);
-        }
+        //    // Send invite message
+        //    string message = "Hello from TCP chat! Please send a message or '!' to disconnect the client!";
+        //    Send(message);
+        //}
 
-        protected override void OnDisconnected()
-        {
-            Console.WriteLine($"Chat TCP session with Id {Id} disconnected!");
-        }
+        //protected override void OnDisconnected()
+        //{
+        //    Console.WriteLine($"Chat TCP session with Id {Id} disconnected!");
+        //}
 
-        protected override void OnReceived(byte[] buffer, long offset, long size)
+        public override void OnWsReceived(byte[] buffer, long offset, long size)
         {
             var data = buffer.Skip(Convert.ToInt32(offset)).ToArray();
 

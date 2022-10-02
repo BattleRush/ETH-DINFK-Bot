@@ -334,14 +334,15 @@ namespace ETHDINFKBot
 
             // WebSocket server content path
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || true)
             {
 //#if !DEBUG
                 string www = "/var/www/wss";
                 try
                 {
-                
-                    //string www = @"C:\Temp\wss";
+#if DEBUG
+                    www = @"C:\Temp\wss";
+#endif
                     // Create and prepare a new SSL server context
                     // TO REGENERATE "sudo openssl pkcs12 -export -out battlerush.dev.pfx -inkey privkey.pem -in fullchain.pem"
                     //var context = new SslContext(SslProtocols.Tls13, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx"), ""));
@@ -349,14 +350,14 @@ namespace ETHDINFKBot
 
                     // Create a new WebSocket server
                     PlaceServer = new PlaceServer(IPAddress.Any, 9000);
-                    PlaceServer.AddStaticContent(www);
+                    //PlaceServer.AddStaticContent(www);
 
                     PlaceServer.OptionKeepAlive = true;
 
                     //PlaceServer = new PlaceServer(IPAddress.Any, 9000);
                     //PlaceServer.OptionKeepAlive = true;
                     PlaceServer.OptionAcceptorBacklog = 8192;
-                    PlaceServer.OptionSendBufferSize = 10_000_000;
+                    PlaceServer.OptionSendBufferSize = 1_000_000;
 
                     _logger.LogInformation("Server starting...");
                     // Start the server
