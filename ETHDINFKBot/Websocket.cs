@@ -186,6 +186,7 @@ namespace ETHDINFKBot
             var chunkFolder = Path.Combine(Program.ApplicationSetting.BasePath, "TimelapseChunks");
 
             var fileAmount = Directory.GetFiles(chunkFolder).Length;
+            fileAmount = 600; // Fix at 600 for no (out of mem around 650)
 
             byte[] returnData = new byte[3];
             returnData[0] = (byte)MessageEnum.TotalChunksAvailable_Response;
