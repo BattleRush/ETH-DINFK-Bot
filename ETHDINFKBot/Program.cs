@@ -41,11 +41,11 @@ using Discord.Interactions;
 
 namespace ETHDINFKBot
 {
-    class PlaceServer : WssServer
+    class PlaceServer : WsServer
     {
-        public PlaceServer(SslContext context, IPAddress address, int port) : base(context, address, port) { }
+        public PlaceServer(IPAddress address, int port) : base(address, port) { }
 
-        protected override WssSession CreateSession() { return new PlaceSession(this); }
+        protected override WsSession CreateSession() { return new PlaceSession(this); }
 
         protected override void OnError(SocketError error)
         {
@@ -344,11 +344,11 @@ namespace ETHDINFKBot
                     //string www = @"C:\Temp\wss";
                     // Create and prepare a new SSL server context
                     // TO REGENERATE "sudo openssl pkcs12 -export -out battlerush.dev.pfx -inkey privkey.pem -in fullchain.pem"
-                    var context = new SslContext(SslProtocols.Tls13, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx"), ""));
+                    //var context = new SslContext(SslProtocols.Tls13, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx"), ""));
                     //var context = new SslContext(SslProtocols.Tls12);
 
                     // Create a new WebSocket server
-                    PlaceServer = new PlaceServer(context, IPAddress.Any, 9000);
+                    PlaceServer = new PlaceServer(IPAddress.Any, 9000);
                     PlaceServer.AddStaticContent(www);
 
                     PlaceServer.OptionKeepAlive = true;

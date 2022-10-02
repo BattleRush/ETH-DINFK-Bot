@@ -16,9 +16,9 @@ using System.Threading.Tasks;
 
 namespace ETHDINFKBot
 {
-    public class PlaceSession : WssSession
+    public class PlaceSession : WsSession
     {
-        public PlaceSession(WssServer server) : base(server) {
+        public PlaceSession(WsServer server) : base(server) {
             int i = 1;
         
         }
@@ -309,6 +309,7 @@ namespace ETHDINFKBot
         {
             Console.WriteLine($"Chat TCP session with Id {Id} disconnected!");
         }
+
         protected override void OnReceived(byte[] buffer, long offset, long size)
         {
             var data = buffer.Skip(Convert.ToInt32(offset)).ToArray();
