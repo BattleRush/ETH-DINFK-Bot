@@ -41,11 +41,11 @@ using Discord.Interactions;
 
 namespace ETHDINFKBot
 {
-    class PlaceServer : WssServer
+    class PlaceServer : SslServer
     {
         public PlaceServer(SslContext context, IPAddress address, int port) : base(context, address, port) { }
 
-        protected override WssSession CreateSession() { return new PlaceSession(this); }
+        protected override SslSession CreateSession() { return new PlaceSession(this); }
 
         protected override void OnError(SocketError error)
         {
@@ -172,6 +172,7 @@ namespace ETHDINFKBot
                        //services.AddCronJob<BackupDBJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 * * *"; });// 0 am utc
                    })
                    .Build();
+
 
                 Host.StartAsync();
 
@@ -336,18 +337,19 @@ namespace ETHDINFKBot
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
 //#if !DEBUG
-                string www = "/var/www/wss";
+                //string www = "/var/www/wss";
                 try
                 {
                 
-                    //string www = @"C:\Temp\wss";
+                    string www = @"C:\Temp\wss";
                     // Create and prepare a new SSL server context
                     // TO REGENERATE "sudo openssl pkcs12 -export -out battlerush.dev.pfx -inkey privkey.pem -in fullchain.pem"
                     var context = new SslContext(SslProtocols.Tls12, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx")));
                     //var context = new SslContext(SslProtocols.Tls12);
+
                     // Create a new WebSocket server
                     PlaceServer = new PlaceServer(context, IPAddress.Any, 9000);
-                    PlaceServer.AddStaticContent(www, "/place");
+                    //PlaceServer.AddStaticContent(www, "/place");
 
                     PlaceServer.OptionKeepAlive = true;
 

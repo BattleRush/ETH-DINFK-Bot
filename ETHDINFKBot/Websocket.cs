@@ -16,9 +16,12 @@ using System.Threading.Tasks;
 
 namespace ETHDINFKBot
 {
-    public class PlaceSession : WssSession
+    public class PlaceSession : SslSession
     {
-        public PlaceSession(WssServer server) : base(server) { }
+        public PlaceSession(SslServer server) : base(server) {
+            int i = 1;
+        
+        }
 
         public void SendPixel(short x, short y, SKColor color)
         {
