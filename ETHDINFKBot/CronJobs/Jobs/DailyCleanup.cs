@@ -41,6 +41,9 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
             foreach (string file in files)
             {
+                if (!(file.EndsWith(".png") || file.EndsWith(".gif")))
+                    continue; // Dont delete non images
+
                 FileInfo fi = new FileInfo(file);
                 if (fi.LastAccessTime < DateTime.Now.AddMonths(-3))
                     fi.Delete();
