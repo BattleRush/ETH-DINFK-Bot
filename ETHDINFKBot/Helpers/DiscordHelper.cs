@@ -313,7 +313,7 @@ namespace ETHDINFKBot.Helpers
 
                     // Show bigger avatar image
                     builder.WithImageUrl(birthdayUser.AvatarUrl?.Replace("size=128", "size=512"));
-                    
+
                     builder.WithTimestamp(SnowflakeUtils.FromSnowflake(birthdayUser.DiscordUserId)); // has to be in UTC
 
                     var message = await spamChannel.SendMessageAsync("", false, builder.Build());
@@ -495,7 +495,7 @@ namespace ETHDINFKBot.Helpers
             canvas.DrawText($"Server emote", new SKPoint(210, 15), serverEmotePaint);
 
             //Pen p = new Pen(brush);
-            
+
             // TODO make it more robust and cleaner
             for (int i = 0; i < rows; i++)
             {
@@ -503,41 +503,41 @@ namespace ETHDINFKBot.Helpers
 
                 for (int j = 0; j < columns; j++)
                 {
-                    if (emojis.Count <= i * j)
+                    if (emojis.Count <= i * columns + j)
                         break;
 
-                        var emote = emojis[i * columns + j];
+                    var emote = emojis[i * columns + j];
 
-                        SKBitmap emoteBitmap;
+                    SKBitmap emoteBitmap;
 
-                        if(!File.Exists(emote.LocalPath))
+                    if (!File.Exists(emote.LocalPath))
+                    {
+                        using (var webClient = new WebClient())
                         {
-                            using (var webClient = new WebClient())
-                            {
-                                byte[] bytes = webClient.DownloadData(emote.Url);
-                                string filePath = EmoteDBManager.MoveEmoteToDisk(emote, bytes);
-                            }
+                            byte[] bytes = webClient.DownloadData(emote.Url);
+                            string filePath = EmoteDBManager.MoveEmoteToDisk(emote, bytes);
                         }
+                    }
 
-                        using (var ms = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
-                        {
-                            emoteBitmap = SKBitmap.Decode(ms);
-                        }
+                    using (var ms = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
+                    {
+                        emoteBitmap = SKBitmap.Decode(ms);
+                    }
 
-                        SKPaint paint = normalEmotePaint;
+                    SKPaint paint = normalEmotePaint;
 
-                        if (emote.Animated)
-                            paint = gifEmotePaint;
+                    if (emote.Animated)
+                        paint = gifEmotePaint;
 
-                        // this server contains this emote
-                        if (guildEmotes.Any(i => i.Id == emote.DiscordEmoteId))
-                            paint = serverEmotePaint;
+                    // this server contains this emote
+                    if (guildEmotes.Any(i => i.Id == emote.DiscordEmoteId))
+                        paint = serverEmotePaint;
 
-                        int x = j * blockSize + padding;
-                        int y = i * blockSize + paddingY + yOffsetFixForImage;
+                    int x = j * blockSize + padding;
+                    int y = i * blockSize + paddingY + yOffsetFixForImage;
 
-                        canvas.DrawBitmap(emoteBitmap, new SKRect(x, y, x + imgSize, y + imgSize));
-                        canvas.DrawText($"{emote.EmoteName}", new SKPoint(x - 1, i * blockSize + j % 2 * (imgSize + 15) + paddingY), paint);
+                    canvas.DrawBitmap(emoteBitmap, new SKRect(x, y, x + imgSize, y + imgSize));
+                    canvas.DrawText($"{emote.EmoteName}", new SKPoint(x - 1, i * blockSize + j % 2 * (imgSize + 15) + paddingY), paint);
                 }
 
                 canvas.DrawLine(new SKPoint(0, i * blockSize + paddingY - 15), new SKPoint(width, i * blockSize + paddingY - 15), DrawingHelper.DefaultDrawing);
