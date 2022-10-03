@@ -83,7 +83,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
         public async void CleanupCDN()
         {
             return; // TODO
-            string[] files = Directory.GetFiles(Path.Combine(Program.ApplicationSetting.BasePath, "Emotes"));
+            string[] files = Directory.GetFiles(System.IO.Path.Combine(Program.ApplicationSetting.BasePath, "Emotes"));
             var guild = Program.Client.GetGuild(747752542741725244);
             var textChannel = guild.GetTextChannel(768600365602963496);
 
