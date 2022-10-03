@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using CSharpMath.Rendering.FrontEnd;
+using Discord;
 using Discord.WebSocket;
 using ETHDINFKBot.Helpers;
 using Microsoft.Extensions.Logging;
@@ -9,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using static System.Net.WebRequestMethods;
 
 namespace ETHDINFKBot.CronJobs.Jobs
 {
@@ -32,21 +34,30 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
         private void CleanupOldEmotes()
         {
-            string[] files = Directory.GetFiles(Path.Combine(Program.ApplicationSetting.BasePath, "Emotes"));
+            var fileEndings = new List<string>()
+            {
+                "*.png", "*.gif"
+            };
+
             var guild = Program.Client.GetGuild(747752542741725244);
             var textChannel = guild.GetTextChannel(768600365602963496);
 
-            if (textChannel != null)
-                textChannel.SendMessageAsync($"Found {files.Length} emotes to be deleted");
-
-            foreach (string file in files)
+            foreach (var fileEnding in fileEndings)
             {
-                if (!(file.EndsWith(".png") || file.EndsWith(".gif")))
-                    continue; // Dont delete non images
+                var files = Directory.EnumerateFiles(System.IO.Path.Combine(Program.ApplicationSetting.BasePath, "Emotes"), fileEnding, SearchOption.AllDirectories);
+                int deletedFiles = 0;
+                foreach (var file in files)
+                {
+                    FileInfo fi = new FileInfo(file);
+                    if (fi.LastAccessTime < DateTime.Now.AddMonths(-3))
+                    {
+                        fi.Delete();
+                        deletedFiles++;
+                    }
+                }
 
-                FileInfo fi = new FileInfo(file);
-                if (fi.LastAccessTime < DateTime.Now.AddMonths(-3))
-                    fi.Delete();
+                if (textChannel != null)
+                    textChannel.SendMessageAsync($"Found {deletedFiles} emotes to be deleted");
             }
         }
         private async void CleanUpOldMessages(SocketTextChannel channel, TimeSpan toDeleteOlderThan)
@@ -170,7 +181,7 @@ ORDER BY MAX(PH.DiscordMessageId)";
 #if !DEBUG
                         RemovePingHell();
                         CleanupOldEmotes();
-                        CleanupCDN();
+                        //CleanupCDN();
 #endif
                     }
                 }
