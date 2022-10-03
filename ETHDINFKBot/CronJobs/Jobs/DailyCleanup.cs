@@ -56,7 +56,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                     }
                 }
 
-                if (textChannel != null)
+                if (textChannel != null && deletedFiles > 0)
                     textChannel.SendMessageAsync($"Found {deletedFiles} emotes to be deleted");
             }
         }
