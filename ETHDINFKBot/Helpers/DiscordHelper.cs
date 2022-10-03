@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -430,6 +431,7 @@ namespace ETHDINFKBot.Helpers
 
 
             return (emoteList, valid, emoteText, fileName, total, pageSize);
+
             //return (emoteList, valid, emoteText, $"https://cdn.battlerush.dev/{fileName}", total, pageSize);
         }
 
@@ -493,7 +495,7 @@ namespace ETHDINFKBot.Helpers
             canvas.DrawText($"Server emote", new SKPoint(210, 15), serverEmotePaint);
 
             //Pen p = new Pen(brush);
-
+            
             // TODO make it more robust and cleaner
             for (int i = 0; i < rows; i++)
             {
@@ -504,11 +506,19 @@ namespace ETHDINFKBot.Helpers
                     if (emojis.Count <= i * j)
                         break;
 
-                    try
-                    {
                         var emote = emojis[i * columns + j];
 
                         SKBitmap emoteBitmap;
+
+                        if(!File.Exists(emote.LocalPath))
+                        {
+                            using (var webClient = new WebClient())
+                            {
+                                byte[] bytes = webClient.DownloadData(emote.Url);
+                                string filePath = EmoteDBManager.MoveEmoteToDisk(emote, bytes);
+                            }
+                        }
+
                         using (var ms = new MemoryStream(File.ReadAllBytes(emote.LocalPath)))
                         {
                             emoteBitmap = SKBitmap.Decode(ms);
@@ -528,11 +538,6 @@ namespace ETHDINFKBot.Helpers
 
                         canvas.DrawBitmap(emoteBitmap, new SKRect(x, y, x + imgSize, y + imgSize));
                         canvas.DrawText($"{emote.EmoteName}", new SKPoint(x - 1, i * blockSize + j % 2 * (imgSize + 15) + paddingY), paint);
-                    }
-                    catch (Exception ex)
-                    {
-
-                    }
                 }
 
                 canvas.DrawLine(new SKPoint(0, i * blockSize + paddingY - 15), new SKPoint(width, i * blockSize + paddingY - 15), DrawingHelper.DefaultDrawing);

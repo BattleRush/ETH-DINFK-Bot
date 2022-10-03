@@ -330,7 +330,7 @@ namespace ETHDINFKBot.Data
         }
 
 
-        private string MoveEmoteToDisk(DiscordEmote emote, byte[] imageData)
+        public static string MoveEmoteToDisk(DiscordEmote emote, byte[] imageData)
         {
             var emojiDate = SnowflakeUtils.FromSnowflake(emote.DiscordEmoteId);
 

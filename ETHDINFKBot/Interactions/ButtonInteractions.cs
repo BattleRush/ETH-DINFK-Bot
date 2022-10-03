@@ -117,7 +117,7 @@ namespace ETHDINFKBot.Interactions
                 {
                     Text = searchTerm + " Page: " + page
                 },
-                ThumbnailUrl = "https://cdn.battlerush.dev/bot_xmas.png",
+                ThumbnailUrl = Program.Client.CurrentUser.GetAvatarUrl(),
                 Timestamp = DateTimeOffset.Now
                 //Url = emoteResult.Url,
             };
@@ -176,7 +176,7 @@ namespace ETHDINFKBot.Interactions
                 {
                     Text = searchTerm + " Page: " + page
                 },
-                ThumbnailUrl = "https://cdn.battlerush.dev/bot_xmas.png",
+                ThumbnailUrl = Program.Client.CurrentUser.GetAvatarUrl(),
                 Timestamp = DateTimeOffset.Now
                 //Url = emoteResult.Url,
             };
@@ -226,6 +226,7 @@ namespace ETHDINFKBot.Interactions
             }
             catch (HttpException ex)
             {
+                
                 foreach (var error in ex.Errors)
                 {
                     if (error.Errors.Any(i => i.Code == "BUTTON_COMPONENT_INVALID_EMOJI"))
@@ -248,6 +249,10 @@ namespace ETHDINFKBot.Interactions
                 // Some emotes may no lonver be valid -> db entry to invalidate the emote
 
             }
+            catch(Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.ToString());
+    }
             //Context.Interaction.DeferAsync();
             return true;
         }

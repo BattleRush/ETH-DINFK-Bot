@@ -4,6 +4,7 @@ using ETHDINFKBot.Helpers;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -29,6 +30,22 @@ namespace ETHDINFKBot.CronJobs.Jobs
             return base.StartAsync(cancellationToken);
         }
 
+        private void CleanupOldEmotes()
+        {
+            string[] files = Directory.GetFiles(Path.Combine(Program.ApplicationSetting.BasePath, "Emotes"));
+            var guild = Program.Client.GetGuild(747752542741725244);
+            var textChannel = guild.GetTextChannel(768600365602963496);
+
+            if (textChannel != null)
+                textChannel.SendMessageAsync($"Found {files.Length} emotes to be deleted");
+
+            foreach (string file in files)
+            {
+                FileInfo fi = new FileInfo(file);
+                if (fi.LastAccessTime < DateTime.Now.AddMonths(-3))
+                    fi.Delete();
+            }
+        }
         private async void CleanUpOldMessages(SocketTextChannel channel, TimeSpan toDeleteOlderThan)
         {
             try
@@ -51,7 +68,20 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
         public async void CleanupCDN()
         {
+            return; // TODO
+            string[] files = Directory.GetFiles(Path.Combine(Program.ApplicationSetting.BasePath, "Emotes"));
+            var guild = Program.Client.GetGuild(747752542741725244);
+            var textChannel = guild.GetTextChannel(768600365602963496);
 
+            if (textChannel != null)
+                textChannel.SendMessageAsync($"Found {files.Length} emotes to be deleted");
+
+            foreach (string file in files)
+            {
+                FileInfo fi = new FileInfo(file);
+                if (fi.LastAccessTime < DateTime.Now.AddMonths(-3))
+                    fi.Delete();
+            }
         }
 
         public async void RemovePingHell()
@@ -136,6 +166,8 @@ ORDER BY MAX(PH.DiscordMessageId)";
                         CleanUpOldMessages(channel, TimeSpan.FromDays(-7));
 #if !DEBUG
                         RemovePingHell();
+                        CleanupOldEmotes();
+                        CleanupCDN();
 #endif
                     }
                 }

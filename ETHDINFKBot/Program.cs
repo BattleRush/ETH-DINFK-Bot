@@ -67,6 +67,8 @@ namespace ETHDINFKBot
 
         public static long TotalEmotes { get; set; }
 
+        public static bool FirstStartup = true;
+
         public static string CurrentPrefix { get; set; }
 
         // TODO Move settings to an object
@@ -918,26 +920,30 @@ namespace ETHDINFKBot
             guildId = 774286694794919986;
 #endif
 
-            var lastStartUp = DatabaseManager.Instance().GetLastBotStartUpTime();
+            if (FirstStartup)
+            {
+                FirstStartup = false;
 
-            //ulong spamChannel = 768600365602963496;
-            var guild = Program.Client.GetGuild(guildId);
+                var lastStartUp = DatabaseManager.Instance().GetLastBotStartUpTime();
 
-            var textChannel = guild.GetTextChannel(DiscordHelper.DiscordChannels["spam"]);
-            if (textChannel != null)
-                textChannel.SendMessageAsync($"Restarted with Branch: {ThisAssembly.Git.Branch} and Commit: {ThisAssembly.Git.Commit}. Last Uptime was: {CommonHelper.ToReadableString(DateTime.Now - lastStartUp)} Bot client ready. <@{Program.ApplicationSetting.Owner}>");
+                //ulong spamChannel = 768600365602963496;
+                var guild = Program.Client.GetGuild(guildId);
 
-            // Register bot startup time when bot is ready
-            DatabaseManager.Instance().AddBotStartUp();
+                var textChannel = guild.GetTextChannel(DiscordHelper.DiscordChannels["spam"]);
+                if (textChannel != null)
+                    textChannel.SendMessageAsync($"Restarted with Branch: {ThisAssembly.Git.Branch} and Commit: {ThisAssembly.Git.Commit}. Last Uptime was: {CommonHelper.ToReadableString(DateTime.Now - lastStartUp)} Bot client ready. <@{Program.ApplicationSetting.Owner}>");
 
-            // list should always be empty
-            ChannelPositions = new List<ChannelOrderInfo>();
+                // Register bot startup time when bot is ready
+                DatabaseManager.Instance().AddBotStartUp();
 
-            // Any channels outside of categories considered?
-            foreach (var category in guild.CategoryChannels)
-                foreach (var channel in category.Channels)
-                    ChannelPositions.Add(new ChannelOrderInfo() { ChannelId = channel.Id, ChannelName = channel.Name, CategoryId = category.Id, CategoryName = category.Name, Position = channel.Position });
+                // list should always be empty
+                ChannelPositions = new List<ChannelOrderInfo>();
 
+                // Any channels outside of categories considered?
+                foreach (var category in guild.CategoryChannels)
+                    foreach (var channel in category.Channels)
+                        ChannelPositions.Add(new ChannelOrderInfo() { ChannelId = channel.Id, ChannelName = channel.Name, CategoryId = category.Id, CategoryName = category.Name, Position = channel.Position });
+            }
             return Task.CompletedTask;
 
 

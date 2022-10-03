@@ -6,6 +6,7 @@ using Discord.WebSocket;
 using ETHBot.DataLayer.Data;
 using ETHBot.DataLayer.Data.Discord;
 using ETHBot.DataLayer.Data.Enums;
+using ETHDINFKBot.Data;
 using ETHDINFKBot.Helpers;
 using SkiaSharp;
 using System;
@@ -446,6 +447,15 @@ namespace ETHDINFKBot.Handlers
                         }
                         else
                         {
+                            if (!File.Exists(emote.LocalPath))
+                            {
+                                using (var webClient = new WebClient())
+                                {
+                                    byte[] bytes = webClient.DownloadData(emote.Url);
+                                    string filePath = EmoteDBManager.MoveEmoteToDisk(emote, bytes);
+                                }
+                            }
+
                             FileAttachment fileAttachment = new FileAttachment(emote.LocalPath, null, name, false);
 
                             // TODO store resized images in db for faster reuse

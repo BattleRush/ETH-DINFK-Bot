@@ -107,75 +107,82 @@ namespace ETHDINFKBot.Modules
         [Alias("fav")]
         public async Task ViewFavouriteEmotes()
         {
-            var userFavEmotes = DatabaseManager.EmoteDatabaseManager.GetFavouriteEmotes(Context.User.Id);
-            var emotes = DatabaseManager.EmoteDatabaseManager.GetDiscordEmotes(userFavEmotes.Select(i => i.DiscordEmoteId).ToList());
-
-            string fileName = $"emote_fav_{new Random().Next(int.MaxValue)}.png";
-
-            // Show the user specified emote name
-            foreach (var emote in emotes)
-                emote.EmoteName = userFavEmotes.SingleOrDefault(i => i.DiscordEmoteId == emote.DiscordEmoteId)?.Name ?? "N/A";
-
-            // TODO List guild emotes
-
-            var emoteDrawing = DiscordHelper.DrawPreviewImage(emotes, new List<GuildEmote>(), 10, 10);
-
-            DrawingHelper.SaveToDisk(Path.Combine(Program.ApplicationSetting.CDNPath, fileName), emoteDrawing.Bitmap);
-
-            EmbedBuilder builder = new EmbedBuilder()
+            try
             {
-                //ImageUrl = $"https://cdn.battlerush.dev/{fileName}",
-                ImageUrl = $"attachment://{fileName}",
-                Description = "Your Favourited emotes",
-                Color = Color.DarkRed,
-                Title = "Image full size",
-                Footer = new EmbedFooterBuilder()
+                var userFavEmotes = DatabaseManager.EmoteDatabaseManager.GetFavouriteEmotes(Context.User.Id);
+                var emotes = DatabaseManager.EmoteDatabaseManager.GetDiscordEmotes(userFavEmotes.Select(i => i.DiscordEmoteId).ToList());
+
+                string fileName = $"emote_fav_{new Random().Next(int.MaxValue)}.png";
+
+                // Show the user specified emote name
+                foreach (var emote in emotes)
+                    emote.EmoteName = userFavEmotes.SingleOrDefault(i => i.DiscordEmoteId == emote.DiscordEmoteId)?.Name ?? "N/A";
+
+                // TODO List guild emotes
+
+                var emoteDrawing = DiscordHelper.DrawPreviewImage(emotes, new List<GuildEmote>(), 10, 10);
+
+                DrawingHelper.SaveToDisk(Path.Combine(Program.ApplicationSetting.CDNPath, fileName), emoteDrawing.Bitmap);
+
+                EmbedBuilder builder = new EmbedBuilder()
                 {
-                    Text = "" + " Page: " + -1
-                },
-                ThumbnailUrl = "https://cdn.battlerush.dev/bot_xmas.png",
-                Timestamp = DateTimeOffset.Now
-                // = $"attachment://{fileName}"
-                //Url = $"https://cdn.battlerush.dev/{fileName}",
-            };
-            builder.WithAuthor(Context.User);
+                    //ImageUrl = $"https://cdn.battlerush.dev/{fileName}",
+                    ImageUrl = $"attachment://{fileName}",
+                    Description = "Your Favourited emotes",
+                    Color = Color.DarkRed,
+                    Title = "Image full size",
+                    Footer = new EmbedFooterBuilder()
+                    {
+                        Text = "" + " Page: " + -1
+                    },
+                    ThumbnailUrl = Program.Client.CurrentUser.GetAvatarUrl(),
+                    Timestamp = DateTimeOffset.Now
+                    // = $"attachment://{fileName}"
+                    //Url = $"https://cdn.battlerush.dev/{fileName}",
+                };
+                builder.WithAuthor(Context.User);
 
-            // COPY OF OTHER FAV FUNCTION
-            var builderComponent = new ComponentBuilder();
+                // COPY OF OTHER FAV FUNCTION
+                var builderComponent = new ComponentBuilder();
 
-            int rows = 4;
-            int columns = 5;
+                int rows = 4;
+                int columns = 5;
 
-            int row = 0;
-            int col = 0;
-            foreach (var emote in emotes)
-            {
-                if (emote.IsValid && false)
+                int row = 0;
+                int col = 0;
+                foreach (var emote in emotes)
                 {
-                    builderComponent.WithButton(emote.EmoteName, $"emote-del-{emote.DiscordEmoteId}", ButtonStyle.Primary, Emote.Parse($"<:{emote.EmoteName}:{emote.DiscordEmoteId}>"), null, false, row);
+                    if (emote.IsValid && false)
+                    {
+                        builderComponent.WithButton(emote.EmoteName, $"emote-del-{emote.DiscordEmoteId}", ButtonStyle.Primary, Emote.Parse($"<:{emote.EmoteName}:{emote.DiscordEmoteId}>"), null, false, row);
+                    }
+                    else
+                    {
+                        builderComponent.WithButton(emote.EmoteName, $"emote-del-{emote.DiscordEmoteId}", ButtonStyle.Danger, null, null, false, row);
+                    }
+
+                    col++;
+
+                    if (col == columns)
+                    {
+                        row++;
+                        col = 0;
+                    }
                 }
-                else
-                {
-                    builderComponent.WithButton(emote.EmoteName, $"emote-del-{emote.DiscordEmoteId}", ButtonStyle.Danger, null, null, false, row);
-                }
 
-                col++;
-
-                if (col == columns)
-                {
+                // Start fresh row for paging
+                if (col > 0)
                     row++;
-                    col = 0;
-                }
+
+                //builderComponent.WithButton("Prev <", $"emote-fav-get-prev-page-{search}-{page}", ButtonStyle.Danger, null, null, page == 0, row);
+                //builderComponent.WithButton("> Next", $"emote-fav-get-next-page-{search}-{page}", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound, row);
+
+                var msg2 = await Context.Channel.SendFileAsync(Path.Combine(Program.ApplicationSetting.CDNPath, fileName), text: "", embed: builder.Build(), components: builderComponent.Build());
             }
-
-            // Start fresh row for paging
-            if (col > 0)
-                row++;
-
-            //builderComponent.WithButton("Prev <", $"emote-fav-get-prev-page-{search}-{page}", ButtonStyle.Danger, null, null, page == 0, row);
-            //builderComponent.WithButton("> Next", $"emote-fav-get-next-page-{search}-{page}", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound, row);
-
-            var msg2 = await Context.Channel.SendFileAsync(Path.Combine(Program.ApplicationSetting.CDNPath, fileName), text: "", embed: builder.Build(), components: builderComponent.Build());
+            catch(Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.ToString());
+            }
         }
 
         [Command("favourite"), Priority(1000)]
@@ -220,7 +227,7 @@ namespace ETHDINFKBot.Modules
                     {
                         Text = search + " Page: " + page
                     },
-                    ThumbnailUrl = "https://cdn.battlerush.dev/bot_xmas.png",
+                    ThumbnailUrl = Program.Client.CurrentUser.GetAvatarUrl(),
                     Timestamp = DateTimeOffset.Now
                     //Url = $"attachment://{emoteResult.Url}"
                 };
@@ -335,7 +342,7 @@ namespace ETHDINFKBot.Modules
                     {
                         Text = $"{search}, Page: {page}, Debug: {debug}"
                     },
-                    ThumbnailUrl = "https://cdn.battlerush.dev/bot_xmas.png",
+                    ThumbnailUrl = Program.Client.CurrentUser.GetAvatarUrl(),
                     Timestamp = DateTimeOffset.Now
                     //Url = $"attachment://{emoteResult.Url}"
                 };
