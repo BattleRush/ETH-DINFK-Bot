@@ -2,6 +2,7 @@
 using ETHBot.DataLayer.Data.ETH.Food;
 using ETHDINFKBot.Data;
 using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -44,13 +45,15 @@ namespace ETHDINFKBot.Helpers
             public string ImgUrl { get; set; }
         }*/
 
-    public static class FoodHelper
+    public class FoodHelper
     {
         private static GoogleEngine Google = new GoogleEngine();
 
         private static FoodDBManager FoodDBManager = FoodDBManager.Instance();
 
-        public static void LoadMenus(int restaurantId = -1, bool fixOnly = false)
+        private readonly ILogger _logger = new Logger<FoodHelper>(Program.Logger);
+
+        public void LoadMenus(int restaurantId = -1, bool fixOnly = false)
         {
             var avilableRestaurants = FoodDBManager.GetAllRestaurants();
             Google = new GoogleEngine(); // TODO Better reset
@@ -81,7 +84,7 @@ namespace ETHDINFKBot.Helpers
                         case RestaurantLocation.ETH_Zentrum:
                         case RestaurantLocation.ETH_Hoengg:
 
-                            var svRestaurantMenuInfos = FoodHelper.GetSVRestaurantMenu(restaurant.MenuUrl);
+                            var svRestaurantMenuInfos = GetSVRestaurantMenu(restaurant.MenuUrl);
 
                             if (svRestaurantMenuInfos == null)
                                 continue;
@@ -93,7 +96,7 @@ namespace ETHDINFKBot.Helpers
                                 {
                                     svRestaurantMenu.Menu.RestaurantId = restaurant.RestaurantId;// Link the menu to restaurant
 
-                                    var menuImage = FoodHelper.GetImageForFood(svRestaurantMenu.Menu);
+                                    var menuImage = GetImageForFood(svRestaurantMenu.Menu);
 
                                     // Set image
                                     if (menuImage != null)
@@ -109,7 +112,7 @@ namespace ETHDINFKBot.Helpers
                                 }
                                 catch (Exception ex)
                                 {
-
+                                    _logger.LogError("Exception while loading SV menu: ", ex);
                                 }
                             }
                             break;
@@ -118,7 +121,7 @@ namespace ETHDINFKBot.Helpers
                         case RestaurantLocation.UZH_Zentrum:
                         case RestaurantLocation.UZH_Irchel:
 
-                            var uzhMenuInfos = FoodHelper.GetUzhMenus(FoodHelper.GetUZHDayOfTheWeek(), restaurant.InternalName); 
+                            var uzhMenuInfos = GetUzhMenus(GetUZHDayOfTheWeek(), restaurant.InternalName); 
                             
                             if (uzhMenuInfos == null)
                                 continue;
@@ -130,7 +133,7 @@ namespace ETHDINFKBot.Helpers
                                 {
                                     uzhMenuInfo.Menu.RestaurantId = restaurant.RestaurantId;// Link the menu to restaurant
 
-                                    var menuImage = FoodHelper.GetImageForFood(uzhMenuInfo.Menu);
+                                    var menuImage = GetImageForFood(uzhMenuInfo.Menu);
 
                                     // Set image
                                     if (menuImage != null)
@@ -146,7 +149,7 @@ namespace ETHDINFKBot.Helpers
                                 }
                                 catch (Exception ex)
                                 {
-
+                                    _logger.LogError("Exception while loading UZH menu: ", ex);
                                 }
                             }
                             break;
@@ -246,7 +249,7 @@ namespace ETHDINFKBot.Helpers
                 }*/
 
         // TODO Provide list of ids to search
-        public static List<(Menu Menu, List<int> AllergyIds)> GetSVRestaurantMenu(string link)
+        public List<(Menu Menu, List<int> AllergyIds)> GetSVRestaurantMenu(string link)
         {
             try
             {
@@ -270,7 +273,7 @@ namespace ETHDINFKBot.Helpers
                 var dateNode = doc.DocumentNode.SelectSingleNode("//*[@for=\"mp-tab1\"]");
                 var dateString = dateNode.InnerText.Replace("\t", "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
-                if (dateString.Last().Contains(".") && dateString.Last().Split('.').First().Trim() != DateTime.Now.Day.ToString())
+                if (dateString.Last().Contains(".") && dateString.Last().Split('.').First().Trim() != $"{DateTime.Now.Day:D2}")
                     return null; // The day is not correct likely a sunday showing monday menus
 
                 // [0] has day Mo, Di
@@ -370,11 +373,12 @@ namespace ETHDINFKBot.Helpers
             }
             catch (Exception ex)
             {
+                _logger.LogError($"Error while loading SV Restaurant: {link}. With: {ex.Message}", ex);
                 return null;
             }
         }
 
-        private static List<Menu> GetPolymensaMenu(MealTime mealTime = MealTime.Lunch, int id = 12)
+        private List<Menu> GetPolymensaMenu(MealTime mealTime = MealTime.Lunch, int id = 12)
         {
             string xPath = "//*[@class=\"scrollarea-content\"]";
 
@@ -483,7 +487,7 @@ namespace ETHDINFKBot.Helpers
             return polymensaMenus;
         }
 
-        public static List<(Menu Menu, List<int> AllergyIds)> GetUzhMenus(string day, string mensa, Language language = Language.English)
+        public List<(Menu Menu, List<int> AllergyIds)> GetUzhMenus(string day, string mensa, Language language = Language.English)
         {
             ///html/body/div[6]/section/div/section/div[2]/div[1]/div/div[2]/div/div/div/div/div/div/div/div/table/tbody[2]
             string xPath = "//*[@id=\"box-1\"]/ul/li/div/div/div";
@@ -732,14 +736,14 @@ namespace ETHDINFKBot.Helpers
             return menus;
         }
 
-        private static List<string> GetImageFromGoogle(string text, string lang = "de")
+        private List<string> GetImageFromGoogle(string text, string lang = "de")
         {
             //return Google.ImageSearch(text.Replace("\"", "").Replace("\"n", "").Trim(), lang: lang).Result;
             return Google.GetSearchResultBySelenium(text.Replace("\"", "").Replace("\"n", " ").Trim(), lang: lang).Result;
         }
 
 
-        public static MenuImage GetImageForFood(Menu menu, bool fullSearch = false)
+        public MenuImage GetImageForFood(Menu menu, bool fullSearch = false)
         {
             // First query german then english
             var menuImage = GetImageForFood(menu, "de", fullSearch).Result;
@@ -750,7 +754,7 @@ namespace ETHDINFKBot.Helpers
         }
 
         // TODO Decide on the order for different mensas
-        private static async Task<MenuImage> GetImageForFood(Menu menu, string language, bool fullSearch = false)
+        private async Task<MenuImage> GetImageForFood(Menu menu, string language, bool fullSearch = false)
         {
             List<string> images = new List<string>();
             HttpClient client = new HttpClient();
@@ -875,7 +879,7 @@ namespace ETHDINFKBot.Helpers
             return Google.ImageSearch(text.Replace("\"", "").Trim(), lang: lang).FirstOrDefault();
         }*/
 
-        public static string GetUZHDayOfTheWeek()
+        public string GetUZHDayOfTheWeek()
         {
             //return "freitag";
             string day = "montag";

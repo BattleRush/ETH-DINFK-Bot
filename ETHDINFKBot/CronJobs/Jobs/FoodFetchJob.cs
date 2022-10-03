@@ -37,7 +37,8 @@ namespace ETHDINFKBot.CronJobs.Jobs
             // TODO Maybe send update message if the fetch was successfull
             Stopwatch watch = new Stopwatch();
             watch.Start();
-            FoodHelper.LoadMenus(-1, true);
+            var foodHelper = new FoodHelper();
+            foodHelper.LoadMenus(-1, true);
             watch.Stop();
 
             var guild = Program.Client.GetGuild(Program.ApplicationSetting.BaseGuild);

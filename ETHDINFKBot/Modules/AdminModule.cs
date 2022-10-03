@@ -683,6 +683,7 @@ namespace ETHDINFKBot.Modules
                 builder.AddField($"{Program.CurrentPrefix}admin food load <id>", "Loads todays menus");
                 builder.AddField($"{Program.CurrentPrefix}admin food image <restaurant|menu> <id> <full>", "Runs a websearch to replace images");
                 builder.AddField($"{Program.CurrentPrefix}admin food status <debug>", "Returns current menus status");
+                builder.AddField($"{Program.CurrentPrefix}admin food fix", "Fixes today menus");
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
@@ -765,6 +766,7 @@ namespace ETHDINFKBot.Modules
                 }
 
                 var allRestaurants = FoodDBManager.GetAllRestaurants();
+                var foodHelper = new FoodHelper();
 
                 foreach (var restaurant in allRestaurants)
                 {
@@ -775,7 +777,7 @@ namespace ETHDINFKBot.Modules
                     if (allMenus.Count == 0)
                     {
                         await ClearFood(restaurant.RestaurantId); // Ensure but likely empty anyway
-                        FoodHelper.LoadMenus(restaurant.RestaurantId);
+                        foodHelper.LoadMenus(restaurant.RestaurantId);
 
                         await Context.Channel.SendMessageAsync($"Done load for: {restaurant.RestaurantId}", false);
                     }
@@ -793,8 +795,9 @@ namespace ETHDINFKBot.Modules
                     return;
                 }
 
+                var foodHelper = new FoodHelper();
                 await ClearFood(restaurantId); // Ensure deleted
-                FoodHelper.LoadMenus(restaurantId);
+                foodHelper.LoadMenus(restaurantId);
 
                 await Context.Channel.SendMessageAsync($"Done load for: {restaurantId}", false);
             }
@@ -827,6 +830,7 @@ namespace ETHDINFKBot.Modules
                     await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                 }
 
+                var foodHelper = new FoodHelper();
                 try
                 {
                     foreach (var menu in menus)
@@ -834,7 +838,7 @@ namespace ETHDINFKBot.Modules
                         if (menu.MenuImageId.HasValue)
                             continue; // We dont need to research this image
 
-                        var menuImage = FoodHelper.GetImageForFood(menu, true);
+                        var menuImage = foodHelper.GetImageForFood(menu, true);
                         await Context.Channel.SendMessageAsync($"Got ImageId: {menuImage?.MenuImageId ?? -1} for Menu: {menu.MenuId}", false);
 
                         if (menuImage != null)
