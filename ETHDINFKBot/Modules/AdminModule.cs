@@ -857,7 +857,7 @@ namespace ETHDINFKBot.Modules
             }
 
             [Command("status", RunMode = RunMode.Async)]
-            public async Task StatusFood(bool debug = false)
+            public async Task StatusFood(bool debug = true)
             {
                 var author = Context.Message.Author;
                 var guildUser = Context.Message.Author as SocketGuildUser;

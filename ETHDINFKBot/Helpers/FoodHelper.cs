@@ -607,11 +607,16 @@ namespace ETHDINFKBot.Helpers
 
                                 if (caloriesText.Contains("("))
                                 {
+                                    // Remove ' to parse the string
+                                    caloriesText = caloriesText.Replace("'", "");
+
                                     int start = caloriesText.IndexOf("(");
                                     int end = caloriesText.IndexOf(" kcal");
                                     caloriesText = caloriesText.Substring(start + 1, end - start - 1);
 
+                                    // TODO add logs when it fails to parse
                                     int.TryParse(caloriesText, out int caloriesAmount);
+
                                     currentMenu.Calories = caloriesAmount;
                                 }
 
