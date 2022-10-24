@@ -51,7 +51,7 @@ namespace ETHDINFKBot.Modules
 
                     // Temp workaround to clear cache periodically as there wont be more than 100 images a day
                     // TODO Clear cache once a day at midnight
-                    if(FoodImageCache > 100)
+                    if(FoodImageCache.Count > 100)
                         FoodImageCache.Clear();
 
                     string imageUrl = menuImg?.MenuImageUrl ?? Program.Client.CurrentUser.GetAvatarUrl();
