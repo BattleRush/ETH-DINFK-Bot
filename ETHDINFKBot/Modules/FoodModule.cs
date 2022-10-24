@@ -37,6 +37,7 @@ namespace ETHDINFKBot.Modules
 
         // Temp solution to cache results
         static FoodDBManager FoodDBManager = FoodDBManager.Instance();
+        private static Dictionary<string, SKBitmap> FoodImageCache = new Dictionary<string, SKBitmap>(); // TODO Clear this cache once a day
         private (SKBitmap Bitmap, int ImageId) GetFoodImage(Menu menu, int imgSize = 192)
         {
             try
@@ -45,11 +46,21 @@ namespace ETHDINFKBot.Modules
                 {
                     // TODO Fallback if the image cant be resolved
                     var menuImg = FoodDBManager.GetBestMenuImage(menu.MenuImageId ?? -1);
-                    var imgBytes = webClient.DownloadData(menuImg?.MenuImageUrl ?? Program.Client.CurrentUser.GetAvatarUrl());
-                    if (imgBytes == null)
-                        return (null, -1);
+                    SKBitmap bitmap = null;
 
-                    var bitmap = SKBitmap.Decode(imgBytes);
+                    if(FoodImageCache.ContainsKey(menuImg.ImageUrl))
+                    {
+                        bitmap = FoodImageCache[menuImg.ImageUrl]; 
+                    }
+                    else
+                    {
+                        var bytes = webClient.DownloadData(menuImg.ImageUrl);
+                        if (imgBytes == null)
+                            return (null, -1);
+                        bitmap = SKBitmap.Decode(bytes);
+                        FoodImageCache.Add(menuImg.ImageUrl, bitmap);
+                    }
+
                     if (bitmap != null)
                     {
                         int width = bitmap.Width;
