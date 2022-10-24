@@ -55,7 +55,7 @@ namespace ETHDINFKBot.Modules
                     else
                     {
                         var bytes = webClient.DownloadData(menuImg.ImageUrl);
-                        if (imgBytes == null)
+                        if (bytes == null)
                             return (null, -1);
                         bitmap = SKBitmap.Decode(bytes);
                         FoodImageCache.Add(menuImg.ImageUrl, bitmap);
