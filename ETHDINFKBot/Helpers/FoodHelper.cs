@@ -768,7 +768,7 @@ namespace ETHDINFKBot.Helpers
             if (searchTerm.StartsWith("mit"))
                 searchTerm = menu.Name + " " + menu.Description;
 
-            searchTerm = searchTerm.Replace("\"", "").Replace("\"n", " ").Trim();
+            searchTerm = searchTerm.Replace("\"", "").Replace("\n", " ").Trim();
             var dbImages = FoodDBManager.GetMenuImages(searchTerm, language);
             if (dbImages.Count > 0)
             {
@@ -784,7 +784,7 @@ namespace ETHDINFKBot.Helpers
                     if (imageLinks.Count == 0 && !menu.Description.StartsWith("mit"))
                     {
                         searchTerm = menu.Name + " " + menu.Description;
-                        searchTerm = searchTerm.Replace("\"", "").Replace("\"n", " ").Trim();
+                        searchTerm = searchTerm.Replace("\"", "").Replace("\n", " ").Trim();
                         // Check db first
                         dbImages = FoodDBManager.GetMenuImages(searchTerm, language);
                         if (dbImages.Count > 0)
@@ -803,7 +803,7 @@ namespace ETHDINFKBot.Helpers
                     if (imageLinks.Count == 0 && menu.Description.Contains("\n"))
                     {
                         searchTerm = menu.Description.Split("\n").First();
-                        searchTerm = searchTerm.Replace("\"", "").Replace("\"n", " ").Trim();
+                        searchTerm = searchTerm.Replace("\"", "").Replace("\n", " ").Trim();
                         // Check db first
                         dbImages = FoodDBManager.GetMenuImages(searchTerm, language);
                         if (dbImages.Count > 0)
@@ -815,7 +815,7 @@ namespace ETHDINFKBot.Helpers
                     if (imageLinks.Count == 0 && menu.Description.Contains(","))
                     {
                         searchTerm = menu.Description.Split(",").First();
-                        searchTerm = searchTerm.Replace("\"", "").Replace("\"n", " ").Trim();
+                        searchTerm = searchTerm.Replace("\"", "").Replace("\sn", " ").Trim();
                         // Check db first
                         dbImages = FoodDBManager.GetMenuImages(searchTerm, language);
                         if (dbImages.Count > 0)
