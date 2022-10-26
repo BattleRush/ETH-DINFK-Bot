@@ -7,11 +7,15 @@ using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
+using HtmlAgilityPack;
+using System.Net.Http;
 
 namespace ETHDINFKBot.Helpers
 {
@@ -550,6 +554,128 @@ namespace ETHDINFKBot.Helpers
 
             return (bitmap, canvas);
         }
+
+
+        public static async Task SyncVisEvents(ulong guildId, ulong adminBotChannelId, ulong eventsChannelId)
+        {
+            var guild = Program.Client.GetGuild(guildId);
+            var adminBotChannel = guild.GetTextChannel(adminBotChannelId);
+            var eventChannel = guild.GetTextChannel(eventsChannelId);
+            int eventsCreated = 0;
+
+            try
+            {
+                var activeEvents = await guild.GetEventsAsync();
+
+                // Download image from url
+                Image cover = new Image();
+                using (HttpClient client = new HttpClient())
+                {
+                    var response = await client.GetAsync($"https://vis.ethz.ch/en/events/");
+                    var contents = await response.Content.ReadAsStringAsync();
+
+                    var doc = new HtmlDocument();
+                    doc.LoadHtml(contents);
+
+                    string xPath = "//*[@class=\"card full-height\"]";
+                    HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes(xPath);
+
+                    foreach (var node in nodes)
+                    {
+                        string title = node.SelectSingleNode(".//h5")?.InnerText;
+
+                        // Ensure HTML is decoded properly and trim any unecessary spaces
+                        title = HttpUtility.HtmlDecode(title)?.Trim();
+
+                        if (title != null)
+                        {
+                            // This event is already created
+                            if (activeEvents.Any(i => i.Name == title))
+                                continue;
+
+                            bool startDateParsed = false;
+                            DateTime startDateTime = DateTime.Now;
+                            bool endDateParsed = false;
+                            DateTime endDateTime = DateTime.Now;
+
+                            var pNodes = node.SelectNodes(".//p");
+                            var imgNode = node.SelectSingleNode(".//img");
+
+                            var description = pNodes[1].InnerText;
+
+                            var eventLink = "https://vis.ethz.ch" + node.SelectSingleNode(".//a").Attributes["href"].Value;
+
+                            description = $"Link: {eventLink}{Environment.NewLine}{description}";
+
+                            string imgUrl = imgNode.Attributes["src"]?.Value;
+                            if (imgUrl.StartsWith("/static"))
+                                imgUrl = "https://vis.ethz.ch" + imgUrl;
+
+                            CultureInfo provider = CultureInfo.InvariantCulture;
+
+                            foreach (var pNode in pNodes)
+                            {
+                                if (pNode.InnerText.ToLower().Contains("event start time"))
+                                {
+                                    string dateTimeString = pNode.InnerText.Replace("Event start time", "").Trim();
+                                    startDateParsed = DateTime.TryParseExact(dateTimeString, "d.M.yyyy HH:mm", provider,
+                                    DateTimeStyles.None, out startDateTime);
+
+                                    // CET/CEST to UTC
+                                    startDateTime = startDateTime.AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(startDateTime) ? -2 : -1);
+                                }
+                                else if (pNode.InnerText.ToLower().Contains("event end time"))
+                                {
+                                    string dateTimeString = pNode.InnerText.Replace("Event end time", "").Trim();
+                                    endDateParsed = DateTime.TryParseExact(dateTimeString, "d.M.yyyy HH:mm", provider,
+                                    DateTimeStyles.None, out endDateTime);
+
+                                    // CET/CEST to UTC
+                                    endDateTime = endDateTime.AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(endDateTime) ? -2 : -1);
+                                }
+                            }
+
+                            // Either end or start date is not parsed
+                            if (!startDateParsed || !endDateParsed)
+                                continue;
+
+                            // Apperently VIS cant put end dates
+                            if (startDateTime == endDateTime)
+                                endDateTime = endDateTime.AddHours(1);
+
+                            var stream = await client.GetStreamAsync(new Uri(WebUtility.HtmlDecode(imgUrl)));
+                            cover = new Image(stream);
+
+                            // Create Event
+                            var guildEvent = await guild.CreateEventAsync(
+                                title,
+                                startTime: startDateTime,
+                                GuildScheduledEventType.External,
+                                description: description,
+                                endTime: endDateTime,
+                                location: "VIS Event",
+                                coverImage: cover
+                            );
+
+                            eventsCreated++;
+
+                            //ulong eventChannelId = 819864331192631346;
+
+                            await eventChannel.SendMessageAsync($"{title}{Environment.NewLine}https://discord.com/events/{guildId}/{guildEvent.Id}");
+                            await adminBotChannel.SendMessageAsync($"Created new VIS Event: {title}");
+                        }
+                    }
+                }
+                
+                if (eventsCreated > 0)
+                    await adminBotChannel.SendMessageAsync("Events synced");
+            }
+            catch (Exception ex)
+            {
+                await adminBotChannel.SendMessageAsync(ex.ToString());
+            }
+        }
+
 
 
     }

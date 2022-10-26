@@ -431,7 +431,7 @@ namespace ETHDINFKBot.Helpers
 
                 var menu = new Menu()
                 {
-                    Description = childNodes[1].InnerText,
+                    Description = HttpUtility.HtmlDecode(childNodes[1].InnerText),
                     Name = childNodes[0].InnerText,
                     Amount = double.Parse(priceString) // TODO fix formatting with the comma
                 };
@@ -547,7 +547,7 @@ namespace ETHDINFKBot.Helpers
                     var descriptionLines = descriptionNode.InnerHtml
                         .Trim()
                         .Split("<br>", StringSplitOptions.RemoveEmptyEntries)
-                        .Where(i => !i.Contains(":")) // These lines usually contain info about meat country of origin
+                        .Where(i => !(i.Contains(":") || i.Contains(";"))) // These lines usually contain info about meat country of origin
                         .Select(i => i.Trim())
                         .ToList();
 
@@ -768,7 +768,7 @@ namespace ETHDINFKBot.Helpers
             if (searchTerm.StartsWith("mit"))
                 searchTerm = menu.Name + " " + menu.Description;
 
-            searchTerm = searchTerm.Replace("\"", "").Replace("\"n", " ").Trim();
+            searchTerm = searchTerm.Replace("\"", "").Replace("\n", " ").Trim();
             var dbImages = FoodDBManager.GetMenuImages(searchTerm, language);
             if (dbImages.Count > 0)
             {
@@ -784,7 +784,7 @@ namespace ETHDINFKBot.Helpers
                     if (imageLinks.Count == 0 && !menu.Description.StartsWith("mit"))
                     {
                         searchTerm = menu.Name + " " + menu.Description;
-                        searchTerm = searchTerm.Replace("\"", "").Replace("\"n", " ").Trim();
+                        searchTerm = searchTerm.Replace("\"", "").Replace("\n", " ").Trim();
                         // Check db first
                         dbImages = FoodDBManager.GetMenuImages(searchTerm, language);
                         if (dbImages.Count > 0)
@@ -803,7 +803,7 @@ namespace ETHDINFKBot.Helpers
                     if (imageLinks.Count == 0 && menu.Description.Contains("\n"))
                     {
                         searchTerm = menu.Description.Split("\n").First();
-                        searchTerm = searchTerm.Replace("\"", "").Replace("\"n", " ").Trim();
+                        searchTerm = searchTerm.Replace("\"", "").Replace("\n", " ").Trim();
                         // Check db first
                         dbImages = FoodDBManager.GetMenuImages(searchTerm, language);
                         if (dbImages.Count > 0)
@@ -815,7 +815,7 @@ namespace ETHDINFKBot.Helpers
                     if (imageLinks.Count == 0 && menu.Description.Contains(","))
                     {
                         searchTerm = menu.Description.Split(",").First();
-                        searchTerm = searchTerm.Replace("\"", "").Replace("\"n", " ").Trim();
+                        searchTerm = searchTerm.Replace("\"", "").Replace("\n", " ").Trim();
                         // Check db first
                         dbImages = FoodDBManager.GetMenuImages(searchTerm, language);
                         if (dbImages.Count > 0)

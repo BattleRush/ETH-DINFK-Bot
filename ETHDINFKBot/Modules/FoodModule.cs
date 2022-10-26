@@ -37,6 +37,8 @@ namespace ETHDINFKBot.Modules
 
         // Temp solution to cache results
         static FoodDBManager FoodDBManager = FoodDBManager.Instance();
+        private static Dictionary<string, SKBitmap> FoodImageCache = new Dictionary<string, SKBitmap>(); // TODO Clear this cache once a day
+
         private (SKBitmap Bitmap, int ImageId) GetFoodImage(Menu menu, int imgSize = 192)
         {
             try
@@ -45,11 +47,28 @@ namespace ETHDINFKBot.Modules
                 {
                     // TODO Fallback if the image cant be resolved
                     var menuImg = FoodDBManager.GetBestMenuImage(menu.MenuImageId ?? -1);
-                    var imgBytes = webClient.DownloadData(menuImg?.MenuImageUrl ?? Program.Client.CurrentUser.GetAvatarUrl());
-                    if (imgBytes == null)
-                        return (null, -1);
+                    SKBitmap bitmap = null;
 
-                    var bitmap = SKBitmap.Decode(imgBytes);
+                    // Temp workaround to clear cache periodically as there wont be more than 100 images a day
+                    // TODO Clear cache once a day at midnight
+                    if(FoodImageCache.Count > 100)
+                        FoodImageCache.Clear();
+
+                    string imageUrl = menuImg?.MenuImageUrl ?? Program.Client.CurrentUser.GetAvatarUrl();
+
+                    if(FoodImageCache.ContainsKey(imageUrl))
+                    {
+                        bitmap = FoodImageCache[imageUrl]; 
+                    }
+                    else
+                    {
+                        var bytes = webClient.DownloadData(imageUrl);
+                        if (bytes == null)
+                            return (null, -1);
+                        bitmap = SKBitmap.Decode(bytes);
+                        FoodImageCache.Add(imageUrl, bitmap);
+                    }
+
                     if (bitmap != null)
                     {
                         int width = bitmap.Width;
@@ -275,7 +294,7 @@ namespace ETHDINFKBot.Modules
                     canvas.DrawRect(left, usedHeight, foodImage.Bitmap.Width, 40, shadowPaint);
 
                     //debugImageIdFont.ImageFilter = SKImageFilter.CreateDropShadow(2, 2, 4, 4, shadowColor);
-                    canvas.DrawText("ImageId: " + foodImage.ImageId, new SKPoint(left + 7, usedHeight + 25), debugImageIdFont);
+                    canvas.DrawText("ImageId: " + foodImage.ImageId, new SKPoint(left + 7, usedHeight + 27), debugImageIdFont);
                 }
 
                 usedHeight += foodImage.Bitmap.Height + 20; // Add 20 to bottom padding
