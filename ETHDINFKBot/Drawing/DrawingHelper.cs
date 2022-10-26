@@ -307,6 +307,10 @@ namespace ETHDINFKBot.Drawing
                 return (false, -1);
 
             SKPoint prevPoint = points.First();
+
+            //Calculate from draw loop
+            int highestLabel = 9999; // highest is lowest value
+
             foreach (var point in points)
             {
                 if (drawPoint)
@@ -314,6 +318,9 @@ namespace ETHDINFKBot.Drawing
 
                 canvas.DrawLine(prevPoint, point, paint);
                 prevPoint = point;
+
+                if (highestLabel > point.Y)
+                    highestLabel = (int)point.Y;
             }
 
             // draw Legend
@@ -335,6 +342,10 @@ namespace ETHDINFKBot.Drawing
 
             canvas.DrawLine(new SKPoint(xBase - iconDist, yBase), new SKPoint(xBase, yBase), paint);
             canvas.DrawText(text, new SKPoint(xBase + 5, yBase + size), textPaint); // TODO Correct paint?
+
+            // Computed label height directly
+            if (labelYHeight == -1)
+                labelYHeight = highestLabel;
 
             if (labelYHeight > 0)
             {

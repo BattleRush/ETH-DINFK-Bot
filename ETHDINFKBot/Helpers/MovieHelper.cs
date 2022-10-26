@@ -40,16 +40,18 @@ namespace ETHDINFKBot.Helpers
 
         public static async Task SaveToDisk(string basePath, int i, SKBitmap bitmap, SKCanvas canvas)
         {
-            using (var data = bitmap.Encode(SKEncodedImageFormat.Png, 80))
+            using (var data = bitmap.Encode(SKEncodedImageFormat.Jpeg, 100))
             {
                 // save the data to a stream
-                using (var stream = File.OpenWrite(Path.Combine(basePath, $"{i.ToString("D8")}.png")))
+                using (var stream = File.OpenWrite(Path.Combine(basePath, $"{i.ToString("D8")}.jpg")))
                     data.SaveTo(stream);
             }
 
             // Release
             bitmap.Dispose();
             canvas.Dispose();
+
+            await Task.CompletedTask;
         }
 
         private static IEnumerable<IGrouping<DateTimeOffset, GraphEntryInfo>> GroupGraphEntryInfoBy(int groupByHours, int groupByMins, List<GraphEntryInfo> messageInfos)
@@ -86,19 +88,22 @@ namespace ETHDINFKBot.Helpers
 
         private static IEnumerable<DateTimeOffset> FillMissingEntries(IEnumerable<DateTimeOffset> keys, TimeSpan timeSpan)
         {
-            //dev.test movieemote 100 24
-            var currentTime = keys.Min();
-            var endTime = keys.Max();
+            var list = keys.OrderBy(i => i).ToArray();
 
-            while (true)
+            //dev.test movieemote 100 24
+            var currentTime = list[0];
+            var endTime = list[list.Length - 1];
+
+            for (int i = 0; i < list.Length;)
             {
                 currentTime = currentTime.Add(timeSpan);
-                if (keys.Contains(currentTime))
+                if (list[i] > currentTime)
+                {
+                    keys = keys.Append(currentTime);
                     continue;
-                if (currentTime > endTime)
-                    break;
+                }
 
-                keys = keys.Append(currentTime);
+                i++;
             }
 
             return keys.OrderBy(i => i); // Ensure order
@@ -329,13 +334,18 @@ namespace ETHDINFKBot.Helpers
         {
             List<Task> tasks = new List<Task>();
 
-            for (int i = 2; i <= keys.Count(); i++)
+            var listKeys = keys.Skip(2)/*idk why but skip 2*/.ToArray();
+
+
+            var startTime = listKeys.First();
+
+            for (int i = 2; i < listKeys.Length; i++)
             {
                 //if (i % 250 == 0)
                 //    await Context.Channel.SendMessageAsync($"Frame gen {i} out of {keys.Count()}");
 
-                var startTime = keys.Take(i).Min();
-                var endTime = keys.Take(i).Max();
+
+                var endTime = listKeys[i];
 
                 int maxY = GetMaxValue(parsedMessageInfos, endTime);
 
@@ -355,21 +365,28 @@ namespace ETHDINFKBot.Helpers
                 int xOffset = 0;
                 int rowIndex = -4; // workaround to use as many label space as possible
 
+                // TODO Current bug when no more data present all end lines point to start
                 foreach (var item in parsedMessageInfos)
                 {
                     // TODO optimize some lines + move to draw helper
-                    var dataPoints = item.Info.Where(j => j.Key <= endTime).OrderBy(i => i.Key).ToDictionary(j => j.Key.DateTime, j => j.Value);
+                    var dataPoints = new Dictionary<DateTime, int>(); /*item.Info.Where(j => j.Key <= endTime).OrderBy(i => i.Key).ToDictionary(j => j.Key.DateTime, j => j.Value);*/
+                    foreach (var key in item.Info)
+                    {
+                        if (key.Key <= endTime)
+                            dataPoints.Add(key.Key.DateTime, key.Value);
+                        else
+                            break;
+                    }
 
                     // todo add 2. y Axis on the right
+                    // TODO maybe reuse so we dont calculate alot of the point new
                     var dataPointList = DrawingHelper.GetPoints(dataPoints, gridSize, true, startTime.DateTime, endTime.DateTime, false, maxY);
 
-                    var highestPoint = -1f;
-
-                    if (dataPointList.Count > 0)
-                        highestPoint = dataPointList.Min(i => i.Y);
+                    /*if (dataPointList.Count > 0)
+                        highestPoint = dataPointList.Min(i => i.Y);*/
 
                     // TODO Do better label name
-                    var drawLineInfo = DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, new SKPaint() { Color = item.Color }, 6, "#" + item.GetName(), rowIndex, xOffset, drawDots, highestPoint, item.Image); //new Pen(System.Drawing.Color.LightGreen)
+                    var drawLineInfo = DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, dataPointList, new SKPaint() { Color = item.Color }, 6, "#" + item.GetName(), rowIndex, xOffset, drawDots, -1, item.Image); //new Pen(System.Drawing.Color.LightGreen)
 
                     if (drawLineInfo.newRow)
                     {
@@ -383,7 +400,8 @@ namespace ETHDINFKBot.Helpers
 
                 }
 
-                tasks.Add(SaveToDisk(basePath, i, drawInfo.Bitmap, drawInfo.Canvas));
+                var result = SaveToDisk(basePath, i, drawInfo.Bitmap, drawInfo.Canvas); // takes about 80ms
+                tasks.Add(result);
             }
 
 
