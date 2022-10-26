@@ -46,7 +46,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
             
             // Message only if it took longer than 10 seconds -> some load happened
             if (spamChannel != null && watch.ElapsedMilliseconds > 10_000)
-                spamChannel.SendMessageAsync($"Loaded menus in {watch.ElapsedMilliseconds}ms");
+                spamChannel.SendMessageAsync($"Loaded menus in {Math.Round(watch.ElapsedMilliseconds / 1000d, 2)} sec(s)"); // Output in seconds
 
             return Task.CompletedTask;
         }
