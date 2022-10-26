@@ -294,7 +294,7 @@ namespace ETHDINFKBot.Modules
                     canvas.DrawRect(left, usedHeight, foodImage.Bitmap.Width, 40, shadowPaint);
 
                     //debugImageIdFont.ImageFilter = SKImageFilter.CreateDropShadow(2, 2, 4, 4, shadowColor);
-                    canvas.DrawText("ImageId: " + foodImage.ImageId, new SKPoint(left + 7, usedHeight + 25), debugImageIdFont);
+                    canvas.DrawText("ImageId: " + foodImage.ImageId, new SKPoint(left + 7, usedHeight + 27), debugImageIdFont);
                 }
 
                 usedHeight += foodImage.Bitmap.Height + 20; // Add 20 to bottom padding
