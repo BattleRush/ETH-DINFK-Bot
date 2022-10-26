@@ -561,7 +561,8 @@ namespace ETHDINFKBot.Helpers
             var guild = Program.Client.GetGuild(guildId);
             var adminBotChannel = guild.GetTextChannel(adminBotChannelId);
             var eventChannel = guild.GetTextChannel(eventsChannelId);
-            
+            int eventsCreated = 0;
+
             try
             {
                 var activeEvents = await guild.GetEventsAsync();
@@ -656,6 +657,8 @@ namespace ETHDINFKBot.Helpers
                                 coverImage: cover
                             );
 
+                            eventsCreated++;
+
                             //ulong eventChannelId = 819864331192631346;
 
                             await eventChannel.SendMessageAsync($"{title}{Environment.NewLine}https://discord.com/events/{guildId}/{guildEvent.Id}");
@@ -663,8 +666,9 @@ namespace ETHDINFKBot.Helpers
                         }
                     }
                 }
-
-                await adminBotChannel.SendMessageAsync("Events synced");
+                
+                if (eventsCreated > 0)
+                    await adminBotChannel.SendMessageAsync("Events synced");
             }
             catch (Exception ex)
             {
