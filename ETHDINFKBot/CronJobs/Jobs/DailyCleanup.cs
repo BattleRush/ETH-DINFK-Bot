@@ -166,6 +166,14 @@ ORDER BY MAX(PH.DiscordMessageId)";
             }
         }
 
+        public async Task SyncVisEvents()
+        {
+            await DiscordHelper.SyncVisEvents(
+                747752542741725244, // GuildId
+                747768907992924192, // AdminBot Channel
+                819864331192631346); // Events Channel
+        }
+
         public override Task DoWork(CancellationToken cancellationToken)
         {
             _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
@@ -181,6 +189,7 @@ ORDER BY MAX(PH.DiscordMessageId)";
 #if !DEBUG
                         RemovePingHell();
                         CleanupOldEmotes();
+                        SyncVisEvents();
                         //CleanupCDN();
 #endif
                     }
