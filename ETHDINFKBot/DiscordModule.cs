@@ -1437,6 +1437,31 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         //    await Context.Channel.SendMessageAsync("", false, builder.Build());
         //}
 
+
+        // Allow only once per hour to call
+        private static DateTime lastCall = DateTime.MinValue;
+        [Command("count")]
+        public async Task CheckCount()
+        {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
+
+            if (lastCall.AddHours(1) > DateTime.Now && Context.Message.Author.Id != ETHDINFKBot.Program.ApplicationSetting.Owner)
+            {
+                await Context.Channel.SendMessageAsync("You can only call this command once per hour");
+                return;
+            }
+
+            lastCall = DateTime.Now;
+
+            string query = "CALL CheckLongestCountingChain";
+
+            var queryResult = await SQLHelper.GetQueryResults(Context, query, true, 50);
+
+            var commandResponse = await SQLHelper.SqlCommand(Context, query);
+            await Context.Channel.SendMessageAsync(commandResponse, false);
+        }
+
         [Command("r")]
         public async Task Reddit(string subreddit = "")
         {
