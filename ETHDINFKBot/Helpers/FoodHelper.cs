@@ -431,7 +431,7 @@ namespace ETHDINFKBot.Helpers
 
                 var menu = new Menu()
                 {
-                    Description = childNodes[1].InnerText,
+                    Description = HttpUtility.HtmlDecode(childNodes[1].InnerText),
                     Name = childNodes[0].InnerText,
                     Amount = double.Parse(priceString) // TODO fix formatting with the comma
                 };
