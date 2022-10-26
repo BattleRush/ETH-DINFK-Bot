@@ -547,8 +547,7 @@ namespace ETHDINFKBot.Helpers
                     var descriptionLines = descriptionNode.InnerHtml
                         .Trim()
                         .Split("<br>", StringSplitOptions.RemoveEmptyEntries)
-                        .Where(i => !i.Contains(":")) // These lines usually contain info about meat country of origin
-                        .Where(i => !i.Contains(";")) // These lines usually contain info about meat country of origin and uzh mensa likes to use ; instead of : sometimes reeeeeeee
+                        .Where(i => !(i.Contains(":") || i.Contains(";"))) // These lines usually contain info about meat country of origin
                         .Select(i => i.Trim())
                         .ToList();
 
