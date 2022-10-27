@@ -54,14 +54,14 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
         private async Task<bool> GenerateMovieLastDay(ulong guildId, SocketTextChannel channel)
         {
-            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24, 30, -1, 2, true, true, "");
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24, 60, -1, 1, true, true, "");
             await channel.SendFileAsync(fileName, "Message graph for last day");
             return true;
         }
 
         private async Task<bool> GenerateMovieLastWeek(ulong guildId, SocketTextChannel channel)
         {
-            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7, 60, -1, 15, true, true, "");
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7, 60, -1, 10, true, true, "");
             await channel.SendFileAsync(fileName, "Message graph for last week");
             return true;
         }
@@ -69,7 +69,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
         private async Task<bool> GenerateMovieLastWeekStudy(ulong guildId, SocketTextChannel channel)
         {
             // TODO Load from config
-            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7, 60, -1, 15, true, true, "", new ulong[] {747753178208141313
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7, 60, -1, 10, true, true, "", new ulong[] {747753178208141313
 ,755401302032515074
 ,755401370596671520
 ,755401537706000534
@@ -110,14 +110,14 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
         private async Task<bool> GenerateMovieLastMonth(ulong guildId, SocketTextChannel channel)
         {
-            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7 * 30, 60, 2, -1, true, true, "");
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 30, 60, 1, -1, true, true, "");
             await channel.SendFileAsync(fileName, "Message graph for last month");
             return true;
         }
 
         private async Task<bool> GenerateMovieLastYear(ulong guildId, SocketTextChannel channel)
         {
-            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7 * 30 * 365, 60, 12, -1, true, true, "");
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 365, 60, 2, -1, true, true, "");
             await channel.SendFileAsync(fileName, "Message graph for last year");
             return true;
         }
