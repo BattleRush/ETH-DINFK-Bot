@@ -239,7 +239,9 @@ namespace ETHDINFKBot
                                     myUriCustom = new Uri(url);
                                 }
                                 var newLink = HttpUtility.ParseQueryString(myUriCustom.Query).Get("imgurl");
-                                if (!imageUrls.Contains(newLink))
+                                
+                                if (!imageUrls.Contains(newLink) 
+                                && !newLink.Contains("sv-restaurant.ch")  /*Ignore sv restaurant site*/)
                                     imageUrls.Add(newLink);
                             }
                         }
@@ -257,7 +259,8 @@ namespace ETHDINFKBot
                         }
 
                         var newLinkDirect = HttpUtility.ParseQueryString(myUri.Query).Get("imgurl");
-                        if (!imageUrls.Contains(newLinkDirect) && string.IsNullOrWhiteSpace(newLinkDirect))
+                        if (!imageUrls.Contains(newLinkDirect) && string.IsNullOrWhiteSpace(newLinkDirect) 
+                        && !newLinkDirect.Contains("sv-restaurant.ch") /*Ignore sv restaurant site*/)
                             imageUrls.Add(newLinkDirect);
                     }
                 }

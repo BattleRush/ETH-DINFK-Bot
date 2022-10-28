@@ -310,7 +310,7 @@ namespace ETHDINFKBot.Data
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.MenuImages.Where(i => i.ImageSearchTerm == searchTerm && i.Language == language).ToList();
+                    return context.MenuImages.Where(i => i.ImageSearchTerm == searchTerm && i.Language == language && i.Available && i.Enabled).ToList();
                 }
             }
             catch (Exception ex)
@@ -453,7 +453,9 @@ namespace ETHDINFKBot.Data
                         {
                             MenuImageUrl = imageUrl,
                             ImageSearchTerm = searchTerm,
-                            Language = language
+                            Language = language,
+                            Available = true,
+                            Enabled = true
                         });
                     }
                     context.SaveChanges();
