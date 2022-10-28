@@ -349,7 +349,9 @@ namespace ETHDINFKBot.Helpers
         {
             List<Task> tasks = new List<Task>();
 
-            var listKeys = keys.Skip(2)/*idk why but skip 2 it was like this before*/.ToArray();
+            var listKeys = keys
+            //.Skip(2)/*idk why but skip 2 it was like this before*/
+            .ToArray();
 
 
             var startTime = listKeys.First();
