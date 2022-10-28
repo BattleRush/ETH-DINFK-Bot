@@ -107,7 +107,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
         private async Task<bool> GenerateMovieLastWeek(ulong guildId, SocketTextChannel channel)
         {
-            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7, 60, -1, 10, true, true, "");
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7, 60, -1, 6, true, true, "");
             await channel.SendFileAsync(fileName, "Message graph for last week");
             return true;
         }
@@ -115,14 +115,14 @@ namespace ETHDINFKBot.CronJobs.Jobs
         private async Task<bool> GenerateMovieLastWeekStudy(ulong guildId, SocketTextChannel channel)
         {
             // TODO Load from config
-            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7, 60, -1, 10, true, true, "", StudyChannels);
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7, 60, -1, 6, true, true, "", StudyChannels);
             await channel.SendFileAsync(fileName, "Message graph for last week (Only study channels)");
             return true;
         }
 
         private async Task<bool> GenerateMovieLastMonth(ulong guildId, SocketTextChannel channel)
         {
-            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 30, 60, 1, -1, true, true, "");
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 30, 60, -1, 20, true, true, "");
             await channel.SendFileAsync(fileName, "Message graph for last month");
             return true;
         }
@@ -130,7 +130,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
         private async Task<bool> GenerateMovieLastMonthStudy(ulong guildId, SocketTextChannel channel)
         {
-            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 30, 60, 1, -1, true, true, "", StudyChannels);
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 30, 60, -1, 20, true, true, "", StudyChannels);
             await channel.SendFileAsync(fileName, "Message graph for last month (Only study channels)");
             return true;
         }
