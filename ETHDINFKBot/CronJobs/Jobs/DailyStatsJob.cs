@@ -16,60 +16,8 @@ namespace ETHDINFKBot.CronJobs.Jobs
         private readonly ILogger<DailyStatsJob> _logger;
         private readonly string Name = "DailyStatsJob";
 
-        public DailyStatsJob(IScheduleConfig<DailyStatsJob> config, ILogger<DailyStatsJob> logger)
-            : base(config.CronExpression, config.TimeZoneInfo)
-        {
-            _logger = logger;
-        }
-
-        public override Task StartAsync(CancellationToken cancellationToken)
-        {
-            _logger.LogInformation($"{Name} starts.");
-            return base.StartAsync(cancellationToken);
-        }
-
-        // TODO Cutoff at midnight
-        // TODO X Axis is scaled wrong
-        public override Task DoWork(CancellationToken cancellationToken)
-        {
-            _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
-            Console.WriteLine("Run DailyStatsJob");
-
-            var guild = Program.Client.GetGuild(Program.ApplicationSetting.BaseGuild);
-            var spamChannel = guild.GetTextChannel(GeneralChatId);
-            if (spamChannel != null)
-            {
-                var res = GenerateMovieLastDay(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
-                res = GenerateMovieLastWeek(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
-                res = GenerateMovieLastWeekStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
-
-                if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday)// Send on each saturday last week
-                    res = GenerateMovieLastMonth(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
-                if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday && DateTime.Now.Day < 8) // On the first saturday of the month send last year
-                    res = GenerateMovieLastYear(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
-            }
-
-            return Task.CompletedTask;
-        }
-
-        private async Task<bool> GenerateMovieLastDay(ulong guildId, SocketTextChannel channel)
-        {
-            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24, 60, -1, 1, true, true, "");
-            await channel.SendFileAsync(fileName, "Message graph for last day");
-            return true;
-        }
-
-        private async Task<bool> GenerateMovieLastWeek(ulong guildId, SocketTextChannel channel)
-        {
-            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7, 60, -1, 10, true, true, "");
-            await channel.SendFileAsync(fileName, "Message graph for last week");
-            return true;
-        }
-
-        private async Task<bool> GenerateMovieLastWeekStudy(ulong guildId, SocketTextChannel channel)
-        {
-            // TODO Load from config
-            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7, 60, -1, 10, true, true, "", new ulong[] {747753178208141313
+        // TODO Move to Config
+        private ulong[] StudyChannels = new ulong[] {747753178208141313
 ,755401302032515074
 ,755401370596671520
 ,755401537706000534
@@ -103,7 +51,71 @@ namespace ETHDINFKBot.CronJobs.Jobs
 ,814453980758802452
 ,814454012937109584
 ,814454064044572702
-,881631622322073690 });
+,881631622322073690 };
+
+        public DailyStatsJob(IScheduleConfig<DailyStatsJob> config, ILogger<DailyStatsJob> logger)
+            : base(config.CronExpression, config.TimeZoneInfo)
+        {
+            _logger = logger;
+        }
+
+        public override Task StartAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation($"{Name} starts.");
+            return base.StartAsync(cancellationToken);
+        }
+
+        // TODO Cutoff at midnight
+        // TODO X Axis is scaled wrong
+        public override Task DoWork(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
+            Console.WriteLine("Run DailyStatsJob");
+
+            var guild = Program.Client.GetGuild(Program.ApplicationSetting.BaseGuild);
+            var spamChannel = guild.GetTextChannel(GeneralChatId);
+            if (spamChannel != null)
+            {
+                var res = GenerateMovieLastDay(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                res = GenerateMovieLastWeek(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                res = GenerateMovieLastWeekStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+
+                if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday)
+                {
+                    // Send on each saturday last week
+                    res = GenerateMovieLastMonth(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                    res = GenerateMovieLastMonthStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                }
+
+                if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday && DateTime.Now.Day < 8)
+                { 
+                    // On the first saturday of the month send last year
+                    res = GenerateMovieLastYear(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                    res = GenerateMovieLastYearStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                }
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private async Task<bool> GenerateMovieLastDay(ulong guildId, SocketTextChannel channel)
+        {
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24, 60, -1, 1, true, true, "");
+            await channel.SendFileAsync(fileName, "Message graph for last day");
+            return true;
+        }
+
+        private async Task<bool> GenerateMovieLastWeek(ulong guildId, SocketTextChannel channel)
+        {
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7, 60, -1, 10, true, true, "");
+            await channel.SendFileAsync(fileName, "Message graph for last week");
+            return true;
+        }
+
+        private async Task<bool> GenerateMovieLastWeekStudy(ulong guildId, SocketTextChannel channel)
+        {
+            // TODO Load from config
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7, 60, -1, 10, true, true, "", StudyChannels);
             await channel.SendFileAsync(fileName, "Message graph for last week (Only study channels)");
             return true;
         }
@@ -115,10 +127,24 @@ namespace ETHDINFKBot.CronJobs.Jobs
             return true;
         }
 
+
+        private async Task<bool> GenerateMovieLastMonthStudy(ulong guildId, SocketTextChannel channel)
+        {
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 30, 60, 1, -1, true, true, "", StudyChannels);
+            await channel.SendFileAsync(fileName, "Message graph for last month (Only study channels)");
+            return true;
+        }
+
         private async Task<bool> GenerateMovieLastYear(ulong guildId, SocketTextChannel channel)
         {
             string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 365, 60, 2, -1, true, true, "");
             await channel.SendFileAsync(fileName, "Message graph for last year");
+            return true;
+        }
+        private async Task<bool> GenerateMovieLastYearStudy(ulong guildId, SocketTextChannel channel)
+        {
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 365, 60, 2, -1, true, true, "", StudyChannels);
+            await channel.SendFileAsync(fileName, "Message graph for last year (Only study channels)");
             return true;
         }
 

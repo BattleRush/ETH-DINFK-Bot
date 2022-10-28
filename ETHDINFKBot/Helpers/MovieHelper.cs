@@ -211,7 +211,7 @@ namespace ETHDINFKBot.Helpers
             Stopwatch watch = new Stopwatch();
 
             watch.Start();
-            var messageInfos = GetMessageInfos(hoursAmount < 0 ? null : SnowflakeUtils.ToSnowflake(DateTimeOffset.Now.AddHours(hoursAmount * (-1))));
+            var messageInfos = GetMessageInfos(hoursAmount < 0 ? null : hoursAmount, true);
             watch.Stop();
 
             //await Context.Channel.SendMessageAsync($"Retrieved data in {watch.ElapsedMilliseconds}ms");
@@ -306,12 +306,27 @@ namespace ETHDINFKBot.Helpers
         }
 
         // TODO add channel filtering
-        private static List<GraphEntryInfo> GetMessageInfos(ulong? fromSnowflakeId = null)
+        private static List<GraphEntryInfo> GetMessageInfos(int? hoursAmount = null, bool startFromNewDay = false)
         {
+            if(hoursAmount.HasValue && hoursAmount.Value < 0)
+                hoursAmount = null;
+            
+            DateTimeOffset until = DateTimeOffset.Now;
+            if (startFromNewDay)
+                until = new DateTimeOffset(until.Year, until.Month, until.Day, 0, 0, 0, until.Offset);
+
+            DateTimeOffset from = new DateTimeOffset(2020, 1, 1, 0, 0, 0, until.Offset);
+            if (hoursAmount.HasValue)
+                from = until.AddHours(hoursAmount.Value * (-1));               
+          
+            var untilSnowflake = SnowflakeUtils.ToSnowflake(until);
+            var fromSnowflake = SnowflakeUtils.ToSnowflake(from);
+
             List<GraphEntryInfo> messageTimes = new List<GraphEntryInfo>();
             using (ETHBotDBContext context = new ETHBotDBContext())
                 messageTimes = context.DiscordMessages.AsQueryable()
-                    .Where(i => fromSnowflakeId == null || (fromSnowflakeId != null && i.DiscordMessageId > fromSnowflakeId))
+                    .Where(i => hoursAmount == null 
+                    || (hoursAmount != null && fromSnowflake < i.DiscordMessageId && i.DiscordMessageId < untilSnowflake))
                     .Select(i => new GraphEntryInfo() { KeyId = i.DiscordChannelId, DateTime = SnowflakeUtils.FromSnowflake(i.DiscordMessageId) })
                     .ToList();
 
