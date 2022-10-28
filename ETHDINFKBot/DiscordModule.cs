@@ -1458,7 +1458,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             var queryResult = await SQLHelper.GetQueryResults(Context, query, true, 50);
 
-            var commandResponse = await SQLHelper.SqlCommand(Context, query);
+            var commandResponse = await SQLHelper.SqlCommand(Context, query, true);
             await Context.Channel.SendMessageAsync(commandResponse, false);
         }
 

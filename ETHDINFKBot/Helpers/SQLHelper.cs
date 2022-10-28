@@ -69,11 +69,11 @@ namespace ETHDINFKBot.Helpers
             return result;
         }
 
-        public static async Task<string> SqlCommand(SocketCommandContext context, string commandSql)
+        public static async Task<string> SqlCommand(SocketCommandContext context, string commandSql, bool adminOverwrite = false)
         {
             var author = context.Message.Author;
 
-            var queryResult = await GetQueryResults(context, commandSql.ToString(), false, 2000);
+            var queryResult = await GetQueryResults(context, commandSql.ToString(), false, 2000, adminOverwrite);
             var resultString = GetRowStringFromResult(queryResult.Header, queryResult.Data, new List<int>());
 
             return resultString + Environment.NewLine + $"{queryResult.TotalResults.ToString("N0")} Row(s) affected Time: {queryResult.Time.ToString("N0")}ms";
