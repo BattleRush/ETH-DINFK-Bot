@@ -334,12 +334,12 @@ namespace ETHDINFKBot.Helpers
         {
             List<Task> tasks = new List<Task>();
 
-            var listKeys = keys.Skip(2)/*idk why but skip 2*/.ToArray();
+            var listKeys = keys.Skip(2)/*idk why but skip 2 it was like this before*/.ToArray();
 
 
             var startTime = listKeys.First();
 
-            for (int i = 2; i < listKeys.Length; i++)
+            for (int i = 0; i < listKeys.Length; i++)
             {
                 //if (i % 250 == 0)
                 //    await Context.Channel.SendMessageAsync($"Frame gen {i} out of {keys.Count()}");
