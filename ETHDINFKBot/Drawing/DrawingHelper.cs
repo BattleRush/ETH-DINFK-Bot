@@ -182,8 +182,7 @@ namespace ETHDINFKBot.Drawing
 
 
             // Y AXIS
-            int intervalRow = (maxVal - minVal) / rows;
-
+            int diff = maxVal - minVal;
             int currentValue = minVal;
 
             List<string> yAxisLabels = new List<string>();
@@ -191,7 +190,10 @@ namespace ETHDINFKBot.Drawing
 
             for (int i = 0; i < rows; i++)
             {
-                currentValue += intervalRow;
+                currentValue = (int)Math.Ceiling((double)diff / rows * (i + 1));
+                if(i == rows - 1)
+                    currentValue = maxVal;
+                    
                 yAxisLabels.Add(currentValue.ToString("N0") + suffix);
             }
 
