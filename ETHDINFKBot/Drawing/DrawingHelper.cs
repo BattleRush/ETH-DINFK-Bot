@@ -184,6 +184,10 @@ namespace ETHDINFKBot.Drawing
             // Y AXIS
             int diff = maxVal - minVal;
             int currentValue = minVal;
+            
+            // If there are more rows than there are int values then show all values
+            if (rows > diff)
+                rows = diff;
 
             List<string> yAxisLabels = new List<string>();
             yAxisLabels.Add(currentValue.ToString("N0"));
@@ -193,7 +197,7 @@ namespace ETHDINFKBot.Drawing
                 currentValue = (int)Math.Ceiling((double)diff / rows * (i + 1));
                 if(i == rows - 1)
                     currentValue = maxVal;
-                    
+
                 yAxisLabels.Add(currentValue.ToString("N0") + suffix);
             }
 
