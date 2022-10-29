@@ -430,7 +430,7 @@ namespace ETHDINFKBot.Helpers
         private static List<ParsedGraphInfo> GetChannelParsedMessageInfos(IEnumerable<IGrouping<DateTimeOffset, GraphEntryInfo>> groups, List<DiscordChannel> channels, params ulong[] channelIds)
         {
             List<ParsedGraphInfo> parsedMessageInfos = new List<ParsedGraphInfo>();
-
+            var random = new Random();
             foreach (var item in groups)
             {
                 foreach (var value in item)
@@ -450,7 +450,12 @@ namespace ETHDINFKBot.Helpers
                             ChannelId = value.KeyId,
                             Info = new Dictionary<DateTimeOffset, int>(),
                             ChannelName = channelDB.ChannelName,
-                            Color = new SKColor((byte)new Random().Next(0, 255), (byte)new Random().Next(0, 255), (byte)new Random().Next(0, 255))
+
+                            // Generate random bright color
+                            Color = new SKColor(
+                                (byte)Math.Floor((1 + random.NextDouble()) * 256 / 2),
+                                (byte)Math.Floor((1 + random.NextDouble()) * 256 / 2),
+                                (byte)Math.Floor((1 + random.NextDouble()) * 256 / 2))
                         });
                     }
 

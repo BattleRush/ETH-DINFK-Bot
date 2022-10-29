@@ -77,6 +77,8 @@ namespace ETHDINFKBot.CronJobs.Jobs
             if (spamChannel != null)
             {
                 var res = GenerateMovieLastDay(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                res = GenerateMovieLastDayStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                
                 res = GenerateMovieLastWeek(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
                 res = GenerateMovieLastWeekStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
 
@@ -102,6 +104,12 @@ namespace ETHDINFKBot.CronJobs.Jobs
         {
             string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24, 60, -1, 1, true, true, "");
             await channel.SendFileAsync(fileName, "Message graph for last day");
+            return true;
+        }
+        private async Task<bool> GenerateMovieLastDayStudy(ulong guildId, SocketTextChannel channel)
+        {
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24, 60, -1, 1, true, true, "");
+            await channel.SendFileAsync(fileName, "Message graph for last day (Only study channels)");
             return true;
         }
 
