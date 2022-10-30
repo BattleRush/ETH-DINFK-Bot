@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace ETHDINFKBot.CronJobs.Jobs
 {
@@ -72,6 +73,11 @@ namespace ETHDINFKBot.CronJobs.Jobs
             _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
             Console.WriteLine("Run DailyStatsJob");
 
+            // Clear /tmp folder
+            DirectoryInfo directoryInfo = new DirectoryInfo("/tmp/");
+            foreach (FileInfo file in directoryInfo.GetFiles())
+                file.Delete();
+
             var guild = Program.Client.GetGuild(Program.ApplicationSetting.BaseGuild);
             var spamChannel = guild.GetTextChannel(GeneralChatId);
             if (spamChannel != null)
@@ -108,7 +114,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
         }
         private async Task<bool> GenerateMovieLastDayStudy(ulong guildId, SocketTextChannel channel)
         {
-            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24, 60, -1, 1, true, true, "");
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24, 60, -1, 1, true, true, "", StudyChannels);
             await channel.SendFileAsync(fileName, "Message graph for last day (Only study channels)");
             return true;
         }
