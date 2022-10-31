@@ -560,13 +560,32 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         }
 
         [Command("ping")]
+        public async Task PingInfo(string command = null)
+        {
+            await PingInfo(command);
+        }
+
+        [Command("ping")]
         public async Task PingInfo(ulong? userId = null)
+        {
+            await PingInfo(null, userId);
+        }
+
+        [Command("ping")]
+        public async Task PingInfo(string command = null, ulong? userId = null)
         {
             // TODO allow ping to pass for info
             // TODO Put replies into the ping history table aswell
 
             if (AllowedToRun(BotPermissionType.EnableType2Commands))
                 return;
+
+            bool filterPingHell = false;
+            if(!string.IsNullOrWhiteSpace(command))
+            {
+                if (command.ToLower() == "-pinghell")
+                    filterPingHell = true;
+            }
 
             try
             {
@@ -576,7 +595,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 if (userId.HasValue)
                     user = Program.Client.GetGuild(Program.ApplicationSetting.BaseGuild).GetUser(userId.Value) as SocketGuildUser;
 
-                var pingHistory = DiscordHelper.GetTotalPingHistory(user, 30);
+                var pingHistory = DiscordHelper.GetTotalPingHistory(user, 30, filterPingHell);
                 var builder = DiscordHelper.GetEmbedForPingHistory(pingHistory, user);
 
                 await Context.Message.Channel.SendMessageAsync("", false, builder.Build());

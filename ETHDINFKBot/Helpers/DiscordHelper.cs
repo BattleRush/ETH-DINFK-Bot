@@ -101,7 +101,7 @@ namespace ETHDINFKBot.Helpers
             return true;
         }
 
-        public static List<PingHistory> GetTotalPingHistory(SocketGuildUser user, int limit = 30)
+        public static List<PingHistory> GetTotalPingHistory(SocketGuildUser user, int limit = 30, bool filterPingHell = false)
         {
             var dbManager = DatabaseManager.Instance();
             List<PingHistory> pingHistory = new();
@@ -110,6 +110,10 @@ namespace ETHDINFKBot.Helpers
 
             foreach (var userRole in user.Roles)
             {
+                // TODO maybe use the Id of pinghell
+                if(filterPingHell && userRole.Name == "Ping Hell")
+                    continue;
+
                 ulong roleId = GetRoleIdFromMention(userRole);
                 pingHistory.AddRange(dbManager.GetLastPingHistory(50, null, roleId));
             }
