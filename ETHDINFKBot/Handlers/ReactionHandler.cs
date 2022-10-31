@@ -68,6 +68,7 @@ namespace ETHDINFKBot.Handlers
                 {
                     SaveReaction(ReactionEmote);
                     UpvoteReactionToPullRequests(ReactionEmote);
+                    PeopleWhoRefuseToPutFoodFav(ReactionEmote);
                 }
             }
         }
@@ -155,6 +156,15 @@ namespace ETHDINFKBot.Handlers
 
                     //Message.Channel.SendMessageAsync("Failed to save the message. Discord returned: " + ex.Message);
                 }
+            }
+        }
+
+        private async void PeopleWhoRefuseToPutFoodFav(Emote reactionEmote)
+        {
+            if(SocketGuildMessageUser.Id == Program.Client.CurrentUser.Id && reactionEmote.Id == DiscordEmotes["shut"] && new Random().Next(0, 100) < 1 /* 1% of the cases */)
+            {
+                await SocketTextChannel.SendMessageAsync($"<@{SocketGuildReactionUser.Id}>");    
+                await SocketTextChannel.SendMessageAsync("https://tenor.com/view/ninja-rage-ninja-twitch-you-little-shit-the-fuck-you-say-the-fuck-you-said-gif-18318497");          
             }
         }
 
