@@ -111,7 +111,7 @@ namespace ETHDINFKBot.Helpers
             foreach (var userRole in user.Roles)
             {
                 // TODO maybe use the Id of pinghell
-                if(filterPingHell && userRole.Name == "Ping Hell")
+                if(filterPingHell && userRole.Id == 895231323034222593)
                     continue;
 
                 ulong roleId = GetRoleIdFromMention(userRole);

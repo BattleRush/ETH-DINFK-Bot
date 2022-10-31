@@ -560,13 +560,19 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         }
 
         [Command("ping")]
-        public async Task PingInfo(string command = null)
+        public async Task PingInfo()
+        {
+            await PingInfo();
+        }
+
+        [Command("ping")]
+        public async Task PingInfo(string command)
         {
             await PingInfo(command);
         }
 
         [Command("ping")]
-        public async Task PingInfo(ulong? userId = null)
+        public async Task PingInfo(ulong? userId)
         {
             await PingInfo(null, userId);
         }
@@ -583,7 +589,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             bool filterPingHell = false;
             if(!string.IsNullOrWhiteSpace(command))
             {
-                if (command.ToLower() == "-pinghell")
+                if (command.Trim().ToLower() == "-pinghell")
                     filterPingHell = true;
             }
 
