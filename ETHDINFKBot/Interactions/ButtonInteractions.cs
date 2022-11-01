@@ -226,7 +226,6 @@ namespace ETHDINFKBot.Interactions
             }
             catch (HttpException ex)
             {
-                
                 foreach (var error in ex.Errors)
                 {
                     if (error.Errors.Any(i => i.Code == "BUTTON_COMPONENT_INVALID_EMOJI"))
@@ -239,6 +238,10 @@ namespace ETHDINFKBot.Interactions
 
                         var brokenEmote = emoteResult.EmoteList.Skip(error_row * columns + error_column).First();
                         EmoteDBManager.Instance().ChangeValidStatus(brokenEmote.Key, false);
+                    }
+                    else
+                    {
+                        await Context.Interaction.RespondAsync("Error: " + ex.ToString(), null, false, true);
                     }
                 }
 
