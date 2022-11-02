@@ -450,6 +450,7 @@ namespace ETHDINFKBot.Helpers
                 menu.Description = string.Join(" ", lines);
                 //menu.MultilineDescription = string.Join("\r\n", lines);// TODO check if atleast 2 lines to begin with
                 //menu.FirstLine = lines.First(); // TODO check if atleast 2 lines to begin with
+                menu.Description = menu.Description.Replace("&amp;", "&").Trim(); // clean up string
 
                 polymensaMenus.Add(menu);
             }
