@@ -442,7 +442,11 @@ namespace ETHDINFKBot.Helpers
                     continue;
                 }
 
-                var lines = childNodes[1].ChildNodes.Where(i => i.Name == "strong" || i.Name == "#text").Select(i => i.InnerText.Replace("\"", "")).ToList();
+                var lines = childNodes[1].ChildNodes
+                    .Where(i => i.Name == "strong" || i.Name == "#text")
+                    .Select(i => HttpUtility.HtmlDecode(i.InnerText).Replace("\"", ""))
+                    .ToList();
+
                 menu.Description = string.Join(" ", lines);
                 //menu.MultilineDescription = string.Join("\r\n", lines);// TODO check if atleast 2 lines to begin with
                 //menu.FirstLine = lines.First(); // TODO check if atleast 2 lines to begin with
