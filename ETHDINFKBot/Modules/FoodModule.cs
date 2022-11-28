@@ -310,7 +310,7 @@ namespace ETHDINFKBot.Modules
             var defaultLunchRestaurants = new List<Restaurant>()
             {
                 FoodDBManager.GetRestaurantByName("ETH Polymensa (Lunch)"),
-                FoodDBManager.GetRestaurantByName("UZH Zentrum Lower Mensa (Lunch)")
+                FoodDBManager.GetRestaurantByName("UZH Zentrum Lower Mensa (Lunch)"),
                 FoodDBManager.GetRestaurantByName("UZH Zentrum Upper Mensa (Lunch)")
             };
 
