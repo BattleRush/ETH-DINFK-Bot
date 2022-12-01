@@ -814,10 +814,7 @@ It is also likely that there are no menus currently available today." + weekendS
                 builder.WithThumbnailUrl(currentUser.GetAvatarUrl() ?? currentUser.GetDefaultAvatarUrl());
 
                 builder.WithCurrentTimestamp();
-                builder.WithDescription(@"You can click on the buttons bellow to adjust your settings. Blue buttons mean active setting, red inactive.
-
-The bot will return up to 5 Restaurant menus per group (Lunch and Dinner are seperate).
-If you select more than 5 they wont be returned.");
+                builder.WithDescription(@"You can click on the buttons bellow to adjust your settings. Blue buttons mean active setting, red meaning inactive.");
                 builder.WithAuthor(currentUser);
                 //builder.AddField("test", "test");
 

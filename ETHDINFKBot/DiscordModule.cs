@@ -242,10 +242,11 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.WithCurrentTimestamp();
             //builder.WithAuthor(author);
             builder.AddField("Misc", $"```{prefix}help {prefix}version {prefix}source {prefix}stats {prefix}ping {prefix}first {prefix}last {prefix}today```", true);
-            builder.AddField("Search", $"```{prefix}google|duck <search term>```", true);
+            builder.AddField("ETH/UZH Food", $"```{prefix}food [ (fav | help | lunch | dinner) ]```", true);
+            //builder.AddField("Search", $"```{prefix}google|duck <search term>```", true);
             //builder.AddField("Images", $"```{prefix}neko[avatar] {prefix}fox {prefix}waifu {prefix}baka {prefix}smug {prefix}holo {prefix}avatar {prefix}wallpaper```");
             builder.AddField("Reddit", $"```{prefix}r[p] <subreddit>|all```", true);
-            builder.AddField("Rant", $"```{prefix}rant [ types | new) ]```", true);
+            builder.AddField("Rant", $"```{prefix}rant [ (types | new) ]```", true);
             builder.AddField("SQL", $"```{prefix}sql info | (table info) | (query[d] <query>) | dmdb help```", true);
             builder.AddField("Emote Help for more info", $"```{prefix}emote help```");
             builder.AddField("React (only this server's emotes)", $"```{prefix}react <message_id> <emote_name>```", true);
@@ -257,7 +258,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             /*builder.AddField("Write .study to force yourself away from discord", "```May contain spoilers to old exams! Once you receive the study role you will be only to chat for max of 15 mins at a time." + Environment.NewLine +
                $"If you are in cooldown, the bot will delete all your messages. Every question is designed to be able to solve within 5-10 mins. To recall your message write '.study'" + Environment.NewLine +
                $"To be able to chat you will need to solve a question each time. (All subject channels are exempt from this rule.)```");*/
-            builder.AddField($"Random Exam Question (for now only LinAlg) Total tracking: {new StudyHelper().GetQuestionCount()} question(s)", $"```{prefix}question [Exam] (Exams: {new StudyHelper().GetExams()})```");
+            //builder.AddField($"Random Exam Question (for now only LinAlg) Total tracking: {new StudyHelper().GetQuestionCount()} question(s)", $"```{prefix}question [Exam] (Exams: {new StudyHelper().GetExams()})```");
             //builder.AddField(".next", "```Regenerate a new question.```");
 
             await Context.Channel.SendMessageAsync("", false, builder.Build());
