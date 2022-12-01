@@ -233,20 +233,13 @@ namespace ETHDINFKBot.Helpers
             if (stacked)
                 StackResults(parsedMessageInfos);
 
-            try
-            {
                 await GenerateFrames(keys, parsedMessageInfos, basePath, drawDots);
                 string fileName = await RunFFMpeg(basePath, baseOutputPath, fps, filePrefix);
 
                 // Here we can cleanup old frames as we dont need it anymore to save disk
                 Directory.Delete(basePath, true);
 
-                return fileName;
-            }
-            catch (Exception ex)
-            {
-                throw ex; // Retrhow error for now
-            }
+                return fileName;        
         }
 
         private static void StackResults(List<ParsedGraphInfo> parsedMessageInfos)
