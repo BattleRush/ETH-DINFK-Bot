@@ -245,8 +245,7 @@ namespace ETHDINFKBot.Helpers
             }
             catch (Exception ex)
             {
-                //_logger.LogError(ex, "Error while creating movie");
-                return null;
+                throw ex; // Retrhow error for now
             }
         }
 
@@ -287,7 +286,7 @@ namespace ETHDINFKBot.Helpers
 
         private static async Task<string> RunFFMpeg(string basePath, string baseOutputPath, int fps, string filePrefix = "")
         {
-            int random = new Random().Next(1_000);
+            int random = new Random().Next(1_000_000);
             //GlobalFFOptions.Configure(options => options.BinaryFolder = Program.Settings.FFMpegPath);
             Xabe.FFmpeg.FFmpeg.SetExecutablesPath(Program.ApplicationSetting.FFMpegPath);
 
