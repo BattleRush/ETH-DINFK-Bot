@@ -139,7 +139,7 @@ namespace ETHDINFKBot
                        services.AddCronJob<DailyCleanup>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"50 * * * *"; }); // Changed to every hour at 30 mins
 
                        // TODO adjust for summer time in CET/CEST
-                       services.AddCronJob<DailyStatsJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"30 11 * * *"; }); // 11 15 urc
+                       services.AddCronJob<DailyStatsJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"42 12 * * *"; }); // 11 15 urc
 
                        // TODO adjust for summer time in CET/CEST
                        // TODO Enable for Maria DB
@@ -151,8 +151,8 @@ namespace ETHDINFKBot
                        // TODO adjust for summer time in CET/CEST
                        services.AddCronJob<StartAllSubredditsJobs>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 * * *"; });// 4 am utc -> 5 am cet
 
-                       // At 4:20 UTC fetch current day menus and until 10:20 UTC fetch next day menus to potentially fix broken menus
-                       services.AddCronJob<FoodFetchJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"20,50 3-10 * * *"; });
+                       // At 2:20 UTC fetch current day menus and until 10:20 UTC fetch next day menus to potentially fix broken menus
+                       services.AddCronJob<FoodFetchJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"20,50 2-10 * * *"; });
                        
                        // TODO adjust for summer time in CET/CEST
                        //services.AddCronJob<GitPullMessageJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 21 * * TUE"; });// 22 CET each Tuesday
