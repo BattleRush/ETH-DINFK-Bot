@@ -70,6 +70,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
         // TODO X Axis is scaled wrong
         public override Task DoWork(CancellationToken cancellationToken)
         {
+          
             _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
             Console.WriteLine("Run DailyStatsJob");
 
@@ -82,24 +83,31 @@ namespace ETHDINFKBot.CronJobs.Jobs
             var spamChannel = guild.GetTextChannel(GeneralChatId);
             if (spamChannel != null)
             {
-                var res = GenerateMovieLastDay(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
-                res = GenerateMovieLastDayStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
-                
-                res = GenerateMovieLastWeek(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
-                res = GenerateMovieLastWeekStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
-
-                if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday)
+                try
                 {
-                    // Send on each saturday last week
-                    res = GenerateMovieLastMonth(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
-                    res = GenerateMovieLastMonthStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
-                }
+                    var res = GenerateMovieLastDay(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                    res = GenerateMovieLastDayStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                    
+                    res = GenerateMovieLastWeek(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                    res = GenerateMovieLastWeekStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
 
-                if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday && DateTime.Now.Day < 8)
-                { 
-                    // On the first saturday of the month send last year
-                    res = GenerateMovieLastYear(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
-                    res = GenerateMovieLastYearStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                    if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday)
+                    {
+                        // Send on each saturday last week
+                        res = GenerateMovieLastMonth(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                        res = GenerateMovieLastMonthStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                    }
+
+                    if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday && DateTime.Now.Day < 8)
+                    { 
+                        // On the first saturday of the month send last year
+                        res = GenerateMovieLastYear(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                        res = GenerateMovieLastYearStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                    }
+                }
+                catch(Exception e)
+                {
+                    spamChannel.SendMessageAsync("Error: " + e.ToString());
                 }
             }
 
