@@ -374,8 +374,11 @@ namespace ETHDINFKBot.Drawing
             int rows = yAxis.Count - 1;
 
             // Prevent div by 0
-            if(columns == 0 || rows == 0)
-                return;
+            if(rows == 0)
+                rows = 1;
+            
+            if (columns == 0)
+                columns = 1;
 
             var labelPaint = MediumTextPaint;
 
