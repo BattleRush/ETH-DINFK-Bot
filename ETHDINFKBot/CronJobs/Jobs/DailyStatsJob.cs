@@ -81,8 +81,8 @@ namespace ETHDINFKBot.CronJobs.Jobs
             // Ensure clean disk before starting
             string currentBasePath = Path.Combine(Program.ApplicationSetting.BasePath, "MovieData");
 
-            // Delete all files and subfolders
-            Directory.Delete(currentBasePath, true);
+            if (Directory.Exists(currentBasePath))
+                Directory.Delete(currentBasePath, true);
 
             var guild = Program.Client.GetGuild(Program.ApplicationSetting.BaseGuild);
             var spamChannel = guild.GetTextChannel(GeneralChatId);
