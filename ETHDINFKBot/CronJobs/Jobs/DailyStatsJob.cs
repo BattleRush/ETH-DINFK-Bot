@@ -119,16 +119,26 @@ namespace ETHDINFKBot.CronJobs.Jobs
             return Task.CompletedTask;
         }
 
+        // TODO Alot of duplicate code rework that
+
         private async Task<bool> GenerateMovieLastDay(ulong guildId, SocketTextChannel channel)
         {
             string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24, 60, -1, 1, true, true, "");
             await channel.SendFileAsync(fileName, "Message graph for last day");
+
+            // Delete file
+            File.Delete(fileName);
+
             return true;
         }
         private async Task<bool> GenerateMovieLastDayStudy(ulong guildId, SocketTextChannel channel)
         {
             string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24, 60, -1, 1, true, true, "", StudyChannels);
             await channel.SendFileAsync(fileName, "Message graph for last day (Only study channels)");
+
+            // Delete file
+            File.Delete(fileName);
+
             return true;
         }
 
@@ -136,6 +146,10 @@ namespace ETHDINFKBot.CronJobs.Jobs
         {
             string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7, 60, -1, 6, true, true, "");
             await channel.SendFileAsync(fileName, "Message graph for last week");
+
+            // Delete file
+            File.Delete(fileName);
+
             return true;
         }
 
@@ -144,6 +158,10 @@ namespace ETHDINFKBot.CronJobs.Jobs
             // TODO Load from config
             string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7, 60, -1, 6, true, true, "", StudyChannels);
             await channel.SendFileAsync(fileName, "Message graph for last week (Only study channels)");
+
+            // Delete file
+            File.Delete(fileName);
+
             return true;
         }
 
@@ -151,6 +169,10 @@ namespace ETHDINFKBot.CronJobs.Jobs
         {
             string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 30, 60, -1, 20, true, true, "");
             await channel.SendFileAsync(fileName, "Message graph for last month");
+
+            // Delete file
+            File.Delete(fileName);
+
             return true;
         }
 
@@ -159,6 +181,10 @@ namespace ETHDINFKBot.CronJobs.Jobs
         {
             string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 30, 60, -1, 20, true, true, "", StudyChannels);
             await channel.SendFileAsync(fileName, "Message graph for last month (Only study channels)");
+
+            // Delete file
+            File.Delete(fileName);
+
             return true;
         }
 
@@ -166,12 +192,20 @@ namespace ETHDINFKBot.CronJobs.Jobs
         {
             string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 365, 60, 2, -1, true, true, "");
             await channel.SendFileAsync(fileName, "Message graph for last year");
+
+            // Delete file
+            File.Delete(fileName);
+
             return true;
         }
         private async Task<bool> GenerateMovieLastYearStudy(ulong guildId, SocketTextChannel channel)
         {
             string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 365, 60, 2, -1, true, true, "", StudyChannels);
             await channel.SendFileAsync(fileName, "Message graph for last year (Only study channels)");
+
+            // Delete file
+            File.Delete(fileName);
+
             return true;
         }
 
