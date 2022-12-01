@@ -78,6 +78,12 @@ namespace ETHDINFKBot.CronJobs.Jobs
             foreach (FileInfo file in directoryInfo.GetFiles())
                 file.Delete();
 
+            // Ensure clean disk before starting
+            string currentBasePath = Path.Combine(Program.ApplicationSetting.BasePath, "MovieData");
+
+            // Delete all files and subfolders
+            Directory.Delete(currentBasePath, true);
+
             var guild = Program.Client.GetGuild(Program.ApplicationSetting.BaseGuild);
             var spamChannel = guild.GetTextChannel(GeneralChatId);
             if (spamChannel != null)

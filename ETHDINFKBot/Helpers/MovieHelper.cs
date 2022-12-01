@@ -20,15 +20,17 @@ namespace ETHDINFKBot.Helpers
     {
         public static (string BasePath, string BaseOutputPath) CleanAndCreateMovieFolders()
         {
-            string basePath = Path.Combine(Program.ApplicationSetting.BasePath, "MovieFrames");
-            string baseOutputPath = Path.Combine(Program.ApplicationSetting.BasePath, "MovieOutput");
+            string randomFolderName = Guid.NewGuid().ToString();
+            string currentBasePath = Path.Combine(Program.ApplicationSetting.BasePath, "MovieData", randomFolderName);
 
-            // Clean up any remaining files
+            string basePath = Path.Combine(currentBasePath, "MovieFrames");
+            string baseOutputPath = Path.Combine(currentBasePath, "MovieOutput");
+
+            // Clean up any remaining files if unlucky and create new folders othwerwise
             if (Directory.Exists(basePath))
                 Directory.Delete(basePath, true);
             if (Directory.Exists(baseOutputPath))
                 Directory.Delete(baseOutputPath, true);
-
 
             if (!Directory.Exists(basePath))
                 Directory.CreateDirectory(basePath);
@@ -235,6 +237,9 @@ namespace ETHDINFKBot.Helpers
             {
                 await GenerateFrames(keys, parsedMessageInfos, basePath, drawDots);
                 string fileName = await RunFFMpeg(basePath, baseOutputPath, fps, filePrefix);
+
+                // Here we can cleanup old frames as we dont need it anymore to save disk
+                Directory.Delete(basePath, true);
 
                 return fileName;
             }
