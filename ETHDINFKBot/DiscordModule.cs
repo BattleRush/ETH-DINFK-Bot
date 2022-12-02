@@ -541,12 +541,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             {
                 // TODO log
             }
-        }
-
-        private long DateTimeToUnixTimestamp(DateTime dateTime)
-        {
-            return (long)(dateTime.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
-        }
+        }           
         
         [Command("pinghell")]
         public async Task CurrentPinghellMembers()
@@ -589,18 +584,18 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 {
                     ulong userId = Convert.ToUInt64(row[0]);
 
-                    if (usersWithPinghell.Any(i => i.Id == userId))
+                    if (!usersWithPinghell.Any(i => i.Id == userId))
                         continue;
 
                     // last ping
-                    var datetime = Convert.ToDateTime(row[1]);
+                    var datetime = SnowflakeUtils.FromSnowflake(ulong.Parse(row[1]));
 
                     var dateTimeTillExit = datetime.AddHours(73);
                     // remove minutes and seconds
                     dateTimeTillExit = dateTimeTillExit.AddMinutes(-dateTimeTillExit.Minute);
                     dateTimeTillExit = dateTimeTillExit.AddSeconds(-dateTimeTillExit.Second);
 
-                    var unixTime = DateTimeToUnixTimestamp(dateTimeTillExit);
+                    var unixTime = dateTimeTillExit.ToUnixTimeSeconds();
 
                     embedBuilder.AddField($"User {userId}", $"Last ping: {row[1]} Member for <t:{unixTime}:r>", true);                    
                 }
