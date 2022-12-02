@@ -317,7 +317,7 @@ namespace ETHDINFKBot.Helpers
                         q = i;
 
                 p = q;
-            } while (p != 0); 
+            } while (p != 0);
 
             return hull;
         }
@@ -341,11 +341,6 @@ namespace ETHDINFKBot.Helpers
             }
 
             return maxY;
-        }
-
-        private static int GetMaxValueGetMaxValueSmooth(List<ParsedGraphInfo> parsedMessageInfos, List<Point> upperHull, DateTimeOffset until)
-        {
-            return 1;
         }
 
         private static async Task<string> RunFFMpeg(string basePath, string baseOutputPath, int fps, string filePrefix = "")
@@ -435,10 +430,7 @@ namespace ETHDINFKBot.Helpers
         {
             List<Task> tasks = new List<Task>();
 
-            var listKeys = keys
-            //.Skip(2)/*idk why but skip 2 it was like this before*/
-            .ToArray();
-
+            var listKeys = keys.ToArray();
 
             var startTime = listKeys.First();
 
@@ -561,8 +553,8 @@ namespace ETHDINFKBot.Helpers
 
 
 
-                //var upperHullPoints = DrawingHelper.GetPoints(upperHullDataPoints, gridSize, true, startTime.DateTime, endTime.DateTime, false, maxY);
-                //DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, upperHullPoints, new SKPaint() { Color = SKColors.Red }, 6, "Upper hull", rowIndex, xOffset, drawDots, -1, null); //new Pen(System.Drawing.Color.LightGreen)
+                var upperHullPoints = DrawingHelper.GetPoints(upperHullDataPoints, gridSize, true, startTime.DateTime, endTime.DateTime, false, maxY);
+                DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, upperHullPoints, new SKPaint() { Color = SKColors.Red }, 6, "Upper hull", rowIndex, xOffset, drawDots, -1, null); //new Pen(System.Drawing.Color.LightGreen)
 
                 var result = SaveToDisk(basePath, i, drawInfo.Bitmap, drawInfo.Canvas); // takes about 80ms
                 tasks.Add(result);
