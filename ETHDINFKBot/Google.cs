@@ -130,6 +130,10 @@ namespace ETHDINFKBot
         public async Task<List<string>> GetSearchResultBySelenium(string query, int start = 0, string lang = "en")
         {
             ChromeOptions options = new ChromeOptions();
+
+            // Disable logging
+            options.AddArgument("--log-level=3");
+
             ChromeDriver driver;
 
 #if DEBUG
@@ -218,7 +222,7 @@ namespace ETHDINFKBot
 
                         parent.Click();
                         var currentTitle = driver.Title;
-                        if(!currentTitle.Contains("Google Search"))
+                        if (!currentTitle.Contains("Google Search"))
                         {
                             driver.Close();
                         }
@@ -239,8 +243,8 @@ namespace ETHDINFKBot
                                     myUriCustom = new Uri(url);
                                 }
                                 var newLink = HttpUtility.ParseQueryString(myUriCustom.Query).Get("imgurl");
-                                
-                                if (!imageUrls.Contains(newLink) 
+
+                                if (!imageUrls.Contains(newLink)
                                 && !newLink.Contains("sv-restaurant.ch")  /*Ignore sv restaurant site*/)
                                     imageUrls.Add(newLink);
                             }
@@ -259,7 +263,7 @@ namespace ETHDINFKBot
                         }
 
                         var newLinkDirect = HttpUtility.ParseQueryString(myUri.Query).Get("imgurl");
-                        if (!imageUrls.Contains(newLinkDirect) && string.IsNullOrWhiteSpace(newLinkDirect) 
+                        if (!imageUrls.Contains(newLinkDirect) && string.IsNullOrWhiteSpace(newLinkDirect)
                         && !newLinkDirect.Contains("sv-restaurant.ch") /*Ignore sv restaurant site*/)
                             imageUrls.Add(newLinkDirect);
                     }
