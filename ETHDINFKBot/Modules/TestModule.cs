@@ -95,6 +95,29 @@ namespace ETHDINFKBot.Modules
             }
         }
 
+        [Command("graph", RunMode = RunMode.Async)]
+        public async Task TestGraphSmoothing()
+        {
+            var author = Context.Message.Author;
+            if (author.Id != Program.ApplicationSetting.Owner)
+            {
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
+            try
+            {
+                string fileName = await MovieHelper.GenerateMovieForMessages(Context.Guild.Id, -1, 30, -1, 3, true, true, "");
+                await Context.Channel.SendFileAsync(fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while creating movie");
+                await Context.Channel.SendMessageAsync(ex.ToString());
+            }
+        }
+
+
         [Command("movie", RunMode = RunMode.Async)]
         public async Task CreateMovie(bool stacked, int groupByHours, int fps, bool drawDots, params ulong[] channelIds)
         {

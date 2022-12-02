@@ -16,6 +16,17 @@ using Xabe.FFmpeg;
 
 namespace ETHDINFKBot.Helpers
 {
+    // TODO move to somewhere else maybe
+    public class Point
+    {
+        public int x, y;
+        public Point(int x, int y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
     public static class MovieHelper
     {
         public static (string BasePath, string BaseOutputPath) CleanAndCreateMovieFolders()
@@ -233,13 +244,13 @@ namespace ETHDINFKBot.Helpers
             if (stacked)
                 StackResults(parsedMessageInfos);
 
-                await GenerateFrames(keys, parsedMessageInfos, basePath, drawDots);
-                string fileName = await RunFFMpeg(basePath, baseOutputPath, fps, filePrefix);
+            await GenerateFrames(keys, parsedMessageInfos, basePath, drawDots);
+            string fileName = await RunFFMpeg(basePath, baseOutputPath, fps, filePrefix);
 
-                // Here we can cleanup old frames as we dont need it anymore to save disk
-                Directory.Delete(basePath, true);
+            // Here we can cleanup old frames as we dont need it anymore to save disk
+            Directory.Delete(basePath, true);
 
-                return fileName;        
+            return fileName;
         }
 
         private static void StackResults(List<ParsedGraphInfo> parsedMessageInfos)
@@ -254,6 +265,61 @@ namespace ETHDINFKBot.Helpers
                     info.Info[value.Key] = val;
                 }
             }
+        }
+
+        private static int orientation(Point p, Point q, Point r)
+        {
+            int val = (q.y - p.y) * (r.x - q.x) -
+              (q.x - p.x) * (r.y - q.y);
+            if (val == 0) return 0; // collinear
+            return (val > 0) ? 1 : 2;
+        }
+
+        private static List<Point> UpperHull(IEnumerable<DateTimeOffset> keys, List<ParsedGraphInfo> parsedMessageInfos)
+        {
+            // TODO Calculate this once and cache it
+            Dictionary<DateTimeOffset, int> maxValues = new Dictionary<DateTimeOffset, int>();
+
+            foreach (var key in keys)
+            {
+                int max = 0;
+                foreach (var info in parsedMessageInfos)
+                    if (info.Info.ContainsKey(key))
+                        max = Math.Max(max, info.Info[key]);
+
+                maxValues.Add(key, max);
+            }
+
+            string arrayValue = string.Join(",", maxValues.Select(i => i.ToString()).ToArray());
+
+            var stack = new Stack<Point>();
+
+            var maxValueX = maxValues.OrderBy(i => i.Key).Select(i => i.Value).ToList();
+            List<Point> hull = new List<Point>();
+            Point[] points = new Point[maxValueX.Count];
+            for (int i = 0; i < maxValueX.Count; i++)
+                points[i] = new Point(i, maxValueX[i]);
+
+            // Source https://www.geeksforgeeks.org/convex-hull-using-jarvis-algorithm-or-wrapping/
+            int n = points.Length;
+
+            int p = 0;
+            int q;
+
+            do
+            {
+                hull.Add(points[p]);
+
+                q = (p + 1) % n;
+
+                for (int i = 0; i < n; i++)
+                    if (orientation(points[p], points[i], points[q]) == 2)
+                        q = i;
+
+                p = q;
+            } while (p != 0); 
+
+            return hull;
         }
 
         private static int GetMaxValue(List<ParsedGraphInfo> parsedMessageInfos, DateTimeOffset until)
@@ -275,6 +341,11 @@ namespace ETHDINFKBot.Helpers
             }
 
             return maxY;
+        }
+
+        private static int GetMaxValueGetMaxValueSmooth(List<ParsedGraphInfo> parsedMessageInfos, List<Point> upperHull, DateTimeOffset until)
+        {
+            return 1;
         }
 
         private static async Task<string> RunFFMpeg(string basePath, string baseOutputPath, int fps, string filePrefix = "")
@@ -305,24 +376,24 @@ namespace ETHDINFKBot.Helpers
         // TODO add channel filtering
         private static List<GraphEntryInfo> GetMessageInfos(int? hoursAmount = null, bool startFromNewDay = false)
         {
-            if(hoursAmount.HasValue && hoursAmount.Value < 0)
+            if (hoursAmount.HasValue && hoursAmount.Value < 0)
                 hoursAmount = null;
-            
+
             DateTimeOffset until = DateTimeOffset.Now;
             if (startFromNewDay)
                 until = new DateTimeOffset(until.Year, until.Month, until.Day, 0, 0, 0, until.Offset);
 
             DateTimeOffset from = new DateTimeOffset(2020, 1, 1, 0, 0, 0, until.Offset);
             if (hoursAmount.HasValue)
-                from = until.AddHours(hoursAmount.Value * (-1));               
-          
+                from = until.AddHours(hoursAmount.Value * (-1));
+
             var untilSnowflake = SnowflakeUtils.ToSnowflake(until);
             var fromSnowflake = SnowflakeUtils.ToSnowflake(from);
 
             List<GraphEntryInfo> messageTimes = new List<GraphEntryInfo>();
             using (ETHBotDBContext context = new ETHBotDBContext())
                 messageTimes = context.DiscordMessages.AsQueryable()
-                    .Where(i => hoursAmount == null 
+                    .Where(i => hoursAmount == null
                     || (hoursAmount != null && fromSnowflake < i.DiscordMessageId && i.DiscordMessageId < untilSnowflake))
                     .Select(i => new GraphEntryInfo() { KeyId = i.DiscordChannelId, DateTime = SnowflakeUtils.FromSnowflake(i.DiscordMessageId) })
                     .ToList();
@@ -342,6 +413,24 @@ namespace ETHDINFKBot.Helpers
             return messageTimes;
         }
 
+        // :happyralf:
+        private static double AitkenNeville(double[] t, double[] y_in, double x)
+        {
+            int n = t.Length;
+
+            // copy y[] into y_copy
+            double[] y_copy = new double[n];
+            for (int i = 0; i < n; ++i)
+                y_copy[i] = y_in[i];
+
+
+            for (int i = 0; i < n; ++i)
+                for (int k = i - 1; k >= 0; --k)
+                    y_copy[k] = y_copy[k + 1] + (y_copy[k + 1] - y_copy[k]) * (x - t[i]) / (t[i] - t[k]);
+
+            return y_copy[0];
+        }
+
         private static async Task<bool> GenerateFrames(IEnumerable<DateTimeOffset> keys, List<ParsedGraphInfo> parsedMessageInfos, string basePath, bool drawDots = true)
         {
             List<Task> tasks = new List<Task>();
@@ -353,6 +442,43 @@ namespace ETHDINFKBot.Helpers
 
             var startTime = listKeys.First();
 
+            var upperHull = UpperHull(keys, parsedMessageInfos);
+            // Sort by x-coordinate
+            upperHull.Sort((p1, p2) => p1.x.CompareTo(p2.x));
+
+
+            // TEMP TODO Cleanup the hull code
+            // Draw upper hull
+            var upperHullDataPoints = new Dictionary<DateTime, int>();
+
+            for (int j = 0; j < upperHull.Count; j++)
+            {
+                var point = upperHull[j];
+
+                upperHullDataPoints.Add(keys.ElementAt(point.x).DateTime, point.y);
+
+            }
+
+            // remove points with y = 0
+            upperHullDataPoints = upperHullDataPoints.Where(i => i.Value != 0).ToDictionary(i => i.Key, i => i.Value);
+
+
+            // TEMP END
+
+
+
+
+            // Remove all 0 entries
+            upperHull.RemoveAll(i => i.y == 0);
+
+            double[] x = upperHull.Select(i => (double)i.x).ToArray();
+            double[] y = upperHull.Select(i => (double)i.y).ToArray();
+
+
+
+            string desmosLinePoints = "";
+            string desmosLinePointsAitkenNeville = "";
+
             for (int i = 0; i < listKeys.Length; i++)
             {
                 //if (i % 250 == 0)
@@ -362,6 +488,24 @@ namespace ETHDINFKBot.Helpers
                 var endTime = listKeys[i];
 
                 int maxY = GetMaxValue(parsedMessageInfos, endTime);
+
+                desmosLinePoints += $"({i}, {maxY}),";
+
+                // TODO THIS IS O(n²) FIX IT
+                double newMaxY = AitkenNeville(x, y, i);
+
+                desmosLinePointsAitkenNeville += $"({i}, {((int)newMaxY)}),";
+
+                if (newMaxY > maxY)
+                {
+                    Console.WriteLine($"CORRECT x: {i} Computed {newMaxY} Current: {maxY}");
+                    maxY = (int)newMaxY;
+                }
+                else
+                {
+                    Console.WriteLine($"WRONG x: {i} Computed {newMaxY} Current: {maxY}");
+                    //newMaxY = maxY;
+                }
 
                 var drawInfo = DrawingHelper.GetEmptyGraphics();
                 var padding = DrawingHelper.DefaultPadding;
@@ -414,9 +558,18 @@ namespace ETHDINFKBot.Helpers
 
                 }
 
+
+
+
+                //var upperHullPoints = DrawingHelper.GetPoints(upperHullDataPoints, gridSize, true, startTime.DateTime, endTime.DateTime, false, maxY);
+                //DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, upperHullPoints, new SKPaint() { Color = SKColors.Red }, 6, "Upper hull", rowIndex, xOffset, drawDots, -1, null); //new Pen(System.Drawing.Color.LightGreen)
+
                 var result = SaveToDisk(basePath, i, drawInfo.Bitmap, drawInfo.Canvas); // takes about 80ms
                 tasks.Add(result);
             }
+
+            //Console.WriteLine(desmosLinePoints);
+            //Console.WriteLine(desmosLinePointsAitkenNeville);
 
 
             Task.WaitAll(tasks.ToArray());
