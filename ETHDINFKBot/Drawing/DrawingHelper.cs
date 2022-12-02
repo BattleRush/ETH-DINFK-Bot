@@ -385,7 +385,8 @@ namespace ETHDINFKBot.Drawing
             // draw columns
             for (int i = 0; i <= columns; i++)
             {
-                canvas.DrawText($"{xAxis[i]}", new SKPoint(gridSize.XMin + (i * (gridSize.XSize / columns)) - 25, gridSize.YMin + labelPaint.TextSize), labelPaint);
+                if (xAxis.Count > i)
+                    canvas.DrawText($"{xAxis[i]}", new SKPoint(gridSize.XMin + (i * (gridSize.XSize / columns)) - 25, gridSize.YMin + labelPaint.TextSize), labelPaint);
 
                 if (i < columns)
                     canvas.DrawLine(new SKPoint(gridSize.XMin + (i * (gridSize.XSize / columns)), gridSize.YMin), new SKPoint(gridSize.XMin + (i * (gridSize.XSize / columns)), gridSize.YMax), DefaultDrawing);
@@ -398,8 +399,9 @@ namespace ETHDINFKBot.Drawing
                 var leftText = labelPaint;
                 leftText.TextAlign = SKTextAlign.Right;
 
-                canvas.DrawText($"{yAxis[i]}", new SKPoint(padding.Left - 5, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i + labelPaint.TextSize / 2), labelPaint);
-                if (secondYAxis != null)
+                if (yAxis.Count > 1)
+                    canvas.DrawText($"{yAxis[i]}", new SKPoint(padding.Left - 5, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i + labelPaint.TextSize / 2), labelPaint);
+                if (secondYAxis != null && secondYAxis.Count > i)
                     canvas.DrawText($"{secondYAxis[i]}", new SKPoint(gridSize.XMax + 25, padding.Top + gridSize.YSize - (gridSize.YSize / rows) * i + labelPaint.TextSize / 2), labelPaint);
 
                 if (i < rows)

@@ -241,7 +241,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             builder.WithCurrentTimestamp();
             //builder.WithAuthor(author);
-            builder.AddField("Misc", $"```{prefix}help {prefix}version {prefix}source {prefix}stats {prefix}ping {prefix}first {prefix}last {prefix}today```", true);
+            builder.AddField("Misc", $"```{prefix}help {prefix}version {prefix}source {prefix}stats {prefix}ping {prefix}ping {prefix}first {prefix}last {prefix}today```", true);
             builder.AddField("ETH/UZH Food", $"```{prefix}food [ (fav | help | lunch | dinner) ]```", true);
             //builder.AddField("Search", $"```{prefix}google|duck <search term>```", true);
             //builder.AddField("Images", $"```{prefix}neko[avatar] {prefix}fox {prefix}waifu {prefix}baka {prefix}smug {prefix}holo {prefix}avatar {prefix}wallpaper```");
@@ -536,6 +536,84 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     await message.AddReactionAsync(emote);
                 }
                 await Context.Message.DeleteAsync();
+            }
+            catch (Exception ex)
+            {
+                // TODO log
+            }
+        }
+
+        private long DateTimeToUnixTimestamp(DateTime dateTime)
+        {
+            return (long)(dateTime.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+        }
+        
+        [Command("pinghell")]
+        public async Task CurrentPinghellMembers()
+        {
+            try
+            {
+              var guildChannel = Context.Message.Channel as SocketGuildChannel;
+                var guild = guildChannel.Guild;
+
+            // Get users that havent pinged the role in the last 72h
+            var sqlQuery = @"
+SELECT 
+    PH.FromDiscordUserID, 
+    MAX(PH.DiscordMessageId)
+FROM PingHistory PH 
+LEFT JOIN DiscordUsers DU ON PH.FromDiscordUserId = DU.DiscordUserId 
+WHERE PH.DiscordRoleId = 895231323034222593 
+GROUP BY PH.FromDiscordUserId
+ORDER BY MAX(PH.DiscordMessageId)";
+
+
+            var queryResult = await SQLHelper.GetQueryResults(null, sqlQuery, true, 5000, true);
+
+            var utcNow = DateTime.UtcNow;
+
+            ulong pingHellRoleId = 895231323034222593;
+            var rolePingHell = guild.Roles.FirstOrDefault(i => i.Id == pingHellRoleId);
+
+            //await guild.DownloadUsersAsync(); // Download all users
+
+
+            var usersWithPinghell = rolePingHell.Members.ToList();
+
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.WithTitle("Pinghell members");
+            embedBuilder.WithColor(Color.Red);
+            embedBuilder.WithDescription($"Total members: {usersWithPinghell.Count}");
+
+
+
+            foreach (var row in queryResult.Data)
+            {
+                    ulong userId = Convert.ToUInt64(row[0]);
+
+                    if (usersWithPinghell.Any(i => i.Id == userId))
+                        continue;
+
+                    // last ping
+                    var datetime = Convert.ToDateTime(row[1]);
+
+                    var dateTimeTillExit = datetime.AddHours(73);
+                    // remove minutes and seconds
+                    dateTimeTillExit = dateTimeTillExit.AddMinutes(-dateTimeTillExit.Minute);
+                    dateTimeTillExit = dateTimeTillExit.AddSeconds(-dateTimeTillExit.Second);
+
+
+                    var unixTime = DateTimeToUnixTimestamp(dateTimeTillExit);
+                
+
+                    
+                    embedBuilder.AddField($"User {userId}", $"Last ping: {row[1]} Member for <t:{unixTime}:r>", true);
+
+
+                        
+                    
+                }
+            
             }
             catch (Exception ex)
             {
