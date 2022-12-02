@@ -298,6 +298,9 @@ namespace ETHDINFKBot.Helpers
 
                     currentMenu.Name = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menuline\"]")?.InnerText;
 
+                    if (currentMenu.Name.Trim() == "Geschlossen") 
+                        continue; // because fuck polymensa and their stupid inconsistency
+
                     string title = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-title\"]").InnerText;
                     title = HttpUtility.HtmlDecode(title);
 
