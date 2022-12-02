@@ -607,7 +607,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             }
             catch (Exception ex)
             {
-                // TODO log
+                await Context.Message.Channel.SendMessageAsync(ex.Message);
             }
         }
 
