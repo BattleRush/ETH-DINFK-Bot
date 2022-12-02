@@ -573,6 +573,7 @@ namespace ETHDINFKBot.Modules
                 builder.AddField($"{Program.CurrentPrefix}admin food clear <id>", "Clears today menus");
                 builder.AddField($"{Program.CurrentPrefix}admin food load <id>", "Loads todays menus");
                 builder.AddField($"{Program.CurrentPrefix}admin food image <restaurant|menu> <id> <full>", "Runs a websearch to replace images");
+                //builder.AddField($"{Program.CurrentPrefix}admin food menuimage <menu_id>", "Returns all images found for this menu");
                 builder.AddField($"{Program.CurrentPrefix}admin food status <debug>", "Returns current menus status");
                 builder.AddField($"{Program.CurrentPrefix}admin food fix", "Fixes today menus");
 

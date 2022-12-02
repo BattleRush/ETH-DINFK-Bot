@@ -298,9 +298,6 @@ namespace ETHDINFKBot.Helpers
 
                     currentMenu.Name = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menuline\"]")?.InnerText;
 
-                    if (currentMenu.Name.Trim() == "Geschlossen") 
-                        continue; // because fuck polymensa and their stupid inconsistency
-
                     string title = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-title\"]").InnerText;
                     title = HttpUtility.HtmlDecode(title);
 
@@ -316,6 +313,12 @@ namespace ETHDINFKBot.Helpers
                     currentMenu.Description = description;
                     if (!isClausiusBar)
                         currentMenu.Description = title + Environment.NewLine + description;
+
+                    if (currentMenu.Description.Trim().StartsWith("Geschlossen"))
+                        continue; // because fuck polymensa and their stupid inconsistency
+
+                    if (currentMenu.Description.Contains("Beachten sie unser Tagesangebot"))
+                        continue; // TODO Handle this maybe better but screw polymensa tbh for them being lazy and inconsistent
 
                     var priceString = menuDoc.DocumentNode.SelectNodes("//*[@class=\"price\"]").FirstOrDefault()?.InnerText.Replace("\t", "") ?? "";
                     double price = -1;

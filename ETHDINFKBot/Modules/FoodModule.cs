@@ -350,10 +350,8 @@ namespace ETHDINFKBot.Modules
         {
             try
             {
-                //if (AllowedToRun(BotPermissionType.EnableType2Commands))
-                //    return;
-
-
+                if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                    return;
 
                 var meal = MealTime.Lunch;
 
@@ -375,9 +373,9 @@ namespace ETHDINFKBot.Modules
                 var author = Context.Message.Author;
                 var userId = author.Id;
 
-                // Only allow bot owner go into debug mode
-                if (userId != Program.ApplicationSetting.Owner)
-                    debug = false;
+                //// Only allow bot owner go into debug mode
+                // if (userId != Program.ApplicationSetting.Owner)
+                //    debug = false;
 
                 var userFavRestaurants = FoodDBManager.GetUsersFavouriteRestaurants(userId);
                 var userSettings = FoodDBManager.GetUserFoodSettings(userId);
