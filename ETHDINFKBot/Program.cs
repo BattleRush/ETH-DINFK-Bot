@@ -42,17 +42,17 @@ using WebSocketSharp.Server;
 
 namespace ETHDINFKBot
 {
-   /* class PlaceServer : WsServer
-    {
-        public PlaceServer(IPAddress address, int port) : base(address, port) { }
+    /* class PlaceServer : WsServer
+     {
+         public PlaceServer(IPAddress address, int port) : base(address, port) { }
 
-        protected override WsSession CreateSession() { return new PlaceSession(this); }
+         protected override WsSession CreateSession() { return new PlaceSession(this); }
 
-        protected override void OnError(SocketError error)
-        {
-            Console.WriteLine($"Chat TCP server caught an error with code {error}");
-        }
-    }*/
+         protected override void OnError(SocketError error)
+         {
+             Console.WriteLine($"Chat TCP server caught an error with code {error}");
+         }
+     }*/
 
     class Program
     {
@@ -139,7 +139,7 @@ namespace ETHDINFKBot
                        services.AddCronJob<DailyCleanup>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"50 * * * *"; }); // Changed to every hour at 30 mins
 
                        // TODO adjust for summer time in CET/CEST
-                       services.AddCronJob<DailyStatsJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"30 11 * * *"; }); // 11 15 urc
+                       services.AddCronJob<DailyStatsJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"38 11 * * *"; }); // 11 15 urc
 
                        // TODO adjust for summer time in CET/CEST
                        // TODO Enable for Maria DB
@@ -153,7 +153,7 @@ namespace ETHDINFKBot
 
                        // At 2:20 UTC fetch current day menus and until 10:20 UTC fetch next day menus to potentially fix broken menus
                        services.AddCronJob<FoodFetchJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"20,50 2-10 * * *"; });
-                       
+
                        // TODO adjust for summer time in CET/CEST
                        //services.AddCronJob<GitPullMessageJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 21 * * TUE"; });// 22 CET each Tuesday
 
@@ -339,7 +339,7 @@ namespace ETHDINFKBot
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || true)
             {
-//#if !DEBUG
+                //#if !DEBUG
                 string www = "/var/www/wss";
                 try
                 {
@@ -380,7 +380,7 @@ namespace ETHDINFKBot
                     _logger.LogInformation("WS Error: " + ex.ToString());
                     ///Console.Write("Error while starting WS: " + ex.ToString());
                 }
-//#endif
+                //#endif
             }
             else
             {

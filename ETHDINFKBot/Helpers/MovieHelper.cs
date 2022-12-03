@@ -411,8 +411,7 @@ namespace ETHDINFKBot.Helpers
         private static double LinearInterpolation(double[] t, double[] y_in, double x)
         {
             int i = 0;
-            while (t[i] < x)
-                i++;
+            for (; i < t.Length && t[i] < x; i++) { }
 
             if (i == 0)
                 return y_in[0];

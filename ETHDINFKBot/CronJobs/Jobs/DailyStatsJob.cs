@@ -92,7 +92,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                 {
                     var res = GenerateMovieLastDay(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
                     res = GenerateMovieLastDayStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
-                    
+
                     res = GenerateMovieLastWeek(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
                     res = GenerateMovieLastWeekStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
 
@@ -104,13 +104,13 @@ namespace ETHDINFKBot.CronJobs.Jobs
                     }
 
                     if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday && DateTime.Now.Day < 8)
-                    { 
+                    {
                         // On the first saturday of the month send last year
                         res = GenerateMovieLastYear(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
                         res = GenerateMovieLastYearStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
                     }
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     spamChannel.SendMessageAsync("Error: " + e.ToString());
                 }
