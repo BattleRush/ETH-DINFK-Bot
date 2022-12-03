@@ -541,8 +541,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             {
                 // TODO log
             }
-        }           
-        
+        }
+
         [Command("pinghell")]
         public async Task CurrentPinghellMembers()
         {
@@ -597,8 +597,10 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                     var unixTime = dateTimeTillExit.ToUnixTimeSeconds();
 
-                    embedBuilder.AddField($"User {userId}", $"Last ping: {row[1]} Member for <t:{unixTime}:r>", true);                    
+                    embedBuilder.AddField($"User {userId}", $"Last ping: {row[1]} Member for <t:{unixTime}:r>", true);
                 }
+
+                await Context.Channel.SendMessageAsync("", false, embedBuilder.Build());
             }
             catch (Exception ex)
             {
@@ -651,7 +653,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 return;
 
             bool filterPingHell = false;
-            if(!string.IsNullOrWhiteSpace(command))
+            if (!string.IsNullOrWhiteSpace(command))
             {
                 if (command.Trim().ToLower() == "-pinghell")
                     filterPingHell = true;
