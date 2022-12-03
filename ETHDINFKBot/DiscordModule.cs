@@ -597,7 +597,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                     var unixTime = dateTimeTillExit.ToUnixTimeSeconds();
 
-                    embedBuilder.AddField($"User {userId}", $"Last ping: {row[1]} Member for <t:{unixTime}:r>", true);
+
+
+                    embedBuilder.AddField($"<@{userId}>", $"Last ping: {datetime}\nMember for <t:{unixTime}:R>", true);
                 }
 
                 await Context.Channel.SendMessageAsync("", false, embedBuilder.Build());
