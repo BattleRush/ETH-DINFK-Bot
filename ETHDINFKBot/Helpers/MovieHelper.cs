@@ -408,6 +408,23 @@ namespace ETHDINFKBot.Helpers
             return messageTimes;
         }
 
+        private static double LinearInterpolation(double[] t, double[] y_in, double x)
+        {
+            int i = 0;
+            while (t[i] < x)
+                i++;
+
+            if (i == 0)
+                return y_in[0];
+
+            if (i == t.Length)
+                return y_in[t.Length - 1];
+
+            double y = y_in[i - 1] + (y_in[i] - y_in[i - 1]) / (t[i] - t[i - 1]) * (x - t[i - 1]);
+            return y;
+        }
+
+
         // :happyralf:
         private static double AitkenNeville(double[] t, double[] y_in, double x)
         {
@@ -484,7 +501,8 @@ namespace ETHDINFKBot.Helpers
                 desmosLinePoints += $"({i}, {maxY}),";
 
                 // TODO THIS IS O(n²) FIX IT
-                double newMaxY = AitkenNeville(x, y, i);
+                //double newMaxY = AitkenNeville(x, y, i);
+                double newMaxY = LinearInterpolation(x, y, i);
 
                 desmosLinePointsAitkenNeville += $"({i}, {((int)newMaxY)}),";
 
