@@ -590,10 +590,13 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     // last ping
                     var datetime = SnowflakeUtils.FromSnowflake(ulong.Parse(row[1]));
 
-                    var dateTimeTillExit = datetime.AddHours(73);
+                    var dateTimeTillExit = datetime.AddHours(72);
                     // remove minutes and seconds
                     dateTimeTillExit = dateTimeTillExit.AddMinutes(-dateTimeTillExit.Minute);
                     dateTimeTillExit = dateTimeTillExit.AddSeconds(-dateTimeTillExit.Second);
+
+                    // Added 50 mins because the cronjob runs at :50
+                    dateTimeTillExit = dateTimeTillExit.AddMinutes(50);
 
                     var unixTime = dateTimeTillExit.ToUnixTimeSeconds();
 
