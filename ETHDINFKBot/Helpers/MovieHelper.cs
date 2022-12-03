@@ -571,8 +571,8 @@ namespace ETHDINFKBot.Helpers
 
 
 
-                var upperHullPoints = DrawingHelper.GetPoints(upperHullDataPoints, gridSize, true, startTime.DateTime, endTime.DateTime, false, maxY);
-                DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, upperHullPoints, new SKPaint() { Color = SKColors.Red }, 6, "Upper hull", rowIndex, xOffset, drawDots, -1, null); //new Pen(System.Drawing.Color.LightGreen)
+                //var upperHullPoints = DrawingHelper.GetPoints(upperHullDataPoints, gridSize, true, startTime.DateTime, endTime.DateTime, false, maxY);
+                //DrawingHelper.DrawLine(drawInfo.Canvas, drawInfo.Bitmap, upperHullPoints, new SKPaint() { Color = SKColors.Red }, 6, "Upper hull", rowIndex, xOffset, drawDots, -1, null); //new Pen(System.Drawing.Color.LightGreen)
 
                 var result = SaveToDisk(basePath, i, drawInfo.Bitmap, drawInfo.Canvas); // takes about 80ms
                 tasks.Add(result);
