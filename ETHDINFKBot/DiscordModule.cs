@@ -545,7 +545,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
         private string GetCountdown(DateTime date)
         {
-            var timeSpan = date - DateTime.Now; // TODO TIMEZONE ??
+            var timeSpan = date - DateTime.Now.AddHours(1); // TODO TIMEZONE ?? atm just add 1h for CEST
             var days = timeSpan.Days;
             var hours = timeSpan.Hours;
             var minutes = timeSpan.Minutes;
@@ -576,7 +576,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             embed.WithTitle("Kerbal Space Program 2 Release Date");
             embed.WithDescription($"Kerbal Space Program 2 is scheduled to be released on February 24, 2023\n Countdown until release: **{GetCountdown(releaseDate)}**");
-            embed.WithImageUrl("https://images.ctfassets.net/wn7ipiv9ue5v/5HlxIEruo0PRYjMfVzeIqj/875b3bf14403b3a2d54fb1acec85a726/KSP2EA_D2C_HeroBanner_3840x2160__1_.jpg");
+            embed.WithImageUrl("https://cdn.akamai.steamstatic.com/steam/apps/954850/header.jpg");
             embed.AddField("Steam Store Page", "https://store.steampowered.com/app/954850/Kerbal_Space_Program_2/");
 
             embed.WithFooter("Kerbal Space Program 2 is a game by Private Division and Squad");
