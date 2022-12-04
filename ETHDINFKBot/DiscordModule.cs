@@ -559,7 +559,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             if (minutes > 0)
                 sb.Append($"{minutes} minutes, ");
             if (seconds > 0)
-                sb.Append($"{seconds} seconds, ");
+                sb.Append($"{seconds} seconds");
 
             return sb.ToString();
         }
@@ -576,8 +576,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             embed.WithTitle("Kerbal Space Program 2 Release Date");
             embed.WithDescription($"Kerbal Space Program 2 is scheduled to be released on February 24, 2023\n Countdown until release: **{GetCountdown(releaseDate)}**");
-            embed.WithImageUrl("https://images.ctfassets.net/wn7ipiv9ue5v/5HlxIEruo0PRYjMfVzeIqj/875b3bf14403b3a2d54fb1acec85a726/KSP2EA_D2C_HeroBanner_3840x2160__1_.jpg?w=1920&h=&fm=avif&q=75");
-            embed.WithUrl("https://www.kerbalspaceprogram.com/games-kerbal-space-program-2");
+            embed.WithImageUrl("https://images.ctfassets.net/wn7ipiv9ue5v/5HlxIEruo0PRYjMfVzeIqj/875b3bf14403b3a2d54fb1acec85a726/KSP2EA_D2C_HeroBanner_3840x2160__1_.jpg");
             embed.AddField("Steam Store Page", "https://store.steampowered.com/app/954850/Kerbal_Space_Program_2/");
 
             embed.WithFooter("Kerbal Space Program 2 is a game by Private Division and Squad");
