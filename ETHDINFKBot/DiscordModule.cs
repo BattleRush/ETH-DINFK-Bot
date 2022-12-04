@@ -575,7 +575,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             embed.WithColor(Color.Blue);
 
             embed.WithTitle("Kerbal Space Program 2 Release Date");
-            embed.WithDescription($"Kerbal Space Program 2 is scheduled to be released on February 24, 2023\n Countdown until release: **{GetCountdown(releaseDate)}**");
+            embed.WithDescription($"Kerbal Space Program 2 is scheduled to be released on Feb 24, 2023\n Countdown until release: **{GetCountdown(releaseDate)}**");
             embed.WithImageUrl("https://cdn.cloudflare.steamstatic.com/steam/apps/954850/capsule_616x353.jpg");
             embed.AddField("Steam Store Page", "https://store.steampowered.com/app/954850/Kerbal_Space_Program_2/");
 
