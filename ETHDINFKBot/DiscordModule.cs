@@ -585,6 +585,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         }
 
         [Command("pinghell")]
+        [Alias("<@&895231323034222593>")]
         public async Task CurrentPinghellMembers()
         {
             try
