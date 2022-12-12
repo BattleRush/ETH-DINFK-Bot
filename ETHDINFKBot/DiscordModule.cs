@@ -644,7 +644,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                     var user = DatabaseManager.GetDiscordUserById(userId);
 
-                    embedBuilder.AddField($"{user.Nickname ?? user.Username}", $"Last ping: {datetime.ToString("dd.MM.yyyy hh:MM:ss")}\nTime left <t:{unixTime}:R>", true);
+                    embedBuilder.AddField($"{user.Nickname ?? user.Username}", $"<@{user.Id}>\nlast pinged at {datetime.ToString("dd.MM.yyyy HH:MM:ss")}\nTime left <t:{unixTime}:R>", true);
                 }
 
                 await Context.Channel.SendMessageAsync("", false, embedBuilder.Build());
