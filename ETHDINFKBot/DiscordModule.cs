@@ -643,8 +643,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     var unixTime = dateTimeTillExit.ToUnixTimeSeconds();
 
                     var user = DatabaseManager.GetDiscordUserById(userId);
-
-                    embedBuilder.AddField($"{user.Nickname ?? user.Username}", $"<@{userId}>\nlast pinged at {datetime.ToString("dd.MM.yyyy HH:MM:ss")}\nTime left <t:{unixTime}:R>", true);
+                    // TODO FIX CET/CEST
+                    embedBuilder.AddField($"{user.Nickname ?? user.Username}", $"<@{userId}>\nlast pinged at {datetime.AddHours(1).ToString("dd.MM.yyyy HH:mm:ss")}\nTime left <t:{unixTime}:R>", true);
                 }
 
                 await Context.Channel.SendMessageAsync("", false, embedBuilder.Build());
