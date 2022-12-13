@@ -1369,7 +1369,6 @@ Total todays menus: {allTodaysMenus.Count}");
                 {
                     if (!channelId.HasValue)
                     {
-
                         DatabaseManager.Instance().UpdateChannelSetting(guildChannel.Id, flag);
                         await Context.Channel.SendMessageAsync($"Set flag {flag} for channel {guildChannel.Name}", false);
                     }
