@@ -546,6 +546,10 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         private string GetCountdown(DateTime date)
         {
             var timeSpan = date - DateTime.Now.AddHours(1); // TODO TIMEZONE ?? atm just add 1h for CEST
+
+            if (date < DateTime.Now)
+                return "ITS OUT NOW !!!!!!";
+
             var days = timeSpan.Days;
             var hours = timeSpan.Hours;
             var minutes = timeSpan.Minutes;
@@ -558,8 +562,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 sb.Append($"{hours} hours, ");
             if (minutes > 0)
                 sb.Append($"{minutes} minutes, ");
-            if (seconds > 0)
-                sb.Append($"{seconds} seconds");
+
+            sb.Append($"{seconds} seconds");
 
             return sb.ToString();
         }
@@ -621,6 +625,10 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 embedBuilder.WithColor(Color.Red);
                 embedBuilder.WithDescription($"Total members: {usersWithPinghell.Count}");
 
+                int count = 1;
+                string messageText = "";
+                string currentBuilder = "";
+
                 foreach (var row in queryResult.Data)
                 {
                     ulong userId = Convert.ToUInt64(row[0]);
@@ -643,8 +651,28 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                     var user = DatabaseManager.GetDiscordUserById(userId);
 
-                    embedBuilder.AddField($"{user.Nickname ?? user.Username}", $"Last ping: {datetime.ToString("dd.MM.yyyy hh:MM:ss")}\nTime left <t:{unixTime}:R>", true);
+                    string line = $"Last ping: {datetime.ToString("dd.MM.yyyy hh:MM:ss")}\nTime left <t:{unixTime}:R> {Environment.NewLine}";
+
+                    if (count <= 10)
+                    {
+                        messageText += line;
+                    }
+                    else
+                    {
+                        currentBuilder += line;
+
+                        if (count % 5 == 0)
+                        {
+                            embedBuilder.AddField($"First {count} members to leave", currentBuilder, false);
+                            currentBuilder = "";
+                        }
+                    }
+
+                    count++;
                 }
+
+                messageText += Environment.NewLine;
+                embedBuilder.WithDescription(messageText);
 
                 await Context.Channel.SendMessageAsync("", false, embedBuilder.Build());
             }
