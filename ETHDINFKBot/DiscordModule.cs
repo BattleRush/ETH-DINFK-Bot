@@ -652,7 +652,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                     var user = DatabaseManager.GetDiscordUserById(userId);
 
-                    string line = $"Last ping: {datetime.ToString("dd.MM.yyyy hh:MM:ss")}\nTime left <t:{unixTime}:R> {Environment.NewLine}";
+                    string line = $"<@{userId}> last pinged at {datetime.AddHours(1).ToString("dd.MM.yyyy HH:mm:ss")} Time left <t:{unixTime}:R>{Environment.NewLine}";
 
                     if (count <= 10)
                     {
