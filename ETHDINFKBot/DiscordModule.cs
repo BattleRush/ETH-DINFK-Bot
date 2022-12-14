@@ -673,7 +673,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 }
 
                 messageText += Environment.NewLine;
-                embedBuilder.WithDescription(messageText);
+                embedBuilder.WithDescription($"Total Pinghell members: {count - 1}{Environment.NewLine}{Environment.NewLine}{messageText}");
 
                 await Context.Channel.SendMessageAsync("", false, embedBuilder.Build());
             }
