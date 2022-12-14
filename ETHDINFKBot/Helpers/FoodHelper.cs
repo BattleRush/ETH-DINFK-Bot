@@ -555,7 +555,9 @@ namespace ETHDINFKBot.Helpers
                     currentMenu.Amount = double.Parse(priceField.Split('/').First(), NumberStyles.Any, CultureInfo.InvariantCulture);
 
                     var descriptionNode = menuDoc.DocumentNode.SelectSingleNode("//p[1]");
-                    var descriptionLines = descriptionNode.InnerHtml
+                    
+                    // TODO Proper HTML Encoding/Decoding
+                    var descriptionLines = descriptionNode.InnerHtml.Replace("&amp;", "&")
                         .Trim()
                         .Split("<br>", StringSplitOptions.RemoveEmptyEntries)
                         .Where(i => !(i.Contains(":") || i.Contains(";"))) // These lines usually contain info about meat country of origin
