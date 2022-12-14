@@ -627,7 +627,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 embedBuilder.WithDescription($"Total members: {usersWithPinghell.Count}");
 
                 int count = 1;
-                string messageText = "";
+                string messageText = $"**First 10 members to leave**{Environment.NewLine}";
                 string currentBuilder = "";
 
                 foreach (var row in queryResult.Data)
