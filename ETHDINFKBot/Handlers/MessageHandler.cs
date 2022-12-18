@@ -80,9 +80,16 @@ namespace ETHDINFKBot.Handlers
                 return false; // slash commands are webhooks ???
 
             //AdministratorBait();
-            EmoteDetection();
-            Autoreact();
-            LiveInBestCanton();
+            try
+            {
+                EmoteDetection();
+                Autoreact();
+                LiveInBestCanton();
+            }
+            catch (Exception ex)
+            {
+                // TODO log
+            }
 
             // Log to DB
             await CreateDiscordServerDBEntry();
@@ -149,7 +156,7 @@ namespace ETHDINFKBot.Handlers
             if (SocketGuildChannel == null)
                 return false;
 
-            if(SocketGuildChannel is SocketForumChannel socketForumChannel)
+            if (SocketGuildChannel is SocketForumChannel socketForumChannel)
             {
                 // Forum group
                 //1019663716804997192
