@@ -664,7 +664,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                         if (count % 5 == 0)
                         {
-                            embedBuilder.AddField($"First {count} members to leave", currentBuilder, false);
+                            embedBuilder.AddField($"First {count - 1} members to leave", currentBuilder, false);
                             currentBuilder = "";
                         }
                     }
