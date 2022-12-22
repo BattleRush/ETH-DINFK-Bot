@@ -317,7 +317,7 @@ namespace ETHDINFKBot.Helpers
                     if (currentMenu.Description.Trim().ToLower().StartsWith("geschlossen"))
                         continue; // because fuck polymensa and their stupid inconsistency
 
-                    if (currentMenu.Description.ToLower().Contains("beachten sie unser tagesangebot"))
+                    if (currentMenu.Description.ToLower().Contains("beachten sie"))
                         continue; // TODO Handle this maybe better but screw polymensa tbh for them being lazy and inconsistent
 
                     var priceString = menuDoc.DocumentNode.SelectNodes("//*[@class=\"price\"]").FirstOrDefault()?.InnerText.Replace("\t", "") ?? "";
