@@ -314,10 +314,10 @@ namespace ETHDINFKBot.Helpers
                     if (!isClausiusBar)
                         currentMenu.Description = title + Environment.NewLine + description;
 
-                    if (currentMenu.Description.Trim().StartsWith("Geschlossen"))
+                    if (currentMenu.Description.Trim().ToLower().StartsWith("geschlossen"))
                         continue; // because fuck polymensa and their stupid inconsistency
 
-                    if (currentMenu.Description.Contains("Beachten sie unser Tagesangebot"))
+                    if (currentMenu.Description.ToLower().Contains("beachten sie unser tagesangebot"))
                         continue; // TODO Handle this maybe better but screw polymensa tbh for them being lazy and inconsistent
 
                     var priceString = menuDoc.DocumentNode.SelectNodes("//*[@class=\"price\"]").FirstOrDefault()?.InnerText.Replace("\t", "") ?? "";
