@@ -546,6 +546,10 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         private string GetCountdown(DateTime date)
         {
             var timeSpan = date - DateTime.Now.AddHours(1); // TODO TIMEZONE ?? atm just add 1h for CEST
+
+            if (date < DateTime.Now)
+                return "ITS OUT NOW !!!!!!";
+
             var days = timeSpan.Days;
             var hours = timeSpan.Hours;
             var minutes = timeSpan.Minutes;
@@ -558,8 +562,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 sb.Append($"{hours} hours, ");
             if (minutes > 0)
                 sb.Append($"{minutes} minutes, ");
-            if (seconds > 0)
-                sb.Append($"{seconds} seconds");
+
+            sb.Append($"{seconds} seconds");
 
             return sb.ToString();
         }
@@ -622,6 +626,10 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 embedBuilder.WithColor(Color.Red);
                 embedBuilder.WithDescription($"Total members: {usersWithPinghell.Count}");
 
+                int count = 1;
+                string messageText = $"**First 10 members to leave**{Environment.NewLine}";
+                string currentBuilder = "";
+
                 foreach (var row in queryResult.Data)
                 {
                     ulong userId = Convert.ToUInt64(row[0]);
@@ -643,9 +651,29 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     var unixTime = dateTimeTillExit.ToUnixTimeSeconds();
 
                     var user = DatabaseManager.GetDiscordUserById(userId);
-                    // TODO FIX CET/CEST
-                    embedBuilder.AddField($"{user.Nickname ?? user.Username}", $"<@{userId}>\nlast pinged at {datetime.AddHours(1).ToString("dd.MM.yyyy HH:mm:ss")}\nTime left <t:{unixTime}:R>", true);
+
+                    string line = $"<@{userId}> last pinged at {datetime.AddHours(1).ToString("dd.MM.yyyy HH:mm:ss")} Time left <t:{unixTime}:R>{Environment.NewLine}";
+
+                    if (count <= 10)
+                    {
+                        messageText += line;
+                    }
+                    else
+                    {
+                        currentBuilder += line;
+
+                        if (count % 5 == 0)
+                        {
+                            embedBuilder.AddField($"First {count - 1} members to leave", currentBuilder, false);
+                            currentBuilder = "";
+                        }
+                    }
+
+                    count++;
                 }
+
+                messageText += Environment.NewLine;
+                embedBuilder.WithDescription($"Total Pinghell members: {count - 1}{Environment.NewLine}{Environment.NewLine}{messageText}");
 
                 await Context.Channel.SendMessageAsync("", false, embedBuilder.Build());
             }

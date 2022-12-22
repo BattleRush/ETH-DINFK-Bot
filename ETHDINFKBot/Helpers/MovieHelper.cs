@@ -507,12 +507,12 @@ namespace ETHDINFKBot.Helpers
 
                 if (newMaxY > maxY)
                 {
-                    Console.WriteLine($"CORRECT x: {i} Computed {newMaxY} Current: {maxY}");
+                    //Console.WriteLine($"CORRECT x: {i} Computed {newMaxY} Current: {maxY}");
                     maxY = (int)newMaxY;
                 }
                 else
                 {
-                    Console.WriteLine($"WRONG x: {i} Computed {newMaxY} Current: {maxY}");
+                    //Console.WriteLine($"WRONG x: {i} Computed {newMaxY} Current: {maxY}");
                     //newMaxY = maxY;
                 }
 

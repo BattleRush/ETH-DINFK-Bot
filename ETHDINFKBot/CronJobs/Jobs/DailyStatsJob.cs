@@ -91,9 +91,9 @@ namespace ETHDINFKBot.CronJobs.Jobs
                 try
                 {
                     var res = GenerateMovieLastDay(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
-                    res = GenerateMovieLastDayStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                    //res = GenerateMovieLastDayStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
 
-                    res = GenerateMovieLastWeek(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                    //res = GenerateMovieLastWeek(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
                     res = GenerateMovieLastWeekStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
 
                     if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday)
@@ -106,8 +106,8 @@ namespace ETHDINFKBot.CronJobs.Jobs
                     if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday && DateTime.Now.Day < 8)
                     {
                         // On the first saturday of the month send last year
-                        res = GenerateMovieLastYear(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
-                        res = GenerateMovieLastYearStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                        //res = GenerateMovieLastYear(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                        //res = GenerateMovieLastYearStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
                     }
                 }
                 catch (Exception e)
@@ -123,7 +123,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
         private async Task<bool> GenerateMovieLastDay(ulong guildId, SocketTextChannel channel)
         {
-            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24, 60, -1, 1, true, true, "");
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24, 30, -1, 2, true, true, "");
             await channel.SendFileAsync(fileName, "Message graph for last day");
 
             // Delete file
@@ -133,7 +133,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
         }
         private async Task<bool> GenerateMovieLastDayStudy(ulong guildId, SocketTextChannel channel)
         {
-            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24, 60, -1, 1, true, true, "", StudyChannels);
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24, 30, -1, 2, true, true, "", StudyChannels);
             await channel.SendFileAsync(fileName, "Message graph for last day (Only study channels)");
 
             // Delete file
@@ -144,7 +144,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
         private async Task<bool> GenerateMovieLastWeek(ulong guildId, SocketTextChannel channel)
         {
-            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7, 60, -1, 6, true, true, "");
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7, 30, -1, 12, true, true, "");
             await channel.SendFileAsync(fileName, "Message graph for last week");
 
             // Delete file
@@ -156,7 +156,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
         private async Task<bool> GenerateMovieLastWeekStudy(ulong guildId, SocketTextChannel channel)
         {
             // TODO Load from config
-            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7, 60, -1, 6, true, true, "", StudyChannels);
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24 * 7, 30, -1, 12, true, true, "", StudyChannels);
             await channel.SendFileAsync(fileName, "Message graph for last week (Only study channels)");
 
             // Delete file
