@@ -94,13 +94,13 @@ namespace ETHDINFKBot.CronJobs.Jobs
                     //res = GenerateMovieLastDayStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
 
                     //res = GenerateMovieLastWeek(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
-                    res = GenerateMovieLastWeekStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                    //res = GenerateMovieLastWeekStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
 
                     if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday)
                     {
                         // Send on each saturday last week
-                        res = GenerateMovieLastMonth(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
-                        res = GenerateMovieLastMonthStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                        //res = GenerateMovieLastMonth(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
+                        //res = GenerateMovieLastMonthStudy(Program.ApplicationSetting.BaseGuild, spamChannel).Result;
                     }
 
                     if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday && DateTime.Now.Day < 8)
@@ -123,7 +123,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
         private async Task<bool> GenerateMovieLastDay(ulong guildId, SocketTextChannel channel)
         {
-            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24, 30, -1, 2, true, true, "");
+            string fileName = await MovieHelper.GenerateMovieForMessages(guildId, 24, 24, -1, 10, true, true, "");
             await channel.SendFileAsync(fileName, "Message graph for last day");
 
             // Delete file
