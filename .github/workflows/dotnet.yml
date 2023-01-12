@@ -35,14 +35,14 @@ jobs:
     - name: Dotnet Publish
       run: dotnet publish ETHDINFKBot -p:PublishSingleFile=true -r linux-x64 --self-contained false -c Release -o deploy
     
-    - name: Reboot machine
-      uses: garygrossgarten/github-action-ssh@release
-      with:
-        command: sudo reboot 
-        host: ${{ secrets.REMOTE_HOST }}
-        username: ${{ secrets.REMOTE_USER }}
-        passphrase: ${{ secrets.REMOTE_SSH_PASSPHRASE }}
-        privateKey: ${{ secrets.REMOTE_SSH_KEY }}    
+    #- name: Reboot machine
+    #uses: garygrossgarten/github-action-ssh@release
+    #  with:
+    #    command: sudo reboot 
+    #    host: ${{ secrets.REMOTE_HOST }}
+    #    username: ${{ secrets.REMOTE_USER }}
+    #    passphrase: ${{ secrets.REMOTE_SSH_PASSPHRASE }}
+    #    privateKey: ${{ secrets.REMOTE_SSH_KEY }}    
     
     - name: Clear /tmp for more diskspace
       uses: garygrossgarten/github-action-ssh@release
