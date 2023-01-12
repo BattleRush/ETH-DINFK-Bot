@@ -27,7 +27,7 @@ jobs:
     - name: install runtime
       uses: garygrossgarten/github-action-ssh@release
       with:
-        command: sudo apt-get install -y dotnet-runtime-6.0
+        command: sudo dotnet --info
         host: ${{ secrets.REMOTE_HOST }}
         username: ${{ secrets.REMOTE_USER }}
         passphrase: ${{ secrets.REMOTE_SSH_PASSPHRASE }}
