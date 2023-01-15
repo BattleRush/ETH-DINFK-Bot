@@ -574,14 +574,15 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             var author = Context.Message.Author;
 
             // Send embed with countdown until KSP2 release on February 24, 2023
-            DateTime releaseDate = new DateTime(2023, 2, 24); // ATM assume midnight launch
+            DateTime releaseDate = new DateTime(2023, 2, 24, 17, 0, 0); // 17 UTC launch time
             var embed = new EmbedBuilder();
             embed.WithColor(Color.Blue);
 
             embed.WithTitle("Kerbal Space Program 2 Release Date");
-            embed.WithDescription($"Kerbal Space Program 2 is scheduled to be released on Feb 24, 2023\n Countdown until release: **{GetCountdown(releaseDate)}**");
+            embed.WithDescription($"Kerbal Space Program 2 is scheduled to be released on Feb 24, 2023 at 17:00 UTC\n Countdown until release: **{GetCountdown(releaseDate)}**");
             embed.WithImageUrl("https://cdn.cloudflare.steamstatic.com/steam/apps/954850/capsule_616x353.jpg");
             embed.AddField("Steam Store Page", "https://store.steampowered.com/app/954850/Kerbal_Space_Program_2/");
+            embed.AddField("Steam DB", "https://steamdb.info/app/954850/history/");
 
             embed.WithFooter("Kerbal Space Program 2 is a game by Private Division and Squad");
 
