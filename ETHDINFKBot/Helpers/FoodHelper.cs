@@ -320,10 +320,16 @@ namespace ETHDINFKBot.Helpers
                     if (currentMenu.Description.ToLower().Contains("beachten sie"))
                         continue; // TODO Handle this maybe better but screw polymensa tbh for them being lazy and inconsistent
 
-                    var priceString = menuDoc.DocumentNode.SelectNodes("//*[@class=\"price\"]").FirstOrDefault()?.InnerText.Replace("\t", "") ?? "";
+                    var priceStringNode = menuDoc.DocumentNode.SelectNodes("//*[@class=\"price\"]");
+
+                    string priceString = "";
+                    if(priceStringNode != null)
+                        priceString = priceStringNode.FirstOrDefault()?.InnerText.Replace("\t", "") ?? ""; // polymensa incapable to put prices on for whatever reason
+                    else 
+                        priceString = "-1"; // sometimes they dont have prices on the site
+
                     double price = -1;
-
-
+                    
                     if (priceString.Contains("STUD"))
                     {
                         // TODO Exception handling
@@ -370,15 +376,15 @@ namespace ETHDINFKBot.Helpers
                     }
 
                     currentMenu.DateTime = DateTime.Now;//.AddDays(-1);
-
                     menus.Add((currentMenu, allergyIdList));
                 }
-
 
                 return menus;
             }
             catch (Exception ex)
             {
+                // TODO handle this per menu, becaus polymensa is just broken 
+                // TODO maybe change to ethz menu site
                 _logger.LogError($"Error while loading SV Restaurant: {link}. With: {ex.Message}", ex);
                 return null;
             }
