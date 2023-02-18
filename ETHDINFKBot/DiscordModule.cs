@@ -545,7 +545,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
         private string GetCountdown(DateTime date)
         {
-            var timeSpan = date - DateTime.Now.AddHours(1); // TODO TIMEZONE ?? atm just add 1h for CEST
+            var timeSpan = date - DateTime.UtcNow; // calculate off utc timezone
 
             if (date < DateTime.Now)
                 return "ITS OUT NOW !!!!!!";
