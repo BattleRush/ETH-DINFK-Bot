@@ -1300,11 +1300,52 @@ Total todays menus: {allTodaysMenus.Count}");
                                     Cells = channelCells
                                 });
 
-                                if (channel is SocketTextChannel socketThextChannel)
+                                if (channel is SocketTextChannel socketTextChannel)
                                 {
                                     // Current channel is a thread
+                                    var threads = socketTextChannel.Threads;
+                                    foreach (var thread in socketTextChannel.Threads)
+                                    {
+                                        var threadSettingInfo = CommonHelper.GetChannelSettingByThreadId(thread.Id);
+                                        var threadSetting = threadSettingInfo.Setting;
 
-                                    foreach (var thread in socketThextChannel.Threads)
+                                        // New thread
+                                        data.Add(new List<string>() {
+                                            "",
+                                            "",
+                                            "#" + thread.Name,
+                                            threadSetting?.ChannelPermissionFlags.ToString() ?? "N/A",
+                                            GetPermissionString((BotPermissionType)(threadSetting?.ChannelPermissionFlags ?? 0)),
+                                            threadSetting?.OldestPostTimePreloaded.ToString() ?? "N/A",
+                                            threadSetting?.NewestPostTimePreloaded.ToString() ?? "N/A",
+                                            threadSetting?.ReachedOldestPreload.ToString() ?? "N/A"
+                                        });
+
+
+                                        var threadCells = new List<TableCellInfo>() { new TableCellInfo() { ColumnId = 2, FontColor = new SkiaSharp.SKColor(255, 255, 255) } };
+                                        if (threadSettingInfo.Inherit || true /* Thread for now always inherit */)
+                                        {
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 3, FontColor = new SkiaSharp.SKColor(144, 238, 144) });
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 4, FontColor = new SkiaSharp.SKColor(144, 238, 144) });
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 5, FontColor = new SkiaSharp.SKColor(144, 238, 144) });
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 6, FontColor = new SkiaSharp.SKColor(144, 238, 144) });
+                                            threadCells.Add(new TableCellInfo() { ColumnId = 7, FontColor = new SkiaSharp.SKColor(144, 238, 144) });
+                                        }
+
+                                        tableRowInfos.Add(new TableRowInfo()
+                                        {
+                                            RowId = data.Count - 1,
+                                            Cells = threadCells
+                                        });
+                                    }
+                                }
+
+                                // TODO Copy of above code simplify
+                                if (channel is SocketForumChannel socketForumChannel)
+                                {
+                                    // Current channel is a thread
+                                    var threads = socketForumChannel.GetActiveThreadsAsync().Result;
+                                    foreach (var thread in threads)
                                     {
                                         var threadSettingInfo = CommonHelper.GetChannelSettingByThreadId(thread.Id);
                                         var threadSetting = threadSettingInfo.Setting;
