@@ -1354,7 +1354,7 @@ Total todays menus: {allTodaysMenus.Count}");
                                         data.Add(new List<string>() {
                                             "",
                                             "",
-                                            "#" + thread.Name,
+                                            "Post: " + thread.Name,
                                             threadSetting?.ChannelPermissionFlags.ToString() ?? "N/A",
                                             GetPermissionString((BotPermissionType)(threadSetting?.ChannelPermissionFlags ?? 0)),
                                             threadSetting?.OldestPostTimePreloaded.ToString() ?? "N/A",
