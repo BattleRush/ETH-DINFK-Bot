@@ -700,7 +700,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                         // If bachelor channel and no tags found then return
                         if ((tagsToAdd == null || tagsToAdd.Count == 0)
-                            && !(!socketForumChannel.Name.Contains("master") || socketForumChannel.Name.Contains("bot")))
+                            && !socketForumChannel.Name.Contains("master") && !socketForumChannel.Name.Contains("bot"))
                         {
                             await Context.Channel.SendMessageAsync("Could not find any tags to add", false);
                             return;
