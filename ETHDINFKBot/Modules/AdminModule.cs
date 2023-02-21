@@ -232,8 +232,8 @@ namespace ETHDINFKBot.Modules
         {
             // TODO Move constants to config
             await DiscordHelper.SyncVisEvents(
-                (Context.Channel as SocketGuildChannel).Guild.Id, 
-                747768907992924192, 
+                (Context.Channel as SocketGuildChannel).Guild.Id,
+                747768907992924192,
                 819864331192631346);
         }
 
@@ -916,6 +916,8 @@ Total todays menus: {allTodaysMenus.Count}");
                 builder.AddField("admin channel set <permission> <channelId>", "Set permissions for the current channel or specific channel");
                 builder.AddField("admin channel all <permission>", "Set the MINIMUM permissions for ALL channels");
                 builder.AddField("admin channel flags", "Returns help with the flag infos");
+                builder.AddField("admin channel create <VVZ Link>", "Creates a new ForumPost for the subject");
+                builder.AddField("admin channel editpost <messageId> <content>", "Edits the current post content, if the bot is the owner of the post");
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
@@ -933,6 +935,183 @@ Total todays menus: {allTodaysMenus.Count}");
                          yield return value;
              }*/
 
+            private async Task<List<ForumTag>> FindTags(HtmlDocument doc, SocketCommandContext context, List<ForumTag> tags)
+            {
+                var list = new List<ForumTag>();
+
+                var table = doc.DocumentNode.SelectSingleNode("//table[@class='wAuto']");
+                bool foundAny = false;
+                if (table != null)
+                {
+                    var rows = table.Descendants("tr").ToList();
+                    foreach (var row in rows)
+                    {
+                        // for now we only handle Bachelor case
+
+                        // Check if first column contains "Informatik Bachelor"
+                        if (row.ChildNodes[0].InnerText.Contains("Informatik Bachelor"))
+                        {
+                            foundAny = true;
+                            string secondColumnText = row.ChildNodes[1].InnerText;
+                            string htmlEncoded = WebUtility.HtmlDecode(secondColumnText);
+
+                            switch (htmlEncoded)
+                            {
+                                case "Ergänzung":
+                                    list.Add(tags.Find(x => x.Name.Contains("BSc Minor")));
+                                    break;
+                                case "Wahlfach":
+                                    list.Add(tags.Find(x => x.Name.Contains("BSc Elective")));
+                                    break;
+                                case "Seminar":
+                                    list.Add(tags.Find(x => x.Name.Contains("BSc Seminar")));
+                                    break;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    await context.Channel.SendMessageAsync("Could not find table for 'Angeboten in'", false);
+                    return null;
+                }
+
+                if (!foundAny)
+                {
+                    await Context.Channel.SendMessageAsync("Could not find any 'Informatik Bachelor' in 'Angeboten in' entries", false);
+                    return null;
+                }
+
+                return list;
+            }
+
+            [Command("editpost")]
+            [RequireUserPermission(GuildPermission.ManageChannels)]
+            public async Task EditPost(ulong messageId, [Remainder] string content)
+            {
+                if (Context.Channel is SocketThreadChannel socketThreadChannel)
+                {
+                    var parent = socketThreadChannel.ParentChannel;
+                    if (parent is SocketForumChannel socketForumChannel)
+                    {
+                        // TODO Get first message automatically
+                        var mainPostEdited = socketThreadChannel.ModifyMessageAsync(messageId, msg => msg.Content = content);
+                    }
+                    else
+                    {
+                        await Context.Channel.SendMessageAsync("This command can only be used in a forum post", false);
+                    }
+                }
+                else
+                {
+                    await Context.Channel.SendMessageAsync("This command can only be used in a thread channel", false);
+                }
+            }
+
+            [Command("create")]
+            [RequireUserPermission(GuildPermission.ManageChannels)]
+            public async Task CreateChannel(string vvzLink)
+            {
+                // get the domain of the link
+                string domain = Regex.Match(vvzLink, @"https?://(www\.)?([^/]*)").Groups[2].Value;
+
+                if (domain != "vorlesungen.ethz.ch")
+                {
+                    await Context.Channel.SendMessageAsync("Invalid link, only www.vorlesungen.ethz.ch is supported, provided domain was: " + domain, false);
+                    return;
+                }
+
+                // template https://www.vorlesungen.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?semkez=2023S&ansicht=ALLE&lerneinheitId=168463&lang=de
+
+                // get url parameters TODO move to a separate function
+                var urlParams = HttpUtility.ParseQueryString(new Uri(vvzLink).Query);
+
+                var semkez = urlParams["semkez"];
+                var ansicht = urlParams["ansicht"];
+                var lerneinheitId = urlParams["lerneinheitId"];
+                var lang = urlParams["lang"];
+
+                ansicht = "ALLE"; // Override view to all
+                lang = "de"; // Override language to german
+
+                string newLink = $"https://www.vorlesungen.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?semkez={semkez}&ansicht={ansicht}&lerneinheitId={lerneinheitId}&lang={lang}";
+
+                // Parse the vvz link html
+                string html = new HttpClient().GetStringAsync(newLink).Result;
+                HtmlDocument doc = new HtmlDocument();
+                doc.LoadHtml(html);
+                string title = doc.DocumentNode.SelectSingleNode("/html/body/div[2]/section/section[1]/div[1]/h1").InnerText;
+
+                // Find lecture id with regex from title XXX-XXXX-XXL
+                string lectureId = Regex.Match(title, @"[0-9]{3}-[0-9]{4}-[0-9A-Z]{3}").Value;
+                string lectureName = title.Replace(lectureId, "").Trim();
+
+                // Create the forum channel
+                try
+                {
+                    if (Context.Channel is SocketThreadChannel socketThreadChannel)
+                    {
+                        var parent = socketThreadChannel.ParentChannel;
+                        if (parent is SocketForumChannel socketForumChannel)
+                        {
+                            // check if a forum post exists
+                            var posts = await socketForumChannel.GetActiveThreadsAsync();
+
+                            if (posts.Any(p => p.Name.Contains(lectureId)))
+                            {
+                                var post = posts.First(p => p.Name.Contains(lectureId));
+                                await Context.Channel.SendMessageAsync($"A forum post for this lecture already exists <#{post.Id}>", false);
+                                return;
+                            }
+
+                            var archivedPosts = await socketForumChannel.GetPublicArchivedThreadsAsync();
+
+                            if (archivedPosts.Any(p => p.Name.Contains(lectureId)))
+                            {
+                                var post = archivedPosts.First(p => p.Name.Contains(lectureId));
+                                await Context.Channel.SendMessageAsync($"An archived forum post for this lecture already exists <#{post.Id}>", false);
+                                return;
+                            }
+
+                            var tags = socketForumChannel.Tags;
+
+                            var tagsToAdd = FindTags(doc, Context, tags.ToList()).Result;
+
+                            // If bachelor channel and no tags found then return
+                            if (tagsToAdd == null && !(!socketForumChannel.Name.Contains("master") || socketForumChannel.Name.Contains("bot")))
+                            {
+                                await Context.Channel.SendMessageAsync("Could not find any tags to add", false);
+                                return;
+                            }
+
+                            var newPost = await socketForumChannel.CreatePostAsync(
+                                    $"[{lectureId}] {lectureName}",
+                                    ThreadArchiveDuration.OneWeek,
+                                    null,
+                                    "VVZ: " + vvzLink,
+                                    tags: tagsToAdd.ToArray());
+
+                            // Get guild user from author
+                            var guildUser = Context.Message.Author as SocketGuildUser;
+                            await newPost.AddUserAsync(guildUser);
+
+                            await Context.Channel.SendMessageAsync($"Created channel <#{newPost.Id}>", false);
+                        }
+                        else
+                        {
+                            await Context.Channel.SendMessageAsync("This command can only be used in a forum channel", false);
+                        }
+                    }
+                    else
+                    {
+                        await Context.Channel.SendMessageAsync("This command can only be used in a forum channel", false);
+                    }
+                }
+                catch (Exception e)
+                {
+                    await Context.Channel.SendMessageAsync("Error: " + e.Message, false);
+                }
+            }
 
             [Command("lockinfo")]
             [RequireUserPermission(GuildPermission.ManageChannels)]
