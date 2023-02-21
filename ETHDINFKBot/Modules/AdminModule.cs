@@ -953,9 +953,9 @@ Total todays menus: {allTodaysMenus.Count}");
                         {
                             foundAny = true;
                             string secondColumnText = row.ChildNodes[1].InnerText;
-                            string htmlEncoded = WebUtility.HtmlDecode(secondColumnText);
+                            string htmlDecoded = WebUtility.HtmlDecode(secondColumnText);
 
-                            switch (htmlEncoded)
+                            switch (htmlDecoded)
                             {
                                 case "Ergänzung":
                                     list.Add(tags.Find(x => x.Name.Contains("BSc Minor")));
@@ -967,6 +967,12 @@ Total todays menus: {allTodaysMenus.Count}");
                                     list.Add(tags.Find(x => x.Name.Contains("BSc Seminar")));
                                     break;
                             }
+                        }
+
+                        if (row.ChildNodes[0].InnerText.Contains("Wissenschaft im Kontext (Science in Perspective)"))
+                        {
+                            foundAny = true;
+                            list.Add(tags.Find(x => x.Name.Contains("GESS")));
                         }
                     }
                 }
@@ -982,7 +988,7 @@ Total todays menus: {allTodaysMenus.Count}");
                     return null;
                 }
 
-                return list;
+                return list.Distinct().ToList();
             }
 
             [Command("editpost")]
@@ -1078,7 +1084,8 @@ Total todays menus: {allTodaysMenus.Count}");
                             var tagsToAdd = FindTags(doc, Context, tags.ToList()).Result;
 
                             // If bachelor channel and no tags found then return
-                            if (tagsToAdd == null && !(!socketForumChannel.Name.Contains("master") || socketForumChannel.Name.Contains("bot")))
+                            if ((tagsToAdd == null || tagsToAdd.Count == 0) 
+                                && !(!socketForumChannel.Name.Contains("master") || socketForumChannel.Name.Contains("bot")))
                             {
                                 await Context.Channel.SendMessageAsync("Could not find any tags to add", false);
                                 return;
