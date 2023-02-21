@@ -1095,7 +1095,7 @@ Total todays menus: {allTodaysMenus.Count}");
                                     $"[{lectureId}] {lectureName}",
                                     ThreadArchiveDuration.OneWeek,
                                     null,
-                                    "VVZ: " + vvzLink,
+                                    "VVZ: " + newLink,
                                     tags: tagsToAdd.ToArray());
 
                             // Get guild user from author

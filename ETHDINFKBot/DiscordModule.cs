@@ -710,7 +710,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                                 $"[{lectureId}] {lectureName}",
                                 ThreadArchiveDuration.OneWeek,
                                 null,
-                                "VVZ: " + vvzLink,
+                                "VVZ: " + newLink,
                                 tags: tagsToAdd.ToArray());
 
                         // Get guild user from author
