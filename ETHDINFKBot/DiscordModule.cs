@@ -35,6 +35,9 @@ using Google.Apis.CustomSearchAPI.v1;
 using Google.Apis.Services;
 using Google.Apis.CustomSearchAPI.v1.Data;
 using Google;
+using System.Net.Http;
+using System.Text.RegularExpressions;
+using System.Web;
 
 namespace ETHDINFKBot
 {
@@ -254,6 +257,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.AddField("Space (for more commands)", $"```{prefix}space help```", true);
             builder.AddField("WIP Command", $"```{prefix}messagegraph [all|lernphase|bp] {prefix}food```", true);
             builder.AddField("ETH DINFK Place", $"```Type '{prefix}place help' for more information```");
+            builder.AddField("Create Subject channel", $"```Type '{prefix}.create <vvz link> to create a forumpost for a subject (GESS, Minor or Electives)");
 
             /*builder.AddField("Write .study to force yourself away from discord", "```May contain spoilers to old exams! Once you receive the study role you will be only to chat for max of 15 mins at a time." + Environment.NewLine +
                $"If you are in cooldown, the bot will delete all your messages. Every question is designed to be able to solve within 5-10 mins. To recall your message write '.study'" + Environment.NewLine +
@@ -568,6 +572,169 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             return sb.ToString();
         }
 
+
+        // Creating channel is duplicate code from admin module TODO refactor
+        private async Task<List<ForumTag>> FindTags(HtmlDocument doc, SocketCommandContext context, List<ForumTag> tags)
+        {
+            var list = new List<ForumTag>();
+
+            var table = doc.DocumentNode.SelectSingleNode("//table[@class='wAuto']");
+            bool foundAny = false;
+            if (table != null)
+            {
+                var rows = table.Descendants("tr").ToList();
+                foreach (var row in rows)
+                {
+                    // for now we only handle Bachelor case
+
+                    // Check if first column contains "Informatik Bachelor"
+                    if (row.ChildNodes[0].InnerText.Contains("Informatik Bachelor"))
+                    {
+                        foundAny = true;
+                        string secondColumnText = row.ChildNodes[1].InnerText;
+                        string htmlDecoded = WebUtility.HtmlDecode(secondColumnText);
+
+                        switch (htmlDecoded)
+                        {
+                            case "Ergänzung":
+                                list.Add(tags.Find(x => x.Name.Contains("BSc Minor")));
+                                break;
+                            case "Wahlfach":
+                                list.Add(tags.Find(x => x.Name.Contains("BSc Elective")));
+                                break;
+                            case "Seminar":
+                                list.Add(tags.Find(x => x.Name.Contains("BSc Seminar")));
+                                break;
+                        }
+                    }
+
+                    if (row.ChildNodes[0].InnerText.Contains("Wissenschaft im Kontext (Science in Perspective)"))
+                    {
+                        foundAny = true;
+                        list.Add(tags.Find(x => x.Name.Contains("GESS")));
+                    }
+                }
+            }
+            else
+            {
+                await context.Channel.SendMessageAsync("Could not find table for 'Angeboten in'", false);
+                return null;
+            }
+
+            if (!foundAny)
+            {
+                await Context.Channel.SendMessageAsync("Could not find any 'Informatik Bachelor' in 'Angeboten in' entries", false);
+                return null;
+            }
+
+            return list.Distinct().ToList();
+        }
+
+        [Command("create")]
+        public async Task CreateChannel(string vvzLink)
+        {
+            // get the domain of the link
+            string domain = Regex.Match(vvzLink, @"https?://(www\.)?([^/]*)").Groups[2].Value;
+
+            if (domain != "vorlesungen.ethz.ch")
+            {
+                await Context.Channel.SendMessageAsync("Invalid link, only www.vorlesungen.ethz.ch is supported, provided domain was: " + domain, false);
+                return;
+            }
+
+            // template https://www.vorlesungen.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?semkez=2023S&ansicht=ALLE&lerneinheitId=168463&lang=de
+
+            // get url parameters TODO move to a separate function
+            var urlParams = HttpUtility.ParseQueryString(new Uri(vvzLink).Query);
+
+            var semkez = urlParams["semkez"];
+            var ansicht = urlParams["ansicht"];
+            var lerneinheitId = urlParams["lerneinheitId"];
+            var lang = urlParams["lang"];
+
+            ansicht = "ALLE"; // Override view to all
+            lang = "de"; // Override language to german
+
+            string newLink = $"https://www.vorlesungen.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?semkez={semkez}&ansicht={ansicht}&lerneinheitId={lerneinheitId}&lang={lang}";
+
+            // Parse the vvz link html
+            string html = new HttpClient().GetStringAsync(newLink).Result;
+            HtmlDocument doc = new HtmlDocument();
+            doc.LoadHtml(html);
+            string title = doc.DocumentNode.SelectSingleNode("/html/body/div[2]/section/section[1]/div[1]/h1").InnerText;
+
+            // Find lecture id with regex from title XXX-XXXX-XXL
+            string lectureId = Regex.Match(title, @"[0-9]{3}-[0-9]{4}-[0-9A-Z]{3}").Value;
+            string lectureName = title.Replace(lectureId, "").Trim();
+
+            // Create the forum channel
+            try
+            {
+                if (Context.Channel is SocketThreadChannel socketThreadChannel)
+                {
+                    var parent = socketThreadChannel.ParentChannel;
+                    if (parent is SocketForumChannel socketForumChannel)
+                    {
+                        // check if a forum post exists
+                        var posts = await socketForumChannel.GetActiveThreadsAsync();
+
+                        if (posts.Any(p => p.Name.Contains(lectureId)))
+                        {
+                            var post = posts.First(p => p.Name.Contains(lectureId));
+                            await Context.Channel.SendMessageAsync($"A forum post for this lecture already exists <#{post.Id}>", false);
+                            return;
+                        }
+
+                        var archivedPosts = await socketForumChannel.GetPublicArchivedThreadsAsync();
+
+                        if (archivedPosts.Any(p => p.Name.Contains(lectureId)))
+                        {
+                            var post = archivedPosts.First(p => p.Name.Contains(lectureId));
+                            await Context.Channel.SendMessageAsync($"An archived forum post for this lecture already exists <#{post.Id}>", false);
+                            return;
+                        }
+
+                        var tags = socketForumChannel.Tags;
+
+                        var tagsToAdd = FindTags(doc, Context, tags.ToList()).Result;
+
+                        // If bachelor channel and no tags found then return
+                        if ((tagsToAdd == null || tagsToAdd.Count == 0)
+                            && !(!socketForumChannel.Name.Contains("master") || socketForumChannel.Name.Contains("bot")))
+                        {
+                            await Context.Channel.SendMessageAsync("Could not find any tags to add", false);
+                            return;
+                        }
+
+                        var newPost = await socketForumChannel.CreatePostAsync(
+                                $"[{lectureId}] {lectureName}",
+                                ThreadArchiveDuration.OneWeek,
+                                null,
+                                "VVZ: " + vvzLink,
+                                tags: tagsToAdd.ToArray());
+
+                        // Get guild user from author
+                        var guildUser = Context.Message.Author as SocketGuildUser;
+                        await newPost.AddUserAsync(guildUser);
+
+                        await Context.Channel.SendMessageAsync($"Created channel <#{newPost.Id}>", false);
+                    }
+                    else
+                    {
+                        await Context.Channel.SendMessageAsync("This command can only be used in a forum channel", false);
+                    }
+                }
+                else
+                {
+                    await Context.Channel.SendMessageAsync("This command can only be used in a forum channel", false);
+                }
+            }
+            catch (Exception e)
+            {
+                await Context.Channel.SendMessageAsync("Error: " + e.Message, false);
+            }
+        }
+        
         [Command("ksp2")]
         public async Task Ksp2ReleaseDate()
         {
