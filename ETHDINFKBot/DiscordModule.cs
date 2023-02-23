@@ -574,7 +574,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
 
         // Creating channel is duplicate code from admin module TODO refactor
-        private async Task<List<ForumTag>> FindTags(HtmlDocument doc, SocketCommandContext context, List<ForumTag> tags)
+        private async Task<List<ForumTag>> FindTags(HtmlDocument doc, SocketCommandContext context, List<ForumTag> tags, bool isMaster)
         {
             var list = new List<ForumTag>();
 
@@ -587,24 +587,35 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 {
                     // for now we only handle Bachelor case
 
-                    // Check if first column contains "Informatik Bachelor"
-                    if (row.ChildNodes[0].InnerText.Contains("Informatik Bachelor"))
+                    if (!isMaster)
                     {
-                        foundAny = true;
-                        string secondColumnText = row.ChildNodes[1].InnerText;
-                        string htmlDecoded = WebUtility.HtmlDecode(secondColumnText);
-
-                        switch (htmlDecoded)
+                        // Check if first column contains "Informatik Bachelor"
+                        if (row.ChildNodes[0].InnerText.Contains("Informatik Bachelor"))
                         {
-                            case "Ergänzung":
-                                list.Add(tags.Find(x => x.Name.Contains("BSc Minor")));
-                                break;
-                            case "Wahlfach":
-                                list.Add(tags.Find(x => x.Name.Contains("BSc Elective")));
-                                break;
-                            case "Seminar":
-                                list.Add(tags.Find(x => x.Name.Contains("BSc Seminar")));
-                                break;
+                            foundAny = true;
+                            string secondColumnText = row.ChildNodes[1].InnerText;
+                            string htmlDecoded = WebUtility.HtmlDecode(secondColumnText);
+
+                            switch (htmlDecoded)
+                            {
+                                case "Ergänzung":
+                                    list.Add(tags.Find(x => x.Name.Contains("BSc Minor")));
+                                    break;
+                                case "Wahlfach":
+                                    list.Add(tags.Find(x => x.Name.Contains("BSc Elective")));
+                                    break;
+                                case "Seminar":
+                                    list.Add(tags.Find(x => x.Name.Contains("BSc Seminar")));
+                                    break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Check if first column contains "Informatik Master"
+                        if (row.ChildNodes[0].InnerText.Contains("Informatik Master"))
+                        {
+                            // Todo add master tags
                         }
                     }
 
@@ -618,13 +629,13 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             else
             {
                 await context.Channel.SendMessageAsync("Could not find table for 'Angeboten in'", false);
-                return null;
+                return new List<ForumTag>();
             }
 
-            if (!foundAny)
+            if (!foundAny && !isMaster)
             {
                 await Context.Channel.SendMessageAsync("Could not find any 'Informatik Bachelor' in 'Angeboten in' entries", false);
-                return null;
+                return new List<ForumTag>();
             }
 
             return list.Distinct().ToList();
@@ -636,9 +647,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             // get the domain of the link
             string domain = Regex.Match(vvzLink, @"https?://(www\.)?([^/]*)").Groups[2].Value;
 
-            if (domain != "vorlesungen.ethz.ch")
+            if (!(domain == "vorlesungen.ethz.ch" || domain == "vvz.ethz.ch"))
             {
-                await Context.Channel.SendMessageAsync("Invalid link, only www.vorlesungen.ethz.ch is supported, provided domain was: " + domain, false);
+                await Context.Channel.SendMessageAsync("Invalid link, only www.vorlesungen.ethz.ch or vvz.ethz.ch is supported, provided domain was: " + domain, false);
                 return;
             }
 
@@ -696,7 +707,10 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                         var tags = socketForumChannel.Tags;
 
-                        var tagsToAdd = FindTags(doc, Context, tags.ToList()).Result;
+                        // TODO better master forum detection
+                        bool isMaster = socketForumChannel.Name.Contains("master");
+
+                        var tagsToAdd = FindTags(doc, Context, tags.ToList(), isMaster).Result;
 
                         // If bachelor channel and no tags found then return
                         if ((tagsToAdd == null || tagsToAdd.Count == 0)
@@ -734,7 +748,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 await Context.Channel.SendMessageAsync("Error: " + e.Message, false);
             }
         }
-        
+
         [Command("ksp2")]
         public async Task Ksp2ReleaseDate()
         {
