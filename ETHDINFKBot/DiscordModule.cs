@@ -257,7 +257,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             builder.AddField("Space (for more commands)", $"```{prefix}space help```", true);
             builder.AddField("WIP Command", $"```{prefix}messagegraph [all|lernphase|bp] {prefix}food```", true);
             builder.AddField("ETH DINFK Place", $"```Type '{prefix}place help' for more information```");
-            builder.AddField("Create Subject channel", $"```Type '{prefix}create <vvz link> to create a forumpost for a subject (GESS, Minor or Electives)```");
+            builder.AddField("Create Subject channel", $"```Type '{prefix}create <vvz link>' to create a forumpost for a subject (GESS, Minor or Electives)```");
 
             /*builder.AddField("Write .study to force yourself away from discord", "```May contain spoilers to old exams! Once you receive the study role you will be only to chat for max of 15 mins at a time." + Environment.NewLine +
                $"If you are in cooldown, the bot will delete all your messages. Every question is designed to be able to solve within 5-10 mins. To recall your message write '.study'" + Environment.NewLine +
