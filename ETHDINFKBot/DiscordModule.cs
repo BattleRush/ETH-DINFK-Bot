@@ -601,7 +601,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                                 case "Ergänzung":
                                     list.Add(tags.Find(x => x.Name.Contains("BSc Minor")));
                                     break;
-                                case "Wahlfach":
+                                case "Wahlfächer":
                                     list.Add(tags.Find(x => x.Name.Contains("BSc Elective")));
                                     break;
                                 case "Seminar":
