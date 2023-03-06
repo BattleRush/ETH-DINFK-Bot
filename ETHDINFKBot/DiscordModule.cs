@@ -854,6 +854,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     count++;
                 }
 
+                if (!string.IsNullOrEmpty(currentBuilder))
+                    embedBuilder.AddField($"First {count - 1} members to leave", currentBuilder, false);
+
                 messageText += Environment.NewLine;
                 embedBuilder.WithDescription($"Total Pinghell members: {count - 1}{Environment.NewLine}{Environment.NewLine}{messageText}");
 
