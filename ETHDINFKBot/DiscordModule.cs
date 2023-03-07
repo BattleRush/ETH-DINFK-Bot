@@ -677,6 +677,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             // Find lecture id with regex from title XXX-XXXX-XXL
             string lectureId = Regex.Match(title, @"[0-9]{3}-[0-9]{4}-[0-9A-Z]{3}").Value;
             string lectureName = title.Replace(lectureId, "").Trim();
+            
+            var guildUser = Context.Message.Author as SocketGuildUser;
 
             // Create the forum channel
             try
@@ -693,6 +695,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                         {
                             var post = posts.First(p => p.Name.Contains(lectureId));
                             await Context.Channel.SendMessageAsync($"A forum post for this lecture already exists <#{post.Id}>", false);
+                            await post.AddUserAsync(guildUser);
                             return;
                         }
 
@@ -702,6 +705,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                         {
                             var post = archivedPosts.First(p => p.Name.Contains(lectureId));
                             await Context.Channel.SendMessageAsync($"An archived forum post for this lecture already exists <#{post.Id}>", false);
+                            await post.AddUserAsync(guildUser);
                             return;
                         }
 
@@ -728,7 +732,6 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                                 tags: tagsToAdd.ToArray());
 
                         // Get guild user from author
-                        var guildUser = Context.Message.Author as SocketGuildUser;
                         await newPost.AddUserAsync(guildUser);
 
                         await Context.Channel.SendMessageAsync($"Created channel <#{newPost.Id}>", false);
