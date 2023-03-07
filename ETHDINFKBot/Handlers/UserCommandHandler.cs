@@ -61,7 +61,8 @@ namespace ETHDINFKBot.Handlers
 
                 var settings = CommonHelper.GetChannelSettingByChannelId(channelId).Setting;
 
-                if (((BotPermissionType)settings.ChannelPermissionFlags).HasFlag(BotPermissionType.EnableType2Commands))
+                // TODO add owner check
+                if (((BotPermissionType)settings.ChannelPermissionFlags).HasFlag(BotPermissionType.EnableType2Commands) || SocketGuildUser.GuildPermissions.Administrator)
                     await SocketUserCommand.Channel.SendMessageAsync("", false, builder.Build());
                 else
                     return false;
