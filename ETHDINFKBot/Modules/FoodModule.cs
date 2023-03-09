@@ -566,8 +566,8 @@ It is also likely that there are no menus currently available today." + weekendS
                         // Set max menus for now per restaurant
                         maxMenus = restaurant.Value.Count;
 
-                        var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(1_000, 2_000);
-
+                        // TODO Ensure the width size isnt violated 
+                        var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(2_000, 2_000);
 
                         int currentTop = 0;
                         string restaurantName = restaurant.Key.Name;
