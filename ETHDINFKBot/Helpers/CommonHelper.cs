@@ -101,7 +101,7 @@ namespace ETHDINFKBot.Helpers
         public static bool AllowedToRun(BotPermissionType type, ulong channelId, ulong authorId)
         {
             var channelSettings = DatabaseManager.Instance().GetChannelSetting(channelId);
-            return authorId == Program.ApplicationSetting.Owner || ((BotPermissionType)channelSettings?.ChannelPermissionFlags).HasFlag(type);
+            return authorId == Program.ApplicationSetting.Owner || ((BotPermissionType)(channelSettings?.ChannelPermissionFlags ?? 0)).HasFlag(type);
         }
 
         public static (BotChannelSetting Setting, bool Inherit) GetChannelSettingByChannelId(ulong channelId, bool recursive = true)

@@ -64,7 +64,7 @@ namespace ETHDINFKBot
         {
             var channelSettings = DatabaseManager.GetChannelSetting(Context.Message.Channel.Id);
             if (Context.Message.Author.Id != Program.ApplicationSetting.Owner
-                && !((BotPermissionType)channelSettings?.ChannelPermissionFlags).HasFlag(type))
+                && !((BotPermissionType)(channelSettings?.ChannelPermissionFlags ?? 0)).HasFlag(type))
             {
 #if DEBUG
                 Context.Channel.SendMessageAsync("blocked by perms", false);
