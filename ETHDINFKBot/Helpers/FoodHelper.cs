@@ -309,6 +309,7 @@ namespace ETHDINFKBot.Helpers
                     }
 
                     string description = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-description\"]").InnerText;
+                    description = HttpUtility.HtmlDecode(description);
 
                     currentMenu.Description = description;
                     if (!isClausiusBar)
