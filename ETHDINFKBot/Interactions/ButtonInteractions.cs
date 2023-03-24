@@ -83,8 +83,15 @@ namespace ETHDINFKBot.Interactions
         [ComponentInteraction("emote-fav-get-next-page-*-*")]
         public async Task EmoteFavGetNextPage(string searchTerm, string page)
         {
-            await Context.Interaction.DeferAsync();
-            await FavEmoteGetPage(1, searchTerm, Convert.ToInt32(page));
+            try
+            {
+                await Context.Interaction.DeferAsync();
+                await FavEmoteGetPage(1, searchTerm, Convert.ToInt32(page));
+            }
+            catch (Exception ex)
+            {
+                await Context.Interaction.RespondAsync(ex.Message);
+            }
         }
 
         private async Task<bool> EmoteGetPage(int dir, string searchTerm, int page, bool debug, int rows = 5, int columns = 10)
