@@ -312,7 +312,8 @@ namespace ETHDINFKBot.Handlers
                     DiscordChannels["pullrequest"],
                     DiscordChannels["serversuggestions"],
                     DiscordChannels["memes"],
-                    DiscordChannels["ethmemes"]
+                    DiscordChannels["ethmemes"],
+                    DiscordChannels["uzhmemes"]
                 };
 
                     if (upvoteChannels.Contains(SocketGuildChannel.Id))
