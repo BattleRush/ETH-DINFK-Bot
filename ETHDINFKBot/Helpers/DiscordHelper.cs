@@ -29,6 +29,7 @@ namespace ETHDINFKBot.Helpers
             { "serversuggestions", 816776685407043614 },
             { "memes", 747758757395562557 },
             { "ethmemes", 758293511514226718 },
+            { "uzhmemes", 1091476764607398039 },
             { "serotonin", 814440115392348171 },
             { "spam", 768600365602963496 }
         };
