@@ -509,6 +509,8 @@ namespace ETHDINFKBot.Helpers
         {
             ///html/body/div[6]/section/div/section/div[2]/div[1]/div/div[2]/div/div/div/div/div/div/div/div/table/tbody[2]
             string xPath = "//*[@id=\"box-1\"]/ul/li/div/div/div";
+            // get div with class NewsListItem
+            xPath = "//div[@class=\"NewsListItem\"]/div";
 
             // day = "freitag";
             //string mensa = "zentrum-mercato";
