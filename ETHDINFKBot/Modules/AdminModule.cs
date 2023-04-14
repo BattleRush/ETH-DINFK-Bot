@@ -90,57 +90,63 @@ namespace ETHDINFKBot.Modules
             }
         }
 
-        [Command("renameback")]
+        [Command("assign")]
         public async Task Test()
         {
-            return; // disable again
-            //var author = Context.Message.Author;
-            //if (author.Id != Program.ApplicationSetting.Owner)
-            //{
-            //    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
-            //    return;
-            //}
-            //try
-            //{
-            //    var allUsers = await Context.Guild.GetUsersAsync().FlattenAsync();
-            //    Context.Channel.SendMessageAsync("users " + allUsers.Count().ToString(), false);
-
-            //    Random r = new Random();
-
-            //    var jsonString = File.ReadAllText("");
-
-            //    var jsonUsers = JsonConvert.DeserializeObject<Class1[]>(jsonString).ToList();
-
-            //    Context.Channel.SendMessageAsync("json " + jsonUsers.Count.ToString(), false);
+            var author = Context.Message.Author;
+            if (author.Id != Program.ApplicationSetting.Owner)
+            {
+                Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+            try
+            {
+                var allUsers = await Context.Guild.GetUsersAsync().FlattenAsync();
+                Context.Channel.SendMessageAsync("users " + allUsers.Count().ToString(), false);
 
 
-            //    foreach (SocketGuildUser user in allUsers)
-            //    {
-            //        var targetUser = jsonUsers.SingleOrDefault(i => i.id == user.Id);
+                foreach (SocketGuildUser user in allUsers)
+                {
+                    if (user.Status == UserStatus.Online || user.Status == UserStatus.Idle || user.Status == UserStatus.AFK || user.Status == UserStatus.DoNotDisturb)
+                    {
+                        await Context.Channel.SendMessageAsync("Setting " + user.Username, false);
 
-            //        if (targetUser == null || targetUser.nick == user.Nickname)
-            //            continue;
+                        ulong roleId = 0;
+                        switch (user.Id % 7)
+                        {
+                            case 0:
+                                roleId = 1089996311522201715;
+                                break;
+                            case 1:
+                                roleId = 1089996425091371128;
+                                break;
+                            case 2:
+                                roleId = 1089996512701984789;
+                                break;
+                            case 3:
+                                roleId = 1089996620625612921;
+                                break;
+                            case 4:
+                                roleId = 1089996706009063424;
+                                break;
+                            case 5:
+                                roleId = 1089996740654006412;
+                                break;
+                            case 6:
+                                roleId = 1089996797780447282;
+                                break;
+                            default:
+                                continue;
+                        }
 
-            //        try
-            //        {
-            //            await user.ModifyAsync(i =>
-            //            {
-            //                i.Nickname = targetUser.nick;
-            //            });
-
-            //            await Context.Channel.SendMessageAsync("Fixing " + user.Username, false);
-
-            //        }
-            //        catch (Exception ex)
-            //        {
-            //            await Context.Channel.SendMessageAsync(ex.Message + " on " + user.Username, false);
-            //        }
-            //    }
-            //}
-            //catch (Exception ex)
-            //{
-            //    await Context.Channel.SendMessageAsync(ex.Message, false);
-            //}
+                        await user.AddRoleAsync(roleId);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.Message, false);
+            }
         }
 
         //[RequireOwner]
