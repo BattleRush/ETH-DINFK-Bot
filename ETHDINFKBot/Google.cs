@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -130,6 +131,9 @@ namespace ETHDINFKBot
         public async Task<List<string>> GetSearchResultBySelenium(string query, int start = 0, string lang = "en")
         {
             ChromeOptions options = new ChromeOptions();
+
+            // Slow down search so that we don't get blocked
+            Thread.Sleep(TimeSpan.FromSeconds(45));
 
             // Disable logging
             options.AddArgument("--log-level=3");
