@@ -1516,6 +1516,7 @@ namespace ETHDINFKBot
                 // delete message
                 await m.DeleteAsync();
                 //await replyMsg.DeleteAsync();
+                return;
             }
 
             var context = new SocketCommandContext(Client, msg);
