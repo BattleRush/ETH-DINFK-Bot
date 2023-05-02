@@ -94,8 +94,8 @@ namespace ETHDINFKBot.Handlers
             // Log to DB
             await CreateDiscordServerDBEntry();
             await CreateDiscordChannelDBEntry();
-            await CreateOrUpdateDBUser();
-            await CreateDiscordMessageDBEntry();
+            var discordUser = await CreateOrUpdateDBUser();
+            await CreateDiscordMessageDBEntry(discordUser);
 
             return true; // kinda useless
         }
@@ -218,7 +218,7 @@ namespace ETHDINFKBot.Handlers
             return true;
         }
 
-        private async Task<bool> CreateOrUpdateDBUser()
+        private async Task<DiscordUser> CreateOrUpdateDBUser()
         {
             var dbAuthor = DatabaseManager.GetDiscordUserById(SocketGuildUser.Id);
 
@@ -246,10 +246,10 @@ namespace ETHDINFKBot.Handlers
                 DatabaseManager.UpdateDiscordUser(discordUser);
             }
 
-            return true;
+            return dbAuthor;
         }
 
-        private async Task<bool> CreateDiscordMessageDBEntry()
+        private async Task<bool> CreateDiscordMessageDBEntry(DiscordUser discordUser)
         {
             if (ChannelSettings != null && ((BotPermissionType)ChannelSettings?.ChannelPermissionFlags).HasFlag(BotPermissionType.Read))
             {
@@ -267,7 +267,7 @@ namespace ETHDINFKBot.Handlers
                     DiscordChannelId = SocketGuildChannel.Id,
                     DiscordUserId = SocketGuildUser.Id,
                     DiscordMessageId = SocketMessage.Id,
-                    Content = SocketMessage.Content,
+                    Content = discordUser.NoTrack ? "" : SocketMessage.Content,
                     ReplyMessageId = referenceMessageId,
                     DiscordThreadId = SocketThreadChannel?.Id
                 }, true);

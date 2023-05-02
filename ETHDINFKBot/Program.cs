@@ -107,6 +107,10 @@ namespace ETHDINFKBot
 
         public static List<string> CommandNames { get; set; }
         private static ServiceProvider Services;
+
+        private static List<ulong> BannedUsers = new List<ulong>();
+        private static List<ulong> NoTrackUsers = new List<ulong>();
+
         static void Main(string[] args)
         {
             CurrentPrefix = ".";
@@ -227,8 +231,6 @@ namespace ETHDINFKBot
                     }
                 };
 
-
-
                 //;
 
                 // TODO Update for new connection strings and dev/prod
@@ -298,6 +300,10 @@ namespace ETHDINFKBot
 
         public async Task MainAsync(string token)
         {
+            // load banned users
+            BannedUsers = DatabaseManager.GetBannedUserIds();
+            NoTrackUsers = DatabaseManager.GetNoTrackUserIds();
+
             // TODO MOVE WEBSOCKET STUFF
 
             /*
@@ -1151,7 +1157,15 @@ namespace ETHDINFKBot
 
             do
             {
-                firstMessage = FirstDailyPostsCandidates.Where(i => i.CreatedAt.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1).Hour != 23).OrderBy(i => i.CreatedAt).FirstOrDefault();
+                // non tracked users dont get included
+                // else check if new message was made in the current new day
+                firstMessage = FirstDailyPostsCandidates
+                    .Where(i => 
+                        i.CreatedAt.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1).Hour != 23
+                        && NoTrackUsers.All(n => n != i.Id)
+                        )
+                    .OrderBy(i => i.CreatedAt)
+                    .FirstOrDefault();
                 await Task.Delay(TimeSpan.FromSeconds(2)); // Check each 2 seconds if a new message arrived
             } while (firstMessage == null);
 
@@ -1368,7 +1382,8 @@ namespace ETHDINFKBot
                     DiscordHelper.ReloadRoles(user.Guild);
                 }
 
-                if (CollectFirstDailyPostMessages && !user.IsBot)
+                // first posts not tracked for non tracking users
+                if (CollectFirstDailyPostMessages && !user.IsBot && NoTrackUsers.All(i => i != user.Id))
                     FirstDailyPostsCandidates.Add(m);
 
                 // duplicate code of the code above
@@ -1491,6 +1506,17 @@ namespace ETHDINFKBot
                 }
             }
 
+
+            // if user is on the banned list and channel is bot-fun or spam
+            if (BannedUsers.Any(i => i == m.Author.Id) && (m.Channel.Id == DiscordHelper.DiscordChannels["spam"] || m.Channel.Id == DiscordHelper.DiscordChannels["botfun"]))
+            {
+                // rip bozo message
+                var replyMsg = await m.Channel.SendMessageAsync($"<@{m.Author.Id}> rip bozo");
+
+                // delete message
+                await m.DeleteAsync();
+                //await replyMsg.DeleteAsync();
+            }
 
             var context = new SocketCommandContext(Client, msg);
             Commands.ExecuteAsync(context, argPos, services);

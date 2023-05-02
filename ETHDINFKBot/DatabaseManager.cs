@@ -79,6 +79,50 @@ namespace ETHDINFKBot
                 return null;
             }
         }
+
+        public bool AddBannedUser(ulong discourdUserId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var user = context.DiscordUsers.SingleOrDefault(i => i.DiscordUserId == discourdUserId);
+                    if (user == null)
+                        return false;
+
+                    user.Banned = true;
+                    context.SaveChanges();
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return false;
+            }
+        }
+
+        public bool AddNoTrackUser(ulong discordUserId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var user = context.DiscordUsers.SingleOrDefault(i => i.DiscordUserId == discordUserId);
+                    if (user == null)
+                        return false;
+
+                    user.NoTrack = true;
+                    context.SaveChanges();
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return false;
+            }
+        }
         
         public int GetDiscordUserMessageCount(ulong discordUserId)
         {
@@ -525,6 +569,38 @@ namespace ETHDINFKBot
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
                     return context.DiscordChannels.AsQueryable().Where(i => i.DiscordServerId == serverId).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public List<ulong> GetBannedUserIds()
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordUsers.AsQueryable().Where(i => i.Banned).Select(i => i.DiscordUserId).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
+        public List<ulong> GetNoTrackUserIds()
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordUsers.AsQueryable().Where(i => i.NoTrack).Select(i => i.DiscordUserId).ToList();
                 }
             }
             catch (Exception ex)

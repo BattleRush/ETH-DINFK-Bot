@@ -335,6 +335,53 @@ namespace ETHDINFKBot.Modules
             }
         }
 
+
+        [Command("notrack")]
+        [RequireUserPermission(GuildPermission.ManageChannels)]
+        public async Task NoTrackUser(ulong discordUserId)
+        {
+            DatabaseManager.Instance().AddNoTrackUser(discordUserId);
+            await Context.Channel.SendMessageAsync($"Added user {discordUserId} to no track list", false);  
+        }
+
+
+        [Command("ban")]
+        [RequireUserPermission(GuildPermission.ManageChannels)]
+        public async Task BanUser(ulong discordUserId)
+        {
+            var user = Program.Client.GetUser(discordUserId);
+
+            if (user == null)
+            {
+                await Context.Channel.SendMessageAsync($"user is null", false);
+                return;
+            }
+
+            // get direct messages with that user
+            var dmChannel = await user.CreateDMChannelAsync();
+
+            if (dmChannel == null)
+            {
+                await Context.Channel.SendMessageAsync($"dmChannel is null", false);
+                return;
+            }
+
+            // delete all messages send by bot
+            var messages = await dmChannel.GetMessagesAsync(1000).FlattenAsync();
+            await Context.Channel.SendMessageAsync($"Found {messages.Count()} messages to delete", false);
+
+            foreach (var message in messages)
+            {
+                if (message.Author.Id == Program.Client.CurrentUser.Id)
+                {
+                    await message.DeleteAsync();
+                }
+            }
+
+            DatabaseManager.Instance().AddBannedUser(discordUserId);
+            await Context.Channel.SendMessageAsync($"Banned user {discordUserId}", false);
+        }
+
         class DiscordUserDump
         {
             public ulong DiscordUserId { get; set; }
