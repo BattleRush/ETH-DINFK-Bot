@@ -1508,14 +1508,15 @@ namespace ETHDINFKBot
 
 
             // if user is on the banned list and channel is bot-fun or spam
-            if (BannedUsers.Any(i => i == m.Author.Id) && (m.Channel.Id == DiscordHelper.DiscordChannels["spam"] || m.Channel.Id == DiscordHelper.DiscordChannels["botfun"]))
+            if (BannedUsers.Any(i => i == m.Author.Id))
             {
                 // rip bozo message
-                var replyMsg = await m.Channel.SendMessageAsync($"<@{m.Author.Id}> rip bozo");
+                if((m.Channel.Id == DiscordHelper.DiscordChannels["spam"] || m.Channel.Id == DiscordHelper.DiscordChannels["botfun"]))
+                    await m.Channel.SendMessageAsync($"<@{m.Author.Id}> rip bozo");
 
-                // delete message
                 await m.DeleteAsync();
                 //await replyMsg.DeleteAsync();
+
                 return;
             }
 

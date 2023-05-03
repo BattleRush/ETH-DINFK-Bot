@@ -65,6 +65,13 @@ namespace ETHDINFKBot.Helpers
                 return false;
             }
 
+            var dbUser = dmManager.GetDiscordUserById(user.Id);
+            if(dbUser.Banned)
+            {
+                await user.SendMessageAsync("no");
+                return false;
+            }
+
             string authorUsername = message?.Author?.Username ?? user.Username; // nickname?
 
             var link = $"https://discord.com/channels/{socketTextChannel.Guild.Id}/{socketTextChannel.Id}/{message.Id}";
