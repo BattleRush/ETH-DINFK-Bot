@@ -56,8 +56,8 @@ namespace ETHDINFKBot.CronJobs.Jobs
                     }
                 }
 
-                if (textChannel != null && deletedFiles > 10)
-                    textChannel.SendMessageAsync($"Found {deletedFiles} emotes to be deleted");
+                //if (textChannel != null && deletedFiles > 10)
+                    //textChannel.SendMessageAsync($"Found {deletedFiles} emotes to be deleted");
             }
         }
         private async void CleanUpOldMessages(SocketTextChannel channel, TimeSpan toDeleteOlderThan)
