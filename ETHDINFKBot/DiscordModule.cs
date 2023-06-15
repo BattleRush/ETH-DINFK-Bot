@@ -677,6 +677,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             // Find lecture id with regex from title XXX-XXXX-XXL
             string lectureId = Regex.Match(title, @"[0-9]{3}-[0-9]{4}-[0-9A-Z]{3}").Value;
             string lectureName = title.Replace(lectureId, "").Trim();
+
+            // html decode the lecture name
+            lectureName = WebUtility.HtmlDecode(lectureName);
             
             var guildUser = Context.Message.Author as SocketGuildUser;
 
