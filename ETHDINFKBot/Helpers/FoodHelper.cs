@@ -56,6 +56,10 @@ namespace ETHDINFKBot.Helpers
         public void LoadMenus(int restaurantId = -1, bool fixOnly = false)
         {
             var avilableRestaurants = FoodDBManager.GetAllRestaurants();
+
+            // flip order of restaurants to load UZH first
+            avilableRestaurants.Reverse();
+
             Google = new GoogleEngine(); // TODO Better reset
 
             foreach (var restaurant in avilableRestaurants)
