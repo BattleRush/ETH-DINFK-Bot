@@ -154,10 +154,18 @@ namespace ETHDINFKBot.CronJobs.Jobs
                 var messages = await pullRequestChannel.GetMessagesAsync(100).FlattenAsync();
 
                 foreach (var message in messages)
-                {
+                {   
+                    bool skip = false;
                     // loop trough users that reacted with any reaction
                     foreach (var reaction in message.Reactions)
                     {
+                        // if the reaction is either plusplus or minusminus skip
+                        if (reaction.Key.Name == "plusplus" || reaction.Key.Name == "minusminus")
+                        {
+                            skip = true;
+                            break;
+                        }
+
                         // get people who reacted with this reaction
                         var users = await message.GetReactionUsersAsync(reaction.Key, 100).FlattenAsync();
 
@@ -165,6 +173,9 @@ namespace ETHDINFKBot.CronJobs.Jobs
                         foreach (var user in users)
                             usersToPing.Remove(user.Id);
                     }
+
+                    if (skip)
+                        continue;
 
 
                     // check if any users are left to be pinged
