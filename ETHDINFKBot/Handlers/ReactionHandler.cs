@@ -273,10 +273,15 @@ namespace ETHDINFKBot.Handlers
 
                             // send message
 
+                            RestUserMessage message;
+
                             if (attachmentsToSend.Count == 0)
-                                await adminSuggestionChannel.SendMessageAsync(title, false, builder.Build());
+                                message = await adminSuggestionChannel.SendMessageAsync(title, false, builder.Build());
                             else
-                                await adminSuggestionChannel.SendFilesAsync(attachmentsToSend, title, false, builder.Build());
+                                message = await adminSuggestionChannel.SendFilesAsync(attachmentsToSend, title, false, builder.Build());
+
+                            // create thread for this message
+                            await adminSuggestionChannel.CreateThreadAsync("Discussion for suggestion: " + Message.Id, message: message);
                         }
                     }
 

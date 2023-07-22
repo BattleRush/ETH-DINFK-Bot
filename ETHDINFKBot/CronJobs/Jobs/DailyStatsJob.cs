@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
+using Discord;
 
 namespace ETHDINFKBot.CronJobs.Jobs
 {
@@ -66,12 +67,16 @@ namespace ETHDINFKBot.CronJobs.Jobs
             return base.StartAsync(cancellationToken);
         }
 
+
+
         // TODO Cutoff at midnight
         // TODO X Axis is scaled wrong
-        public override Task DoWork(CancellationToken cancellationToken)
+        public override async Task DoWork(CancellationToken cancellationToken)
         {
             _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
             Console.WriteLine("Run DailyStatsJob");
+
+            await ILikePingingStaff();
 
             // Clear /tmp folder
             DirectoryInfo directoryInfo = new DirectoryInfo("/tmp/");
@@ -112,11 +117,82 @@ namespace ETHDINFKBot.CronJobs.Jobs
                 }
                 catch (Exception e)
                 {
-                    spamChannel.SendMessageAsync("Error: " + e.ToString());
+                    await spamChannel.SendMessageAsync("Error: " + e.ToString());
                 }
             }
 
-            return Task.CompletedTask;
+            return;
+        }
+
+        private async Task ILikePingingStaff()
+        {
+            // get users with role id 747753814723002500 (admin) or 815932497920917514 (mod) -> TODO move to config
+
+            // Get Messages from pull request
+            var guild = Program.Client.GetGuild(Program.ApplicationSetting.BaseGuild);
+
+            List<ulong> usersToPing = new List<ulong>();
+
+            var adminRole = guild.GetRole(747753814723002500);
+            var modRole = guild.GetRole(815932497920917514);
+
+            var usersWithAdminRole = guild.Users.Where(x => x.Roles.Contains(adminRole));
+            var usersWithModRole = guild.Users.Where(x => x.Roles.Contains(modRole));
+
+            foreach (var user in usersWithAdminRole)
+                usersToPing.Add(user.Id);
+
+            foreach (var user in usersWithModRole)
+                usersToPing.Add(user.Id);
+
+            usersToPing = usersToPing.Distinct().ToList();
+
+            var pullRequestChannel = guild.GetTextChannel(816279194321420308); // TODO 
+            if (pullRequestChannel != null)
+            {
+                var threads = await pullRequestChannel.GetActiveThreadsAsync();
+                var messages = await pullRequestChannel.GetMessagesAsync(100).FlattenAsync();
+
+                foreach (var message in messages)
+                {
+                    // loop trough users that reacted with any reaction
+                    foreach (var reaction in message.Reactions)
+                    {
+                        // get people who reacted with this reaction
+                        var users = await message.GetReactionUsersAsync(reaction.Key, 100).FlattenAsync();
+
+                        // remove this users from usersToPing
+                        foreach (var user in users)
+                            usersToPing.Remove(user.Id);
+                    }
+
+
+                    // check if any users are left to be pinged
+
+                    if (usersToPing.Count > 0)
+                    {
+                        foreach (var thread in threads)
+                        {
+                            if (thread.Id == message.Id)
+                            {
+                                // ping users
+                                string pingString = "Would ping to react on this message: ";
+                                foreach (var user in usersToPing)
+                                {
+                                    pingString += $"{user}; ";
+                                }
+
+                                await thread.SendMessageAsync(pingString);
+                            }
+                            else
+                            {
+                                // thread not found create for the current message
+                                await pullRequestChannel.CreateThreadAsync("Discussion (Non automatic)", message: message);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // TODO Alot of duplicate code rework that
