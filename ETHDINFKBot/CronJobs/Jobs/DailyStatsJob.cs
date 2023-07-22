@@ -76,7 +76,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
             _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
             Console.WriteLine("Run DailyStatsJob");
 
-            await ILikePingingStaff();
+
 
             // Clear /tmp folder
             DirectoryInfo directoryInfo = new DirectoryInfo("/tmp/");
@@ -91,6 +91,16 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
             var guild = Program.Client.GetGuild(Program.ApplicationSetting.BaseGuild);
             var spamChannel = guild.GetTextChannel(GeneralChatId);
+
+            try
+            {
+                await ILikePingingStaff();
+            }
+            catch (Exception e)
+            {
+                await spamChannel.SendMessageAsync("Error: " + e.ToString().Substring(0, Math.Min(e.ToString().Length, 1980)));
+            }
+
             if (spamChannel != null)
             {
                 try
@@ -154,7 +164,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                 var messages = await pullRequestChannel.GetMessagesAsync(100).FlattenAsync();
 
                 foreach (var message in messages)
-                {   
+                {
                     bool skip = false;
                     // loop trough users that reacted with any reaction
                     foreach (var reaction in message.Reactions)
