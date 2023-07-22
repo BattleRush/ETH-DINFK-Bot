@@ -8,6 +8,7 @@ using ETHDINFKBot.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -214,7 +215,7 @@ namespace ETHDINFKBot.Handlers
                     var downvoteCount = Message.Reactions.Where(i => i.Key is Emote emote && emote.Id == DiscordEmotes["that"]).FirstOrDefault();
 
 
-                    if (upvoteCount.Value.ReactionCount > 15 && upvoteCount.Value.ReactionCount > downvoteCount.Value.ReactionCount)
+                    if (upvoteCount.Value.ReactionCount > 1 && upvoteCount.Value.ReactionCount > downvoteCount.Value.ReactionCount)
                     {
                         // TODO not fixed ids
                         var adminSuggestionChannel = SocketGuild.GetTextChannel(DiscordChannels["pullrequest"]);
@@ -248,8 +249,34 @@ namespace ETHDINFKBot.Handlers
 
                             builder.AddField("Link", $"[Message]({link})");
 
+                            var attachments = Message.Attachments;
 
-                            await adminSuggestionChannel.SendMessageAsync(title, false, builder.Build());
+                            HttpClient client = new HttpClient();
+                            var attachmentsToSend = new List<FileAttachment>();
+                            if (attachments != null)
+                            {
+                                builder.AddField("Attachments", attachments.Count.ToString(), true);
+
+                                foreach (var attachment in attachments)
+                                {
+                                    // download attachments
+                                    var attachmentStream = await client.GetStreamAsync(attachment.Url);
+                                    var attachmentFileName = attachment.Filename;
+
+                                    attachmentsToSend.Add(new FileAttachment(attachmentStream, attachmentFileName));
+                                }
+                            }
+
+                            // download attachments
+
+                            // attach attachments to message
+
+                            // send message
+
+                            if (attachmentsToSend.Count == 0)
+                                await adminSuggestionChannel.SendMessageAsync(title, false, builder.Build());
+                            else
+                                await adminSuggestionChannel.SendFilesAsync(attachmentsToSend, title, false, builder.Build());
                         }
                     }
 
