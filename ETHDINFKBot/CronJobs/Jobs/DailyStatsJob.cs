@@ -163,7 +163,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                 var threads = await pullRequestChannel.GetActiveThreadsAsync();
                 var messages = await pullRequestChannel.GetMessagesAsync(100).FlattenAsync();
 
-                foreach (var message in messages)
+                foreach (IMessage message in messages)
                 {
                     bool skip = false;
                     // loop trough users that reacted with any reaction
@@ -187,34 +187,42 @@ namespace ETHDINFKBot.CronJobs.Jobs
                     if (skip)
                         continue;
 
+                    if (message.Type == MessageType.ThreadCreated || message.Type == MessageType.ThreadStarterMessage || message.Type == MessageType.ThreadCreated)
+                        continue;
 
                     // check if any users are left to be pinged
-
-                    if (usersToPing.Count > 0)
+                    try
                     {
-                        foreach (var thread in threads)
+                        if (usersToPing.Count > 0)
                         {
-                            if (thread.Id == message.Id)
-                            {
-                                // ping users
-                                string pingString = "Would ping to react on this message: ";
-                                foreach (var user in usersToPing)
-                                {
-                                    pingString += $"{user}; ";
-                                }
+                            var thread = threads.FirstOrDefault(i => i.Id == message.Id);
 
+                            // ping users
+                            string pingString = "Following admins are too lazy to react: ";
+                            foreach (var user in usersToPing)
+                                pingString += $"<@{user}> ";
+
+                            if (thread != null)
+                            {
                                 await thread.SendMessageAsync(pingString);
                             }
                             else
                             {
                                 // thread not found create for the current message
-                                await pullRequestChannel.CreateThreadAsync("Discussion (Non automatic)", message: message);
+                                var threadCreated = await pullRequestChannel.CreateThreadAsync("Discussion (Non automatic)", message: message);
+                                await threadCreated.SendMessageAsync(pingString);
                             }
+
                         }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.ToString());
                     }
                 }
             }
         }
+
 
         // TODO Alot of duplicate code rework that
 

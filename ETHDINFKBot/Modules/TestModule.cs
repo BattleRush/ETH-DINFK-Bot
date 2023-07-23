@@ -75,8 +75,9 @@ namespace ETHDINFKBot.Modules
                         var name = reader.GetString(1);
                         users.Add(new SocialCreditUser()
                         {
-                            Id = id, Name = name,
-                            Transactions = new List<SocialCreditTransaction>() {  }
+                            Id = id,
+                            Name = name,
+                            Transactions = new List<SocialCreditTransaction>() { }
                         });
 
                     }
