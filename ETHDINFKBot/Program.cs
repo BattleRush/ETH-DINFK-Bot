@@ -143,7 +143,7 @@ namespace ETHDINFKBot
                        services.AddCronJob<DailyCleanup>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"50 * * * *"; }); // Changed to every hour at 30 mins
 
                        // TODO adjust for summer time in CET/CEST
-                       services.AddCronJob<DailyStatsJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"27 12 * * *"; }); // 11 15 urc
+                       services.AddCronJob<DailyStatsJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"30 11 * * *"; }); // 11 15 urc
 
                        // TODO adjust for summer time in CET/CEST
                        // TODO Enable for Maria DB

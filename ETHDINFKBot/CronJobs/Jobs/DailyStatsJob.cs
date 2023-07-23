@@ -160,6 +160,8 @@ namespace ETHDINFKBot.CronJobs.Jobs
             var pullRequestChannel = guild.GetTextChannel(816279194321420308); // TODO 
             if (pullRequestChannel != null)
             {
+                var currentUsersToPing = usersToPing.ToList();
+
                 var threads = await pullRequestChannel.GetActiveThreadsAsync();
                 var messages = await pullRequestChannel.GetMessagesAsync(100).FlattenAsync();
 
@@ -181,7 +183,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                         // remove this users from usersToPing
                         foreach (var user in users)
-                            usersToPing.Remove(user.Id);
+                            currentUsersToPing.Remove(user.Id);
                     }
 
                     if (skip)
@@ -193,13 +195,13 @@ namespace ETHDINFKBot.CronJobs.Jobs
                     // check if any users are left to be pinged
                     try
                     {
-                        if (usersToPing.Count > 0)
+                        if (currentUsersToPing.Count > 0)
                         {
                             var thread = threads.FirstOrDefault(i => i.Id == message.Id);
 
                             // ping users
                             string pingString = "Following admins are too lazy to react: ";
-                            foreach (var user in usersToPing)
+                            foreach (var user in currentUsersToPing)
                                 pingString += $"<@{user}> ";
 
                             if (thread != null)
