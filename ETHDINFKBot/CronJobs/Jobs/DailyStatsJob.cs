@@ -167,7 +167,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                 foreach (IMessage message in messages)
                 {
-                    if (message.Timestamp < DateTimeOffset.UtcNow.AddDays(-3))
+                    if (message.Timestamp > DateTimeOffset.UtcNow.AddDays(-3))
                         continue;
 
                     bool skip = false;
