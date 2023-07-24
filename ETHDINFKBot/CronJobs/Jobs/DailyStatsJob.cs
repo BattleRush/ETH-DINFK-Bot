@@ -167,6 +167,9 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                 foreach (IMessage message in messages)
                 {
+                    if (message.Timestamp > DateTimeOffset.UtcNow.AddDays(-3))
+                        continue;
+
                     bool skip = false;
                     // loop trough users that reacted with any reaction
                     foreach (var reaction in message.Reactions)
