@@ -185,7 +185,8 @@ ORDER BY MAX(PH.DiscordMessageId)";
                     var channel = item.GetTextChannel(ServerSuggestion);
                     if (channel != null)
                     {
-                        CleanUpOldMessages(channel, TimeSpan.FromDays(-7));
+                        // dont clean up server suggestions
+                        //CleanUpOldMessages(channel, TimeSpan.FromDays(-7));
 #if !DEBUG
                         RemovePingHell();
                         CleanupOldEmotes();
