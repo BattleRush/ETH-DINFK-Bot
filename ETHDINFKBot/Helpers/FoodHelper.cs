@@ -509,6 +509,18 @@ namespace ETHDINFKBot.Helpers
             return polymensaMenus;
         }
 
+        public void GetUZHMensaMenuWeek(string mensa)
+        {
+
+        }
+
+        public void GetUZHMensa(string link)
+        {
+
+        }
+
+        
+
         public List<(Menu Menu, List<int> AllergyIds)> GetUzhMenus(string day, string mensa, Language language = Language.English)
         {
             ///html/body/div[6]/section/div/section/div[2]/div[1]/div/div[2]/div/div/div/div/div/div/div/div/table/tbody[2]
