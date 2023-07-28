@@ -787,7 +787,7 @@ It is also likely that there are no menus currently available today." + weekendS
 
                 builder.WithCurrentTimestamp();
                 builder.AddField($"{Program.CurrentPrefix}food help", "This message :)");
-                builder.AddField($"{Program.CurrentPrefix}food <lunch|dinner>", $"Retreived food info. If the user has no settings then default mensas are retreived.{Environment.NewLine}" +
+                builder.AddField($"{Program.CurrentPrefix}food <mon|tue|wed|thu|fri> <lunch|dinner>", $"Retreived food info. If the user has no settings then default mensas are retreived.{Environment.NewLine}" +
                     $"Optional: Time parameter 'lunch' or 'dinner'. If its not provided then the bot send currently appropriate menus depending on the time of day.");
                 builder.AddField($"{Program.CurrentPrefix}food fav {Program.CurrentPrefix}food settings", $"Edit your favourite restaurants and food preferences which are used when the user calls {Program.CurrentPrefix}food");
                 builder.AddField($"{Program.CurrentPrefix}food allergies", "Informations about the Allergy icons");
