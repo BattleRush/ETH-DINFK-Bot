@@ -840,63 +840,69 @@ It is also likely that there are no menus currently available today." + weekendS
             [Priority(10)]
             public async Task FoodSettings()
             {
-                var currentUser = Context.Message.Author;
-                var currentUserId = currentUser.Id;
-
-
-                var userMenuSetting = FoodDBManager.GetUserFoodSettings(currentUserId);
-                var userFavRestaurants = FoodDBManager.GetUsersFavouriteRestaurants(currentUserId);
-                var availableRestaurants = FoodDBManager.GetAllRestaurants();
-
-
-                if (userMenuSetting == null)
-                    userMenuSetting = new MenuUserSetting();
-
-                // Get Current settings
-                // Get Current faved restaurants
-
-                EmbedBuilder builder = new EmbedBuilder();
-
-                builder.WithTitle($"Food settings for {currentUser.Username}"); // TODO Nickname
-
-                builder.WithColor(0, 0, 255);
-
-                builder.WithThumbnailUrl(currentUser.GetAvatarUrl() ?? currentUser.GetDefaultAvatarUrl());
-
-                builder.WithCurrentTimestamp();
-                builder.WithDescription(@"You can click on the buttons bellow to adjust your settings. Blue buttons mean active setting, red meaning inactive.");
-                builder.WithAuthor(currentUser);
-                //builder.AddField("test", "test");
-
-                var builderComponent = new ComponentBuilder();
-
                 try
                 {
-                    builderComponent.WithButton("Filter Vegetarian", $"food-fav-vegetarian", userMenuSetting.VegetarianPreference ? ButtonStyle.Primary : ButtonStyle.Danger, Emote.Parse($"<:food_vegetarian:1017751739648188487>"), null, false, 0);
-                    builderComponent.WithButton("Filter Vegan", $"food-fav-vegan", userMenuSetting.VeganPreference ? ButtonStyle.Primary : ButtonStyle.Danger, Emote.Parse($"<:food_vegan:1017751741455937536>"), null, false, 0);
-                    builderComponent.WithButton("Show all nutritions stats", $"food-fav-nutritions", userMenuSetting.FullNutritions ? ButtonStyle.Primary : ButtonStyle.Danger, null/*Emote.Parse($"<:food_vegan:1017751741455937536>")*/, null, false, 0);
-                    builderComponent.WithButton("Show Allergies", $"food-fav-allergies", userMenuSetting.DisplayAllergies ? ButtonStyle.Primary : ButtonStyle.Danger, null/*Emote.Parse($"<:food_vegan:1017751741455937536>")*/, null, false, 0);
+                    var currentUser = Context.Message.Author;
+                    var currentUserId = currentUser.Id;
 
-                    var favedRestaurantIds = userFavRestaurants.Select(i => i.RestaurantId);
 
-                    int row = 1;
-                    foreach (var restaurantLocationGroup in availableRestaurants.GroupBy(i => i.Location))
+                    var userMenuSetting = FoodDBManager.GetUserFoodSettings(currentUserId);
+                    var userFavRestaurants = FoodDBManager.GetUsersFavouriteRestaurants(currentUserId);
+                    var availableRestaurants = FoodDBManager.GetAllRestaurants();
+
+
+                    if (userMenuSetting == null)
+                        userMenuSetting = new MenuUserSetting();
+
+                    // Get Current settings
+                    // Get Current faved restaurants
+
+                    EmbedBuilder builder = new EmbedBuilder();
+
+                    builder.WithTitle($"Food settings for {currentUser.Username}"); // TODO Nickname
+
+                    builder.WithColor(0, 0, 255);
+
+                    builder.WithThumbnailUrl(currentUser.GetAvatarUrl() ?? currentUser.GetDefaultAvatarUrl());
+
+                    builder.WithCurrentTimestamp();
+                    builder.WithDescription(@"You can click on the buttons bellow to adjust your settings. Blue buttons mean active setting, red meaning inactive.");
+                    builder.WithAuthor(currentUser);
+                    //builder.AddField("test", "test");
+
+                    var builderComponent = new ComponentBuilder();
+
+                    try
                     {
-                        // Currently only supports only 4 locations with 5 restaurants each
+                        builderComponent.WithButton("Filter Vegetarian", $"food-fav-vegetarian", userMenuSetting.VegetarianPreference ? ButtonStyle.Primary : ButtonStyle.Danger, Emote.Parse($"<:food_vegetarian:1017751739648188487>"), null, false, 0);
+                        builderComponent.WithButton("Filter Vegan", $"food-fav-vegan", userMenuSetting.VeganPreference ? ButtonStyle.Primary : ButtonStyle.Danger, Emote.Parse($"<:food_vegan:1017751741455937536>"), null, false, 0);
+                        builderComponent.WithButton("Show all nutritions stats", $"food-fav-nutritions", userMenuSetting.FullNutritions ? ButtonStyle.Primary : ButtonStyle.Danger, null/*Emote.Parse($"<:food_vegan:1017751741455937536>")*/, null, false, 0);
+                        builderComponent.WithButton("Show Allergies", $"food-fav-allergies", userMenuSetting.DisplayAllergies ? ButtonStyle.Primary : ButtonStyle.Danger, null/*Emote.Parse($"<:food_vegan:1017751741455937536>")*/, null, false, 0);
 
-                        foreach (var restaurant in restaurantLocationGroup)
+                        var favedRestaurantIds = userFavRestaurants.Select(i => i.RestaurantId);
+
+                        int row = 1;
+                        foreach (var restaurantLocationGroup in availableRestaurants.GroupBy(i => i.Location))
                         {
-                            builderComponent.WithButton(restaurant.Name, $"food-fav-{restaurant.RestaurantId}", favedRestaurantIds.Contains(restaurant.RestaurantId) ? ButtonStyle.Primary : ButtonStyle.Danger, null, null, false, row);
-                        }
+                            // Currently only supports only 4 locations with 5 restaurants each
 
-                        row++;
+                            foreach (var restaurant in restaurantLocationGroup)
+                            {
+                                builderComponent.WithButton(restaurant.Name, $"food-fav-{restaurant.RestaurantId}", favedRestaurantIds.Contains(restaurant.RestaurantId) ? ButtonStyle.Primary : ButtonStyle.Danger, null, null, false, row);
+                            }
+
+                            row++;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        throw ex;
                     }
                 }
                 catch (Exception ex)
                 {
-
+                    await Context.Channel.SendMessageAsync(ex.ToString());
                 }
-
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build(), components: builderComponent.Build());
             }
