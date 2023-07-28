@@ -362,8 +362,6 @@ namespace ETHDINFKBot.Modules
                 if (AllowedToRun(BotPermissionType.EnableType2Commands))
                     return;
 
-                await Context.Message.Channel.SendMessageAsync("Command entered");
-
                 var meal = MealTime.Lunch;
 
                 var searchDate = DateTime.UtcNow.UtcToLocalDateTime(Program.TimeZoneInfo); /// Make it passable by param
