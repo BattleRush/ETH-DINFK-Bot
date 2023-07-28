@@ -840,25 +840,26 @@ It is also likely that there are no menus currently available today." + weekendS
             [Priority(10)]
             public async Task FoodSettings()
             {
+
+                var currentUser = Context.Message.Author;
+                var currentUserId = currentUser.Id;
+
+
+                var userMenuSetting = FoodDBManager.GetUserFoodSettings(currentUserId);
+                var userFavRestaurants = FoodDBManager.GetUsersFavouriteRestaurants(currentUserId);
+                var availableRestaurants = FoodDBManager.GetAllRestaurants();
+
+
+                if (userMenuSetting == null)
+                    userMenuSetting = new MenuUserSetting();
+
+                // Get Current settings
+                // Get Current faved restaurants
+
+                EmbedBuilder builder = new EmbedBuilder();
+                
                 try
                 {
-                    var currentUser = Context.Message.Author;
-                    var currentUserId = currentUser.Id;
-
-
-                    var userMenuSetting = FoodDBManager.GetUserFoodSettings(currentUserId);
-                    var userFavRestaurants = FoodDBManager.GetUsersFavouriteRestaurants(currentUserId);
-                    var availableRestaurants = FoodDBManager.GetAllRestaurants();
-
-
-                    if (userMenuSetting == null)
-                        userMenuSetting = new MenuUserSetting();
-
-                    // Get Current settings
-                    // Get Current faved restaurants
-
-                    EmbedBuilder builder = new EmbedBuilder();
-
                     builder.WithTitle($"Food settings for {currentUser.Username}"); // TODO Nickname
 
                     builder.WithColor(0, 0, 255);
