@@ -166,6 +166,9 @@
     <None Update="Images\Icons\Food\vegetarian.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Images\Icons\Food\verified.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Images\Icons\Integer_16x.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
