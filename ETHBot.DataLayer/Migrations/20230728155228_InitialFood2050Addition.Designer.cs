@@ -3,6 +3,7 @@ using System;
 using ETHBot.DataLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ETHBot.DataLayer.Migrations
 {
     [DbContext(typeof(ETHBotDBContext))]
-    partial class ETHBotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20230728155228_InitialFood2050Addition")]
+    partial class InitialFood2050Addition
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -861,9 +863,6 @@ namespace ETHBot.DataLayer.Migrations
 
                     b.Property<bool>("OffersLunch")
                         .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("TimeParameter")
-                        .HasColumnType("longtext");
 
                     b.HasKey("RestaurantId");
 

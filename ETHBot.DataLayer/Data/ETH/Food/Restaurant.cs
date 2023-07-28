@@ -18,7 +18,10 @@ namespace ETHBot.DataLayer.Data.ETH.Food
         public string Name { get; set; }
         public string ImageUrl { get; set; }
         public string MenuUrl { get; set; }
+        
+        // for food2050 this is location name
         public string InternalName { get; set; }
+        // for food2050 this is mensa name
         public string AdditionalInternalName { get; set; }
 
         //public bool OffersBreakfast { get; set; }
@@ -31,9 +34,12 @@ namespace ETHBot.DataLayer.Data.ETH.Food
 
         public RestaurantLocation Location { get; set; } // TODO Enum
 
+        public bool IsFood2050Supported { get; set; }
+        public string? TimeParameter { get; set; }
+
         // Location 
         // 1 - ETH Zentrum
-        // 2 - ETH Höngg
+        // 2 - ETH Hï¿½ngg
         // 3 - UZH Zentrum
         // 4 - UZH Irchel
     }

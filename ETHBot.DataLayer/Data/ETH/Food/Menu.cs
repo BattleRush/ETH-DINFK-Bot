@@ -28,6 +28,9 @@ namespace ETHBot.DataLayer.Data.ETH.Food
         public double Fat { get; set; }
         public double Carbohydrates { get; set; }
         public double Salt { get; set; }
+        public string? DirectMenuImageUrl { get; set; }
+
+        // TODO add field PastSimilarPicture if a menu from the past has the same picture as this one
 
         [ForeignKey("MenuImage")]
         public int? MenuImageId { get; set; }

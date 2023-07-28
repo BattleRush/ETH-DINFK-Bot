@@ -3,6 +3,7 @@ using ETHBot.DataLayer.Data.ETH.Food;
 using ETHDINFKBot.Data;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -70,7 +71,7 @@ namespace ETHDINFKBot.Helpers
                 if (restaurant.IsOpen)
                 {
                     if (fixOnly)
-                    {               
+                    {
                         var allMenus = FoodDBManager.GetMenusByDay(DateTime.Now, restaurant.RestaurantId);
                         if (allMenus.Count != 0)
                             continue; // We have some menus loaded do not reload
@@ -125,8 +126,44 @@ namespace ETHDINFKBot.Helpers
                         case RestaurantLocation.UZH_Zentrum:
                         case RestaurantLocation.UZH_Irchel:
 
-                            var uzhMenuInfos = GetUzhMenus(GetUZHDayOfTheWeek(), restaurant.InternalName); 
-                            
+                            if (restaurant.IsFood2050Supported)
+                            {
+                                try
+                                {
+                                    var menus = GetUZHMensaMenuWeek(
+                                        restaurant.InternalName,
+                                        restaurant.AdditionalInternalName,
+                                        restaurant.TimeParameter
+                                    );
+
+                                    foreach (var currentMenu in menus)
+                                    {
+                                        try
+                                        {
+                                            currentMenu.RestaurantId = restaurant.RestaurantId;// Link the menu to restaurant
+
+                                            var dbMenu = FoodDBManager.CreateMenu(currentMenu);
+
+                                            // Link menu with allergies for now no allergies handling
+                                            /*foreach (var allergyId in menu.AllergyIds)
+                                            {
+                                                FoodDBManager.CreateMenuAllergy(menu.MenuId, allergyId);
+                                            }*/
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            _logger.LogError("Exception while loading UZH menu: ", ex);
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogError("Exception while loading UZH menu: ", ex);
+                                }
+                                return;
+                            }
+
+                            var uzhMenuInfos = GetUzhMenus(GetUZHDayOfTheWeek(), restaurant.InternalName);
                             if (uzhMenuInfos == null)
                                 continue;
                             //await Context.Channel.SendMessageAsync($"Found for {restaurant.Name}: {uzhMenuInfos.Count} menus");
@@ -328,13 +365,13 @@ namespace ETHDINFKBot.Helpers
                     var priceStringNode = menuDoc.DocumentNode.SelectNodes("//*[@class=\"price\"]");
 
                     string priceString = "";
-                    if(priceStringNode != null)
+                    if (priceStringNode != null)
                         priceString = priceStringNode.FirstOrDefault()?.InnerText.Replace("\t", "") ?? ""; // polymensa incapable to put prices on for whatever reason
-                    else 
+                    else
                         priceString = "-1"; // sometimes they dont have prices on the site
 
                     double price = -1;
-                    
+
                     if (priceString.Contains("STUD"))
                     {
                         // TODO Exception handling
@@ -353,7 +390,7 @@ namespace ETHDINFKBot.Helpers
 
                     if (menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-labels\"]")?.InnerHtml.ToLower().Contains("vegan") == true)
                         currentMenu.IsVegan = true;
-                   
+
                     string allergiesString = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"allergen-info\"]")?.InnerText.Replace("\t", "").Trim() ?? "";
 
                     allergiesString = HttpUtility.HtmlDecode(allergiesString);
@@ -509,17 +546,76 @@ namespace ETHDINFKBot.Helpers
             return polymensaMenus;
         }
 
-        public void GetUZHMensaMenuWeek(string mensa)
+        public List<Menu> GetUZHMensaMenuWeek(string location, string mensa, string time = null)
         {
+            var menus = new List<Menu>();
 
+            string timeString = time == null ? "" : $"{time}/";
+            string url = $"https://app.food2050.ch/_next/data/fWt87G0z-iWkq_diJzXc_/{location}/{mensa}/menu/{timeString}weekly.json";
+
+            WebClient client = new WebClient();
+            string json = client.DownloadString(url);
+
+            var result = JsonConvert.DeserializeObject<Food2050WeeklyResponse>(json);
+            var categories = result.pageProps.query.location.kitchen.digitalMenu.categories;
+
+            foreach (var category in categories)
+            {
+                if (category.__typename != "DigitalMenuCategory")
+                    continue;
+
+                foreach (var item in category.items)
+                {
+                    foreach (var recipe in item.dailyRecipies)
+                    {
+                        if (recipe?.recipe == null)
+                            continue;
+
+                        // example https://app.food2050.ch/_next/data/fWt87G0z-iWkq_diJzXc_/uzh-zentrum/untere-mensa/food-profile/2023-07-28-mittag-butcher.json?locationSlug=uzh-zentrum&kitchenSlug=untere-mensa&slug=2023-07-28-mittag-butcher
+                        var menuUrl = $"https://app.food2050.ch/_next/data/fWt87G0z-iWkq_diJzXc_/{location}/{mensa}/food-profile/{recipe.recipe.slug}.json";
+
+                        string menuJson = client.DownloadString(menuUrl);
+                        var menuResult = JsonConvert.DeserializeObject<Food2050MenuResponse>(menuJson);
+
+                        var responseRecipe = menuResult.pageProps.recipe;
+
+                        double price = 0;
+
+                        foreach (var priceItem in responseRecipe.prices)
+                        {
+                            if (priceItem.category.title == "Student")
+                            {
+                                price = priceItem.amount;
+                                break;
+                            }
+                        }
+
+                        var imageUrl = responseRecipe.imageUrl ?? "";
+
+                        var menu = new Menu()
+                        {
+                            Name = item.displayName,
+                            Description = responseRecipe.title_de,
+                            Amount = price,
+                            IsVegan = responseRecipe.isVegan,
+                            IsVegetarian = responseRecipe.isVegetarian,
+                            Calories = responseRecipe.energy,
+                            Protein = Math.Round(responseRecipe.protein ?? 0, 1),
+                            Carbohydrates = Math.Round(responseRecipe.carbohydrates ?? 0, 1),
+                            Fat = Math.Round(responseRecipe.fat ?? 0, 1),
+                            Salt = Math.Round(responseRecipe.salt ?? 0, 1),
+                            DirectMenuImageUrl = responseRecipe.imageUrl,
+                            DateTime = recipe.date.AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(recipe.date) ? 2 : 1)
+                        };
+
+                        menus.Add(menu);
+                        System.Threading.Thread.Sleep(1000);
+                    }
+                }
+            }
+
+            return menus;
         }
-
-        public void GetUZHMensa(string link)
-        {
-
-        }
-
-        
 
         public List<(Menu Menu, List<int> AllergyIds)> GetUzhMenus(string day, string mensa, Language language = Language.English)
         {
@@ -543,7 +639,7 @@ namespace ETHDINFKBot.Helpers
                 // TODO Log
                 return null; // Likely a HTTP Error
             }
-            
+
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
 
@@ -580,7 +676,7 @@ namespace ETHDINFKBot.Helpers
                     currentMenu.Amount = double.Parse(priceField.Split('/').First(), NumberStyles.Any, CultureInfo.InvariantCulture);
 
                     var descriptionNode = menuDoc.DocumentNode.SelectSingleNode("//p[1]");
-                    
+
                     // TODO Proper HTML Encoding/Decoding
                     var descriptionLines = descriptionNode.InnerHtml.Replace("&amp;", "&")
                         .Trim()
@@ -685,7 +781,7 @@ namespace ETHDINFKBot.Helpers
                     var allergyIds = new List<int>();
 
                     var allergyNode = menuDoc.DocumentNode.SelectNodes("//p").Last();
-                    if(allergyNode != null && allergyNode.InnerText.ToLower().Contains("allergikerinformationen"))
+                    if (allergyNode != null && allergyNode.InnerText.ToLower().Contains("allergikerinformationen"))
                     {
                         string allergiesString = allergyNode.InnerText.Trim();
                         if (allergiesString.Contains(":"))
@@ -813,7 +909,7 @@ namespace ETHDINFKBot.Helpers
                 return dbImages.First();
             }
             else
-            {              
+            {
                 var imageLinks = GetImageFromGoogle(searchTerm, language);
 
                 // This is to fix ratelimit hits
@@ -830,7 +926,7 @@ namespace ETHDINFKBot.Helpers
 
                         imageLinks = GetImageFromGoogle(searchTerm, language);
                     }
-                   
+
                     /*if (imageLinks.Count == 0)
                     {
                         searchTerm = menu.Name + " " + menu.Description;
@@ -887,7 +983,7 @@ namespace ETHDINFKBot.Helpers
                 System.Threading.Thread.Sleep(TimeSpan.FromSeconds(10));
 
                 // TODO If description starts with "mit" then maybe also add name infront
-                
+
                 dbImages = FoodDBManager.CreateMenuImages(successfullyResolvedImages, searchTerm, language);
 
                 if (dbImages.Count > 0)
@@ -954,7 +1050,7 @@ namespace ETHDINFKBot.Helpers
 
             return day;
         }
-      
+
 
     }
 }

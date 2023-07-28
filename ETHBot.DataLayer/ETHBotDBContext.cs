@@ -103,7 +103,7 @@ namespace ETHBot.DataLayer
 
 
         public DbSet<Allergy> Allergies { get; set; }
-        public DbSet<DiscordUserFavouriteRestaturant> DiscordUserFavouriteRestaturants { get; set; }
+        public DbSet<DiscordUserFavouriteRestaurant> DiscordUserFavouriteRestaurants { get; set; }
         public DbSet<Menu> Menus { get; set; }
         public DbSet<MenuAllergy> MenuAllergies { get; set; }
         public DbSet<MenuImage> MenuImages { get; set; }
@@ -111,6 +111,7 @@ namespace ETHBot.DataLayer
         public DbSet<Restaurant> Restaurants { get; set; }
         public DbSet<RestaurantOpeningTime> RestaurantOpeningTimes { get; set; }
 
+        public DbSet<Food2050CO2Entry> Food2050CO2Entries { get; set; }
 
         /*
 

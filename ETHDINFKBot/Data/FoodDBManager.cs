@@ -46,6 +46,26 @@ namespace ETHDINFKBot.Data
             }
         }
 
+        public void AddFood2050CO2Entry(Food2050CO2Entry entry)
+        {
+            using (ETHBotDBContext context = new ETHBotDBContext())
+            {
+                if(entry.CO2Delta > 0)
+                    return;
+
+                context.Food2050CO2Entries.Add(entry);
+                context.SaveChanges();
+            }
+        }
+
+        public List<Restaurant> GetAllFood2050Restaurants()
+        {
+            using (ETHBotDBContext context = new ETHBotDBContext())
+            {
+                return context.Restaurants.Where(i => i.IsFood2050Supported).ToList();
+            }
+        }
+
         public Restaurant GetRestaurantByInternalName(string internalName)
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
@@ -231,11 +251,11 @@ namespace ETHDINFKBot.Data
             return true;
         }
 
-        public List<DiscordUserFavouriteRestaturant> GetUsersFavouriteRestaurants(ulong discordUserId)
+        public List<DiscordUserFavouriteRestaurant> GetUsersFavouriteRestaurants(ulong discordUserId)
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
-                return context.DiscordUserFavouriteRestaturants.Where(i => i.DiscordUserId == discordUserId).ToList();
+                return context.DiscordUserFavouriteRestaurants.Where(i => i.DiscordUserId == discordUserId).ToList();
             }
         }
 
@@ -245,7 +265,7 @@ namespace ETHDINFKBot.Data
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    context.DiscordUserFavouriteRestaturants.Add(new DiscordUserFavouriteRestaturant()
+                    context.DiscordUserFavouriteRestaurants.Add(new DiscordUserFavouriteRestaurant()
                     {
                         DiscordUserId = discordUserId,
                         RestaurantId = restaurantId
@@ -268,12 +288,12 @@ namespace ETHDINFKBot.Data
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    var returnedFavRestaurant = context.DiscordUserFavouriteRestaturants
+                    var returnedFavRestaurant = context.DiscordUserFavouriteRestaurants
                         .SingleOrDefault(i => i.DiscordUserId == discordUserId && i.RestaurantId == restaurantId);
 
                     if (returnedFavRestaurant != null)
                     {
-                        context.DiscordUserFavouriteRestaturants.Remove(returnedFavRestaurant);
+                        context.DiscordUserFavouriteRestaurants.Remove(returnedFavRestaurant);
                         context.SaveChanges();
 
                         return true;
@@ -288,13 +308,13 @@ namespace ETHDINFKBot.Data
             return false;
         }
 
-        public DiscordUserFavouriteRestaturant GetUsersFavouriteRestaurant(ulong discordUserId, int restaurantId)
+        public DiscordUserFavouriteRestaurant GetUsersFavouriteRestaurant(ulong discordUserId, int restaurantId)
         {
             try
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.DiscordUserFavouriteRestaturants.SingleOrDefault(i => i.DiscordUserId == discordUserId && i.RestaurantId == restaurantId);
+                    return context.DiscordUserFavouriteRestaurants.SingleOrDefault(i => i.DiscordUserId == discordUserId && i.RestaurantId == restaurantId);
                 }
             }
             catch (Exception ex)

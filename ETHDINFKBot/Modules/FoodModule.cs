@@ -51,14 +51,16 @@ namespace ETHDINFKBot.Modules
 
                     // Temp workaround to clear cache periodically as there wont be more than 100 images a day
                     // TODO Clear cache once a day at midnight
-                    if(FoodImageCache.Count > 100)
+                    if (FoodImageCache.Count > 100)
                         FoodImageCache.Clear();
 
-                    string imageUrl = menuImg?.MenuImageUrl ?? Program.Client.CurrentUser.GetAvatarUrl();
+                    string imageUrl = menu.DirectMenuImageUrl;
+                    if (string.IsNullOrEmpty(imageUrl))
+                        imageUrl = menuImg?.MenuImageUrl ?? Program.Client.CurrentUser.GetAvatarUrl();
 
-                    if(FoodImageCache.ContainsKey(imageUrl))
+                    if (FoodImageCache.ContainsKey(imageUrl))
                     {
-                        bitmap = FoodImageCache[imageUrl]; 
+                        bitmap = FoodImageCache[imageUrl];
                     }
                     else
                     {
@@ -271,6 +273,13 @@ namespace ETHDINFKBot.Modules
             if (foodImage.Bitmap != null)
             {
                 canvas.DrawBitmap(foodImage.Bitmap, new SKPoint(left, usedHeight));
+
+                if (!string.IsNullOrWhiteSpace(menu.DirectMenuImageUrl))
+                {
+                    var verifiedBitmap = SKBitmap.Decode(Path.Combine(pathToImage, "verified.png"));
+                    canvas.DrawBitmap(verifiedBitmap, new SKPoint(left, usedHeight));
+                }
+
                 if (debug)
                 {
                     SKColor shadowColor = new SKColor(0, 0, 0, 128);
@@ -346,7 +355,7 @@ namespace ETHDINFKBot.Modules
 
         [Command("food")]
         [Priority(1)]
-        public async Task DrawFoowImages(string time = "", bool debug = false)
+        public async Task DrawFoodImages(string day = null, string time = null, bool debug = false)
         {
             try
             {
@@ -359,11 +368,17 @@ namespace ETHDINFKBot.Modules
                 if (searchDate.Hour < 6)
                 {
                     await Context.Message.Channel.SendMessageAsync("You are here too early. The menus will be loading during the night. Come back in the morning. Good night <:sleep:851469700453367838>", messageReference: new MessageReference(Context.Message.Id));
-                    return;                
+                    return;
                 }
 
                 if (searchDate.Hour >= 14)
                     meal = MealTime.Dinner;
+
+                if (day == null)
+                    day = "";
+
+                if (time == null)
+                    time = day; // in this case day is actually time
 
                 if (time.ToLower() == "lunch")
                     meal = MealTime.Lunch;
@@ -372,6 +387,35 @@ namespace ETHDINFKBot.Modules
 
                 var author = Context.Message.Author;
                 var userId = author.Id;
+
+                DayOfWeek dayOfWeek = DateTime.UtcNow.DayOfWeek;
+
+                if (day.ToLower() == "monday" || day.ToLower() == "mon")
+                    dayOfWeek = DayOfWeek.Monday;
+                else if (day.ToLower() == "tuesday" || day.ToLower() == "tue")
+                    dayOfWeek = DayOfWeek.Tuesday;
+                else if (day.ToLower() == "wednesday" || day.ToLower() == "wed")
+                    dayOfWeek = DayOfWeek.Wednesday;
+                else if (day.ToLower() == "thursday" || day.ToLower() == "thu")
+                    dayOfWeek = DayOfWeek.Thursday;
+                else if (day.ToLower() == "friday" || day.ToLower() == "fri")
+                    dayOfWeek = DayOfWeek.Friday;
+                else if (day.ToLower() == "saturday" || day.ToLower() == "sat")
+                    dayOfWeek = DayOfWeek.Saturday;
+                else if (day.ToLower() == "sunday" || day.ToLower() == "sun")
+                    dayOfWeek = DayOfWeek.Sunday;
+
+                // get this weeks monday
+                var date = DateTime.UtcNow;
+                date = date.AddDays(-(int)date.DayOfWeek + (int)DayOfWeek.Monday);
+
+                // remove time
+                date = date.Date;
+
+                while (date.DayOfWeek != dayOfWeek)
+                    date = date.AddDays(1);
+
+                searchDate = date;
 
                 //// Only allow bot owner go into debug mode
                 // if (userId != Program.ApplicationSetting.Owner)
@@ -455,9 +499,9 @@ It is also likely that there are no menus currently available today." + weekendS
                 var largeFont = DrawingHelper.LargeTextPaint;
                 largeFont.FakeBoldText = true;
 
-                bool mergeMode = userSettings?.VegetarianPreference == true 
+                bool mergeMode = userSettings?.VegetarianPreference == true
                                 || userSettings?.VeganPreference == true
-                                || currentMenus.Count() > 5;      
+                                || currentMenus.Count() > 5;
 
                 if (mergeMode)
                 {
@@ -484,6 +528,10 @@ It is also likely that there are no menus currently available today." + weekendS
 
                                 int currentTop = 0;
                                 string restaurantName = restaurant.Key.Name;
+
+                                // add date and day of week for restaurant
+                                restaurantName += $" ({searchDate.ToString("dd.MM.yyyy")}) - {searchDate.DayOfWeek}";
+
                                 if (debug)
                                     restaurantName += $" (Id: {restaurant.Key.RestaurantId})";
 
@@ -571,6 +619,10 @@ It is also likely that there are no menus currently available today." + weekendS
 
                         int currentTop = 0;
                         string restaurantName = restaurant.Key.Name;
+
+                        // add date and day of week for restaurant
+                        restaurantName += $" ({searchDate.ToString("dd.MM.yyyy")}) - {searchDate.DayOfWeek}";
+
                         if (debug)
                             restaurantName += $" (Id: {restaurant.Key.RestaurantId})";
 
@@ -706,7 +758,7 @@ It is also likely that there are no menus currently available today." + weekendS
             catch (Exception ex)
             {
                 // TODO check if the error code can be extracted from the exception directly
-                if(ex.Message.Contains("50035"))
+                if (ex.Message.Contains("50035"))
                 {
                     await Context.Channel.SendMessageAsync($"Think ya funny <@{Context.Message.Author.Id}>?");
                 }

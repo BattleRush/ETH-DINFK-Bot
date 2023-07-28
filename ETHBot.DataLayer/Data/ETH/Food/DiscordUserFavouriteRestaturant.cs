@@ -9,7 +9,7 @@ using ETHBot.DataLayer.Data.Discord;
 
 namespace ETHBot.DataLayer.Data.ETH.Food
 {
-    public class DiscordUserFavouriteRestaturant
+    public class DiscordUserFavouriteRestaurant
     {        
         [Key, Column(Order = 0)]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
