@@ -10,7 +10,7 @@ namespace ETHBot.DataLayer.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameTable("DiscordUserFavouriteRestaturants", null, "DiscordUserFavouriteRestaurants");
+            /*migrationBuilder.RenameTable("DiscordUserFavouriteRestaturants", null, "DiscordUserFavouriteRestaurants");
 
             migrationBuilder.AddColumn<bool>(
                 name: "IsFood2050Supported",
@@ -49,22 +49,22 @@ namespace ETHBot.DataLayer.Migrations
                         principalColumn: "RestaurantId",
                         onDelete: ReferentialAction.Cascade);
                 })
-                .Annotation("MySql:CharSet", "utf8mb4");
+                .Annotation("MySql:CharSet", "utf8mb4");*/
 
             // deleting the wrong intex with typo
-            migrationBuilder.DropIndex(
+            /*migrationBuilder.DropIndex(
                 name: "IX_DiscordUserFavouriteRestaturants_DiscordUserId",
                 table: "DiscordUserFavouriteRestaturants");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DiscordUserFavouriteRestaurants_DiscordUserId",
                 table: "DiscordUserFavouriteRestaurants",
-                column: "DiscordUserId");
+                column: "DiscordUserId");*/
 
-            migrationBuilder.CreateIndex(
+            /*migrationBuilder.CreateIndex(
                 name: "IX_Food2050CO2Entries_RestaurantId",
                 table: "Food2050CO2Entries",
-                column: "RestaurantId");
+                column: "RestaurantId");*/
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
