@@ -70,11 +70,9 @@ namespace ETHDINFKBot.Helpers
 
                 if (restaurant.IsOpen)
                 {
-                    int allMenuCount = 0;
                     if (fixOnly)
                     {
                         var allMenus = FoodDBManager.GetMenusByDay(DateTime.Now, restaurant.RestaurantId);
-                        allMenuCount = allMenus.Count;
                         if (allMenus.Count != 0)
                             continue; // We have some menus loaded do not reload
                     }
@@ -92,8 +90,9 @@ namespace ETHDINFKBot.Helpers
                         case RestaurantLocation.ETH_Hoengg:
 
                             // for sv restaurant go only into fix only mode because selenium would nuke me atm
-                            if (allMenuCount > 0)
-                                continue;
+                            var allMenus = FoodDBManager.GetMenusByDay(DateTime.Now, restaurant.RestaurantId);
+                            if (allMenus.Count != 0)
+                                continue; // We have some menus loaded do not reload
 
                             var today = DateTime.UtcNow.Date;
 
