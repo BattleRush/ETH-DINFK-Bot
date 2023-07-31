@@ -946,6 +946,8 @@ namespace ETHDINFKBot.Helpers
             }
             else
             {
+                return null; // atm disabled
+
                 var imageLinks = GetImageFromGoogle(searchTerm, language);
 
                 // This is to fix ratelimit hits
