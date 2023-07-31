@@ -54,6 +54,9 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                 var url = $"https://api.app.food2050.ch/";
 
+                // get utc time now in 2023-07-28T09:56:21.562Z format
+                var utcNow = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+
                 var payload = new
                 {
                     operationName = "KitchenStatsPerMinute",
@@ -61,7 +64,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                     {
                         kitchenSlug = restaurant.AdditionalInternalName,
                         locationSlug = restaurant.InternalName,
-                        timestamp = DateTime.Now
+                        timestamp = utcNow
                     },
                     query = "query KitchenStatsPerMinute($locationSlug: String!, $kitchenSlug: String!, $timestamp: DateTime!) {\n  location(id: $locationSlug) {\n    id\n    kitchen(slug: $kitchenSlug) {\n      id\n      publicLabel\n      statsPerMinute(\n        where: {timestamp: {lte: $timestamp}}\n        orderBy: {timestamp: desc}\n        take: 1\n      ) {\n        co2EmissionsGramsDelta\n        co2EmissionsGramsTotal\n        temperatureChangeStats {\n          temperatureChange\n          temperatureChangeDelta\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  climateRatingFromDegrees {\n    HIGHMinDegCelsius\n    MEDIUMMinDegCelsius\n    __typename\n  }\n}"
                 };
@@ -89,8 +92,8 @@ namespace ETHDINFKBot.CronJobs.Jobs
                         $"CO2 Delta: {co2EmissionsGramsDelta}g\n" +
                         $"CO2 Total: {co2EmissionsGramsTotal}g\n";
 
-                    var channel = Program.Client.GetGuild(747752542741725244).GetTextChannel(768600365602963496);
-                    await channel.SendMessageAsync(message);
+                    //var channel = Program.Client.GetGuild(747752542741725244).GetTextChannel(768600365602963496);
+                    //await channel.SendMessageAsync(message);
                     
                     foodDBManager.AddFood2050CO2Entry(new ETHBot.DataLayer.Data.ETH.Food.Food2050CO2Entry()
                     {
