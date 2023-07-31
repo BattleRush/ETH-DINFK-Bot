@@ -387,8 +387,17 @@ namespace ETHDINFKBot.Data
                     if (dbMenu != null)
                     {
                         // Menu exists dont create a new entry (TODO decide if it should delete)
-                        //return UpdateMenu(menu);
-                        return dbMenu;
+
+                        dbMenu.Description = menu.Description;
+                        dbMenu.Amount = menu.Amount;
+                        dbMenu.MenuImageId = menu.MenuImageId;
+                        dbMenu.DirectMenuImageUrl = menu.DirectMenuImageUrl;
+                        dbMenu.IsVegan = menu.IsVegan;
+                        dbMenu.IsVegetarian = menu.IsVegetarian;
+
+                        context.SaveChanges();
+
+                        return menu;
                     }
                     else
                     {
@@ -446,6 +455,9 @@ namespace ETHDINFKBot.Data
                         dbMenu.Description = menu.Description;
                         dbMenu.Name = menu.Name;
                         dbMenu.IsLocal = menu.IsLocal;
+                        dbMenu.MenuImageId = menu.MenuImageId;
+                        dbMenu.DirectMenuImageUrl = menu.DirectMenuImageUrl;
+                        
                         // TODO Rest me lazy
 
                         context.SaveChanges();

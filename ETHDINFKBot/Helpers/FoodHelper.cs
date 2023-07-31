@@ -70,9 +70,11 @@ namespace ETHDINFKBot.Helpers
 
                 if (restaurant.IsOpen)
                 {
+                    int allMenuCount = 0;
                     if (fixOnly)
                     {
                         var allMenus = FoodDBManager.GetMenusByDay(DateTime.Now, restaurant.RestaurantId);
+                        allMenuCount = allMenus.Count;
                         if (allMenus.Count != 0)
                             continue; // We have some menus loaded do not reload
                     }
@@ -89,35 +91,57 @@ namespace ETHDINFKBot.Helpers
                         case RestaurantLocation.ETH_Zentrum:
                         case RestaurantLocation.ETH_Hoengg:
 
-                            var svRestaurantMenuInfos = GetSVRestaurantMenu(restaurant.MenuUrl);
-
-                            if (svRestaurantMenuInfos == null)
+                            // for sv restaurant go only into fix only mode because selenium would nuke me atm
+                            if (allMenuCount > 0)
                                 continue;
-                            //await Context.Channel.SendMessageAsync($"Found for {restaurant.Name}: {svRestaurantMenuInfos.Count} menus");
 
-                            foreach (var svRestaurantMenu in svRestaurantMenuInfos)
+                            var today = DateTime.UtcNow.Date;
+
+                            List<DateTime> remainingWeekdays = new List<DateTime>();
+
+                            remainingWeekdays.Add(today);
+
+                            for (int i = 0; i < 5; i++)
                             {
-                                try
+                                var day = today.AddDays(i);
+                                if (day.DayOfWeek == DayOfWeek.Saturday || day.DayOfWeek == DayOfWeek.Sunday)
+                                    break;
+
+                                remainingWeekdays.Add(day);
+                            }
+
+                            foreach (var day in remainingWeekdays)
+                            {
+                                var svRestaurantMenuInfos = GetSVRestaurantMenu(restaurant.MenuUrl);
+
+                                if (svRestaurantMenuInfos == null)
+                                    continue;
+                                //await Context.Channel.SendMessageAsync($"Found for {restaurant.Name}: {svRestaurantMenuInfos.Count} menus");
+
+                                foreach (var svRestaurantMenu in svRestaurantMenuInfos)
                                 {
-                                    svRestaurantMenu.Menu.RestaurantId = restaurant.RestaurantId;// Link the menu to restaurant
-
-                                    var menuImage = GetImageForFood(svRestaurantMenu.Menu);
-
-                                    // Set image
-                                    if (menuImage != null)
-                                        svRestaurantMenu.Menu.MenuImageId = menuImage.MenuImageId;
-
-                                    var dbMenu = FoodDBManager.CreateMenu(svRestaurantMenu.Menu);
-
-                                    // Link menu with allergies
-                                    foreach (var allergyId in svRestaurantMenu.AllergyIds)
+                                    try
                                     {
-                                        FoodDBManager.CreateMenuAllergy(svRestaurantMenu.Menu.MenuId, allergyId);
+                                        svRestaurantMenu.Menu.RestaurantId = restaurant.RestaurantId;// Link the menu to restaurant
+
+                                        var menuImage = GetImageForFood(svRestaurantMenu.Menu);
+
+                                        // Set image
+                                        if (menuImage != null)
+                                            svRestaurantMenu.Menu.MenuImageId = menuImage.MenuImageId;
+
+                                        var dbMenu = FoodDBManager.CreateMenu(svRestaurantMenu.Menu);
+
+                                        // Link menu with allergies
+                                        foreach (var allergyId in svRestaurantMenu.AllergyIds)
+                                        {
+                                            FoodDBManager.CreateMenuAllergy(svRestaurantMenu.Menu.MenuId, allergyId);
+                                        }
                                     }
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogError("Exception while loading SV menu: ", ex);
+                                    catch (Exception ex)
+                                    {
+                                        _logger.LogError("Exception while loading SV menu: ", ex);
+                                    }
                                 }
                             }
                             break;
@@ -160,7 +184,7 @@ namespace ETHDINFKBot.Helpers
                                 {
                                     _logger.LogError("Exception while loading UZH menu: ", ex);
                                 }
-                                return;
+                                continue;
                             }
 
                             var uzhMenuInfos = GetUzhMenus(GetUZHDayOfTheWeek(), restaurant.InternalName);
@@ -980,7 +1004,7 @@ namespace ETHDINFKBot.Helpers
                     }
                 }
 
-                System.Threading.Thread.Sleep(TimeSpan.FromSeconds(10));
+                System.Threading.Thread.Sleep(TimeSpan.FromSeconds(2));
 
                 // TODO If description starts with "mit" then maybe also add name infront
 

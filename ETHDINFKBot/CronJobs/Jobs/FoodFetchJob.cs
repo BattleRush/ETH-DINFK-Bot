@@ -38,7 +38,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
             Stopwatch watch = new Stopwatch();
             watch.Start();
             var foodHelper = new FoodHelper();
-            foodHelper.LoadMenus(-1, true);
+            foodHelper.LoadMenus(-1, false);
             watch.Stop();
 
             var guild = Program.Client.GetGuild(Program.ApplicationSetting.BaseGuild);
