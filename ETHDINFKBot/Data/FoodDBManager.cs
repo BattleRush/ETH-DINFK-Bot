@@ -50,7 +50,7 @@ namespace ETHDINFKBot.Data
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
-                if(entry.CO2Delta > 0)
+                if(entry.CO2Delta <= 0)
                     return;
 
                 context.Food2050CO2Entries.Add(entry);
