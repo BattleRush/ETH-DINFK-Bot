@@ -42,13 +42,13 @@ public class MenuCategory
         public string menuLineDescription { get; set; }
         public List<MenuPrice> prices { get; set; }
         public List<string> allergensList { get; set; }
-        public int energy { get; set; }
+        public double? energy { get; set; }
         public double? fat { get; set; }
         public double? carbohydrates { get; set; }
         public double? sugar { get; set; }
         public double? protein { get; set; }
         public double? salt { get; set; }
-        public int? weight { get; set; }
+        public double? weight { get; set; }
     }
 
     public class Food2050MenuResponse

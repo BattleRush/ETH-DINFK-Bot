@@ -102,16 +102,16 @@ namespace ETHDINFKBot.Helpers
 
                             for (int i = 0; i < 5; i++)
                             {
-                                var day = today.AddDays(i);
-                                if (day.DayOfWeek == DayOfWeek.Saturday || day.DayOfWeek == DayOfWeek.Sunday)
+                                today = today.AddDays(1);
+                                if (today.DayOfWeek == DayOfWeek.Saturday || today.DayOfWeek == DayOfWeek.Sunday)
                                     break;
 
-                                remainingWeekdays.Add(day);
+                                remainingWeekdays.Add(today);
                             }
 
                             foreach (var day in remainingWeekdays)
                             {
-                                var svRestaurantMenuInfos = GetSVRestaurantMenu(restaurant.MenuUrl);
+                                var svRestaurantMenuInfos = GetSVRestaurantMenu(restaurant.MenuUrl, day);
 
                                 if (svRestaurantMenuInfos == null)
                                     continue;
@@ -313,7 +313,7 @@ namespace ETHDINFKBot.Helpers
                 }*/
 
         // TODO Provide list of ids to search
-        public List<(Menu Menu, List<int> AllergyIds)> GetSVRestaurantMenu(string link)
+        public List<(Menu Menu, List<int> AllergyIds)> GetSVRestaurantMenu(string link, DateTime dateTime)
         {
             try
             {
@@ -334,114 +334,120 @@ namespace ETHDINFKBot.Helpers
                 var doc = new HtmlDocument();
                 doc.LoadHtml(html);
 
-                var dateNode = doc.DocumentNode.SelectSingleNode("//*[@for=\"mp-tab1\"]");
-                var dateString = dateNode.InnerText.Replace("\t", "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
-
-                if (dateString.Last().Contains(".") && dateString.Last().Split('.').First().Trim() != $"{DateTime.Now.Day:D2}")
-                    return null; // The day is not correct likely a sunday showing monday menus
-
-                // [0] has day Mo, Di
-                // [1] has the date
-
-
-                var menuMainNode = doc.DocumentNode.SelectSingleNode("//*[@id=\"menu-plan-tab1\"]");
-
-
-                var menusDoc = new HtmlDocument();
-                menusDoc.LoadHtml(menuMainNode.InnerHtml);
-
-                var menuItems = menusDoc.DocumentNode.SelectNodes("//*[@class=\"menu-item\"]");
                 List<(Menu, List<int>)> menus = new List<(Menu, List<int>)>();
 
-                foreach (var item in menuItems)
+                for (int i = 1; i <= 5; i++)
                 {
-                    var menuDoc = new HtmlDocument();
-                    menuDoc.LoadHtml(item.InnerHtml);
+                    var dateNode = doc.DocumentNode.SelectSingleNode($"//*[@for=\"mp-tab{i}\"]");
+                    var dateString = dateNode.InnerText.Replace("\t", "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
-                    Menu currentMenu = new Menu();
+                    var dateToSearch = $"{dateTime:dd.MM.}";
 
-                    currentMenu.Name = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menuline\"]")?.InnerText;
+                    if (dateString.Last().Trim() != dateToSearch)
+                        continue; // The day is not correct likely a sunday showing monday menus
 
-                    string title = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-title\"]").InnerText;
-                    title = HttpUtility.HtmlDecode(title);
+                    // [0] has day Mo, Di
+                    // [1] has the date
 
-                    bool isClausiusBar = false; // Clausius bar uses no proper food titles or just a broken menu which sv restaurant doesnt care about
-                    if (string.IsNullOrWhiteSpace(currentMenu.Name))
+
+                    var menuMainNode = doc.DocumentNode.SelectSingleNode($"//*[@id=\"menu-plan-tab{i}\"]");
+
+
+                    var menusDoc = new HtmlDocument();
+                    menusDoc.LoadHtml(menuMainNode.InnerHtml);
+
+                    var menuItems = menusDoc.DocumentNode.SelectNodes("//*[@class=\"menu-item\"]");
+
+                    foreach (var item in menuItems)
                     {
-                        isClausiusBar = true;
-                        currentMenu.Name = title;
-                    }
+                        var menuDoc = new HtmlDocument();
+                        menuDoc.LoadHtml(item.InnerHtml);
 
-                    string description = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-description\"]").InnerText;
-                    description = HttpUtility.HtmlDecode(description);
+                        Menu currentMenu = new Menu();
 
-                    currentMenu.Description = description;
-                    if (!isClausiusBar)
-                        currentMenu.Description = title + Environment.NewLine + description;
+                        currentMenu.Name = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menuline\"]")?.InnerText;
 
-                    if (currentMenu.Description.Trim().ToLower().StartsWith("geschlossen"))
-                        continue; // because fuck polymensa and their stupid inconsistency
+                        string title = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-title\"]").InnerText;
+                        title = HttpUtility.HtmlDecode(title);
 
-                    if (currentMenu.Description.ToLower().Contains("beachten sie"))
-                        continue; // TODO Handle this maybe better but screw polymensa tbh for them being lazy and inconsistent
-
-                    var priceStringNode = menuDoc.DocumentNode.SelectNodes("//*[@class=\"price\"]");
-
-                    string priceString = "";
-                    if (priceStringNode != null)
-                        priceString = priceStringNode.FirstOrDefault()?.InnerText.Replace("\t", "") ?? ""; // polymensa incapable to put prices on for whatever reason
-                    else
-                        priceString = "-1"; // sometimes they dont have prices on the site
-
-                    double price = -1;
-
-                    if (priceString.Contains("STUD"))
-                    {
-                        // TODO Exception handling
-                        price = double.Parse(priceString.Split('\n', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(), NumberStyles.Any, CultureInfo.InvariantCulture);
-                    }
-                    else
-                    {
-                        // Dozentenfoyer (works same as above case maybe the check isnt needed for now)
-                        price = double.Parse(priceString.Split('\n', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(), NumberStyles.Any, CultureInfo.InvariantCulture);
-                    }
-
-                    currentMenu.Amount = price; // TODO Dozentenfoyer has no student prices
-
-                    if (menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-labels\"]")?.InnerHtml.ToLower().Contains("vegetarian") == true)
-                        currentMenu.IsVegetarian = true;
-
-                    if (menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-labels\"]")?.InnerHtml.ToLower().Contains("vegan") == true)
-                        currentMenu.IsVegan = true;
-
-                    string allergiesString = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"allergen-info\"]")?.InnerText.Replace("\t", "").Trim() ?? "";
-
-                    allergiesString = HttpUtility.HtmlDecode(allergiesString);
-                    if (allergiesString.Contains(":"))
-                        allergiesString = allergiesString.Split(":", StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? "";
-
-                    var allergyIdList = new List<int>();
-
-                    if (allergiesString.Contains(","))
-                    {
-                        var AllergyIds = allergiesString.Split(",", StringSplitOptions.RemoveEmptyEntries);
-
-                        foreach (var AllergyIdString in AllergyIds)
+                        bool isClausiusBar = false; // Clausius bar uses no proper food titles or just a broken menu which sv restaurant doesnt care about
+                        if (string.IsNullOrWhiteSpace(currentMenu.Name))
                         {
-                            if (int.TryParse(AllergyIdString.Trim(), out int AllergyId))
-                            {
-                                // TODO Save the ids
-                                allergyIdList.Add(AllergyId);
-                            }
-                            else
-                            {
+                            isClausiusBar = true;
+                            currentMenu.Name = title;
+                        }
 
+                        string description = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-description\"]").InnerText;
+                        description = HttpUtility.HtmlDecode(description);
+
+                        currentMenu.Description = description;
+                        if (!isClausiusBar)
+                            currentMenu.Description = title + Environment.NewLine + description;
+
+                        if (currentMenu.Description.Trim().ToLower().StartsWith("geschlossen"))
+                            continue; // because fuck polymensa and their stupid inconsistency
+
+                        if (currentMenu.Description.ToLower().Contains("beachten sie"))
+                            continue; // TODO Handle this maybe better but screw polymensa tbh for them being lazy and inconsistent
+
+                        var priceStringNode = menuDoc.DocumentNode.SelectNodes("//*[@class=\"price\"]");
+
+                        string priceString = "";
+                        if (priceStringNode != null)
+                            priceString = priceStringNode.FirstOrDefault()?.InnerText.Replace("\t", "") ?? ""; // polymensa incapable to put prices on for whatever reason
+                        else
+                            priceString = "-1"; // sometimes they dont have prices on the site
+
+                        double price = -1;
+
+                        if (priceString.Contains("STUD"))
+                        {
+                            // TODO Exception handling
+                            price = double.Parse(priceString.Split('\n', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(), NumberStyles.Any, CultureInfo.InvariantCulture);
+                        }
+                        else
+                        {
+                            // Dozentenfoyer (works same as above case maybe the check isnt needed for now)
+                            price = double.Parse(priceString.Split('\n', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(), NumberStyles.Any, CultureInfo.InvariantCulture);
+                        }
+
+                        currentMenu.Amount = price; // TODO Dozentenfoyer has no student prices
+
+                        if (menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-labels\"]")?.InnerHtml.ToLower().Contains("vegetarian") == true)
+                            currentMenu.IsVegetarian = true;
+
+                        if (menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-labels\"]")?.InnerHtml.ToLower().Contains("vegan") == true)
+                            currentMenu.IsVegan = true;
+
+                        string allergiesString = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"allergen-info\"]")?.InnerText.Replace("\t", "").Trim() ?? "";
+
+                        allergiesString = HttpUtility.HtmlDecode(allergiesString);
+                        if (allergiesString.Contains(":"))
+                            allergiesString = allergiesString.Split(":", StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? "";
+
+                        var allergyIdList = new List<int>();
+
+                        if (allergiesString.Contains(","))
+                        {
+                            var AllergyIds = allergiesString.Split(",", StringSplitOptions.RemoveEmptyEntries);
+
+                            foreach (var AllergyIdString in AllergyIds)
+                            {
+                                if (int.TryParse(AllergyIdString.Trim(), out int AllergyId))
+                                {
+                                    // TODO Save the ids
+                                    allergyIdList.Add(AllergyId);
+                                }
+                                else
+                                {
+
+                                }
                             }
                         }
-                    }
 
-                    currentMenu.DateTime = DateTime.Now;//.AddDays(-1);
-                    menus.Add((currentMenu, allergyIdList));
+                        currentMenu.DateTime = dateTime;//.AddDays(-1);
+                        menus.Add((currentMenu, allergyIdList));
+                    }
                 }
 
                 return menus;
@@ -622,7 +628,7 @@ namespace ETHDINFKBot.Helpers
                             Amount = price,
                             IsVegan = responseRecipe.isVegan,
                             IsVegetarian = responseRecipe.isVegetarian,
-                            Calories = responseRecipe.energy,
+                            Calories = responseRecipe.energy != null ? (int)responseRecipe.energy : 0,
                             Protein = Math.Round(responseRecipe.protein ?? 0, 1),
                             Carbohydrates = Math.Round(responseRecipe.carbohydrates ?? 0, 1),
                             Fat = Math.Round(responseRecipe.fat ?? 0, 1),
@@ -907,12 +913,19 @@ namespace ETHDINFKBot.Helpers
 
         public MenuImage GetImageForFood(Menu menu, bool fullSearch = false)
         {
-            // First query german then english
-            var menuImage = GetImageForFood(menu, "de", fullSearch).Result;
-            //if (menuImage == null)
-            //    menuImage = GetImageForFood(menu, "en").Result;
+            try
+            {
+                // First query german then english
+                var menuImage = GetImageForFood(menu, "de", fullSearch).Result;
+                //if (menuImage == null)
+                //    menuImage = GetImageForFood(menu, "en").Result;
 
-            return menuImage;
+                return menuImage;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
 
         // TODO Decide on the order for different mensas
