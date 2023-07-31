@@ -89,8 +89,8 @@ namespace ETHDINFKBot.CronJobs.Jobs
                         $"CO2 Delta: {co2EmissionsGramsDelta}g\n" +
                         $"CO2 Total: {co2EmissionsGramsTotal}g\n";
 
-                    //var channel = Program.Client.GetGuild(747752542741725244).GetTextChannel(768600365602963496);
-                    //await channel.SendMessageAsync(message);
+                    var channel = Program.Client.GetGuild(747752542741725244).GetTextChannel(768600365602963496);
+                    await channel.SendMessageAsync(message);
                     
                     foodDBManager.AddFood2050CO2Entry(new ETHBot.DataLayer.Data.ETH.Food.Food2050CO2Entry()
                     {
