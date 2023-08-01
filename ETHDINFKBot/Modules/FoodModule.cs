@@ -312,7 +312,7 @@ namespace ETHDINFKBot.Modules
             return (colWidth, usedHeight);
         }
 
-        private Dictionary<Restaurant, List<Menu>> GetDefaultMenuList(MealTime mealtime, MenuUserSetting userSettings)
+        private Dictionary<Restaurant, List<Menu>> GetDefaultMenuList(MealTime mealtime, MenuUserSetting userSettings, DateTime searchDate)
         {
             var currentMenus = new Dictionary<Restaurant, List<Menu>>();
 
@@ -337,7 +337,7 @@ namespace ETHDINFKBot.Modules
 
             foreach (var restaurant in defaultRestaurant)
             {
-                var defaultMenu = FoodDBManager.GetMenusFromRestaurant(restaurant.RestaurantId, DateTime.Now);
+                var defaultMenu = FoodDBManager.GetMenusFromRestaurant(restaurant.RestaurantId, searchDate);
 
                 if (userSettings?.VeganPreference == true)
                     defaultMenu = defaultMenu.Where(i => i.IsVegan ?? false).ToList();
@@ -430,7 +430,7 @@ namespace ETHDINFKBot.Modules
                 // TODO Dinner options
                 if (userFavRestaurants.Count == 0)
                 {
-                    currentMenus = GetDefaultMenuList(meal, userSettings);
+                    currentMenus = GetDefaultMenuList(meal, userSettings, searchDate);
                 }
                 else
                 {
