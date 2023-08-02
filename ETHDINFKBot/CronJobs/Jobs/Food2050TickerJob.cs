@@ -57,7 +57,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                 // get utc time now in 2023-07-28T09:56:21.562Z format
                 var utcNow = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
 
-                int take = 50000;
+                int take = 5000;
 
                 var payload = new
                 {
@@ -82,11 +82,20 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                 //System.IO.File.WriteAllText("food2050result.json", result);
 
+                if(result == "Service Unavailable")
+                {
+                    // todo handle properly
+                    continue;
+                }
+
                 var food2050Response = JsonConvert.DeserializeObject<Food2050StatPerMinute>(result);
 
                 // enfore ascending sort order
                 foreach (var stat in food2050Response.data.location.kitchen.statsPerMinute.OrderBy(x => x.timestamp))
                 {
+                    if (stat.temperatureChangeStats == null)
+                        continue;
+
                     var temperatureChange = stat.temperatureChangeStats.temperatureChange;
                     var temperatureChangeDelta = stat.temperatureChangeStats.temperatureChangeDelta;
                     var co2EmissionsGramsDelta = stat.co2EmissionsGramsDelta;
@@ -126,6 +135,9 @@ namespace ETHDINFKBot.CronJobs.Jobs
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
+                // send to spam
+                var channel = Program.Client.GetGuild(747752542741725244).GetTextChannel(768600365602963496);
+                channel.SendMessageAsync($"Error in {Name}: {ex.Message}");
             }
 
             return Task.CompletedTask;

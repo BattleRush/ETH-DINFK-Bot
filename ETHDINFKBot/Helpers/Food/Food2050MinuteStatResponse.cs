@@ -47,6 +47,6 @@ public class StatClimateRatingFromDegrees
     public class TemperatureChangeStats
     {
         public double temperatureChange { get; set; }
-        public int temperatureChangeDelta { get; set; }
+        public double temperatureChangeDelta { get; set; }
         public string __typename { get; set; }
     }
