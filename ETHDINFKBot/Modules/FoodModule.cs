@@ -992,7 +992,7 @@ It is also likely that there are no menus currently available today." + weekendS
 
                             row = 0; // reset row per day
                             int dayWidth = 0;
-                            
+
                             foreach (var menu in group.OrderBy(i => i.Name))
                             {
                                 (int usedWidth, int usedHeight) = module.DrawMenu(canvas, menu, padding.Left + column * colWidth, padding.Top + currentTop, colWidth, userSettings, userFavRestaurants.Count, debug);
@@ -1030,7 +1030,8 @@ It is also likely that there are no menus currently available today." + weekendS
                         if (stream != null)
                             streams.Add(stream);
 
-                        if (streams.Count >= 5)
+                        // TODO warn user if this is being hit
+                        if (streams.Count >= 10)
                             break; // Limit to 5 max
 
                         bitmap.Dispose();
