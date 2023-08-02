@@ -41,8 +41,11 @@ namespace ETHDINFKBot.CronJobs.Jobs
             var foodDBManager = new FoodDBManager();
             var restaurants = foodDBManager.GetAllFood2050Restaurants();
 
+            Dictionary<string, int> restaurantCO2Added = new Dictionary<string, int>();
+
             foreach (var restaurant in restaurants)
             {
+                int count = 0;
                 if (restaurant.RestaurantId == 10)
                 {
                     // continue for this one as its dinner for lower which is captured by the lunch case
@@ -68,7 +71,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                         locationSlug = restaurant.InternalName,
                         timestamp = utcNow
                     },
-                    query = "query KitchenStatsPerMinute($locationSlug: String!, $kitchenSlug: String!, $timestamp: DateTime!) {\n  location(id: $locationSlug) {\n    id\n    kitchen(slug: $kitchenSlug) {\n      id\n      publicLabel\n      statsPerMinute(\n        where: {co2EmissionsGramsDelta: {gt: 0}}\n        orderBy: {timestamp: desc}\n        take: " + take + "\n      ) {\n        timestamp\n        co2EmissionsGramsDelta\n        co2EmissionsGramsTotal\n        temperatureChangeStats {\n          temperatureChange\n          temperatureChangeDelta\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  climateRatingFromDegrees {\n    HIGHMinDegCelsius\n    MEDIUMMinDegCelsius\n    __typename\n  }\n}"
+                    query = "query KitchenStatsPerMinute($locationSlug: String!, $kitchenSlug: String!) {\n  location(id: $locationSlug) {\n    id\n    kitchen(slug: $kitchenSlug) {\n      id\n      publicLabel\n      statsPerMinute(\n        where: {co2EmissionsGramsDelta: {gt: 0}}\n        orderBy: {timestamp: desc}\n        take: " + take + "\n      ) {\n        timestamp\n        co2EmissionsGramsDelta\n        co2EmissionsGramsTotal\n        temperatureChangeStats {\n          temperatureChange\n          temperatureChangeDelta\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  climateRatingFromDegrees {\n    HIGHMinDegCelsius\n    MEDIUMMinDegCelsius\n    __typename\n  }\n}"
                 };
 
                 var json = JsonConvert.SerializeObject(payload, Formatting.Indented);
@@ -102,16 +105,16 @@ namespace ETHDINFKBot.CronJobs.Jobs
                     var co2EmissionsGramsTotal = stat.co2EmissionsGramsTotal;
                     var dateTime = stat.timestamp;
 
-                    var message = $"Restaurant: {restaurant.Name}\n" +
+                    /*var message = $"Restaurant: {restaurant.Name}\n" +
                         $"Temperatur: {temperatureChange}°C\n" +
                         $"Temperatur Delta: {temperatureChangeDelta}°C\n" +
                         $"CO2 Delta: {co2EmissionsGramsDelta}g\n" +
-                        $"CO2 Total: {co2EmissionsGramsTotal}g\n";
+                        $"CO2 Total: {co2EmissionsGramsTotal}g\n";*/
 
                     //var channel = Program.Client.GetGuild(747752542741725244).GetTextChannel(768600365602963496);
                     //await channel.SendMessageAsync(message);
 
-                    foodDBManager.AddFood2050CO2Entry(new ETHBot.DataLayer.Data.ETH.Food.Food2050CO2Entry()
+                    var added = foodDBManager.AddFood2050CO2Entry(new ETHBot.DataLayer.Data.ETH.Food.Food2050CO2Entry()
                     {
                         DateTime = dateTime,
                         RestaurantId = restaurant.RestaurantId,
@@ -120,8 +123,23 @@ namespace ETHDINFKBot.CronJobs.Jobs
                         TemperatureChange = temperatureChange,
                         TemperatureChangeDelta = temperatureChangeDelta,
                     });
+
+                    if(added)
+                        count++;
                 }
+
+                if (count > 0)
+                    restaurantCO2Added.Add(restaurant.Name, count);
             }
+
+            // send to spam how many records added for restaurant
+            var channel = Program.Client.GetGuild(747752542741725244).GetTextChannel(768600365602963496);
+
+            string message = $"Food2050 CO2 Data added:\n";
+            foreach (var item in restaurantCO2Added)
+                message += $"{item.Key}: {item.Value}\n";
+
+            await channel.SendMessageAsync(message);
         }
 
         public override Task DoWork(CancellationToken cancellationToken)

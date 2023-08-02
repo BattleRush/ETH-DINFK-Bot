@@ -46,12 +46,12 @@ namespace ETHDINFKBot.Data
             }
         }
 
-        public void AddFood2050CO2Entry(Food2050CO2Entry entry)
+        public bool AddFood2050CO2Entry(Food2050CO2Entry entry)
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
                 if (entry.CO2Delta <= 0)
-                    return;
+                    return false;
 
                 // check if a timestamp entry exists with this restaurant
                 var existingEntry = context.Food2050CO2Entries.FirstOrDefault(i => i.RestaurantId == entry.RestaurantId && i.DateTime == entry.DateTime);
@@ -59,8 +59,11 @@ namespace ETHDINFKBot.Data
                 {
                     context.Food2050CO2Entries.Add(entry);
                     context.SaveChanges();
+                    return true;
                 }
             }
+
+            return false;
         }
 
         public List<Restaurant> GetAllFood2050Restaurants()
