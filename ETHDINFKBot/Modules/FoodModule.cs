@@ -49,10 +49,10 @@ namespace ETHDINFKBot.Modules
                     var menuImg = FoodDBManager.GetBestMenuImage(menu.MenuImageId ?? -1);
                     SKBitmap bitmap = null;
 
-                    // Temp workaround to clear cache periodically as there wont be more than 100 images a day
+                    // Temp workaround to clear cache periodically as there wont be more than 250 images a day/week
                     // TODO Clear cache once a day at midnight
-                    if (FoodImageCache.Count > 100)
-                        FoodImageCache.Clear();
+                    if (FoodImageCache.Count > 250)
+                        FoodImageCache.Clear(); // todo clear oldest images
 
                     string imageUrl = menu.DirectMenuImageUrl;
 
@@ -72,7 +72,6 @@ namespace ETHDINFKBot.Modules
                         if (bytes == null)
                             return (null, -1);
                         bitmap = SKBitmap.Decode(bytes);
-                        FoodImageCache.Add(imageUrl, bitmap);
                     }
 
                     if (bitmap != null)
@@ -92,6 +91,9 @@ namespace ETHDINFKBot.Modules
                         }
 
                         var resizedBitmap = bitmap.Resize(new SKSizeI(width, height), SKFilterQuality.High); //Resize to the canvas
+
+                        if (!FoodImageCache.ContainsKey(imageUrl))
+                            FoodImageCache.Add(imageUrl, resizedBitmap);
 
                         return (resizedBitmap, menuImg?.MenuImageId ?? -1);
                     }
