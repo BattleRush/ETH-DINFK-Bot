@@ -1,4 +1,5 @@
 // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
+using System;
 using System.Collections.Generic;
 
 public class StatClimateRatingFromDegrees
@@ -36,6 +37,7 @@ public class StatClimateRatingFromDegrees
 
     public class StatsPerMinute
     {
+        public DateTime timestamp { get; set; }
         public int co2EmissionsGramsDelta { get; set; }
         public int co2EmissionsGramsTotal { get; set; }
         public TemperatureChangeStats temperatureChangeStats { get; set; }

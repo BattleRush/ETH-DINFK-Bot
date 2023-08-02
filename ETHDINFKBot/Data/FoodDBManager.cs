@@ -50,11 +50,16 @@ namespace ETHDINFKBot.Data
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
-                if(entry.CO2Delta <= 0)
+                if (entry.CO2Delta <= 0)
                     return;
 
-                context.Food2050CO2Entries.Add(entry);
-                context.SaveChanges();
+                // check if a timestamp entry exists with this restaurant
+                var existingEntry = context.Food2050CO2Entries.FirstOrDefault(i => i.RestaurantId == entry.RestaurantId && i.DateTime == entry.DateTime);
+                if (existingEntry == null)
+                {
+                    context.Food2050CO2Entries.Add(entry);
+                    context.SaveChanges();
+                }
             }
         }
 
@@ -457,7 +462,7 @@ namespace ETHDINFKBot.Data
                         dbMenu.IsLocal = menu.IsLocal;
                         dbMenu.MenuImageId = menu.MenuImageId;
                         dbMenu.DirectMenuImageUrl = menu.DirectMenuImageUrl;
-                        
+
                         // TODO Rest me lazy
 
                         context.SaveChanges();
