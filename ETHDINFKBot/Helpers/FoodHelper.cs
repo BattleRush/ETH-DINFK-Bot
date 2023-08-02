@@ -644,6 +644,18 @@ namespace ETHDINFKBot.Helpers
                             DateTime = recipe.date.AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(recipe.date) ? 2 : 1)
                         };
 
+                        if(menu.DirectMenuImageUrl == null)
+                        {
+                            // find from menus with direct image if there exists one menu with same description
+                            menu.FallbackMenuImageUrl = FoodDBManager.GetDirectImageByMenuDescription(menu.Description);
+
+                            if(string.IsNullOrWhiteSpace(menu.FallbackMenuImageUrl))
+                            {
+                                // find from current menu list if any menu has same description
+                                menu.FallbackMenuImageUrl = menus.FirstOrDefault(x => x.Description == menu.Description)?.DirectMenuImageUrl;
+                            }
+                        }
+
                         menus.Add(menu);
                         System.Threading.Thread.Sleep(1000);
                     }

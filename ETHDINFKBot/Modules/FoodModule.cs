@@ -55,6 +55,10 @@ namespace ETHDINFKBot.Modules
                         FoodImageCache.Clear();
 
                     string imageUrl = menu.DirectMenuImageUrl;
+
+                    if(string.IsNullOrEmpty(imageUrl))
+                        imageUrl = menu.FallbackMenuImageUrl;
+
                     if (string.IsNullOrEmpty(imageUrl))
                         imageUrl = menuImg?.MenuImageUrl ?? Program.Client.CurrentUser.GetAvatarUrl();
 
@@ -280,6 +284,12 @@ namespace ETHDINFKBot.Modules
                     canvas.DrawBitmap(verifiedBitmap, new SKPoint(left, usedHeight));
                 }
 
+                if(string.IsNullOrWhiteSpace(menu.DirectMenuImageUrl) && !string.IsNullOrWhiteSpace(menu.FallbackMenuImageUrl))
+                {
+                    var warnBitmap = SKBitmap.Decode(Path.Combine(pathToImage, "warn.png"));
+                    canvas.DrawBitmap(warnBitmap, new SKPoint(left + 3, usedHeight + 3));
+                }
+
                 if (debug)
                 {
                     SKColor shadowColor = new SKColor(0, 0, 0, 128);
@@ -452,7 +462,7 @@ namespace ETHDINFKBot.Modules
                         if (userSettings?.VegetarianPreference == true)
                             menus = menus.Where(i => (i.IsVegetarian ?? false) || (i.IsVegan ?? false)).ToList();
 
-                        if (menus.Count == 0)
+                        if ((menus?.Count ?? 0) == 0)
                             continue;
 
                         currentMenus.Add(FoodDBManager.GetRestaurantById(favRestaurant.RestaurantId), menus);
@@ -794,6 +804,319 @@ It is also likely that there are no menus currently available today." + weekendS
                 builder.AddField($"{Program.CurrentPrefix}admin food help", "For admins");
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
+            }
+
+            [Command("week")]
+            [Priority(10)]
+            public async Task GetWeeklyMenuImage(string time = null, bool debug = false)
+            {
+                FoodModule module = new FoodModule();
+
+                MealTime meal = MealTime.Lunch;
+
+                var searchDate = DateTime.UtcNow.UtcToLocalDateTime(Program.TimeZoneInfo); /// Make it passable by param
+                if (searchDate.Hour < 6 && searchDate.DayOfWeek == DayOfWeek.Monday)
+                {
+                    await Context.Message.Channel.SendMessageAsync("You are here too early. The menus will be loading during the night. Come back in the morning. Good night <:sleep:851469700453367838>", messageReference: new MessageReference(Context.Message.Id));
+                    return;
+                }
+
+                if (searchDate.Hour >= 14)
+                    meal = MealTime.Dinner;
+
+                var author = Context.Message.Author;
+                var userId = author.Id;
+
+                if (!string.IsNullOrEmpty(time))
+                {
+                    if (time.ToLower() == "lunch")
+                        meal = MealTime.Lunch;
+                    else if (time.ToLower() == "dinner")
+                        meal = MealTime.Dinner;
+                }
+
+                var userFavRestaurants = FoodDBManager.GetUsersFavouriteRestaurants(userId);
+                var userSettings = FoodDBManager.GetUserFoodSettings(userId);
+
+
+                var currentMenus = new Dictionary<Restaurant, List<Menu>>();
+
+
+                searchDate = searchDate.AddDays(-(int)searchDate.DayOfWeek + (int)DayOfWeek.Monday);
+
+
+                for (int i = 0; i < 5; i++)
+                {
+                   // await Context.Channel.SendMessageAsync("searching for: " + searchDate.ToString("dd.MM.yyyy"), messageReference: new MessageReference(Context.Message.Id));
+
+                    // TODO Dinner options
+                    if (userFavRestaurants.Count == 0)
+                    {
+                        // todo for non favs
+                        currentMenus = module.GetDefaultMenuList(meal, userSettings, searchDate);
+                    }
+                    else
+                    {
+                        foreach (var favRestaurant in userFavRestaurants)
+                        {
+                            var restaurant = FoodDBManager.GetRestaurantById(favRestaurant.RestaurantId);
+
+                            if (meal == MealTime.Lunch && !restaurant.OffersLunch)
+                                continue;// Request needs lunch
+
+                            if (meal == MealTime.Dinner && !restaurant.OffersDinner)
+                                continue; // Request needs dinner
+
+                            var menus = FoodDBManager.GetMenusFromRestaurant(favRestaurant.RestaurantId, searchDate);
+
+                            // TODO Duplicate code
+                            if (userSettings?.VeganPreference == true)
+                                menus = menus.Where(i => i.IsVegan ?? false).ToList();
+                            if (userSettings?.VegetarianPreference == true)
+                                menus = menus.Where(i => (i.IsVegetarian ?? false) || (i.IsVegan ?? false)).ToList();
+
+                            if (menus.Count == 0)
+                                continue;
+
+                            // check if key exists
+                            var key = currentMenus.Keys.FirstOrDefault(i => i.RestaurantId == favRestaurant.RestaurantId);
+                            if (key != null)
+                            {
+                                currentMenus[key].AddRange(menus);
+                            }
+                            else
+                            {
+                                currentMenus.Add(FoodDBManager.GetRestaurantById(favRestaurant.RestaurantId), menus);
+                            }
+                        }
+                    }
+
+                    searchDate = searchDate.AddDays(1);
+                }
+
+                if (currentMenus.Count == 0)
+                {
+                    string weekendString = "";
+                    if (DateTime.Now.DayOfWeek == DayOfWeek.Saturday || DateTime.Now.DayOfWeek == DayOfWeek.Sunday)
+                        weekendString = Environment.NewLine + "Also remember its weekend :D";
+
+                    if (userFavRestaurants.Count == 0)
+                        await Context.Message.Channel.SendMessageAsync("No menus found, likely there are none available today :(" + weekendString, messageReference: new MessageReference(Context.Message.Id));
+                    else
+                        await Context.Message.Channel.SendMessageAsync(@$"No menus found, likely that you haven't favourited any restaurants for the current meal time: **{meal}**
+Type **{Program.CurrentPrefix}food fav** to see your current food settings and to also change them.
+It is also likely that there are no menus currently available today." + weekendString, messageReference: new MessageReference(Context.Message.Id));
+
+                    return;
+                }
+
+                try
+                {
+
+                    var padding = DrawingHelper.DefaultPadding;
+
+                    padding.Left = 20;
+                    padding.Top = 40;
+
+                    int imgSize = 192;
+
+                    int rowHeight = 500; // cut off in the end
+                    int colWidth = 50 + imgSize;
+
+                    var paint = DrawingHelper.DefaultTextPaint;
+                    paint.TextSize = 20;
+                    paint.Color = new SKColor(128, 255, 64);
+
+                    List<Stream> streams = new List<Stream>();
+
+                    var pathToImage = Path.Combine(Program.ApplicationSetting.BasePath, "Images", "Icons", "Food");
+
+                    int maxMenus = currentMenus.Count == 0 ? 0 : currentMenus.Values.Max(i => i.Count);
+
+                    var largeFont = DrawingHelper.LargeTextPaint;
+                    largeFont.FakeBoldText = true;
+
+                    foreach (var restaurant in currentMenus)
+                    {
+                        int maxUsedHeight = 0;
+                        int maxUsedWidth = 0;
+
+                        if (restaurant.Value.Count == 0)
+                            continue;
+
+                        // Set max menus for now per restaurant
+                        maxMenus = restaurant.Value.Count;
+
+                        // TODO Ensure the width size isnt violated 
+                        var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(2_000, 2_000);
+
+                        int currentTop = 0;
+                        string restaurantName = restaurant.Key.Name;
+
+                        // add date and day of week for restaurant
+                        //restaurantName += $" ({searchDate.ToString("dd.MM.yyyy")}) - {searchDate.DayOfWeek}";
+
+                        if (debug)
+                            restaurantName += $" (Id: {restaurant.Key.RestaurantId})";
+
+                        canvas.DrawText(restaurantName, new SKPoint(padding.Left, padding.Top + currentTop), largeFont); // TODO Correct paint?
+
+                        currentTop += 25;
+
+                        int column = 0;
+                        int row = 0;
+
+                        int currentWidth = 0;
+                        int maxColumnCount = 5;
+
+                        canvas.DrawText(meal.ToString(), new SKPoint(maxColumnCount * colWidth - 75, 35), paint);
+
+                        // group menus by date
+                        var groupedMenus = restaurant.Value.GroupBy(i => i.DateTime.Date);
+
+                        //await Context.Channel.SendMessageAsync($"Found {groupedMenus.Count()} days for {restaurant.Key.Name}", messageReference: new MessageReference(Context.Message.Id));
+
+                        foreach (var group in groupedMenus)
+                        {
+                            int oldTop = currentTop;
+                            var date = group.Key;
+                            var dayOfWeek = date.DayOfWeek;
+
+                            //await Context.Channel.SendMessageAsync($"drawing day {dayOfWeek} {date.ToString("dd.MM.yyyy")}", messageReference: new MessageReference(Context.Message.Id));
+
+                            var dayOfWeekString = dayOfWeek.ToString().Substring(0, 3);
+
+                            canvas.DrawText($"{dayOfWeekString} {date.ToString("dd.MM.yyyy")}", new SKPoint(column * colWidth + padding.Left, 70), paint);
+
+                            currentTop += 28;
+
+                            row = 0; // reset row per day
+                            int dayWidth = 0;
+                            
+                            foreach (var menu in group.OrderBy(i => i.Name))
+                            {
+                                (int usedWidth, int usedHeight) = module.DrawMenu(canvas, menu, padding.Left + column * colWidth, padding.Top + currentTop, colWidth, userSettings, userFavRestaurants.Count, debug);
+
+                                //currentWidth += usedWidth;
+                                currentTop = usedHeight;
+
+                                dayWidth = Math.Max(dayWidth, usedWidth);
+
+                                if (maxUsedHeight < usedHeight)
+                                    maxUsedHeight = usedHeight;
+
+                                row++;
+                            }
+
+                            maxUsedWidth += dayWidth;
+
+                            column++;
+                            currentTop = oldTop;
+                            
+                        }
+
+
+                        //maxUsedHeight += 20; // Bottom padding
+
+                        /* await Context.Channel.SendMessageAsync($"**Menu: {menu.Name} Description: {menu.Description} Price: {menu.Price}**");
+
+                         if (!string.IsNullOrEmpty(menu.ImgUrl))
+                             await Context.Channel.SendMessageAsync(menu.ImgUrl);
+                        */
+                        bitmap = DrawingHelper.CropImage(bitmap, new SKRect(0, 0, Math.Min(bitmap.Width, maxUsedWidth), Math.Min(bitmap.Width, maxUsedHeight)));
+
+
+                        var stream = CommonHelper.GetStream(bitmap);
+                        if (stream != null)
+                            streams.Add(stream);
+
+                        if (streams.Count >= 5)
+                            break; // Limit to 5 max
+
+                        bitmap.Dispose();
+                        canvas.Dispose();
+
+                    }
+
+
+                    paint = DrawingHelper.DefaultTextPaint;
+                    paint.TextSize = 20;
+                    paint.Color = new SKColor(255, 32, 32);
+                    //canvas.DrawText("THIS FEATURE IS IN ALPHA CURRENTLY", new SKPoint(padding.Left, bitmap.Height - 50), paint);
+                    paint.TextSize = 16;
+                    //canvas.DrawText("(Images are taken from google.com and may not represent the actual product)", new SKPoint(padding.Left, bitmap.Height - 30), paint);
+
+
+                    var attachments = new List<FileAttachment>();
+                    // TODO send multiple attachments
+                    int menuCount = 0;
+                    foreach (var stream in streams)
+                        attachments.Add(new FileAttachment(stream, $"menu_{menuCount}.png"));
+
+                    if (attachments.Count > 0)
+                        await Context.Channel.SendFilesAsync(attachments, messageReference: new MessageReference(Context.Message.Id));
+
+                    if (userFavRestaurants.Count == 0)
+                    {
+                        // User hasnt favourited any menu preference or locations 
+                        // Always show this hint
+                        await Context.Channel.SendMessageAsync($"You haven't set any favourite mensa location. The bot will show you a default view only (Polymensa and UZH Zentrum Mensa).{Environment.NewLine}" +
+                            $"You can adjust this with {Program.CurrentPrefix}food fav", messageReference: new MessageReference(Context.Message.Id));
+                    }
+
+                    //    // Create the service.
+                    //    var service = new CustomSearchAPIService(new BaseClientService.Initializer
+                    //    {
+                    //        //ApplicationName = "Discovery Sample",
+                    //        ApiKey = "",
+                    //    });
+
+                    //    // Run the request.
+                    //    Console.WriteLine("Executing a list request...");
+                    //    CseResource.ListRequest listRequest = new CseResource.ListRequest(service)
+                    //    {
+                    //        Cx = "",
+                    //        Q = polymensaMenus[0].FirstLine,
+                    //        Safe = CseResource.ListRequest.SafeEnum.Active,
+                    //        SearchType = CseResource.ListRequest.SearchTypeEnum.Image,
+                    //        Hl = "de"
+                    //    };
+
+
+                    //    try
+                    //    {
+
+                    //        Search search = listRequest.Execute();
+                    //        // Display the results.
+                    //        if (search.Items != null)
+                    //        {
+                    //            foreach (var api in search.Items)
+                    //            {
+                    //                Context.Channel.SendMessageAsync(api.Link);
+                    //                Console.WriteLine(api.DisplayLink + " - " + api.Title);
+                    //            }
+                    //        }
+                    //    }
+                    //    catch (GoogleApiException e)
+                    //    {
+                    //        Console.WriteLine($"statuscode:{e.HttpStatusCode}");
+                    //    }
+
+                }
+                catch (Exception ex)
+                {
+                    // TODO check if the error code can be extracted from the exception directly
+                    if (ex.Message.Contains("50035"))
+                    {
+                        await Context.Channel.SendMessageAsync($"Think ya funny <@{Context.Message.Author.Id}>?");
+                    }
+                    else
+                    {
+                        await Context.Channel.SendMessageAsync(ex.ToString());
+                    }
+                }
+
+
             }
 
             [Command("allergies")]

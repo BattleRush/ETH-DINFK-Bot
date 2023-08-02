@@ -66,6 +66,19 @@ namespace ETHDINFKBot.Data
             return false;
         }
 
+        public string GetDirectImageByMenuDescription(string description)
+        {
+            using (ETHBotDBContext context = new ETHBotDBContext())
+            {
+                // todo make the search more robust against typos or minor changes
+                var menu = context.Menus.FirstOrDefault(i => i.DirectMenuImageUrl != null && i.Description == description);
+                if (menu != null)
+                    return menu.DirectMenuImageUrl;
+            }
+
+            return null;
+        }
+
         public List<Restaurant> GetAllFood2050Restaurants()
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
@@ -400,6 +413,7 @@ namespace ETHDINFKBot.Data
                         dbMenu.Amount = menu.Amount;
                         dbMenu.MenuImageId = menu.MenuImageId;
                         dbMenu.DirectMenuImageUrl = menu.DirectMenuImageUrl;
+                        dbMenu.FallbackMenuImageUrl = menu.FallbackMenuImageUrl;
                         dbMenu.IsVegan = menu.IsVegan;
                         dbMenu.IsVegetarian = menu.IsVegetarian;
 
