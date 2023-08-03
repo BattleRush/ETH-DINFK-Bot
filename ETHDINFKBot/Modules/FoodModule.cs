@@ -56,7 +56,7 @@ namespace ETHDINFKBot.Modules
 
                     string imageUrl = menu.DirectMenuImageUrl;
 
-                    if(string.IsNullOrEmpty(imageUrl))
+                    if (string.IsNullOrEmpty(imageUrl))
                         imageUrl = menu.FallbackMenuImageUrl;
 
                     if (string.IsNullOrEmpty(imageUrl))
@@ -286,7 +286,7 @@ namespace ETHDINFKBot.Modules
                     canvas.DrawBitmap(verifiedBitmap, new SKPoint(left, usedHeight));
                 }
 
-                if(string.IsNullOrWhiteSpace(menu.DirectMenuImageUrl) && !string.IsNullOrWhiteSpace(menu.FallbackMenuImageUrl))
+                if (string.IsNullOrWhiteSpace(menu.DirectMenuImageUrl) && !string.IsNullOrWhiteSpace(menu.FallbackMenuImageUrl))
                 {
                     var warnBitmap = SKBitmap.Decode(Path.Combine(pathToImage, "warn.png"));
                     canvas.DrawBitmap(warnBitmap, new SKPoint(left + 3, usedHeight + 3));
@@ -813,7 +813,6 @@ It is also likely that there are no menus currently available today." + weekendS
             public async Task GetWeeklyMenuImage(string time = null, bool debug = false)
             {
                 FoodModule module = new FoodModule();
-
                 MealTime meal = MealTime.Lunch;
 
                 var searchDate = DateTime.UtcNow.UtcToLocalDateTime(Program.TimeZoneInfo); /// Make it passable by param
@@ -840,22 +839,24 @@ It is also likely that there are no menus currently available today." + weekendS
                 var userFavRestaurants = FoodDBManager.GetUsersFavouriteRestaurants(userId);
                 var userSettings = FoodDBManager.GetUserFoodSettings(userId);
 
-
                 var currentMenus = new Dictionary<Restaurant, List<Menu>>();
-
-
                 searchDate = searchDate.AddDays(-(int)searchDate.DayOfWeek + (int)DayOfWeek.Monday);
-
 
                 for (int i = 0; i < 5; i++)
                 {
-                   // await Context.Channel.SendMessageAsync("searching for: " + searchDate.ToString("dd.MM.yyyy"), messageReference: new MessageReference(Context.Message.Id));
-
-                    // TODO Dinner options
                     if (userFavRestaurants.Count == 0)
                     {
-                        // todo for non favs
-                        currentMenus = module.GetDefaultMenuList(meal, userSettings, searchDate);
+                        var searchMenus = module.GetDefaultMenuList(meal, userSettings, searchDate);
+
+                        foreach (var menu in searchMenus)
+                        {
+                            // check if key exists
+                            var key = currentMenus.Keys.FirstOrDefault(i => i.RestaurantId == menu.Key.RestaurantId);
+                            if (key != null)
+                                currentMenus[key].AddRange(menu.Value);
+                            else
+                                currentMenus.Add(FoodDBManager.GetRestaurantById(menu.Key.RestaurantId), menu.Value);
+                        }
                     }
                     else
                     {
@@ -883,13 +884,9 @@ It is also likely that there are no menus currently available today." + weekendS
                             // check if key exists
                             var key = currentMenus.Keys.FirstOrDefault(i => i.RestaurantId == favRestaurant.RestaurantId);
                             if (key != null)
-                            {
                                 currentMenus[key].AddRange(menus);
-                            }
                             else
-                            {
                                 currentMenus.Add(FoodDBManager.GetRestaurantById(favRestaurant.RestaurantId), menus);
-                            }
                         }
                     }
 
@@ -1014,7 +1011,7 @@ It is also likely that there are no menus currently available today." + weekendS
 
                             column++;
                             currentTop = oldTop;
-                            
+
                         }
 
 
