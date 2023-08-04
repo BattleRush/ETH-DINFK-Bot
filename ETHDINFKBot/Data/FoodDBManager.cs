@@ -412,10 +412,21 @@ namespace ETHDINFKBot.Data
                         dbMenu.Description = menu.Description;
                         dbMenu.Amount = menu.Amount;
                         dbMenu.MenuImageId = menu.MenuImageId;
-                        dbMenu.DirectMenuImageUrl = menu.DirectMenuImageUrl;
-                        dbMenu.FallbackMenuImageUrl = menu.FallbackMenuImageUrl;
+
+                        if(!string.IsNullOrEmpty(menu.DirectMenuImageUrl))
+                            dbMenu.DirectMenuImageUrl = menu.DirectMenuImageUrl;
+
+                        if(!string.IsNullOrEmpty(menu.FallbackMenuImageUrl))
+                            dbMenu.FallbackMenuImageUrl = menu.FallbackMenuImageUrl;
+
                         dbMenu.IsVegan = menu.IsVegan;
                         dbMenu.IsVegetarian = menu.IsVegetarian;
+
+                        dbMenu.Calories = menu.Calories;
+                        dbMenu.Fat = menu.Fat;
+                        dbMenu.Carbohydrates = menu.Carbohydrates;
+                        dbMenu.Protein = menu.Protein;
+                        dbMenu.Salt = menu.Salt;
 
                         context.SaveChanges();
 
