@@ -16,7 +16,6 @@ using System.Web;
 
 namespace ETHDINFKBot.Helpers
 {
-
     public enum MealTime
     {
         Breakfast = 0,
@@ -29,6 +28,7 @@ namespace ETHDINFKBot.Helpers
         English = 0,
         German = 1
     }
+
     /*
         public class Menu
         {
@@ -72,7 +72,10 @@ namespace ETHDINFKBot.Helpers
                 {
                     if (fixOnly)
                     {
-                        var allMenus = FoodDBManager.GetMenusByDay(DateTime.Now, restaurant.RestaurantId);
+                        var allMenus = FoodDBManager.GetMenusByDay(
+                            DateTime.Now,
+                            restaurant.RestaurantId
+                        );
                         if (allMenus.Count != 0)
                             continue; // We have some menus loaded do not reload
                     }
@@ -90,7 +93,10 @@ namespace ETHDINFKBot.Helpers
                         case RestaurantLocation.ETH_Hoengg:
 
                             // for sv restaurant go only into fix only mode because selenium would nuke me atm
-                            var allMenus = FoodDBManager.GetMenusByDay(DateTime.Now, restaurant.RestaurantId);
+                            var allMenus = FoodDBManager.GetMenusByDay(
+                                DateTime.Now,
+                                restaurant.RestaurantId
+                            );
                             if (allMenus.Count != 0)
                                 continue; // We have some menus loaded do not reload
 
@@ -103,7 +109,10 @@ namespace ETHDINFKBot.Helpers
                             for (int i = 0; i < 5; i++)
                             {
                                 today = today.AddDays(1);
-                                if (today.DayOfWeek == DayOfWeek.Saturday || today.DayOfWeek == DayOfWeek.Sunday)
+                                if (
+                                    today.DayOfWeek == DayOfWeek.Saturday
+                                    || today.DayOfWeek == DayOfWeek.Sunday
+                                )
                                     break;
 
                                 remainingWeekdays.Add(today);
@@ -111,7 +120,10 @@ namespace ETHDINFKBot.Helpers
 
                             foreach (var day in remainingWeekdays)
                             {
-                                var svRestaurantMenuInfos = GetSVRestaurantMenu(restaurant.MenuUrl, day);
+                                var svRestaurantMenuInfos = GetSVRestaurantMenu(
+                                    restaurant.MenuUrl,
+                                    day
+                                );
 
                                 if (svRestaurantMenuInfos == null)
                                     continue;
@@ -121,25 +133,33 @@ namespace ETHDINFKBot.Helpers
                                 {
                                     try
                                     {
-                                        svRestaurantMenu.Menu.RestaurantId = restaurant.RestaurantId;// Link the menu to restaurant
+                                        svRestaurantMenu.Menu.RestaurantId =
+                                            restaurant.RestaurantId; // Link the menu to restaurant
 
                                         var menuImage = GetImageForFood(svRestaurantMenu.Menu);
 
                                         // Set image
                                         if (menuImage != null)
-                                            svRestaurantMenu.Menu.MenuImageId = menuImage.MenuImageId;
+                                            svRestaurantMenu.Menu.MenuImageId =
+                                                menuImage.MenuImageId;
 
-                                        var dbMenu = FoodDBManager.CreateMenu(svRestaurantMenu.Menu);
+                                        var dbMenu = FoodDBManager.CreateMenu(
+                                            svRestaurantMenu.Menu
+                                        );
 
                                         // Link menu with allergies
                                         foreach (var allergyId in svRestaurantMenu.AllergyIds)
                                         {
-                                            FoodDBManager.CreateMenuAllergy(svRestaurantMenu.Menu.MenuId, allergyId);
+                                            FoodDBManager.CreateMenuAllergy(
+                                                svRestaurantMenu.Menu.MenuId,
+                                                allergyId
+                                            );
                                         }
                                     }
                                     catch (Exception ex)
                                     {
                                         _logger.LogError("Exception while loading SV menu: ", ex);
+                                        Console.WriteLine(ex);
                                     }
                                 }
                             }
@@ -163,7 +183,7 @@ namespace ETHDINFKBot.Helpers
                                     {
                                         try
                                         {
-                                            currentMenu.RestaurantId = restaurant.RestaurantId;// Link the menu to restaurant
+                                            currentMenu.RestaurantId = restaurant.RestaurantId; // Link the menu to restaurant
 
                                             var dbMenu = FoodDBManager.CreateMenu(currentMenu);
 
@@ -175,18 +195,26 @@ namespace ETHDINFKBot.Helpers
                                         }
                                         catch (Exception ex)
                                         {
-                                            _logger.LogError("Exception while loading UZH menu: ", ex);
+                                            _logger.LogError(
+                                                "Exception while loading UZH menu: ",
+                                                ex
+                                            );
+                                            Console.WriteLine(ex);
                                         }
                                     }
                                 }
                                 catch (Exception ex)
                                 {
                                     _logger.LogError("Exception while loading UZH menu: ", ex);
+                                    Console.WriteLine(ex);
                                 }
                                 continue;
                             }
 
-                            var uzhMenuInfos = GetUzhMenus(GetUZHDayOfTheWeek(), restaurant.InternalName);
+                            var uzhMenuInfos = GetUzhMenus(
+                                GetUZHDayOfTheWeek(),
+                                restaurant.InternalName
+                            );
                             if (uzhMenuInfos == null)
                                 continue;
                             //await Context.Channel.SendMessageAsync($"Found for {restaurant.Name}: {uzhMenuInfos.Count} menus");
@@ -195,7 +223,7 @@ namespace ETHDINFKBot.Helpers
                             {
                                 try
                                 {
-                                    uzhMenuInfo.Menu.RestaurantId = restaurant.RestaurantId;// Link the menu to restaurant
+                                    uzhMenuInfo.Menu.RestaurantId = restaurant.RestaurantId; // Link the menu to restaurant
 
                                     var menuImage = GetImageForFood(uzhMenuInfo.Menu);
 
@@ -220,7 +248,6 @@ namespace ETHDINFKBot.Helpers
                         default:
                             break;
                     }
-
                 }
                 else
                 {
@@ -228,13 +255,7 @@ namespace ETHDINFKBot.Helpers
                 }
             }
             //await Context.Channel.SendMessageAsync($"Done");
-
         }
-
-
-
-
-
 
         /*
                 public static List<ETHBot.DataLayer.Data.ETH.Food.Restaurant> FetchETHRestaurant()
@@ -313,7 +334,10 @@ namespace ETHDINFKBot.Helpers
                 }*/
 
         // TODO Provide list of ids to search
-        public List<(Menu Menu, List<int> AllergyIds)> GetSVRestaurantMenu(string link, DateTime dateTime)
+        public List<(Menu Menu, List<int> AllergyIds)> GetSVRestaurantMenu(
+            string link,
+            DateTime dateTime
+        )
         {
             try
             {
@@ -340,8 +364,12 @@ namespace ETHDINFKBot.Helpers
                 {
                     try
                     {
-                        var dateNode = doc.DocumentNode.SelectSingleNode($"//*[@for=\"mp-tab{i}\"]");
-                        var dateString = dateNode.InnerText.Replace("\t", "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                        var dateNode = doc.DocumentNode.SelectSingleNode(
+                            $"//*[@for=\"mp-tab{i}\"]"
+                        );
+                        var dateString = dateNode.InnerText
+                            .Replace("\t", "")
+                            .Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
                         var dateToSearch = $"{dateTime:dd.MM.}";
 
@@ -352,13 +380,16 @@ namespace ETHDINFKBot.Helpers
                         // [1] has the date
 
 
-                        var menuMainNode = doc.DocumentNode.SelectSingleNode($"//*[@id=\"menu-plan-tab{i}\"]");
-
+                        var menuMainNode = doc.DocumentNode.SelectSingleNode(
+                            $"//*[@id=\"menu-plan-tab{i}\"]"
+                        );
 
                         var menusDoc = new HtmlDocument();
                         menusDoc.LoadHtml(menuMainNode.InnerHtml);
 
-                        var menuItems = menusDoc.DocumentNode.SelectNodes("//*[@class=\"menu-item\"]");
+                        var menuItems = menusDoc.DocumentNode.SelectNodes(
+                            "//*[@class=\"menu-item\"]"
+                        );
 
                         foreach (var item in menuItems)
                         {
@@ -367,9 +398,13 @@ namespace ETHDINFKBot.Helpers
 
                             Menu currentMenu = new Menu();
 
-                            currentMenu.Name = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menuline\"]")?.InnerText;
+                            currentMenu.Name = menuDoc.DocumentNode
+                                .SelectSingleNode("//*[@class=\"menuline\"]")
+                                ?.InnerText;
 
-                            string title = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-title\"]").InnerText;
+                            string title = menuDoc.DocumentNode
+                                .SelectSingleNode("//*[@class=\"menu-title\"]")
+                                .InnerText;
                             title = HttpUtility.HtmlDecode(title);
 
                             bool isClausiusBar = false; // Clausius bar uses no proper food titles or just a broken menu which sv restaurant doesnt care about
@@ -379,7 +414,9 @@ namespace ETHDINFKBot.Helpers
                                 currentMenu.Name = title;
                             }
 
-                            string description = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-description\"]").InnerText;
+                            string description = menuDoc.DocumentNode
+                                .SelectSingleNode("//*[@class=\"menu-description\"]")
+                                .InnerText;
                             description = HttpUtility.HtmlDecode(description);
 
                             currentMenu.Description = description;
@@ -392,11 +429,15 @@ namespace ETHDINFKBot.Helpers
                             if (currentMenu.Description.ToLower().Contains("beachten sie"))
                                 continue; // TODO Handle this maybe better but screw polymensa tbh for them being lazy and inconsistent
 
-                            var priceStringNode = menuDoc.DocumentNode.SelectNodes("//*[@class=\"price\"]");
+                            var priceStringNode = menuDoc.DocumentNode.SelectNodes(
+                                "//*[@class=\"price\"]"
+                            );
 
                             string priceString = "";
                             if (priceStringNode != null)
-                                priceString = priceStringNode.FirstOrDefault()?.InnerText.Replace("\t", "") ?? ""; // polymensa incapable to put prices on for whatever reason
+                                priceString =
+                                    priceStringNode.FirstOrDefault()?.InnerText.Replace("\t", "")
+                                    ?? ""; // polymensa incapable to put prices on for whatever reason
                             else
                                 priceString = "-1"; // sometimes they dont have prices on the site
 
@@ -405,33 +446,65 @@ namespace ETHDINFKBot.Helpers
                             if (priceString.Contains("STUD"))
                             {
                                 // TODO Exception handling
-                                price = double.Parse(priceString.Split('\n', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(), NumberStyles.Any, CultureInfo.InvariantCulture);
+                                price = double.Parse(
+                                    priceString
+                                        .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                                        .FirstOrDefault(),
+                                    NumberStyles.Any,
+                                    CultureInfo.InvariantCulture
+                                );
                             }
                             else
                             {
                                 // Dozentenfoyer (works same as above case maybe the check isnt needed for now)
-                                price = double.Parse(priceString.Split('\n', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(), NumberStyles.Any, CultureInfo.InvariantCulture);
+                                price = double.Parse(
+                                    priceString
+                                        .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                                        .FirstOrDefault(),
+                                    NumberStyles.Any,
+                                    CultureInfo.InvariantCulture
+                                );
                             }
 
                             currentMenu.Amount = price; // TODO Dozentenfoyer has no student prices
 
-                            if (menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-labels\"]")?.InnerHtml.ToLower().Contains("vegetarian") == true)
+                            if (
+                                menuDoc.DocumentNode
+                                    .SelectSingleNode("//*[@class=\"menu-labels\"]")
+                                    ?.InnerHtml.ToLower()
+                                    .Contains("vegetarian") == true
+                            )
                                 currentMenu.IsVegetarian = true;
 
-                            if (menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"menu-labels\"]")?.InnerHtml.ToLower().Contains("vegan") == true)
+                            if (
+                                menuDoc.DocumentNode
+                                    .SelectSingleNode("//*[@class=\"menu-labels\"]")
+                                    ?.InnerHtml.ToLower()
+                                    .Contains("vegan") == true
+                            )
                                 currentMenu.IsVegan = true;
 
-                            string allergiesString = menuDoc.DocumentNode.SelectSingleNode("//*[@class=\"allergen-info\"]")?.InnerText.Replace("\t", "").Trim() ?? "";
+                            string allergiesString =
+                                menuDoc.DocumentNode
+                                    .SelectSingleNode("//*[@class=\"allergen-info\"]")
+                                    ?.InnerText.Replace("\t", "")
+                                    .Trim() ?? "";
 
                             allergiesString = HttpUtility.HtmlDecode(allergiesString);
                             if (allergiesString.Contains(":"))
-                                allergiesString = allergiesString.Split(":", StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? "";
+                                allergiesString =
+                                    allergiesString
+                                        .Split(":", StringSplitOptions.RemoveEmptyEntries)
+                                        .LastOrDefault() ?? "";
 
                             var allergyIdList = new List<int>();
 
                             if (allergiesString.Contains(","))
                             {
-                                var AllergyIds = allergiesString.Split(",", StringSplitOptions.RemoveEmptyEntries);
+                                var AllergyIds = allergiesString.Split(
+                                    ",",
+                                    StringSplitOptions.RemoveEmptyEntries
+                                );
 
                                 foreach (var AllergyIdString in AllergyIds)
                                 {
@@ -440,20 +513,20 @@ namespace ETHDINFKBot.Helpers
                                         // TODO Save the ids
                                         allergyIdList.Add(AllergyId);
                                     }
-                                    else
-                                    {
-
-                                    }
+                                    else { }
                                 }
                             }
 
-                            currentMenu.DateTime = dateTime;//.AddDays(-1);
+                            currentMenu.DateTime = dateTime; //.AddDays(-1);
                             menus.Add((currentMenu, allergyIdList));
                         }
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError($"Error while loading SV Restaurant: {link}. With: {ex.Message} for index {i}", ex);
+                        _logger.LogError(
+                            $"Error while loading SV Restaurant: {link}. With: {ex.Message} for index {i}",
+                            ex
+                        );
                     }
                 }
 
@@ -461,9 +534,12 @@ namespace ETHDINFKBot.Helpers
             }
             catch (Exception ex)
             {
-                // TODO handle this per menu, becaus polymensa is just broken 
+                // TODO handle this per menu, becaus polymensa is just broken
                 // TODO maybe change to ethz menu site
-                _logger.LogError($"Error while loading SV Restaurant: {link}. With: {ex.Message}", ex);
+                _logger.LogError(
+                    $"Error while loading SV Restaurant: {link}. With: {ex.Message}",
+                    ex
+                );
                 return null;
             }
         }
@@ -483,7 +559,9 @@ namespace ETHDINFKBot.Helpers
 
             try
             {
-                html = client.DownloadString($"https://ethz.ch/de/campus/erleben/gastronomie-und-einkaufen/gastronomie/menueplaene/offerDay.html?language={lang}&id={polyMensaId}&date={dateString}");
+                html = client.DownloadString(
+                    $"https://ethz.ch/de/campus/erleben/gastronomie-und-einkaufen/gastronomie/menueplaene/offerDay.html?language={lang}&id={polyMensaId}&date={dateString}"
+                );
             }
             catch (Exception ex)
             {
@@ -576,7 +654,6 @@ namespace ETHDINFKBot.Helpers
                     if (menu.ImgUrl == "")
                         menu.ImgUrl = Program.Client.CurrentUser.GetAvatarUrl();
                 }*/
-
             }
 
             return polymensaMenus;
@@ -584,88 +661,122 @@ namespace ETHDINFKBot.Helpers
 
         public List<Menu> GetUZHMensaMenuWeek(string location, string mensa, string time = null)
         {
-            var menus = new List<Menu>();
-
-            string timeString = time == null ? "" : $"{time}/";
-            string url = $"https://app.food2050.ch/_next/data/fWt87G0z-iWkq_diJzXc_/{location}/{mensa}/menu/{timeString}weekly.json";
-
-            WebClient client = new WebClient();
-            string json = client.DownloadString(url);
-
-            var result = JsonConvert.DeserializeObject<Food2050WeeklyResponse>(json);
-            var categories = result.pageProps.query.location.kitchen.digitalMenu.categories;
-
-            foreach (var category in categories)
+            try
             {
-                if (category.__typename != "DigitalMenuCategory")
-                    continue;
+                WebClient client = new WebClient();
+                var menus = new List<Menu>();
 
-                foreach (var item in category.items)
+                string timeString = time == null ? "" : $"{time}/";
+
+
+                string mainUrl = $"https://app.food2050.ch/{location}/{mensa}/menu/{timeString}weekly";
+                string mainPage = client.DownloadString(mainUrl);
+
+                // get text between "buildId":" and ","
+                // TODO make this more robust
+                int startIndex = mainPage.IndexOf("\"buildId\":\"") + "\"buildId\":\"".Length;
+                string buildIdString = mainPage.Substring(startIndex);
+                int endIndex = buildIdString.IndexOf("\",");
+                string buildId = buildIdString.Substring(0, endIndex);
+
+                string url =
+                    $"https://app.food2050.ch/_next/data/{buildId}/{location}/{mensa}/menu/{timeString}weekly.json";
+
+                string json = client.DownloadString(url);
+
+                var result = JsonConvert.DeserializeObject<Food2050WeeklyResponse>(json);
+                var categories = result.pageProps.query.location.kitchen.digitalMenu.categories;
+
+                foreach (var category in categories)
                 {
-                    foreach (var recipe in item.dailyRecipies)
+                    if (category.__typename != "DigitalMenuCategory")
+                        continue;
+
+                    foreach (var item in category.items)
                     {
-                        if (recipe?.recipe == null)
-                            continue;
-
-                        // example https://app.food2050.ch/_next/data/fWt87G0z-iWkq_diJzXc_/uzh-zentrum/untere-mensa/food-profile/2023-07-28-mittag-butcher.json?locationSlug=uzh-zentrum&kitchenSlug=untere-mensa&slug=2023-07-28-mittag-butcher
-                        var menuUrl = $"https://app.food2050.ch/_next/data/fWt87G0z-iWkq_diJzXc_/{location}/{mensa}/food-profile/{recipe.recipe.slug}.json";
-
-                        string menuJson = client.DownloadString(menuUrl);
-                        var menuResult = JsonConvert.DeserializeObject<Food2050MenuResponse>(menuJson);
-
-                        var responseRecipe = menuResult.pageProps.recipe;
-
-                        double price = 0;
-
-                        foreach (var priceItem in responseRecipe.prices)
+                        foreach (var recipe in item.dailyRecipies)
                         {
-                            if (priceItem.category.title == "Student")
+                            if (recipe?.recipe == null)
+                                continue;
+
+                            // example https://app.food2050.ch/_next/data/fWt87G0z-iWkq_diJzXc_/uzh-zentrum/untere-mensa/food-profile/2023-07-28-mittag-butcher.json?locationSlug=uzh-zentrum&kitchenSlug=untere-mensa&slug=2023-07-28-mittag-butcher
+                            var menuUrl =
+                                $"https://app.food2050.ch/_next/data/{buildId}/{location}/{mensa}/food-profile/{recipe.recipe.slug}.json";
+
+                            string menuJson = client.DownloadString(menuUrl);
+                            var menuResult = JsonConvert.DeserializeObject<Food2050MenuResponse>(
+                                menuJson
+                            );
+
+                            var responseRecipe = menuResult.pageProps.recipe;
+
+                            double price = 0;
+
+                            foreach (var priceItem in responseRecipe.prices)
                             {
-                                price = priceItem.amount;
-                                break;
+                                if (priceItem.category.title == "Student")
+                                {
+                                    price = priceItem.amount;
+                                    break;
+                                }
                             }
-                        }
 
-                        var imageUrl = responseRecipe.imageUrl ?? "";
+                            var imageUrl = responseRecipe.imageUrl ?? "";
 
-                        var menu = new Menu()
-                        {
-                            Name = item.displayName,
-                            Description = responseRecipe.title_de,
-                            Amount = price,
-                            IsVegan = responseRecipe.isVegan,
-                            IsVegetarian = responseRecipe.isVegetarian,
-                            Calories = responseRecipe.energy != null ? (int)responseRecipe.energy : 0,
-                            Protein = Math.Round(responseRecipe.protein ?? 0, 1),
-                            Carbohydrates = Math.Round(responseRecipe.carbohydrates ?? 0, 1),
-                            Fat = Math.Round(responseRecipe.fat ?? 0, 1),
-                            Salt = Math.Round(responseRecipe.salt ?? 0, 1),
-                            DirectMenuImageUrl = responseRecipe.imageUrl,
-                            DateTime = recipe.date.AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(recipe.date) ? 2 : 1)
-                        };
-
-                        if(menu.DirectMenuImageUrl == null)
-                        {
-                            // find from menus with direct image if there exists one menu with same description
-                            menu.FallbackMenuImageUrl = FoodDBManager.GetDirectImageByMenuDescription(menu.Description);
-
-                            if(string.IsNullOrWhiteSpace(menu.FallbackMenuImageUrl))
+                            var menu = new Menu()
                             {
-                                // find from current menu list if any menu has same description
-                                menu.FallbackMenuImageUrl = menus.FirstOrDefault(x => x.Description == menu.Description)?.DirectMenuImageUrl;
-                            }
-                        }
+                                Name = item.displayName,
+                                Description = responseRecipe.title_de,
+                                Amount = price,
+                                IsVegan = responseRecipe.isVegan,
+                                IsVegetarian = responseRecipe.isVegetarian,
+                                Calories =
+                                    responseRecipe.energy != null ? (int)responseRecipe.energy : 0,
+                                Protein = Math.Round(responseRecipe.protein ?? 0, 1),
+                                Carbohydrates = Math.Round(responseRecipe.carbohydrates ?? 0, 1),
+                                Fat = Math.Round(responseRecipe.fat ?? 0, 1),
+                                Salt = Math.Round(responseRecipe.salt ?? 0, 1),
+                                DirectMenuImageUrl = responseRecipe.imageUrl,
+                                DateTime = recipe.date.AddHours(
+                                    Program.TimeZoneInfo.IsDaylightSavingTime(recipe.date) ? 2 : 1
+                                )
+                            };
 
-                        menus.Add(menu);
-                        System.Threading.Thread.Sleep(1000);
+                            if (menu.DirectMenuImageUrl == null)
+                            {
+                                // find from menus with direct image if there exists one menu with same description
+                                menu.FallbackMenuImageUrl =
+                                    FoodDBManager.GetDirectImageByMenuDescription(menu.Description);
+
+                                if (string.IsNullOrWhiteSpace(menu.FallbackMenuImageUrl))
+                                {
+                                    // find from current menu list if any menu has same description
+                                    menu.FallbackMenuImageUrl = menus
+                                        .FirstOrDefault(x => x.Description == menu.Description)
+                                        ?.DirectMenuImageUrl;
+                                }
+                            }
+
+                            menus.Add(menu);
+                            System.Threading.Thread.Sleep(1000);
+                        }
                     }
                 }
-            }
 
-            return menus;
+                return menus;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return new List<Menu>();
+            }
         }
 
-        public List<(Menu Menu, List<int> AllergyIds)> GetUzhMenus(string day, string mensa, Language language = Language.English)
+        public List<(Menu Menu, List<int> AllergyIds)> GetUzhMenus(
+            string day,
+            string mensa,
+            Language language = Language.English
+        )
         {
             ///html/body/div[6]/section/div/section/div[2]/div[1]/div/div[2]/div/div/div/div/div/div/div/div/table/tbody[2]
             string xPath = "//*[@id=\"box-1\"]/ul/li/div/div/div";
@@ -680,7 +791,9 @@ namespace ETHDINFKBot.Helpers
 
             try
             {
-                html = client.DownloadString($"https://www.mensa.uzh.ch/de/menueplaene/{mensa}/{day}.html");
+                html = client.DownloadString(
+                    $"https://www.mensa.uzh.ch/de/menueplaene/{mensa}/{day}.html"
+                );
             }
             catch (Exception ex)
             {
@@ -693,9 +806,7 @@ namespace ETHDINFKBot.Helpers
 
             HtmlNode node = doc.DocumentNode.SelectSingleNode(xPath);
 
-
             List<(Menu, List<int>)> menus = new List<(Menu, List<int>)>();
-
 
             int step = 0;
             bool brHitOnce = false;
@@ -720,20 +831,32 @@ namespace ETHDINFKBot.Helpers
                     if (currentMenu.Name == "News")
                         continue; // Non valid entry
 
-                    string priceField = titleNode.InnerText.Split('|').LastOrDefault()?.Trim().Replace("CHF", "");
-                    currentMenu.Amount = double.Parse(priceField.Split('/').First(), NumberStyles.Any, CultureInfo.InvariantCulture);
+                    string priceField = titleNode.InnerText
+                        .Split('|')
+                        .LastOrDefault()
+                        ?.Trim()
+                        .Replace("CHF", "");
+                    currentMenu.Amount = double.Parse(
+                        priceField.Split('/').First(),
+                        NumberStyles.Any,
+                        CultureInfo.InvariantCulture
+                    );
 
                     var descriptionNode = menuDoc.DocumentNode.SelectSingleNode("//p[1]");
 
                     // TODO Proper HTML Encoding/Decoding
-                    var descriptionLines = descriptionNode.InnerHtml.Replace("&amp;", "&")
+                    var descriptionLines = descriptionNode.InnerHtml
+                        .Replace("&amp;", "&")
                         .Trim()
                         .Split("<br>", StringSplitOptions.RemoveEmptyEntries)
                         .Where(i => !(i.Contains(":") || i.Contains(";"))) // These lines usually contain info about meat country of origin
                         .Select(i => i.Trim())
                         .ToList();
 
-                    currentMenu.Description = string.Join(Environment.NewLine, descriptionLines/*.Take(lines.Count - 1)*/);
+                    currentMenu.Description = string.Join(
+                        Environment.NewLine,
+                        descriptionLines /*.Take(lines.Count - 1)*/
+                    );
 
                     var images = menuDoc.DocumentNode.SelectNodes("//img");
                     if (images != null)
@@ -750,7 +873,6 @@ namespace ETHDINFKBot.Helpers
                                 currentMenu.IsLocal = true;
                             else if (altValue == "mni_ebp_enjoy")
                                 currentMenu.IsBalanced = true;
-
                             else if (altValue == "gluten todo")
                                 currentMenu.IsGlutenFree = true;
                             else if (altValue == "lactose todo")
@@ -766,10 +888,8 @@ namespace ETHDINFKBot.Helpers
                             var tableDoc = new HtmlDocument();
                             tableDoc.LoadHtml(table.InnerHtml);
 
-
                             if (tableDoc.DocumentNode.InnerText.ToLower().Contains("kcal"))
                             {
-
                                 var tableCells = tableDoc.DocumentNode.SelectNodes("//td");
 
                                 // TODO CHECK TOTAL AMOUNT OF CELLS
@@ -794,7 +914,10 @@ namespace ETHDINFKBot.Helpers
 
                                     int start = caloriesText.IndexOf("(");
                                     int end = caloriesText.IndexOf(" kcal");
-                                    caloriesText = caloriesText.Substring(start + 1, end - start - 1);
+                                    caloriesText = caloriesText.Substring(
+                                        start + 1,
+                                        end - start - 1
+                                    );
 
                                     // TODO add logs when it fails to parse
                                     int.TryParse(caloriesText, out int caloriesAmount);
@@ -804,24 +927,52 @@ namespace ETHDINFKBot.Helpers
 
                                 var proteinText = tableCells[3].InnerText.Trim().Replace("g", "");
                                 var fatText = tableCells[5].InnerText.Trim().Replace("g", "");
-                                var carbohydratesText = tableCells[7].InnerText.Trim().Replace("g", "");
+                                var carbohydratesText = tableCells[7].InnerText
+                                    .Trim()
+                                    .Replace("g", "");
                                 var saltText = tableCells[9].InnerText.Trim().Replace("g", "");
 
                                 // TODO change int to decimal
 
-                                if (double.TryParse(proteinText, NumberStyles.Any, CultureInfo.InvariantCulture, out double proteinAmount))
+                                if (
+                                    double.TryParse(
+                                        proteinText,
+                                        NumberStyles.Any,
+                                        CultureInfo.InvariantCulture,
+                                        out double proteinAmount
+                                    )
+                                )
                                     currentMenu.Protein = proteinAmount;
 
-                                if (double.TryParse(fatText, NumberStyles.Any, CultureInfo.InvariantCulture, out double fatAmount))
+                                if (
+                                    double.TryParse(
+                                        fatText,
+                                        NumberStyles.Any,
+                                        CultureInfo.InvariantCulture,
+                                        out double fatAmount
+                                    )
+                                )
                                     currentMenu.Fat = fatAmount;
 
-                                if (double.TryParse(carbohydratesText, NumberStyles.Any, CultureInfo.InvariantCulture, out double carbsAmount))
+                                if (
+                                    double.TryParse(
+                                        carbohydratesText,
+                                        NumberStyles.Any,
+                                        CultureInfo.InvariantCulture,
+                                        out double carbsAmount
+                                    )
+                                )
                                     currentMenu.Carbohydrates = carbsAmount;
 
-                                if (double.TryParse(saltText, NumberStyles.Any, CultureInfo.InvariantCulture, out double saltAmount))
+                                if (
+                                    double.TryParse(
+                                        saltText,
+                                        NumberStyles.Any,
+                                        CultureInfo.InvariantCulture,
+                                        out double saltAmount
+                                    )
+                                )
                                     currentMenu.Salt = saltAmount;
-
-
                             }
                         }
                     }
@@ -829,16 +980,24 @@ namespace ETHDINFKBot.Helpers
                     var allergyIds = new List<int>();
 
                     var allergyNode = menuDoc.DocumentNode.SelectNodes("//p").Last();
-                    if (allergyNode != null && allergyNode.InnerText.ToLower().Contains("allergikerinformationen"))
+                    if (
+                        allergyNode != null
+                        && allergyNode.InnerText.ToLower().Contains("allergikerinformationen")
+                    )
                     {
                         string allergiesString = allergyNode.InnerText.Trim();
                         if (allergiesString.Contains(":"))
-                            allergiesString = allergiesString.Split(":", StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? "";
+                            allergiesString =
+                                allergiesString
+                                    .Split(":", StringSplitOptions.RemoveEmptyEntries)
+                                    .LastOrDefault() ?? "";
 
                         if (allergiesString.Contains(","))
                         {
-                            var allergyNames = allergiesString.Split(",", StringSplitOptions.RemoveEmptyEntries);
-
+                            var allergyNames = allergiesString.Split(
+                                ",",
+                                StringSplitOptions.RemoveEmptyEntries
+                            );
 
                             foreach (var AllergyName in allergyNames)
                             {
@@ -900,7 +1059,6 @@ namespace ETHDINFKBot.Helpers
                                         allergyIds.Add(14);
                                         break;
 
-
                                     default:
                                         int i = 1;
                                         break; // Shouldt enter TODO catch
@@ -909,9 +1067,8 @@ namespace ETHDINFKBot.Helpers
                         }
                     }
 
-
                     // TODO set permanent fix
-                    currentMenu.DateTime = DateTime.Now;//.AddDays(-1);
+                    currentMenu.DateTime = DateTime.Now; //.AddDays(-1);
                     menus.Add((currentMenu, allergyIds));
                 }
                 catch (Exception ex)
@@ -926,9 +1083,13 @@ namespace ETHDINFKBot.Helpers
         private List<string> GetImageFromGoogle(string text, string lang = "de")
         {
             //return Google.ImageSearch(text.Replace("\"", "").Replace("\"n", "").Trim(), lang: lang).Result;
-            return Google.GetSearchResultBySelenium(text.Replace("\"", "").Replace("\"n", " ").Trim(), lang: lang).Result;
+            return Google
+                .GetSearchResultBySelenium(
+                    text.Replace("\"", "").Replace("\"n", " ").Trim(),
+                    lang: lang
+                )
+                .Result;
         }
-
 
         public MenuImage GetImageForFood(Menu menu, bool fullSearch = false)
         {
@@ -948,7 +1109,11 @@ namespace ETHDINFKBot.Helpers
         }
 
         // TODO Decide on the order for different mensas
-        private async Task<MenuImage> GetImageForFood(Menu menu, string language, bool fullSearch = false)
+        private async Task<MenuImage> GetImageForFood(
+            Menu menu,
+            string language,
+            bool fullSearch = false
+        )
         {
             List<string> images = new List<string>();
             HttpClient client = new HttpClient();
@@ -1041,7 +1206,11 @@ namespace ETHDINFKBot.Helpers
 
                 // TODO If description starts with "mit" then maybe also add name infront
 
-                dbImages = FoodDBManager.CreateMenuImages(successfullyResolvedImages, searchTerm, language);
+                dbImages = FoodDBManager.CreateMenuImages(
+                    successfullyResolvedImages,
+                    searchTerm,
+                    language
+                );
 
                 if (dbImages.Count > 0)
                     return dbImages.First();
@@ -1107,7 +1276,5 @@ namespace ETHDINFKBot.Helpers
 
             return day;
         }
-
-
     }
 }
