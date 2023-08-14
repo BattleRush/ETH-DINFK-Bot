@@ -668,7 +668,6 @@ namespace ETHDINFKBot.Helpers
 
                 string timeString = time == null ? "" : $"{time}/";
 
-
                 string mainUrl = $"https://app.food2050.ch/{location}/{mensa}/menu/{timeString}weekly";
                 string mainPage = client.DownloadString(mainUrl);
 
@@ -700,13 +699,31 @@ namespace ETHDINFKBot.Helpers
                                 continue;
 
                             // example https://app.food2050.ch/_next/data/fWt87G0z-iWkq_diJzXc_/uzh-zentrum/untere-mensa/food-profile/2023-07-28-mittag-butcher.json?locationSlug=uzh-zentrum&kitchenSlug=untere-mensa&slug=2023-07-28-mittag-butcher
-                            var menuUrl =
-                                $"https://app.food2050.ch/_next/data/{buildId}/{location}/{mensa}/food-profile/{recipe.recipe.slug}.json";
+                            var menuUrl = $"https://app.food2050.ch/_next/data/{buildId}/{location}/{mensa}/food-profile/{recipe.recipe.slug}.json";
 
-                            string menuJson = client.DownloadString(menuUrl);
-                            var menuResult = JsonConvert.DeserializeObject<Food2050MenuResponse>(
-                                menuJson
-                            );
+                            Food2050MenuResponse menuResult = null;
+
+                            try
+                            {
+                                string menuJson = client.DownloadString(menuUrl);
+                                menuResult = JsonConvert.DeserializeObject<Food2050MenuResponse>(menuJson);
+
+                                if (menuResult == null)
+                                    continue;
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine(ex);
+                                menus.Add(
+                                    new Menu()
+                                    {
+                                        Name = item.displayName,
+                                        Description = ex.Message,
+                                        DateTime = recipe.date.AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(recipe.date) ? 2 : 1)
+                                    }
+                                );
+                                continue;
+                            }
 
                             var responseRecipe = menuResult.pageProps.recipe;
 
