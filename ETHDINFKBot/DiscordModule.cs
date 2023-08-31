@@ -599,13 +599,16 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                             switch (htmlDecoded)
                             {
                                 case "Ergänzung":
-                                    list.Add(tags.Find(x => x.Name.Contains("BSc Minor")));
+                                    if (!list.Any(x => x.Name.Contains("BSc Minor")))
+                                        list.Add(tags.Find(x => x.Name.Contains("BSc Minor")));
                                     break;
                                 case "Wahlfächer":
-                                    list.Add(tags.Find(x => x.Name.Contains("BSc Elective")));
+                                    if (!list.Any(x => x.Name.Contains("BSc Elective")))
+                                        list.Add(tags.Find(x => x.Name.Contains("BSc Elective")));
                                     break;
                                 case "Seminar":
-                                    list.Add(tags.Find(x => x.Name.Contains("BSc Seminar")));
+                                    if (!list.Any(x => x.Name.Contains("BSc Seminar")))
+                                        list.Add(tags.Find(x => x.Name.Contains("BSc Seminar")));
                                     break;
                             }
                         }
@@ -622,7 +625,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     if (row.ChildNodes[0].InnerText.Contains("Wissenschaft im Kontext (Science in Perspective)"))
                     {
                         foundAny = true;
-                        list.Add(tags.Find(x => x.Name.Contains("GESS")));
+                        // check if list contains this tag already
+                        if (!list.Any(x => x.Name.Contains("GESS")))
+                            list.Add(tags.Find(x => x.Name.Contains("GESS")));
                     }
                 }
             }
@@ -638,7 +643,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 return new List<ForumTag>();
             }
 
-            return list.Distinct().ToList();
+            // Discord allows only up to 5 tags
+            return list.Distinct().Take(5).ToList();
         }
 
         [Command("create")]
@@ -719,8 +725,8 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                         var tagsToAdd = FindTags(doc, Context, tags.ToList(), isMaster).Result;
 
-                        await Context.Channel.SendMessageAsync($"Found {tagsToAdd.Count} tags to add", false);
-                        await Context.Channel.SendMessageAsync($"Tags: {string.Join(", ", tagsToAdd.Select(i => i.Name))}", false);
+                        //await Context.Channel.SendMessageAsync($"Found {tagsToAdd.Count} tags to add", false);
+                        //await Context.Channel.SendMessageAsync($"Tags: {string.Join(", ", tagsToAdd.Select(i => i.Name))}", false);
 
                         // If bachelor channel and no tags found then return
                         if ((tagsToAdd == null || tagsToAdd.Count == 0)
