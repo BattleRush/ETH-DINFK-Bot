@@ -211,39 +211,48 @@ namespace ETHDINFKBot.Helpers
                                 continue;
                             }
 
-                            var uzhMenuInfos = GetUzhMenus(
-                                GetUZHDayOfTheWeek(),
-                                restaurant.InternalName
-                            );
-                            if (uzhMenuInfos == null)
-                                continue;
-                            //await Context.Channel.SendMessageAsync($"Found for {restaurant.Name}: {uzhMenuInfos.Count} menus");
-
-                            foreach (var uzhMenuInfo in uzhMenuInfos)
+                            try
                             {
-                                try
+                                var uzhMenuInfos = GetUzhMenus(
+                                    GetUZHDayOfTheWeek(),
+                                    restaurant.InternalName
+                                );
+
+                                if (uzhMenuInfos == null)
+                                    continue;
+                                //await Context.Channel.SendMessageAsync($"Found for {restaurant.Name}: {uzhMenuInfos.Count} menus");
+
+                                foreach (var uzhMenuInfo in uzhMenuInfos)
                                 {
-                                    uzhMenuInfo.Menu.RestaurantId = restaurant.RestaurantId; // Link the menu to restaurant
-
-                                    var menuImage = GetImageForFood(uzhMenuInfo.Menu);
-
-                                    // Set image
-                                    if (menuImage != null)
-                                        uzhMenuInfo.Menu.MenuImageId = menuImage.MenuImageId;
-
-                                    var dbMenu = FoodDBManager.CreateMenu(uzhMenuInfo.Menu);
-
-                                    // Link menu with allergies
-                                    foreach (var allergyId in uzhMenuInfo.AllergyIds)
+                                    try
                                     {
-                                        FoodDBManager.CreateMenuAllergy(dbMenu.MenuId, allergyId);
+                                        uzhMenuInfo.Menu.RestaurantId = restaurant.RestaurantId; // Link the menu to restaurant
+
+                                        var menuImage = GetImageForFood(uzhMenuInfo.Menu);
+
+                                        // Set image
+                                        if (menuImage != null)
+                                            uzhMenuInfo.Menu.MenuImageId = menuImage.MenuImageId;
+
+                                        var dbMenu = FoodDBManager.CreateMenu(uzhMenuInfo.Menu);
+
+                                        // Link menu with allergies
+                                        foreach (var allergyId in uzhMenuInfo.AllergyIds)
+                                        {
+                                            FoodDBManager.CreateMenuAllergy(dbMenu.MenuId, allergyId);
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        _logger.LogError("Exception while loading UZH menu: ", ex);
                                     }
                                 }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogError("Exception while loading UZH menu: ", ex);
-                                }
                             }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError("Exception while loading UZH menu from HTTP: ", ex);
+                            }
+
                             break;
                         default:
                             break;
