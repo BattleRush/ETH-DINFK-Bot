@@ -719,6 +719,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                         var tagsToAdd = FindTags(doc, Context, tags.ToList(), isMaster).Result;
 
+                        await Context.Channel.SendMessageAsync($"Found {tagsToAdd.Count} tags to add", false);
+                        await Context.Channel.SendMessageAsync($"Tags: {string.Join(", ", tagsToAdd.Select(i => i.Name))}", false);
+
                         // If bachelor channel and no tags found then return
                         if ((tagsToAdd == null || tagsToAdd.Count == 0)
                             && !socketForumChannel.Name.Contains("master") && !socketForumChannel.Name.Contains("bot"))
