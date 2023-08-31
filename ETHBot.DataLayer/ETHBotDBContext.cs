@@ -113,6 +113,8 @@ namespace ETHBot.DataLayer
 
         public DbSet<Food2050CO2Entry> Food2050CO2Entries { get; set; }
 
+        //public DbSet<SavedSQLQuery> SavedSQLQueries { get; set; }
+
         /*
 
         // todo reconsider how to import them

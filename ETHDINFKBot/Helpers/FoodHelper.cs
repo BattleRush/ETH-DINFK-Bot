@@ -747,8 +747,7 @@ namespace ETHDINFKBot.Helpers
                                 Amount = price,
                                 IsVegan = responseRecipe.isVegan,
                                 IsVegetarian = responseRecipe.isVegetarian,
-                                Calories =
-                                    responseRecipe.energy != null ? (int)responseRecipe.energy : 0,
+                                Calories = responseRecipe.energy != null ? (int)responseRecipe.energy : 0,
                                 Protein = Math.Round(responseRecipe.protein ?? 0, 1),
                                 Carbohydrates = Math.Round(responseRecipe.carbohydrates ?? 0, 1),
                                 Fat = Math.Round(responseRecipe.fat ?? 0, 1),

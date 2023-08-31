@@ -1086,6 +1086,26 @@ ORDER BY table_name DESC;", true, 50);
         }
 
 
+        public async Task SaveSQL(string key, [Remainder] string message)
+        {
+            // TODO also allow the query to be parametrized
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
+
+            if (ForbiddenQuery(message, Context.Message.Author.Id))
+                return;
+
+            try
+            {
+                var queryResult = await SQLHelper.SqlCommand(Context, message);
+                await Context.Channel.SendMessageAsync(queryResult, false);
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync("Is this all you got <:kekw:768912035928735775> " + ex.ToString(), false);
+            }
+        }
+
         private static Dictionary<ulong, DateTime> ActiveSQLCommands = new Dictionary<ulong, DateTime>();
 
         [Command("query", RunMode = RunMode.Async)]
