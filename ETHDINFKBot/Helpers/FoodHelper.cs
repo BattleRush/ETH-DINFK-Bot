@@ -693,7 +693,7 @@ namespace ETHDINFKBot.Helpers
                 string json = client.DownloadString(url);
 
                 var result = JsonConvert.DeserializeObject<Food2050WeeklyResponse>(json);
-                var categories = result.pageProps.query.location.kitchen.digitalMenu.categories;
+                var categories = result.pageProps.query.location.kitchen.digitalMenu?.categories ?? new List<Category>();
 
                 foreach (var category in categories)
                 {
