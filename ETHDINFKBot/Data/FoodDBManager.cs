@@ -407,7 +407,7 @@ namespace ETHDINFKBot.Data
 
                     if (dbMenu != null)
                     {
-                        // Menu exists dont create a new entry (TODO decide if it should delete)
+                        // Menu exists dont create a new entry but update the existing one
 
                         dbMenu.Description = menu.Description;
                         dbMenu.Amount = menu.Amount;
@@ -427,6 +427,7 @@ namespace ETHDINFKBot.Data
                         dbMenu.Carbohydrates = menu.Carbohydrates;
                         dbMenu.Protein = menu.Protein;
                         dbMenu.Salt = menu.Salt;
+                        // TODO add sugar to the table
 
                         context.SaveChanges();
 

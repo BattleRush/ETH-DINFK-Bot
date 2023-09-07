@@ -842,7 +842,7 @@ It is also likely that there are no menus currently available today." + weekendS
                 var currentMenus = new Dictionary<Restaurant, List<Menu>>();
                 searchDate = searchDate.AddDays(-(int)searchDate.DayOfWeek + (int)DayOfWeek.Monday);
 
-                for (int i = 0; i < 5; i++)
+                for (int i = 0; i < 7; i++)
                 {
                     if (userFavRestaurants.Count == 0)
                     {
