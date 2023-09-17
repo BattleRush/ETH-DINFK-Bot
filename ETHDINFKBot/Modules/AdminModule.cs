@@ -890,7 +890,7 @@ Total todays menus: {allTodaysMenus.Count}");
 
 
                         // for each location make http call url/{location.slug}
-                        string locationUrl = mainUrl + location.slug;
+                        string locationUrl = mainUrl + location.slug + "/";
 
                         var htmlLocationPage = "";
 
@@ -928,7 +928,7 @@ Total todays menus: {allTodaysMenus.Count}");
                         {
                             var kitchenSlug = kitchen.slug;
 
-                            string kitchenUrl = mainUrl + location.slug + "/" + kitchenSlug;
+                            string kitchenUrl = mainUrl + location.slug + "/" + kitchenSlug + "/";
 
                             var htmlKitchenPage = "";
 
