@@ -1,7 +1,8 @@
 // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
 using System.Collections.Generic;
-
-public class MenuCategory
+namespace ETHDINFKBot.Helpers.Food
+{
+    public class MenuCategory
     {
         public string __typename { get; set; }
         public string title { get; set; }
@@ -56,3 +57,4 @@ public class MenuCategory
         public MenuPageProps pageProps { get; set; }
         public bool __N_SSP { get; set; }
     }
+}

@@ -2,7 +2,9 @@
 using System;
 using System.Collections.Generic;
 
-public class StatClimateRatingFromDegrees
+namespace ETHDINFKBot.Helpers.Food
+{
+    public class StatClimateRatingFromDegrees
     {
         public double HIGHMinDegCelsius { get; set; }
         public double MEDIUMMinDegCelsius { get; set; }
@@ -50,3 +52,4 @@ public class StatClimateRatingFromDegrees
         public double temperatureChangeDelta { get; set; }
         public string __typename { get; set; }
     }
+}

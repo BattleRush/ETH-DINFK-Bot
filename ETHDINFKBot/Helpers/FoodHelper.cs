@@ -1,6 +1,7 @@
 ﻿using ETHBot.DataLayer.Data.Enums;
 using ETHBot.DataLayer.Data.ETH.Food;
 using ETHDINFKBot.Data;
+using ETHDINFKBot.Helpers.Food;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -83,185 +84,151 @@ namespace ETHDINFKBot.Helpers
                     //await Context.Channel.SendMessageAsync($"Processing {restaurant.Name}");
 
                     List<Menu> menu = new List<Menu>();
-                    switch (restaurant.Location)
+                    if (!restaurant.IsFood2050Supported)
                     {
-                        case RestaurantLocation.None:
-                            break;
+                        // TODO add capability (new field to specify scraper and add ETH page scraper because SV is unreliable as usual)
+                        // for sv restaurant go only into fix only mode because selenium would nuke me atm
+                        var allMenus = FoodDBManager.GetMenusByDay(
+                            DateTime.Now,
+                            restaurant.RestaurantId
+                        );
+                        if (allMenus.Count != 0)
+                            continue; // We have some menus loaded do not reload
 
-                        // SV Restaurant handler
-                        case RestaurantLocation.ETH_Zentrum:
-                        case RestaurantLocation.ETH_Hoengg:
+                        var today = DateTime.UtcNow.Date;
 
-                            // for sv restaurant go only into fix only mode because selenium would nuke me atm
-                            var allMenus = FoodDBManager.GetMenusByDay(
-                                DateTime.Now,
-                                restaurant.RestaurantId
-                            );
-                            if (allMenus.Count != 0)
-                                continue; // We have some menus loaded do not reload
+                        List<DateTime> remainingWeekdays = new List<DateTime>();
 
-                            var today = DateTime.UtcNow.Date;
+                        remainingWeekdays.Add(today);
 
-                            List<DateTime> remainingWeekdays = new List<DateTime>();
+                        for (int i = 0; i < 5; i++)
+                        {
+                            today = today.AddDays(1);
+                            if (
+                                today.DayOfWeek == DayOfWeek.Saturday
+                                || today.DayOfWeek == DayOfWeek.Sunday
+                            )
+                                break;
 
                             remainingWeekdays.Add(today);
+                        }
 
-                            for (int i = 0; i < 5; i++)
-                            {
-                                today = today.AddDays(1);
-                                if (
-                                    today.DayOfWeek == DayOfWeek.Saturday
-                                    || today.DayOfWeek == DayOfWeek.Sunday
-                                )
-                                    break;
+                        foreach (var day in remainingWeekdays)
+                        {
+                            var svRestaurantMenuInfos = GetSVRestaurantMenu(restaurant.MenuUrl, day);
 
-                                remainingWeekdays.Add(today);
-                            }
+                            if (svRestaurantMenuInfos == null)
+                                continue;
+                            //await Context.Channel.SendMessageAsync($"Found for {restaurant.Name}: {svRestaurantMenuInfos.Count} menus");
 
-                            foreach (var day in remainingWeekdays)
-                            {
-                                var svRestaurantMenuInfos = GetSVRestaurantMenu(
-                                    restaurant.MenuUrl,
-                                    day
-                                );
-
-                                if (svRestaurantMenuInfos == null)
-                                    continue;
-                                //await Context.Channel.SendMessageAsync($"Found for {restaurant.Name}: {svRestaurantMenuInfos.Count} menus");
-
-                                foreach (var svRestaurantMenu in svRestaurantMenuInfos)
-                                {
-                                    try
-                                    {
-                                        svRestaurantMenu.Menu.RestaurantId =
-                                            restaurant.RestaurantId; // Link the menu to restaurant
-
-                                        var menuImage = GetImageForFood(svRestaurantMenu.Menu);
-
-                                        // Set image
-                                        if (menuImage != null)
-                                            svRestaurantMenu.Menu.MenuImageId =
-                                                menuImage.MenuImageId;
-
-                                        var dbMenu = FoodDBManager.CreateMenu(
-                                            svRestaurantMenu.Menu
-                                        );
-
-                                        // Link menu with allergies
-                                        foreach (var allergyId in svRestaurantMenu.AllergyIds)
-                                        {
-                                            FoodDBManager.CreateMenuAllergy(
-                                                svRestaurantMenu.Menu.MenuId,
-                                                allergyId
-                                            );
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        _logger.LogError("Exception while loading SV menu: ", ex);
-                                        Console.WriteLine(ex);
-                                    }
-                                }
-                            }
-                            break;
-
-                        // ZFV Restaurant handler
-                        case RestaurantLocation.UZH_Zentrum:
-                        case RestaurantLocation.UZH_Irchel:
-
-                            if (restaurant.IsFood2050Supported)
+                            foreach (var svRestaurantMenu in svRestaurantMenuInfos)
                             {
                                 try
                                 {
-                                    var menus = GetUZHMensaMenuWeek(
-                                        restaurant.InternalName,
-                                        restaurant.AdditionalInternalName,
-                                        restaurant.TimeParameter
-                                    );
+                                    svRestaurantMenu.Menu.RestaurantId = restaurant.RestaurantId; // Link the menu to restaurant
 
-                                    foreach (var currentMenu in menus)
+                                    var menuImage = GetImageForFood(svRestaurantMenu.Menu);
+
+                                    // Set image
+                                    if (menuImage != null)
+                                        svRestaurantMenu.Menu.MenuImageId = menuImage.MenuImageId;
+
+                                    var dbMenu = FoodDBManager.CreateMenu(svRestaurantMenu.Menu);
+
+                                    // Link menu with allergies
+                                    foreach (var allergyId in svRestaurantMenu.AllergyIds)
                                     {
-                                        try
-                                        {
-                                            currentMenu.RestaurantId = restaurant.RestaurantId; // Link the menu to restaurant
-
-                                            var dbMenu = FoodDBManager.CreateMenu(currentMenu);
-
-                                            // Link menu with allergies for now no allergies handling
-                                            /*foreach (var allergyId in menu.AllergyIds)
-                                            {
-                                                FoodDBManager.CreateMenuAllergy(menu.MenuId, allergyId);
-                                            }*/
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            _logger.LogError(
-                                                "Exception while loading UZH menu: ",
-                                                ex
-                                            );
-                                            Console.WriteLine(ex);
-                                        }
+                                        FoodDBManager.CreateMenuAllergy(svRestaurantMenu.Menu.MenuId, allergyId);
                                     }
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogError("Exception while loading SV menu: ", ex);
+                                    Console.WriteLine(ex);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        try
+                        {
+                            var menus = GetUZHMensaMenuWeek(restaurant.InternalName, restaurant.AdditionalInternalName, restaurant.TimeParameter);
+
+                            foreach (var currentMenu in menus)
+                            {
+                                try
+                                {
+                                    currentMenu.RestaurantId = restaurant.RestaurantId; // Link the menu to restaurant
+
+                                    var dbMenu = FoodDBManager.CreateMenu(currentMenu);
+
+                                    // Link menu with allergies for now no allergies handling
+                                    /*foreach (var allergyId in menu.AllergyIds)
+                                    {
+                                        FoodDBManager.CreateMenuAllergy(menu.MenuId, allergyId);
+                                    }*/
                                 }
                                 catch (Exception ex)
                                 {
                                     _logger.LogError("Exception while loading UZH menu: ", ex);
                                     Console.WriteLine(ex);
                                 }
-                                continue;
                             }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError("Exception while loading UZH menu: ", ex);
+                            Console.WriteLine(ex);
+                        }
+                    }
 
+                    // old code for old mensa page TODO remove if no page uses this site anymore
+                    /*try
+                    {
+                        var uzhMenuInfos = GetUzhMenus(
+                            GetUZHDayOfTheWeek(),
+                            restaurant.InternalName
+                        );
+
+                        if (uzhMenuInfos == null)
+                            continue;
+                        //await Context.Channel.SendMessageAsync($"Found for {restaurant.Name}: {uzhMenuInfos.Count} menus");
+
+                        foreach (var uzhMenuInfo in uzhMenuInfos)
+                        {
                             try
                             {
-                                var uzhMenuInfos = GetUzhMenus(
-                                    GetUZHDayOfTheWeek(),
-                                    restaurant.InternalName
-                                );
+                                uzhMenuInfo.Menu.RestaurantId = restaurant.RestaurantId; // Link the menu to restaurant
 
-                                if (uzhMenuInfos == null)
-                                    continue;
-                                //await Context.Channel.SendMessageAsync($"Found for {restaurant.Name}: {uzhMenuInfos.Count} menus");
+                                var menuImage = GetImageForFood(uzhMenuInfo.Menu);
 
-                                foreach (var uzhMenuInfo in uzhMenuInfos)
+                                // Set image
+                                if (menuImage != null)
+                                    uzhMenuInfo.Menu.MenuImageId = menuImage.MenuImageId;
+
+                                var dbMenu = FoodDBManager.CreateMenu(uzhMenuInfo.Menu);
+
+                                // Link menu with allergies
+                                foreach (var allergyId in uzhMenuInfo.AllergyIds)
                                 {
-                                    try
-                                    {
-                                        uzhMenuInfo.Menu.RestaurantId = restaurant.RestaurantId; // Link the menu to restaurant
-
-                                        var menuImage = GetImageForFood(uzhMenuInfo.Menu);
-
-                                        // Set image
-                                        if (menuImage != null)
-                                            uzhMenuInfo.Menu.MenuImageId = menuImage.MenuImageId;
-
-                                        var dbMenu = FoodDBManager.CreateMenu(uzhMenuInfo.Menu);
-
-                                        // Link menu with allergies
-                                        foreach (var allergyId in uzhMenuInfo.AllergyIds)
-                                        {
-                                            FoodDBManager.CreateMenuAllergy(dbMenu.MenuId, allergyId);
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        _logger.LogError("Exception while loading UZH menu: ", ex);
-                                    }
+                                    FoodDBManager.CreateMenuAllergy(dbMenu.MenuId, allergyId);
                                 }
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogError("Exception while loading UZH menu from HTTP: ", ex);
+                                _logger.LogError("Exception while loading UZH menu: ", ex);
                             }
-
-                            break;
-                        default:
-                            break;
+                        }
                     }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError("Exception while loading UZH menu from HTTP: ", ex);
+                    }*/
+
+
                 }
-                else
-                {
-                    //await Context.Channel.SendMessageAsync($"{restaurant.Name} is closed");
-                }
+
             }
             //await Context.Channel.SendMessageAsync($"Done");
         }
@@ -343,10 +310,7 @@ namespace ETHDINFKBot.Helpers
                 }*/
 
         // TODO Provide list of ids to search
-        public List<(Menu Menu, List<int> AllergyIds)> GetSVRestaurantMenu(
-            string link,
-            DateTime dateTime
-        )
+        public List<(Menu Menu, List<int> AllergyIds)> GetSVRestaurantMenu(string link, DateTime dateTime)
         {
             try
             {

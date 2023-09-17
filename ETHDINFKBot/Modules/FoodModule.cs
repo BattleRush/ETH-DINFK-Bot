@@ -13,6 +13,8 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using ETHBot.DataLayer.Data.ETH.Food;
+using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 
 namespace ETHDINFKBot.Modules
 {
@@ -1196,15 +1198,53 @@ It is also likely that there are no menus currently available today." + weekendS
 
                 try
                 {
-                    builderComponent.WithButton("Filter Vegetarian", $"food-fav-vegetarian", userMenuSetting.VegetarianPreference ? ButtonStyle.Primary : ButtonStyle.Danger, Emote.Parse($"<:food_vegetarian:1017751739648188487>"), null, false, 0);
-                    builderComponent.WithButton("Filter Vegan", $"food-fav-vegan", userMenuSetting.VeganPreference ? ButtonStyle.Primary : ButtonStyle.Danger, Emote.Parse($"<:food_vegan:1017751741455937536>"), null, false, 0);
-                    builderComponent.WithButton("Show all nutritions stats", $"food-fav-nutritions", userMenuSetting.FullNutritions ? ButtonStyle.Primary : ButtonStyle.Danger, null/*Emote.Parse($"<:food_vegan:1017751741455937536>")*/, null, false, 0);
-                    builderComponent.WithButton("Show Allergies", $"food-fav-allergies", userMenuSetting.DisplayAllergies ? ButtonStyle.Primary : ButtonStyle.Danger, null/*Emote.Parse($"<:food_vegan:1017751741455937536>")*/, null, false, 0);
+                    builderComponent.WithButton("Filter Vegetarian", $"food-fav-setting-vegetarian", userMenuSetting.VegetarianPreference ? ButtonStyle.Primary : ButtonStyle.Danger, Emote.Parse($"<:food_vegetarian:1017751739648188487>"), null, false, 0);
+                    builderComponent.WithButton("Filter Vegan", $"food-fav-setting-vegan", userMenuSetting.VeganPreference ? ButtonStyle.Primary : ButtonStyle.Danger, Emote.Parse($"<:food_vegan:1017751741455937536>"), null, false, 0);
+                    builderComponent.WithButton("Show all nutritions stats", $"food-fav-setting-nutritions", userMenuSetting.FullNutritions ? ButtonStyle.Primary : ButtonStyle.Danger, null/*Emote.Parse($"<:food_vegan:1017751741455937536>")*/, null, false, 0);
+                    builderComponent.WithButton("Show Allergies", $"food-fav-setting-allergies", userMenuSetting.DisplayAllergies ? ButtonStyle.Primary : ButtonStyle.Danger, null/*Emote.Parse($"<:food_vegan:1017751741455937536>")*/, null, false, 0);
 
                     var favedRestaurantIds = userFavRestaurants.Select(i => i.RestaurantId);
 
                     int row = 1;
-                    foreach (var restaurantLocationGroup in availableRestaurants.GroupBy(i => i.Location))
+
+                    // iterate trough elements of RestaurantLocation enum
+
+                    foreach (var location in Enum.GetValues(typeof(RestaurantLocation)).Cast<RestaurantLocation>())
+                    {
+                        var locationDisplayName = location.GetType().GetMember(location.ToString()).First().GetCustomAttribute<DisplayAttribute>();
+
+                        switch(location)
+                        {
+                            case RestaurantLocation.ETH_UZH_Zentrum:
+                                row = 1;
+                                break;
+                            case RestaurantLocation.ETH_Hoengg:
+                                row = 1;
+                                break;
+                            case RestaurantLocation.UZH_Irchel_Oerlikon:
+                                row = 1;
+                                break;
+                            case RestaurantLocation.Zurich:
+                                row = 2;
+                                break;
+                            case RestaurantLocation.HSLU:
+                                row = 1;
+                                break;
+                            case RestaurantLocation.Bern:
+                                row = 2;
+                                break;
+                            case RestaurantLocation.Other:
+                                row = 3;
+                                break;                            
+                        }
+
+                        int locationValue = (int)location;
+
+                        builderComponent.WithButton(locationDisplayName.Name, $"food-fav-location-{locationValue}", ButtonStyle.Success, null, null, false, row);
+                    }
+
+
+                    /*foreach (var restaurantLocationGroup in availableRestaurants.GroupBy(i => i.Location))
                     {
                         // Currently only supports only 4 locations with 5 restaurants each
 
@@ -1214,7 +1254,7 @@ It is also likely that there are no menus currently available today." + weekendS
                         }
 
                         row++;
-                    }
+                    }*/
                 }
                 catch (Exception ex)
                 {

@@ -37,6 +37,7 @@ using System.Web;
 using ETHBot.DataLayer.Data.Discord;
 using MySqlConnector;
 using ETHBot.DataLayer.Data.ETH.Food;
+using ETHDINFKBot.Helpers.Food;
 
 namespace ETHDINFKBot.Modules
 {
@@ -341,7 +342,7 @@ namespace ETHDINFKBot.Modules
         public async Task NoTrackUser(ulong discordUserId)
         {
             DatabaseManager.Instance().AddNoTrackUser(discordUserId);
-            await Context.Channel.SendMessageAsync($"Added user {discordUserId} to no track list", false);  
+            await Context.Channel.SendMessageAsync($"Added user {discordUserId} to no track list", false);
         }
 
 
@@ -629,6 +630,8 @@ namespace ETHDINFKBot.Modules
                 //builder.AddField($"{Program.CurrentPrefix}admin food menuimage <menu_id>", "Returns all images found for this menu");
                 builder.AddField($"{Program.CurrentPrefix}admin food status <debug>", "Returns current menus status");
                 builder.AddField($"{Program.CurrentPrefix}admin food fix", "Fixes today menus");
+                builder.AddField($"{Program.CurrentPrefix}admin food 2050mensas <dryRun>", "Loads all mensas from food2050 and add missing ones");
+                builder.AddField($"{Program.CurrentPrefix}admin food setlocation <locationid> <restaurantids>", "Sets the location for a restaurants (comma seperated)");
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
@@ -839,6 +842,273 @@ Total todays menus: {allTodaysMenus.Count}");
                 }
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
+            }
+
+            [Command("2050mensas", RunMode = RunMode.Async)]
+            public async Task Mensas2050(bool dryRun = true)
+            {
+                var author = Context.Message.Author;
+                var guildUser = Context.Message.Author as SocketGuildUser;
+                if (!(author.Id == ETHDINFKBot.Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels))
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                try
+                {
+                    int totalAdded = 0;
+                    string mainUrl = "https://app.food2050.ch/";
+
+                    var client = new HttpClient();
+
+                    var htmlMainPage = client.GetStringAsync(mainUrl);
+
+                    var doc = new HtmlDocument();
+
+                    doc.LoadHtml(htmlMainPage.Result);
+
+                    // get script tag with json with the id __NEXT_DATA__
+                    var scriptTag = doc.DocumentNode.Descendants("script").Where(i => i.Id == "__NEXT_DATA__").FirstOrDefault();
+
+                    if (scriptTag == null)
+                    {
+                        await Context.Channel.SendMessageAsync("Could not find script tag in main", false);
+                        return;
+                    }
+
+                    var json = scriptTag.InnerText;
+
+                    var appResponse = JsonConvert.DeserializeObject<Food2050MainAppResponse>(json);
+
+                    // loop trough all restaurants
+                    var locations = appResponse.props.pageProps.locations;
+                    string output = "Found: " + locations.Count() + " restaurants" + Environment.NewLine;
+                    foreach (var location in locations)
+                    {
+                        output += $"Id: {location.id} Slug: {location.slug} Title: {location.title}" + Environment.NewLine;
+
+
+                        // for each location make http call url/{location.slug}
+                        string locationUrl = mainUrl + location.slug;
+
+                        var htmlLocationPage = "";
+
+                        try
+                        {
+                            htmlLocationPage = await client.GetStringAsync(locationUrl);
+                        }
+                        catch (Exception ex)
+                        {
+                            await Context.Channel.SendMessageAsync($"Could not get {locationUrl}", false);
+                            continue;
+                        }
+
+                        var locationDoc = new HtmlDocument();
+
+                        locationDoc.LoadHtml(htmlLocationPage);
+
+                        // get script tag with json with the id __NEXT_DATA__
+
+                        var locationScriptTag = locationDoc.DocumentNode.Descendants("script").Where(i => i.Id == "__NEXT_DATA__").FirstOrDefault();
+
+                        if (locationScriptTag == null)
+                        {
+                            await Context.Channel.SendMessageAsync($"Could not find script tag for {locationUrl}", false);
+                            return;
+                        }
+
+                        var locationJson = locationScriptTag.InnerText;
+
+                        var locationAppResponse = JsonConvert.DeserializeObject<Food2050MainAppLocationResponse>(locationJson);
+
+                        var kitchens = locationAppResponse.props.pageProps.location.outlets;
+
+                        foreach (var kitchen in kitchens)
+                        {
+                            var kitchenSlug = kitchen.slug;
+
+                            string kitchenUrl = mainUrl + location.slug + "/" + kitchenSlug;
+
+                            var htmlKitchenPage = "";
+
+                            try
+                            {
+                                htmlKitchenPage = await client.GetStringAsync(kitchenUrl);
+                            }
+                            catch (Exception ex)
+                            {
+                                await Context.Channel.SendMessageAsync($"Could not get {kitchenUrl}", false);
+                                continue;
+                            }
+
+                            var kitchenDoc = new HtmlDocument();
+
+                            kitchenDoc.LoadHtml(htmlKitchenPage);
+
+                            // get script tag with json with the id __NEXT_DATA__
+
+                            var kitchenScriptTag = kitchenDoc.DocumentNode.Descendants("script").Where(i => i.Id == "__NEXT_DATA__").FirstOrDefault();
+
+                            if (kitchenScriptTag == null)
+                            {
+                                await Context.Channel.SendMessageAsync($"Could not find script tag for {kitchenUrl}", false);
+                                return;
+                            }
+
+                            var kitchenJson = kitchenScriptTag.InnerText;
+
+                            var kitchenAppResponse = JsonConvert.DeserializeObject<Food2050MainAppKitchenResponse>(kitchenJson);
+
+                            var digitalMenus = kitchenAppResponse.props.pageProps.location.kitchen.digitalMenus;
+
+                            foreach (var digitalMenu in digitalMenus)
+                            {
+                                var menuSlug = digitalMenu.slug;
+
+
+                                // get all db restaurants (we call all here always to ensure no duplicates)
+
+                                var allRestaurants = FoodDBManager.GetAllRestaurants();
+
+                                var dbRestaurant = allRestaurants.Where(i =>
+                                    i.InternalName == location.slug
+                                    && i.AdditionalInternalName == kitchenSlug
+                                    && i.TimeParameter == menuSlug).FirstOrDefault();
+
+                                if (dbRestaurant == null)
+                                {
+                                    output += $"  LocationSlug: {location.slug} KitchenSlug: {kitchenSlug} MenuSlug: {menuSlug}" + Environment.NewLine;
+
+                                    string menuName = "";
+
+                                    string menuLabel = digitalMenu.label ?? "";
+
+                                    // translate to english
+                                    if (menuLabel.ToLower().Contains("mittag"))
+                                        menuLabel = "Lunch";
+                                    else if (menuLabel.ToLower().Contains("abend"))
+                                        menuLabel = "Dinner";
+
+                                    if (!string.IsNullOrWhiteSpace(menuSlug))
+                                        menuName = $" ({menuLabel})";
+
+                                    RestaurantLocation restaurantLocation = RestaurantLocation.Other;
+
+                                    string name = $"{location.title} {menuName}";
+                                    string fullName = $"{location.title} {kitchen.publicLabel}";
+
+                                    // could lead to some false positives
+                                    if (fullName.ToLower().Contains("eth"))
+                                        restaurantLocation = RestaurantLocation.ETH_UZH_Zentrum;
+
+
+                                    if (fullName.ToLower().Contains("irchel"))
+                                        restaurantLocation = RestaurantLocation.UZH_Irchel_Oerlikon;
+
+                                    // not all will be captured
+                                    if (fullName.ToLower().Contains("hslu"))
+                                        restaurantLocation = RestaurantLocation.HSLU;
+
+                                    // some may be classified in zentrum but should be irchel/oerlikon
+                                    if (fullName.ToLower().Contains("uzh"))
+                                        restaurantLocation = RestaurantLocation.ETH_UZH_Zentrum;
+
+                                    // TODO maybe other to auto detect
+
+                                    // create new restaurant
+                                    dbRestaurant = new Restaurant()
+                                    {
+                                        InternalName = location.slug,
+                                        AdditionalInternalName = kitchenSlug,
+                                        TimeParameter = menuSlug,
+                                        Name = name,
+                                        IsOpen = true,
+                                        OffersLunch = true,
+                                        OffersDinner = false, // TODO this has to be done manually
+                                        Location = restaurantLocation,
+                                        IsFood2050Supported = true
+                                    };
+
+                                    if (!dryRun)
+                                    {
+                                        bool success = FoodDBManager.AddRestaurant(dbRestaurant);
+
+                                        if (success)
+                                            totalAdded++;
+
+                                        output += $"    Added new restaurant to DB: {success} at the location: {restaurantLocation}" + Environment.NewLine;
+                                    }
+                                    else
+                                    {
+                                        output += $"    [DRY] Would have added new restaurant to DB at the location: {restaurantLocation}" + Environment.NewLine;
+                                    }
+                                }   
+                            }
+                        }
+                    }
+
+                    output += $"# Total added: {totalAdded}";
+
+                    // send up to 2000 chars max per message, split by lines
+                    var lines = output.Split(Environment.NewLine).ToList();
+                    var messages = new List<string>();
+                    string currentMessage = "";
+                    foreach (var line in lines)
+                    {
+                        if (currentMessage.Length + line.Length > 2000)
+                        {
+                            messages.Add(currentMessage);
+                            currentMessage = "";
+                        }
+
+                        currentMessage += line + Environment.NewLine;
+                    }
+
+                    messages.Add(currentMessage);
+
+                    foreach (var message in messages)
+                        await Context.Channel.SendMessageAsync(message, false);
+                }
+                catch (Exception ex)
+                {
+                    await Context.Channel.SendMessageAsync(ex.ToString(), false);
+                }
+            }
+
+            // set location pass location id and then comma separated the restaurant ids
+            [Command("setlocation", RunMode = RunMode.Async)]
+            public async Task SetLocation(int locationId, string restaurantIds)
+            {
+                var author = Context.Message.Author;
+                var guildUser = Context.Message.Author as SocketGuildUser;
+                if (!(author.Id == ETHDINFKBot.Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels))
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                var allRestaurants = FoodDBManager.GetAllRestaurants();
+
+
+                var restaurantIdsList = restaurantIds.Split(',').Select(i => int.Parse(i)).ToList();
+
+                foreach (var restaurantId in restaurantIdsList)
+                {
+                    var dbRestaurant = allRestaurants.Where(i => i.RestaurantId == restaurantId).FirstOrDefault();
+
+                    if (dbRestaurant == null)
+                    {
+                        await Context.Channel.SendMessageAsync($"Could not find restaurant with id: {restaurantId}", false);
+                        continue;
+                    }
+
+                    dbRestaurant.Location = (RestaurantLocation)locationId;
+
+                    bool success = FoodDBManager.UpdateRestaurant(dbRestaurant);
+
+                    await Context.Channel.SendMessageAsync($"Updated restaurant: {dbRestaurant.Name} with location: {locationId} with success: {success}", false);
+                }
             }
         }
 

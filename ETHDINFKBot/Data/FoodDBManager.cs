@@ -46,6 +46,49 @@ namespace ETHDINFKBot.Data
             }
         }
 
+        // add restaurant
+        public bool AddRestaurant(Restaurant restaurant)
+        {
+            using (ETHBotDBContext context = new ETHBotDBContext())
+            {
+                if (context.Restaurants.Any(i => i.Name == restaurant.Name))
+                    return false;
+
+                context.Restaurants.Add(restaurant);
+                context.SaveChanges();
+            }
+
+            return true;
+        }
+
+        public bool UpdateRestaurant(Restaurant restaurant)
+        {
+            using (ETHBotDBContext context = new ETHBotDBContext())
+            {
+                var dbRestaurant = context.Restaurants.FirstOrDefault(i => i.RestaurantId == restaurant.RestaurantId);
+                if (dbRestaurant == null)
+                    return false;
+
+                dbRestaurant.Name = restaurant.Name;
+                dbRestaurant.ImageUrl = restaurant.ImageUrl;
+                dbRestaurant.MenuUrl = restaurant.MenuUrl;
+                dbRestaurant.InternalName = restaurant.InternalName;
+                dbRestaurant.AdditionalInternalName = restaurant.AdditionalInternalName;
+                dbRestaurant.OffersLunch = restaurant.OffersLunch;
+                dbRestaurant.OffersDinner = restaurant.OffersDinner;
+                dbRestaurant.HasMenu = restaurant.HasMenu;
+                dbRestaurant.IsOpen = restaurant.IsOpen;
+                dbRestaurant.LastUpdate = restaurant.LastUpdate;
+                dbRestaurant.Location = restaurant.Location;
+                dbRestaurant.IsFood2050Supported = restaurant.IsFood2050Supported;
+                dbRestaurant.TimeParameter = restaurant.TimeParameter;
+
+                context.SaveChanges();
+            }
+
+            return true;
+        }
+
         public bool AddFood2050CO2Entry(Food2050CO2Entry entry)
         {
             using (ETHBotDBContext context = new ETHBotDBContext())

@@ -3,6 +3,7 @@ using Discord;
 using Discord.WebSocket;
 using ETHDINFKBot.Data;
 using ETHDINFKBot.Helpers;
+using ETHDINFKBot.Helpers.Food;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
