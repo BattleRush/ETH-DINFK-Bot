@@ -990,7 +990,7 @@ Total todays menus: {allTodaysMenus.Count}");
                                     else if (menuLabel.ToLower().Contains("abend"))
                                         menuLabel = "Dinner";
 
-                                    if (!string.IsNullOrWhiteSpace(menuSlug))
+                                    if (!string.IsNullOrWhiteSpace(menuSlug) && !string.IsNullOrWhiteSpace(menuLabel))
                                         menuName = $" ({menuLabel})";
 
                                     RestaurantLocation restaurantLocation = RestaurantLocation.Other;
