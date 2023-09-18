@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using ETHBot.DataLayer.Data.ETH.Food;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
+using RestSharp.Deserializers;
 
 namespace ETHDINFKBot.Modules
 {
@@ -515,13 +516,13 @@ It is also likely that there are no menus currently available today." + weekendS
 
                 bool mergeMode = userSettings?.VegetarianPreference == true
                                 || userSettings?.VeganPreference == true
-                                || currentMenus.Count() > 5;
+                                || currentMenus.Count() > 10;
 
 
                 // TODO in merge mode allow there to be rows
                 if (mergeMode)
                 {
-                    int maxPages = 4;
+                    int maxPages = 10;
 
                     int totalMenus = currentMenus.Count == 0 ? 0 : currentMenus.Sum(i => i.Value.Count);
 
@@ -537,8 +538,12 @@ It is also likely that there are no menus currently available today." + weekendS
 
                     try
                     {
+                        bool done = false;
                         foreach (var restaurant in currentMenus)
                         {
+                            if(done)
+                                break;
+
                             foreach (var menu in restaurant.Value)
                             {
                                 if (currentColumn == 0)
@@ -597,7 +602,8 @@ It is also likely that there are no menus currently available today." + weekendS
                                     if(streams.Count >= maxPages)
                                     {
                                         // Limit to 10 max
-                                        break;
+                                        done = true; 
+                                        currentColumn = -1;
                                         // TODO notify log
                                     }
 
