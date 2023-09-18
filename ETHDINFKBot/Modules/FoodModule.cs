@@ -515,22 +515,26 @@ It is also likely that there are no menus currently available today." + weekendS
 
                 bool mergeMode = userSettings?.VegetarianPreference == true
                                 || userSettings?.VeganPreference == true
-                                || currentMenus.Count() > 5;
+                                || currentMenus.Count() > 10;
 
+
+                // TODO in merge mode allow there to be rows
                 if (mergeMode)
                 {
-                    int maxPages = 4;
+                    int maxPages = 10;
 
                     int totalMenus = currentMenus.Count == 0 ? 0 : currentMenus.Sum(i => i.Value.Count);
+
                     int maxColumns = Math.Max(3, totalMenus / maxPages);
 
                     // TODO Title max chars 
-                    var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(2_000, 2_000);
+                    var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(3_000, 3_000);
                     int currentColumn = 0;
 
                     int maxUsedHeight = 0;
                     int currentWidth = 0;
                     int currentTitleTop = 0;
+
                     try
                     {
                         foreach (var restaurant in currentMenus)
@@ -538,7 +542,7 @@ It is also likely that there are no menus currently available today." + weekendS
                             foreach (var menu in restaurant.Value)
                             {
                                 if (currentColumn == 0)
-                                    (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(2_000, 2_000);
+                                    (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(3_000, 3_000);
 
                                 int currentTop = 0;
                                 string restaurantName = restaurant.Key.Name;
@@ -590,6 +594,13 @@ It is also likely that there are no menus currently available today." + weekendS
                                     bitmap.Dispose();
                                     canvas.Dispose();
 
+                                    if(streams.Count >= maxPages)
+                                    {
+                                        // Limit to 10 max
+                                        break;
+                                        // TODO notify log
+                                    }
+
                                     currentColumn = 0;
                                     maxUsedHeight = 0;
                                     currentWidth = 0;
@@ -629,7 +640,7 @@ It is also likely that there are no menus currently available today." + weekendS
                         maxMenus = restaurant.Value.Count;
 
                         // TODO Ensure the width size isnt violated 
-                        var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(2_000, 2_000);
+                        var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(3_000, 3_000);
 
                         int currentTop = 0;
                         string restaurantName = restaurant.Key.Name;
@@ -696,12 +707,11 @@ It is also likely that there are no menus currently available today." + weekendS
                         if (stream != null)
                             streams.Add(stream);
 
-                        if (streams.Count >= 5)
-                            break; // Limit to 5 max
-
                         bitmap.Dispose();
                         canvas.Dispose();
 
+                        if (streams.Count >= 10)
+                            break; // Limit to 10 max
                     }
                 }
 

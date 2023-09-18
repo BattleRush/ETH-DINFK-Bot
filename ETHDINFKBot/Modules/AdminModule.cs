@@ -886,7 +886,7 @@ Total todays menus: {allTodaysMenus.Count}");
                     string output = "Found: " + locations.Count() + " restaurants" + Environment.NewLine;
                     foreach (var location in locations)
                     {
-                        output += $"Id: {location.id} Slug: {location.slug} Title: {location.title}" + Environment.NewLine;
+                        output += $"Slug: {location.slug} Title: {location.title}" + Environment.NewLine;
 
 
                         // for each location make http call url/{location.slug}
@@ -991,11 +991,11 @@ Total todays menus: {allTodaysMenus.Count}");
                                         menuLabel = "Dinner";
 
                                     if (!string.IsNullOrWhiteSpace(menuSlug) && !string.IsNullOrWhiteSpace(menuLabel))
-                                        menuName = $" ({menuLabel})";
+                                        menuName = $"({menuLabel.Trim()})";
 
                                     RestaurantLocation restaurantLocation = RestaurantLocation.Other;
 
-                                    string name = $"{location.title} {menuName}";
+                                    string name = $"{location.title.Trim()} {menuName}";
                                     string fullName = $"{location.title} {kitchen.publicLabel}";
 
                                     // could lead to some false positives
@@ -1078,7 +1078,7 @@ Total todays menus: {allTodaysMenus.Count}");
 
             // set location pass location id and then comma separated the restaurant ids
             [Command("setlocation", RunMode = RunMode.Async)]
-            public async Task SetLocation(int locationId, string restaurantIds)
+            public async Task SetLocation(int locationId, [Remainder] string restaurantIds)
             {
                 var author = Context.Message.Author;
                 var guildUser = Context.Message.Author as SocketGuildUser;

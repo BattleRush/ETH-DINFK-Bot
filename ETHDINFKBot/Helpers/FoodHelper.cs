@@ -12,6 +12,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -651,10 +652,11 @@ namespace ETHDINFKBot.Helpers
                 int endIndex = buildIdString.IndexOf("\",");
                 string buildId = buildIdString.Substring(0, endIndex);
 
-                string url =
-                    $"https://app.food2050.ch/_next/data/{buildId}/{location}/{mensa}/menu/{timeString}weekly.json";
+                string url = $"https://app.food2050.ch/_next/data/{buildId}/{location}/{mensa}/menu/{timeString}weekly.json";
 
                 string json = client.DownloadString(url);
+
+                Thread.Sleep(1000);
 
                 var result = JsonConvert.DeserializeObject<Food2050WeeklyResponse>(json);
                 var categories = result.pageProps.query.location.kitchen.digitalMenu?.categories ?? new List<Category>();
@@ -679,6 +681,7 @@ namespace ETHDINFKBot.Helpers
                             try
                             {
                                 string menuJson = client.DownloadString(menuUrl);
+                                Thread.Sleep(500);
                                 menuResult = JsonConvert.DeserializeObject<Food2050MenuResponse>(menuJson);
 
                                 if (menuResult == null)
