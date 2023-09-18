@@ -521,7 +521,7 @@ It is also likely that there are no menus currently available today." + weekendS
                 // TODO in merge mode allow there to be rows
                 if (mergeMode)
                 {
-                    int maxPages = 5;
+                    int maxPages = 4;
 
                     int totalMenus = currentMenus.Count == 0 ? 0 : currentMenus.Sum(i => i.Value.Count);
 
@@ -617,7 +617,6 @@ It is also likely that there are no menus currently available today." + weekendS
                             if (stream != null)
                                 streams.Add(stream);
 
-
                             bitmap.Dispose();
                             canvas.Dispose();
                         }
@@ -640,7 +639,7 @@ It is also likely that there are no menus currently available today." + weekendS
                         maxMenus = restaurant.Value.Count;
 
                         // TODO Ensure the width size isnt violated 
-                        var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(3_000, 3_000);
+                        var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(2_000, 2_000);
 
                         int currentTop = 0;
                         string restaurantName = restaurant.Key.Name;
@@ -739,45 +738,6 @@ It is also likely that there are no menus currently available today." + weekendS
                     await Context.Channel.SendMessageAsync($"You haven't set any favourite mensa location. The bot will show you a default view only (Polymensa and UZH Zentrum Mensa).{Environment.NewLine}" +
                         $"You can adjust this with {Program.CurrentPrefix}food fav", messageReference: new MessageReference(Context.Message.Id));
                 }
-
-                //    // Create the service.
-                //    var service = new CustomSearchAPIService(new BaseClientService.Initializer
-                //    {
-                //        //ApplicationName = "Discovery Sample",
-                //        ApiKey = "",
-                //    });
-
-                //    // Run the request.
-                //    Console.WriteLine("Executing a list request...");
-                //    CseResource.ListRequest listRequest = new CseResource.ListRequest(service)
-                //    {
-                //        Cx = "",
-                //        Q = polymensaMenus[0].FirstLine,
-                //        Safe = CseResource.ListRequest.SafeEnum.Active,
-                //        SearchType = CseResource.ListRequest.SearchTypeEnum.Image,
-                //        Hl = "de"
-                //    };
-
-
-                //    try
-                //    {
-
-                //        Search search = listRequest.Execute();
-                //        // Display the results.
-                //        if (search.Items != null)
-                //        {
-                //            foreach (var api in search.Items)
-                //            {
-                //                Context.Channel.SendMessageAsync(api.Link);
-                //                Console.WriteLine(api.DisplayLink + " - " + api.Title);
-                //            }
-                //        }
-                //    }
-                //    catch (GoogleApiException e)
-                //    {
-                //        Console.WriteLine($"statuscode:{e.HttpStatusCode}");
-                //    }
-
             }
             catch (Exception ex)
             {
