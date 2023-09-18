@@ -515,13 +515,13 @@ It is also likely that there are no menus currently available today." + weekendS
 
                 bool mergeMode = userSettings?.VegetarianPreference == true
                                 || userSettings?.VeganPreference == true
-                                || currentMenus.Count() > 10;
+                                || currentMenus.Count() > 5;
 
 
                 // TODO in merge mode allow there to be rows
                 if (mergeMode)
                 {
-                    int maxPages = 10;
+                    int maxPages = 5;
 
                     int totalMenus = currentMenus.Count == 0 ? 0 : currentMenus.Sum(i => i.Value.Count);
 

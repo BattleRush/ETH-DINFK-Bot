@@ -139,12 +139,12 @@ namespace ETHDINFKBot.Helpers
                                     // Link menu with allergies
                                     foreach (var allergyId in svRestaurantMenu.AllergyIds)
                                     {
-                                        FoodDBManager.CreateMenuAllergy(svRestaurantMenu.Menu.MenuId, allergyId);
+                                        FoodDBManager.CreateMenuAllergy(dbMenu.MenuId, allergyId);
                                     }
                                 }
                                 catch (Exception ex)
                                 {
-                                    _logger.LogError("Exception while loading SV menu: ", ex);
+                                    _logger.LogError($"Exception while loading SV menu: {ex.Message} STACK: {ex.StackTrace}", ex);
                                     Console.WriteLine(ex);
                                 }
                             }
@@ -172,14 +172,14 @@ namespace ETHDINFKBot.Helpers
                                 }
                                 catch (Exception ex)
                                 {
-                                    _logger.LogError("Exception while loading UZH menu: ", ex);
+                                    _logger.LogError("Exception while loading UZH menu: {ex.Message} STACK: {ex.StackTrace}", ex);
                                     Console.WriteLine(ex);
                                 }
                             }
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError("Exception while loading UZH menu: ", ex);
+                            _logger.LogError("Exception while loading UZH menu Global: {ex.Message} STACK: {ex.StackTrace}", ex);
                             Console.WriteLine(ex);
                         }
                     }
@@ -498,7 +498,7 @@ namespace ETHDINFKBot.Helpers
                     catch (Exception ex)
                     {
                         _logger.LogError(
-                            $"Error while loading SV Restaurant: {link}. With: {ex.Message} for index {i}",
+                            $"Error while loading SV Restaurant: {link}. With: {ex.Message} Stack: {ex.StackTrace} for index {i}",
                             ex
                         );
                     }
