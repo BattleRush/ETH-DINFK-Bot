@@ -528,7 +528,7 @@ It is also likely that there are no menus currently available today." + weekendS
                     int maxColumns = Math.Max(3, totalMenus / maxPages);
 
                     // TODO Title max chars 
-                    var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(3_000, 3_000);
+                    var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(2_000, 2_000);
                     int currentColumn = 0;
 
                     int maxUsedHeight = 0;
@@ -542,7 +542,7 @@ It is also likely that there are no menus currently available today." + weekendS
                             foreach (var menu in restaurant.Value)
                             {
                                 if (currentColumn == 0)
-                                    (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(3_000, 3_000);
+                                    (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(2_000, 2_000);
 
                                 int currentTop = 0;
                                 string restaurantName = restaurant.Key.Name;
@@ -726,7 +726,7 @@ It is also likely that there are no menus currently available today." + weekendS
                 var attachments = new List<FileAttachment>();
                 // TODO send multiple attachments
                 int menuCount = 0;
-                foreach (var stream in streams)
+                foreach (var stream in streams.Take(10))
                     attachments.Add(new FileAttachment(stream, $"menu_{menuCount}.png"));
 
                 if (attachments.Count > 0)
