@@ -379,9 +379,9 @@ namespace ETHDINFKBot.Modules
                 var meal = MealTime.Lunch;
 
                 var searchDate = DateTime.UtcNow.UtcToLocalDateTime(Program.TimeZoneInfo); /// Make it passable by param
-                if (searchDate.Hour < 6)
+                if (searchDate.Hour < 6 && searchDate.DayOfWeek == DayOfWeek.Monday)
                 {
-                    await Context.Message.Channel.SendMessageAsync("You are here too early. The menus will be loading during the night. Come back in the morning. Good night <:sleep:851469700453367838>", messageReference: new MessageReference(Context.Message.Id));
+                    await Context.Message.Channel.SendMessageAsync("You are here too early. The menus for this week will be loading during the night. Come back in the morning. Good night <:sleep:851469700453367838> and good start into the week", messageReference: new MessageReference(Context.Message.Id));
                     return;
                 }
 
