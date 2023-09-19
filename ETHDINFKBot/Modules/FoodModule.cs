@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using ETHBot.DataLayer.Data.ETH.Food;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
+using RestSharp.Deserializers;
 
 namespace ETHDINFKBot.Modules
 {
@@ -515,13 +516,16 @@ It is also likely that there are no menus currently available today." + weekendS
 
                 bool mergeMode = userSettings?.VegetarianPreference == true
                                 || userSettings?.VeganPreference == true
-                                || currentMenus.Count() > 5;
+                                || currentMenus.Count() > 10;
 
+
+                // TODO in merge mode allow there to be rows
                 if (mergeMode)
                 {
-                    int maxPages = 4;
+                    int maxPages = 10;
 
                     int totalMenus = currentMenus.Count == 0 ? 0 : currentMenus.Sum(i => i.Value.Count);
+
                     int maxColumns = Math.Max(3, totalMenus / maxPages);
 
                     // TODO Title max chars 
@@ -531,10 +535,15 @@ It is also likely that there are no menus currently available today." + weekendS
                     int maxUsedHeight = 0;
                     int currentWidth = 0;
                     int currentTitleTop = 0;
+
                     try
                     {
+                        bool done = false;
                         foreach (var restaurant in currentMenus)
                         {
+                            if(done)
+                                break;
+
                             foreach (var menu in restaurant.Value)
                             {
                                 if (currentColumn == 0)
@@ -590,6 +599,14 @@ It is also likely that there are no menus currently available today." + weekendS
                                     bitmap.Dispose();
                                     canvas.Dispose();
 
+                                    if(streams.Count >= maxPages)
+                                    {
+                                        // Limit to 10 max
+                                        done = true; 
+                                        currentColumn = -1;
+                                        // TODO notify log
+                                    }
+
                                     currentColumn = 0;
                                     maxUsedHeight = 0;
                                     currentWidth = 0;
@@ -605,7 +622,6 @@ It is also likely that there are no menus currently available today." + weekendS
                             var stream = CommonHelper.GetStream(bitmap);
                             if (stream != null)
                                 streams.Add(stream);
-
 
                             bitmap.Dispose();
                             canvas.Dispose();
@@ -696,12 +712,11 @@ It is also likely that there are no menus currently available today." + weekendS
                         if (stream != null)
                             streams.Add(stream);
 
-                        if (streams.Count >= 5)
-                            break; // Limit to 5 max
-
                         bitmap.Dispose();
                         canvas.Dispose();
 
+                        if (streams.Count >= 10)
+                            break; // Limit to 10 max
                     }
                 }
 
@@ -716,7 +731,7 @@ It is also likely that there are no menus currently available today." + weekendS
                 var attachments = new List<FileAttachment>();
                 // TODO send multiple attachments
                 int menuCount = 0;
-                foreach (var stream in streams)
+                foreach (var stream in streams.Take(10))
                     attachments.Add(new FileAttachment(stream, $"menu_{menuCount}.png"));
 
                 if (attachments.Count > 0)
@@ -729,45 +744,6 @@ It is also likely that there are no menus currently available today." + weekendS
                     await Context.Channel.SendMessageAsync($"You haven't set any favourite mensa location. The bot will show you a default view only (Polymensa and UZH Zentrum Mensa).{Environment.NewLine}" +
                         $"You can adjust this with {Program.CurrentPrefix}food fav", messageReference: new MessageReference(Context.Message.Id));
                 }
-
-                //    // Create the service.
-                //    var service = new CustomSearchAPIService(new BaseClientService.Initializer
-                //    {
-                //        //ApplicationName = "Discovery Sample",
-                //        ApiKey = "",
-                //    });
-
-                //    // Run the request.
-                //    Console.WriteLine("Executing a list request...");
-                //    CseResource.ListRequest listRequest = new CseResource.ListRequest(service)
-                //    {
-                //        Cx = "",
-                //        Q = polymensaMenus[0].FirstLine,
-                //        Safe = CseResource.ListRequest.SafeEnum.Active,
-                //        SearchType = CseResource.ListRequest.SearchTypeEnum.Image,
-                //        Hl = "de"
-                //    };
-
-
-                //    try
-                //    {
-
-                //        Search search = listRequest.Execute();
-                //        // Display the results.
-                //        if (search.Items != null)
-                //        {
-                //            foreach (var api in search.Items)
-                //            {
-                //                Context.Channel.SendMessageAsync(api.Link);
-                //                Console.WriteLine(api.DisplayLink + " - " + api.Title);
-                //            }
-                //        }
-                //    }
-                //    catch (GoogleApiException e)
-                //    {
-                //        Console.WriteLine($"statuscode:{e.HttpStatusCode}");
-                //    }
-
             }
             catch (Exception ex)
             {
