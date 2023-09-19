@@ -266,6 +266,10 @@ namespace ETHDINFKBot.Interactions
                         break;
                 }
 
+                // allow only one of the two
+                if(userMenuSetting.VeganPreference && userMenuSetting.VegetarianPreference)
+                    userMenuSetting.VegetarianPreference = false;
+
                 var updatedRecord = FoodDBManager.UpdateUserFoodSettings(userMenuSetting);
 
 
