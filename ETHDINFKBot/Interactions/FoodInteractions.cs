@@ -218,7 +218,7 @@ namespace ETHDINFKBot.Interactions
                 return;
             }
 
-            await Context.Interaction.DeferAsync();
+            //await Context.Interaction.DeferAsync();
 
             // TODO Check if updates successfull 
             if (int.TryParse(favChange, out int restaurantId))
@@ -273,6 +273,10 @@ namespace ETHDINFKBot.Interactions
 
                     // send user message why this is not allowed
                     await Context.Interaction.RespondAsync($"You can't have both vegan and vegetarian filter on (It's an AND filter). I turned off vegetarian for you :)", ephemeral: true);
+                }
+                else
+                {
+                    await Context.Interaction.DeferAsync();
                 }
 
                 var updatedRecord = FoodDBManager.UpdateUserFoodSettings(userMenuSetting);
