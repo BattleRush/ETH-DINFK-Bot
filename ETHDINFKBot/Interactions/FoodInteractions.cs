@@ -268,7 +268,12 @@ namespace ETHDINFKBot.Interactions
 
                 // allow only one of the two
                 if(userMenuSetting.VeganPreference && userMenuSetting.VegetarianPreference)
+                {
                     userMenuSetting.VegetarianPreference = false;
+
+                    // send user message why this is not allowed
+                    await Context.Interaction.RespondAsync($"You can't have both vegan and vegetarian filter on (It's an AND filter). I turned off vegetarian for you :)", ephemeral: true);
+                }
 
                 var updatedRecord = FoodDBManager.UpdateUserFoodSettings(userMenuSetting);
 
