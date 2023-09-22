@@ -1241,6 +1241,7 @@ Total todays menus: {allTodaysMenus.Count}");
                 builder.AddField("admin channel flags", "Returns help with the flag infos");
                 builder.AddField("admin channel create <VVZ Link>", "Creates a new ForumPost for the subject");
                 builder.AddField("admin channel editpost <messageId> <content>", "Edits the current post content, if the bot is the owner of the post");
+                builder.AddField("admin channel duplicate", "Checks if any forum post is duplicate");
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
@@ -1837,9 +1838,11 @@ Total todays menus: {allTodaysMenus.Count}");
                 }
 
 
-                List<ulong> forumIds = new List<ulong>();
-                forumIds.Add(1067785361062887424); // BSc
-                forumIds.Add(1067780019423817779); // MSc
+                List<ulong> forumIds = new List<ulong>
+                {
+                    1067785361062887424, // BSc
+                    1067780019423817779 // MSc
+                };
 
                 Dictionary<ulong, string> titles = new Dictionary<ulong, string>();
 
@@ -1861,6 +1864,8 @@ Total todays menus: {allTodaysMenus.Count}");
                             titles.Add(thread.Id, threadTitle);
                     }
                 }
+
+                await Context.Channel.SendMessageAsync($"Finished checking {forumIds.Count} forums for duplicates", false);
             }
         }
 
