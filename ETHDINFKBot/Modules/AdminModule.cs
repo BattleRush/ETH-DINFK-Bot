@@ -1043,7 +1043,7 @@ Total todays menus: {allTodaysMenus.Count}");
                                     {
                                         output += $"    [DRY] Would have added new restaurant to DB at the location: {restaurantLocation}" + Environment.NewLine;
                                     }
-                                }   
+                                }
                             }
                         }
                     }
@@ -1823,6 +1823,44 @@ Total todays menus: {allTodaysMenus.Count}");
                 builder.AddField("BotPermissionType", inlineString);
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
+            }
+
+            // check for duplicate forum posts
+            [Command("duplicate")]
+            public async Task CheckForDuplicateForumPosts()
+            {
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+
+                List<ulong> forumIds = new List<ulong>();
+                forumIds.Add(1067785361062887424); // BSc
+                forumIds.Add(1067780019423817779); // MSc
+
+                Dictionary<ulong, string> titles = new Dictionary<ulong, string>();
+
+                foreach (var forumId in forumIds)
+                {
+                    var forum = Context.Guild.GetChannel(forumId) as SocketForumChannel;
+
+                    var threads = forum.GetActiveThreadsAsync().Result;
+                    var archivedThreads = forum.GetPublicArchivedThreadsAsync().Result;
+
+                    var currentThreads = threads.Concat(archivedThreads).ToList();
+
+                    foreach (var thread in currentThreads)
+                    {
+                        var threadTitle = thread.Name;
+                        if (titles.ContainsKey(thread.Id))
+                            await Context.Channel.SendMessageAsync($"Duplicate found: {threadTitle} in {forum.Name} Link:<# {thread.Id}>", false);
+                        else
+                            titles.Add(thread.Id, threadTitle);
+                    }
+                }
             }
         }
 
