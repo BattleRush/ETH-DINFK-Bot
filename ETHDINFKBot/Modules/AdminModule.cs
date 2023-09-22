@@ -1859,7 +1859,7 @@ Total todays menus: {allTodaysMenus.Count}");
                     {
                         var threadTitle = thread.Name;
                         if (titles.ContainsValue(threadTitle))
-                            await Context.Channel.SendMessageAsync($"Duplicate found: {threadTitle} in {forum.Name} Link:<# {thread.Id}> and <#{titles.FirstOrDefault(x => x.Value == threadTitle).Key}>", false);                            
+                            await Context.Channel.SendMessageAsync($"Duplicate found: {threadTitle} in {forum.Name} Link: <#{thread.Id}> and <#{titles.FirstOrDefault(x => x.Value == threadTitle).Key}>", false);                            
                         else
                             titles.Add(thread.Id, threadTitle);
                     }
