@@ -686,7 +686,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
             // html decode the lecture name
             lectureName = WebUtility.HtmlDecode(lectureName);
-            
+
             var guildUser = Context.Message.Author as SocketGuildUser;
 
             // Create the forum channel
@@ -928,10 +928,13 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 return;
 
             bool filterPingHell = false;
+            bool fullView = false;
             if (!string.IsNullOrWhiteSpace(command))
             {
                 if (command.Trim().ToLower() == "-pinghell")
                     filterPingHell = true;
+                else if (command.Trim().ToLower() == "full")
+                    fullView = true;
             }
 
             try
@@ -943,7 +946,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     user = Program.Client.GetGuild(Program.ApplicationSetting.BaseGuild).GetUser(userId.Value) as SocketGuildUser;
 
                 var pingHistory = DiscordHelper.GetTotalPingHistory(user, 30, filterPingHell);
-                var builder = DiscordHelper.GetEmbedForPingHistory(pingHistory, user);
+                var builder = DiscordHelper.GetEmbedForPingHistory(pingHistory, user, fullView ? 30 : 10);
 
                 await Context.Message.Channel.SendMessageAsync("", false, builder.Build());
             }
