@@ -149,7 +149,7 @@ namespace ETHDINFKBot.Helpers
 
             foreach (var item in pingHistory)
             {
-                if(count >= total)
+                if(count > total)
                 {
                     messageText += $"... and more pings. To see more do {Program.CurrentPrefix}ping full";
                     break;
