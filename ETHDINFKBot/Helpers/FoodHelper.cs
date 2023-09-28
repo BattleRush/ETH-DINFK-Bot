@@ -56,14 +56,322 @@ namespace ETHDINFKBot.Helpers
 
         private readonly ILogger _logger = new Logger<FoodHelper>(Program.Logger);
 
+
+        /* TODO to be removed as ETH API returns the id
+                private int ETHAllergyToDBAlergyId(int allergyId)
+                {
+                                        switch (allergyId)
+                                        {
+                                            // gluten wheat
+                                            case 10:
+                                                return 1;
+
+                                            // crustaceans
+                                            case 11:
+                                                return 2;
+
+                                            // eggs
+                                            case 12:
+                                                return 3;
+
+                                            // fish
+                                            case 13:
+                                                return 4;
+
+                                            // peanuts
+                                            case 14:
+                                                return 5;
+
+                                            // soya
+                                            case 15:
+                                                return 6;
+
+                                            // milk, lactose
+                                            case 16:
+                                                return 7;
+
+                                            // nuts
+                                            case 17:
+                                                return 8;
+
+                                            // celery
+                                            case 18:
+                                                return 9;
+
+                                            // mustard
+                                            case 19:
+                                                return 10;
+
+                                            // sesame
+                                            case 20:
+                                                return 11;
+
+                                            // sulfite
+                                            case 21:
+                                               return 12;
+
+                                            // lupin
+                                            case 22:
+                                                return 13;
+
+                                            // molluscs
+                                            case 23:
+                                                return 14;
+
+                                            default:
+                                                int i = 1;
+                                                break; // Shouldt enter TODO catch
+                                        }
+
+                }
+                */
+
+        public void HandleSVRestaurantMenu(Restaurant restaurant)
+        {
+            var allMenus = FoodDBManager.GetMenusByDay(
+                            DateTime.Now,
+                            restaurant.RestaurantId
+                        );
+            if (allMenus.Count != 0)
+                return; // We have some menus loaded do not reload
+
+            var today = DateTime.UtcNow.Date;
+
+            List<DateTime> remainingWeekdays = new List<DateTime>();
+
+            remainingWeekdays.Add(today);
+
+            for (int i = 0; i < 5; i++)
+            {
+                today = today.AddDays(1);
+                if (
+                    today.DayOfWeek == DayOfWeek.Saturday
+                    || today.DayOfWeek == DayOfWeek.Sunday
+                )
+                    break;
+
+                remainingWeekdays.Add(today);
+            }
+
+            foreach (var day in remainingWeekdays)
+            {
+                var svRestaurantMenuInfos = GetSVRestaurantMenu(restaurant.MenuUrl, day);
+
+                if (svRestaurantMenuInfos == null)
+                    continue;
+                //await Context.Channel.SendMessageAsync($"Found for {restaurant.Name}: {svRestaurantMenuInfos.Count} menus");
+
+                foreach (var svRestaurantMenu in svRestaurantMenuInfos)
+                {
+                    try
+                    {
+                        svRestaurantMenu.Menu.RestaurantId = restaurant.RestaurantId; // Link the menu to restaurant
+
+                        var menuImage = GetImageForFood(svRestaurantMenu.Menu);
+
+                        // Set image
+                        if (menuImage != null)
+                            svRestaurantMenu.Menu.MenuImageId = menuImage.MenuImageId;
+
+                        var dbMenu = FoodDBManager.CreateMenu(svRestaurantMenu.Menu);
+
+                        // Link menu with allergies
+                        foreach (var allergyId in svRestaurantMenu.AllergyIds)
+                        {
+                            FoodDBManager.CreateMenuAllergy(dbMenu.MenuId, allergyId);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Exception while loading SV menu: {ex.Message} STACK: {ex.StackTrace}", ex);
+                        Console.WriteLine(ex);
+                    }
+                }
+            }
+        }
+
+        public ETHFoodResponse GetAllETHMenus()
+        {
+            string today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+            string url = $"https://idapps.ethz.ch/cookpit-pub-services/v1/weeklyrotas?client-id=ethz-wcms&lang=en&rs-first=0&rs-size=50&valid-after={today}";
+
+            HttpClient client = new HttpClient();
+            var response = client.GetAsync(url).Result;
+
+            if (response.StatusCode != HttpStatusCode.OK)
+                return null;
+
+            var responseString = response.Content.ReadAsStringAsync().Result;
+
+            var responseJson = JsonConvert.DeserializeObject<ETHFoodResponse>(responseString);
+
+            return responseJson;
+        }
+
+        public void HandleETHRestaurantMenu(Restaurant restaurant, ETHFoodResponse ethFoodResponse)
+        {
+            // find in foor response the facility id = restaurant.internalname
+
+
+            var today = DateTime.UtcNow.Date;
+            var monday = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+
+            string mondayString = monday.ToString("yyyy-MM-dd");
+
+            var facility = ethFoodResponse.weeklyrotaarray.FirstOrDefault(i => i.facilityid.ToString() == restaurant.InternalName
+                && i.validfrom == mondayString);
+
+            if (facility == null)
+                return;
+
+            if (facility.dayofweekarray == null)
+                return; // TODO Log this
+
+            //loop trough all opening array
+            foreach (var dayOfWeek in facility.dayofweekarray)
+            {
+                var menuDateTime = monday.AddDays(dayOfWeek.dayofweekcode - 1);
+
+                // check if menuDateTime name of day == dayOfWeek.desc
+                if (menuDateTime.ToString("dddd", new CultureInfo("en-US")) != dayOfWeek.dayofweekdesc)
+                    continue; // TODO Maybe we need to log this
+
+                if (dayOfWeek.openinghourarray == null)
+                    continue;
+
+                foreach (var openingHour in dayOfWeek.openinghourarray)
+                {
+                    foreach (var mealtime in openingHour.mealtimearray)
+                    {
+                        // TODO German text maybe?
+                        if (restaurant.OffersLunch && mealtime.name != "Lunch")
+                            continue;
+
+                        if (restaurant.OffersDinner && mealtime.name != "Dinner")
+                            continue;
+
+                        foreach (var line in mealtime.linearray)
+                        {
+                            try
+                            {
+                                var meal = line.meal;
+
+                                var price = meal.mealpricearray?.FirstOrDefault(i => i.customergroupdesc == "students")?.price ?? -1;
+                                var isVegan = meal.mealclassarray?.FirstOrDefault(i => i.descshort == "Vegan") != null;
+                                var isVegetarian = meal.mealclassarray?.FirstOrDefault(i => i.descshort == "Vegetarian") != null;
+
+                                var isGlutenFree = !meal.allergenarray?.Any(i => i.descshort.ToLower().Contains("gluten"));
+                                var isLactoseFree = !meal.allergenarray?.Any(i => i.descshort.ToLower().Contains("lactose"));
+
+                                string imageUrl = null;
+
+                                if (meal.imageurl != null)
+                                    imageUrl = meal.imageurl + "?client-id=ethz-wcms";
+
+                                var menu = new Menu()
+                                {
+                                    Name = meal.name,
+                                    Description = meal.description,
+                                    Amount = price,
+                                    IsVegetarian = isVegetarian,
+                                    IsVegan = isVegan,
+                                    IsGlutenFree = isGlutenFree,
+                                    IsLactoseFree = isLactoseFree,
+                                    DateTime = menuDateTime,
+                                    RestaurantId = restaurant.RestaurantId,
+                                    DirectMenuImageUrl = imageUrl,
+
+                                    // only some meals have it
+                                    Calories = (int)(meal.energy ?? 0),
+                                    Protein = (int)(meal.proteins ?? 0),
+                                    Fat = (int)(meal.fat ?? 0),
+                                    Carbohydrates = (int)(meal.carbohydrates ?? 0),
+
+                                };
+
+                                var dbMenu = FoodDBManager.CreateMenu(menu);
+
+                                if (meal.allergenarray != null)
+                                {
+
+                                    // allergies
+                                    foreach (var allergy in meal.allergenarray)
+                                    {
+                                        if (int.TryParse(allergy.descshort, out var allergyId))
+                                        {
+                                            if (allergyId < 1 || allergyId > 14)
+                                            {
+                                                Console.WriteLine($"Found allergy with code {allergy.descshort} and name {allergy.desc}");
+                                                continue;
+                                            }
+
+                                            //Console.WriteLine($"Found allergy {allergyId} for menuId {dbMenu.MenuId}");
+
+                                            if (menu.MenuId == 0)
+                                                continue;
+
+                                            FoodDBManager.CreateMenuAllergy(dbMenu.MenuId, allergyId);
+                                        }
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError($"Exception while loading ETH menu: {ex.Message} STACK: {ex.StackTrace}", ex);
+                                Console.WriteLine(ex);
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+
+        public void HandleFood2050Menu(Restaurant restaurant)
+        {
+            try
+            {
+                var menus = GetUZHMensaMenuWeek(restaurant.InternalName, restaurant.AdditionalInternalName, restaurant.TimeParameter);
+
+                foreach ((var currentMenu, var allergies) in menus)
+                {
+                    try
+                    {
+                        currentMenu.RestaurantId = restaurant.RestaurantId; // Link the menu to restaurant
+
+                        var dbMenu = FoodDBManager.CreateMenu(currentMenu);
+
+                        // Link menu with allergies for now no allergies handling
+                        foreach (var allergyId in allergies)
+                        {
+                            if (dbMenu.MenuId == 0)
+                                continue;
+
+                            FoodDBManager.CreateMenuAllergy(dbMenu.MenuId, allergyId);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError("Exception while loading UZH menu: {ex.Message} STACK: {ex.StackTrace}", ex);
+                        Console.WriteLine(ex);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Exception while loading UZH menu Global: {ex.Message} STACK: {ex.StackTrace}", ex);
+                Console.WriteLine(ex);
+            }
+        }
+
         public void LoadMenus(int restaurantId = -1, bool fixOnly = false)
         {
             var avilableRestaurants = FoodDBManager.GetAllRestaurants();
 
-            // flip order of restaurants to load UZH first
-            avilableRestaurants.Reverse();
+            var ethMenus = GetAllETHMenus();
 
-            Google = new GoogleEngine(); // TODO Better reset
+
+            //Google = new GoogleEngine(); // TODO Better reset
 
             foreach (var restaurant in avilableRestaurants)
             {
@@ -85,103 +393,29 @@ namespace ETHDINFKBot.Helpers
                     //await Context.Channel.SendMessageAsync($"Processing {restaurant.Name}");
 
                     List<Menu> menu = new List<Menu>();
-                    if (!restaurant.IsFood2050Supported)
+
+                    try
                     {
-                        // TODO add capability (new field to specify scraper and add ETH page scraper because SV is unreliable as usual)
-                        // for sv restaurant go only into fix only mode because selenium would nuke me atm
-                        var allMenus = FoodDBManager.GetMenusByDay(
-                            DateTime.Now,
-                            restaurant.RestaurantId
-                        );
-                        if (allMenus.Count != 0)
-                            continue; // We have some menus loaded do not reload
+                        Console.WriteLine($"Loading: {restaurant.Name}");
 
-                        var today = DateTime.UtcNow.Date;
-
-                        List<DateTime> remainingWeekdays = new List<DateTime>();
-
-                        remainingWeekdays.Add(today);
-
-                        for (int i = 0; i < 5; i++)
+                        switch (restaurant.ScraperTypeId)
                         {
-                            today = today.AddDays(1);
-                            if (
-                                today.DayOfWeek == DayOfWeek.Saturday
-                                || today.DayOfWeek == DayOfWeek.Sunday
-                            )
+                            case FoodScraperType.Food2050:
+                                HandleFood2050Menu(restaurant);
                                 break;
-
-                            remainingWeekdays.Add(today);
-                        }
-
-                        foreach (var day in remainingWeekdays)
-                        {
-                            var svRestaurantMenuInfos = GetSVRestaurantMenu(restaurant.MenuUrl, day);
-
-                            if (svRestaurantMenuInfos == null)
-                                continue;
-                            //await Context.Channel.SendMessageAsync($"Found for {restaurant.Name}: {svRestaurantMenuInfos.Count} menus");
-
-                            foreach (var svRestaurantMenu in svRestaurantMenuInfos)
-                            {
-                                try
-                                {
-                                    svRestaurantMenu.Menu.RestaurantId = restaurant.RestaurantId; // Link the menu to restaurant
-
-                                    var menuImage = GetImageForFood(svRestaurantMenu.Menu);
-
-                                    // Set image
-                                    if (menuImage != null)
-                                        svRestaurantMenu.Menu.MenuImageId = menuImage.MenuImageId;
-
-                                    var dbMenu = FoodDBManager.CreateMenu(svRestaurantMenu.Menu);
-
-                                    // Link menu with allergies
-                                    foreach (var allergyId in svRestaurantMenu.AllergyIds)
-                                    {
-                                        FoodDBManager.CreateMenuAllergy(dbMenu.MenuId, allergyId);
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogError($"Exception while loading SV menu: {ex.Message} STACK: {ex.StackTrace}", ex);
-                                    Console.WriteLine(ex);
-                                }
-                            }
+                            case FoodScraperType.ETH_Website_v1:
+                                HandleETHRestaurantMenu(restaurant, ethMenus);
+                                break;
+                            case FoodScraperType.SV_Restaurant:
+                                HandleSVRestaurantMenu(restaurant);
+                                break;
+                            default:
+                                break;
                         }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        try
-                        {
-                            var menus = GetUZHMensaMenuWeek(restaurant.InternalName, restaurant.AdditionalInternalName, restaurant.TimeParameter);
-
-                            foreach (var currentMenu in menus)
-                            {
-                                try
-                                {
-                                    currentMenu.RestaurantId = restaurant.RestaurantId; // Link the menu to restaurant
-
-                                    var dbMenu = FoodDBManager.CreateMenu(currentMenu);
-
-                                    // Link menu with allergies for now no allergies handling
-                                    /*foreach (var allergyId in menu.AllergyIds)
-                                    {
-                                        FoodDBManager.CreateMenuAllergy(menu.MenuId, allergyId);
-                                    }*/
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogError("Exception while loading UZH menu: {ex.Message} STACK: {ex.StackTrace}", ex);
-                                    Console.WriteLine(ex);
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError("Exception while loading UZH menu Global: {ex.Message} STACK: {ex.StackTrace}", ex);
-                            Console.WriteLine(ex);
-                        }
+                        Console.WriteLine(ex.ToString());
                     }
 
                     // old code for old mensa page TODO remove if no page uses this site anymore
@@ -633,12 +867,94 @@ namespace ETHDINFKBot.Helpers
             return polymensaMenus;
         }
 
-        public List<Menu> GetUZHMensaMenuWeek(string location, string mensa, string time = null)
+        public int MapFood2050AllergyToDBInt(string allergy)
+        {
+            switch (allergy)
+            {
+                // gluten wheat
+                case "cerealsContainingGluten":
+                    return 1;
+
+                // crustaceans
+                case "crustaceans":
+                    return 2;
+
+                // eggs
+                case "eggs":
+                    return 3;
+
+                // fish
+                case "fish":
+                    return 4;
+
+                // peanuts
+                case "peanuts":
+                    return 5;
+
+                // soya
+                case "soybeans":
+                    return 6;
+
+                // milk, lactose
+                case "milk":
+                    return 7;
+
+                // nuts
+                case "nuts":
+                    return 8;
+
+                // celery
+                case "celery":
+                    return 9;
+
+                // mustard
+                case "mustard":
+                    return 10;
+
+                // sesame
+                case "sesame":
+                    return 11;
+
+                // sulfite
+                case "sulphites":
+                    return 12;
+
+                // lupin
+                case "lupin":
+                    return 13;
+
+                // molluscs
+                case "molluscs": // TODO Unconfirmed
+                    return 14;
+
+                case "wheat":
+                case "barley":
+                    return 1; // ATM return cereals containing gluten
+
+                case "walnut":
+                case "almond":
+                case "cashew":
+                case "pistachio":
+                    return 8; // ATM return nuts            
+
+                default:
+                    Console.WriteLine(allergy);
+                    return -1;
+
+
+                    // TODO Wheat
+                    // TODO barley
+            }
+
+            return -1;
+        }
+
+        public List<(Menu, List<int>)> GetUZHMensaMenuWeek(string location, string mensa, string time = null)
         {
             try
             {
                 WebClient client = new WebClient();
-                var menus = new List<Menu>();
+                var menus = new List<(Menu, List<int>)>();
 
                 string timeString = time == null ? "" : $"{time}/";
 
@@ -659,7 +975,9 @@ namespace ETHDINFKBot.Helpers
                 Thread.Sleep(1000);
 
                 var result = JsonConvert.DeserializeObject<Food2050WeeklyResponse>(json);
-                var categories = result.pageProps.query.location.kitchen.digitalMenu?.categories ?? new List<Category>();
+                var categories = result?.pageProps?.query?.location?.kitchen?.digitalMenu?.categories ?? new List<Category>();
+
+                List<int> allergyIds = new List<int>();
 
                 foreach (var category in categories)
                 {
@@ -671,6 +989,10 @@ namespace ETHDINFKBot.Helpers
                         foreach (var recipe in item.dailyRecipies)
                         {
                             if (recipe?.recipe == null)
+                                continue;
+
+                            // if recipe datetime is older than now minus 1 day then skip
+                            if(recipe.date < DateTime.UtcNow.AddDays(-1))
                                 continue;
 
                             // example https://app.food2050.ch/_next/data/fWt87G0z-iWkq_diJzXc_/uzh-zentrum/untere-mensa/food-profile/2023-07-28-mittag-butcher.json?locationSlug=uzh-zentrum&kitchenSlug=untere-mensa&slug=2023-07-28-mittag-butcher
@@ -690,13 +1012,13 @@ namespace ETHDINFKBot.Helpers
                             catch (Exception ex)
                             {
                                 Console.WriteLine(ex);
-                                menus.Add(
+                                menus.Add((
                                     new Menu()
                                     {
                                         Name = item.displayName,
                                         Description = ex.Message,
                                         DateTime = recipe.date.AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(recipe.date) ? 2 : 1)
-                                    }
+                                    }, new List<int>())
                                 );
                                 continue;
                             }
@@ -737,20 +1059,27 @@ namespace ETHDINFKBot.Helpers
                             if (menu.DirectMenuImageUrl == null)
                             {
                                 // find from menus with direct image if there exists one menu with same description
-                                menu.FallbackMenuImageUrl =
-                                    FoodDBManager.GetDirectImageByMenuDescription(menu.Description);
+                                menu.FallbackMenuImageUrl = FoodDBManager.GetDirectImageByMenuDescription(menu.Description);
 
                                 if (string.IsNullOrWhiteSpace(menu.FallbackMenuImageUrl))
                                 {
                                     // find from current menu list if any menu has same description
                                     menu.FallbackMenuImageUrl = menus
-                                        .FirstOrDefault(x => x.Description == menu.Description)
+                                        .FirstOrDefault(x => x.Item1.Description == menu.Description).Item1
                                         ?.DirectMenuImageUrl;
                                 }
                             }
 
-                            menus.Add(menu);
-                            System.Threading.Thread.Sleep(1000);
+                            //Console.WriteLine("Found allergens: " + recipe.recipe.allergens);
+                            foreach (var allergy in recipe.recipe.allergens.Split(','))
+                            {
+                                int allergyId = MapFood2050AllergyToDBInt(allergy);
+                                if (allergyId > 0)
+                                    allergyIds.Add(allergyId);
+                            }
+
+                            menus.Add((menu, allergyIds));
+                            Thread.Sleep(1000);
                         }
                     }
                 }
@@ -760,7 +1089,7 @@ namespace ETHDINFKBot.Helpers
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
-                return new List<Menu>();
+                return null;
             }
         }
 

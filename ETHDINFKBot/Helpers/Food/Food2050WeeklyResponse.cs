@@ -92,7 +92,7 @@ namespace ETHDINFKBot.Helpers.Food
         public ClimatePrediction climatePrediction { get; set; }
         public string slug { get; set; }
         public Kitchen kitchen { get; set; }
-        public string allergens { get; set; }
+        public string allergens { get; set; } // TODO Check if really a list
         public bool isVegan { get; set; }
         public bool isVegetarian { get; set; }
     }

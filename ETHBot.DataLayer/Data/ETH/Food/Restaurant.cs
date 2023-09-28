@@ -33,13 +33,14 @@ namespace ETHBot.DataLayer.Data.ETH.Food
         public DateTimeOffset LastUpdate { get; set; }
 
         public RestaurantLocation Location { get; set; } // TODO Enum
-
-        public bool IsFood2050Supported { get; set; }
+        public bool IsFood2050Supported { get; set; } // TODO to depricate
         public string? TimeParameter { get; set; }
+
+        public FoodScraperType ScraperTypeId { get; set; }
 
         // Location 
         // 1 - ETH Zentrum
-        // 2 - ETH H�ngg
+        // 2 - ETH Höngg
         // 3 - UZH Zentrum
         // 4 - UZH Irchel
     }

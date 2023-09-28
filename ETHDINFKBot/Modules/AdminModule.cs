@@ -744,7 +744,7 @@ namespace ETHDINFKBot.Modules
                 }
 
                 var foodHelper = new FoodHelper();
-                await ClearFood(restaurantId); // Ensure deleted
+                //await ClearFood(restaurantId); // Ensure deleted -> atm there is no need to delete as we just update records
                 foodHelper.LoadMenus(restaurantId);
 
                 await Context.Channel.SendMessageAsync($"Done load for: {restaurantId}", false);
@@ -886,6 +886,17 @@ Total todays menus: {allTodaysMenus.Count}");
                     string output = "Found: " + locations.Count() + " restaurants" + Environment.NewLine;
                     foreach (var location in locations)
                     {
+                        // location title remove number at the start of the string divided by a space
+                        var parts = location.title.Split(' ');
+
+                        // if the first part is just numbers remove it
+                        if (parts.First().All(Char.IsDigit))
+                        {
+                            parts = parts.Skip(1).ToArray();
+                            location.title = string.Join(" ", parts);
+                        }
+                        
+
                         output += $"Slug: {location.slug} Title: {location.title}" + Environment.NewLine;
 
 
@@ -1027,7 +1038,8 @@ Total todays menus: {allTodaysMenus.Count}");
                                         OffersLunch = true,
                                         OffersDinner = false, // TODO this has to be done manually
                                         Location = restaurantLocation,
-                                        IsFood2050Supported = true
+                                        IsFood2050Supported = true,
+                                        ScraperTypeId = FoodScraperType.Food2050
                                     };
 
                                     if (!dryRun)
@@ -1075,6 +1087,106 @@ Total todays menus: {allTodaysMenus.Count}");
                     await Context.Channel.SendMessageAsync(ex.ToString(), false);
                 }
             }
+
+            // command to load ETHMensas
+            [Command("ethmensas", RunMode = RunMode.Async)]
+            public async Task LoadETHMensas(bool dryRun = true)
+            {
+                var author = Context.Message.Author;
+                var guildUser = Context.Message.Author as SocketGuildUser;
+                if (!(author.Id == ETHDINFKBot.Program.ApplicationSetting.Owner || guildUser.GuildPermissions.ManageChannels))
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                try
+                {
+                    string url = "https://idapps.ethz.ch/cookpit-pub-services/v1/facilities?client-id=ethz-wcms&lang=en&rs-first=0&rs-size=50";
+
+                    var client = new HttpClient();
+
+                    var response = await client.GetAsync(url);
+
+                    var json = await response.Content.ReadAsStringAsync();
+
+                    var ethMensas = JsonConvert.DeserializeObject<ETHMensaResponse>(json);
+
+                    var restaurants = FoodDBManager.GetAllRestaurants();
+
+                    string messageString = "";
+
+                    foreach (var facility in ethMensas.facilityarray)
+                    {
+                        // check if restaurant exists with InternalParameter == facilify.facilityid
+                        var dbRestaurant = restaurants.Where(i => i.InternalName == facility.facilityid.ToString()).FirstOrDefault();
+
+                        if (dbRestaurant == null)
+                        {
+                            // create new restaurant
+                            dbRestaurant = new Restaurant()
+                            {
+                                InternalName = facility.facilityid.ToString(),
+                                Name = facility.facilityname,
+                                IsOpen = true,
+                                OffersLunch = true,
+                                OffersDinner = false, // TODO this has to be done manually
+                                Location = RestaurantLocation.ETH_UZH_Zentrum,
+                                IsFood2050Supported = false,
+                                ScraperTypeId = FoodScraperType.ETH_Website_v1
+                            };
+
+                            // if publication code is not 1 then there is likely no menu card
+                            if (facility.publicationtypecode != 1)
+                            {
+                                messageString += $"[NO MENU] Restaurant {facility.facilityname} with InternalName: {facility.facilityid.ToString()} has no menu card" + Environment.NewLine;
+                                continue;
+                            }
+
+                            if (!dryRun)
+                            {
+                                bool success = FoodDBManager.AddRestaurant(dbRestaurant);
+
+                                messageString += $"Added new restaurant with InternalName: {facility.facilityid.ToString()} to DB: {success} at the location: {RestaurantLocation.ETH_UZH_Zentrum}" + Environment.NewLine;
+                            }
+                            else
+                            {
+                                messageString += $"[DRY] Would have added new restaurant {facility.facilityname} with InternalName: {facility.facilityid.ToString()} to DB at the location: {RestaurantLocation.ETH_UZH_Zentrum}" + Environment.NewLine;
+                            }
+                        }
+                        else{
+                            messageString += $"Restaurant {facility.facilityname} already exists in DB with Internal name: {dbRestaurant.InternalName}" + Environment.NewLine;
+                        }
+                    }
+
+                    // TODO duplicate code from above
+                    // send up to 2000 chars max per message, split by lines
+                    var lines = messageString.Split(Environment.NewLine).ToList();
+                    var messages = new List<string>();
+                    string currentMessage = "";
+                    foreach (var line in lines)
+                    {
+                        if (currentMessage.Length + line.Length > 2000)
+                        {
+                            messages.Add(currentMessage);
+                            currentMessage = "";
+                        }
+
+                        currentMessage += line + Environment.NewLine;
+                    }
+
+                    messages.Add(currentMessage);
+
+                    foreach (var message in messages)
+                        await Context.Channel.SendMessageAsync(message, false);
+                    await Context.Channel.SendMessageAsync($"Done load", false);
+                }
+                catch (Exception ex)
+                {
+                    await Context.Channel.SendMessageAsync(ex.ToString(), false);
+                }
+            }
+
 
             // set location pass location id and then comma separated the restaurant ids
             [Command("setlocation", RunMode = RunMode.Async)]
@@ -1859,7 +1971,7 @@ Total todays menus: {allTodaysMenus.Count}");
                     {
                         var threadTitle = thread.Name;
                         if (titles.ContainsValue(threadTitle))
-                            await Context.Channel.SendMessageAsync($"Duplicate found: {threadTitle} in {forum.Name} Link: <#{thread.Id}> and <#{titles.FirstOrDefault(x => x.Value == threadTitle).Key}>", false);                            
+                            await Context.Channel.SendMessageAsync($"Duplicate found: {threadTitle} in {forum.Name} Link: <#{thread.Id}> and <#{titles.FirstOrDefault(x => x.Value == threadTitle).Key}>", false);
                         else
                             titles.Add(thread.Id, threadTitle);
                     }

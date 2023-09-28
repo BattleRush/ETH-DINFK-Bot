@@ -647,6 +647,28 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             return list.Distinct().Take(5).ToList();
         }
 
+        private RestThreadChannel CheckIfPostExists(string title)
+        {
+            List<ulong> forumIds = new List<ulong>();
+            forumIds.Add(1067785361062887424); // BSc
+            forumIds.Add(1067780019423817779); // MSc
+
+            foreach (var forumId in forumIds)
+            {
+                var forum = Context.Guild.GetChannel(forumId) as SocketForumChannel;
+
+                var threads = forum.GetActiveThreadsAsync().Result;
+                if (threads.Any(t => t.Name.Contains(title)))
+                    return threads.First(t => t.Name.Contains(title));
+
+                var archivedThreads = forum.GetPublicArchivedThreadsAsync().Result;
+                if (archivedThreads.Any(t => t.Name.Contains(title)))
+                    return archivedThreads.First(t => t.Name.Contains(title));
+            }
+
+            return null;
+        }
+
         [Command("create")]
         public async Task CreateChannel(string vvzLink)
         {
@@ -698,7 +720,14 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                     if (parent is SocketForumChannel socketForumChannel)
                     {
                         // check if a forum post exists
-                        var posts = await socketForumChannel.GetActiveThreadsAsync();
+                        var post = CheckIfPostExists(lectureId);
+                        if (post != null)
+                        {
+                            await Context.Channel.SendMessageAsync($"A forum post for this lecture already exists <#{post.Id}>", false);
+                            await post.AddUserAsync(guildUser);
+                            return;
+                        }
+                        /*var posts = await socketForumChannel.GetActiveThreadsAsync();
 
                         if (posts.Any(p => p.Name.Contains(lectureId)))
                         {
@@ -716,7 +745,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                             await Context.Channel.SendMessageAsync($"An archived forum post for this lecture already exists <#{post.Id}>", false);
                             await post.AddUserAsync(guildUser);
                             return;
-                        }
+                        }*/
 
                         var tags = socketForumChannel.Tags;
 

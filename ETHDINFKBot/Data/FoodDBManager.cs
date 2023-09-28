@@ -292,16 +292,20 @@ namespace ETHDINFKBot.Data
         }
 
 
-        public bool CreateMenuAllergy(int menuId, int AllergyId)
+        public bool CreateMenuAllergy(int menuId, int allergyId)
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
                 try
                 {
+                    // check if this combination exists already
+                    if(context.MenuAllergies.Any(i => i.MenuId == menuId && i.AllergyId == allergyId))
+                        return true;
+
                     context.MenuAllergies.Add(new MenuAllergy()
                     {
                         MenuId = menuId,
-                        AllergyId = AllergyId
+                        AllergyId = allergyId
                     });
 
                     context.SaveChanges();
@@ -474,7 +478,7 @@ namespace ETHDINFKBot.Data
 
                         context.SaveChanges();
 
-                        return menu;
+                        return dbMenu;
                     }
                     else
                     {
