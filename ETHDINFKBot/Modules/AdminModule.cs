@@ -631,6 +631,7 @@ namespace ETHDINFKBot.Modules
                 builder.AddField($"{Program.CurrentPrefix}admin food status <debug>", "Returns current menus status");
                 builder.AddField($"{Program.CurrentPrefix}admin food fix", "Fixes today menus");
                 builder.AddField($"{Program.CurrentPrefix}admin food 2050mensas <dryRun>", "Loads all mensas from food2050 and add missing ones");
+                builder.AddField($"{Program.CurrentPrefix}admin food ethmensas <dryRun>", "Loads all mensas from eth page and add missing ones");                
                 builder.AddField($"{Program.CurrentPrefix}admin food setlocation <locationid> <restaurantids>", "Sets the location for a restaurants (comma seperated)");
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());

@@ -223,6 +223,8 @@ namespace ETHDINFKBot.Interactions
             // TODO Check if updates successfull 
             if (int.TryParse(favChange, out int restaurantId))
             {
+                await Context.Interaction.DeferAsync();
+                
                 // Restaurant fav change
                 var returnedFavRestaurant = FoodDBManager.GetUsersFavouriteRestaurant(user.Id, restaurantId);
                 if (returnedFavRestaurant != null)
