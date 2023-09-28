@@ -136,7 +136,7 @@ namespace ETHDINFKBot.Helpers
             return pingHistory;
         }
 
-        public static EmbedBuilder GetEmbedForPingHistory(List<PingHistory> pingHistory, SocketGuildUser user)
+        public static EmbedBuilder GetEmbedForPingHistory(List<PingHistory> pingHistory, SocketGuildUser user, int total = 30)
         {
             var dbManager = DatabaseManager.Instance();
 
@@ -149,6 +149,11 @@ namespace ETHDINFKBot.Helpers
 
             foreach (var item in pingHistory)
             {
+                if(count > total)
+                {
+                    messageText += $"... and more pings. To see more do {Program.CurrentPrefix}ping full";
+                    break;
+                }
                 //if (item.DiscordMessageId == null)
                 //    continue;
 
