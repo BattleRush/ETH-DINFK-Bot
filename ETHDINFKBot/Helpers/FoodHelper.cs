@@ -268,6 +268,18 @@ namespace ETHDINFKBot.Helpers
                                 if (meal.imageurl != null)
                                     imageUrl = meal.imageurl + "?client-id=ethz-wcms";
 
+                                if(meal.name.Contains("Geschlossen"))
+                                    continue;
+                                
+                                if (meal.name.Contains("Closed"))
+                                    continue;
+
+                                if(meal.name.Contains("Beachten Sie"))
+                                    continue;
+
+                                if(meal.name.Contains("Note our"))
+                                    continue;
+
                                 var menu = new Menu()
                                 {
                                     Name = meal.name,
