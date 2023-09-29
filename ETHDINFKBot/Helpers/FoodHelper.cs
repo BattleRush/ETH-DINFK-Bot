@@ -244,10 +244,10 @@ namespace ETHDINFKBot.Helpers
                     foreach (var mealtime in openingHour.mealtimearray)
                     {
                         // TODO German text maybe?
-                        if (restaurant.OffersLunch && mealtime.name != "Lunch")
+                        if (restaurant.OffersLunch && !mealtime.name.ToLower().Contains("lunch"))
                             continue;
 
-                        if (restaurant.OffersDinner && mealtime.name != "Dinner")
+                        if (restaurant.OffersDinner && !mealtime.name.ToLower().Contains("dinner"))
                             continue;
 
                         foreach (var line in mealtime.linearray)
