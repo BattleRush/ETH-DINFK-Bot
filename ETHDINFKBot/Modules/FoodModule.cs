@@ -126,7 +126,7 @@ namespace ETHDINFKBot.Modules
             //canvas.DrawText(menuName, new SKPoint(left, top), titleFont);
             //usedHeight += 20;
 
-            usedHeight += (int)DrawingHelper.DrawTextArea(
+            usedHeight = (int)DrawingHelper.DrawTextArea(
                 canvas,
                 titleFont,
                 left,
@@ -137,7 +137,7 @@ namespace ETHDINFKBot.Modules
             );
 
 
-            usedHeight += (int)DrawingHelper.DrawTextArea(
+            usedHeight = (int)DrawingHelper.DrawTextArea(
                 canvas,
                 DrawingHelper.MediumTextPaint,
                 left,
