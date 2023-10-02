@@ -43,94 +43,102 @@ namespace ETHDINFKBot.CronJobs.Jobs
             var restaurants = foodDBManager.GetAllFood2050Restaurants();
 
             Dictionary<string, int> restaurantCO2Added = new Dictionary<string, int>();
-
+            string errorLog = "";
             foreach (var restaurant in restaurants)
             {
-                int count = 0;
-                if (restaurant.RestaurantId == 10)
+                try
                 {
-                    // continue for this one as its dinner for lower which is captured by the lunch case
-                    // todo handle properly
-                    continue;
-                }
-
-                // {"operationName":"KitchenStatsPerMinute","variables":{"kitchenSlug":"untere-mensa","locationSlug":"uzh-zentrum","timestamp":"2023-07-27T14:33:14.628Z"},"query":"query KitchenStatsPerMinute($locationSlug: String!, $kitchenSlug: String!, $timestamp: DateTime!) {\n  location(id: $locationSlug) {\n    id\n    kitchen(slug: $kitchenSlug) {\n      id\n      publicLabel\n      statsPerMinute(\n        where: {timestamp: {lte: $timestamp}}\n        orderBy: {timestamp: desc}\n        take: 1\n      ) {\n        co2EmissionsGramsDelta\n        co2EmissionsGramsTotal\n        temperatureChangeStats {\n          temperatureChange\n          temperatureChangeDelta\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  climateRatingFromDegrees {\n    HIGHMinDegCelsius\n    MEDIUMMinDegCelsius\n    __typename\n  }\n}"}
-
-                var url = $"https://api.app.food2050.ch/";
-
-                // get utc time now in 2023-07-28T09:56:21.562Z format
-                var utcNow = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-
-                int take = 5000;
-
-                var payload = new
-                {
-                    operationName = "KitchenStatsPerMinute",
-                    variables = new
+                    int count = 0;
+                    if (restaurant.RestaurantId == 10)
                     {
-                        kitchenSlug = restaurant.AdditionalInternalName,
-                        locationSlug = restaurant.InternalName,
-                        timestamp = utcNow
-                    },
-                    query = "query KitchenStatsPerMinute($locationSlug: String!, $kitchenSlug: String!) {\n  location(id: $locationSlug) {\n    id\n    kitchen(slug: $kitchenSlug) {\n      id\n      publicLabel\n      statsPerMinute(\n        where: {co2EmissionsGramsDelta: {gt: 0}}\n        orderBy: {timestamp: desc}\n        take: " + take + "\n      ) {\n        timestamp\n        co2EmissionsGramsDelta\n        co2EmissionsGramsTotal\n        temperatureChangeStats {\n          temperatureChange\n          temperatureChangeDelta\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  climateRatingFromDegrees {\n    HIGHMinDegCelsius\n    MEDIUMMinDegCelsius\n    __typename\n  }\n}"
-                };
-
-                var json = JsonConvert.SerializeObject(payload, Formatting.Indented);
-
-                //System.IO.File.WriteAllText("food2050.json", json);
-
-                var data = new StringContent(json, Encoding.UTF8, "application/json");
-
-                var response = await client.PostAsync(url, data);
-                string result = response.Content.ReadAsStringAsync().Result;
-
-                //System.IO.File.WriteAllText("food2050result.json", result);
-
-                if(result == "Service Unavailable")
-                {
-                    // todo handle properly
-                    continue;
-                }
-
-                var food2050Response = JsonConvert.DeserializeObject<Food2050StatPerMinute>(result);
-
-                // enfore ascending sort order
-                foreach (var stat in food2050Response.data.location.kitchen.statsPerMinute.OrderBy(x => x.timestamp))
-                {
-                    if (stat.temperatureChangeStats == null)
+                        // continue for this one as its dinner for lower which is captured by the lunch case
+                        // todo handle properly
                         continue;
+                    }
 
-                    var temperatureChange = stat.temperatureChangeStats.temperatureChange;
-                    var temperatureChangeDelta = stat.temperatureChangeStats.temperatureChangeDelta;
-                    var co2EmissionsGramsDelta = stat.co2EmissionsGramsDelta;
-                    var co2EmissionsGramsTotal = stat.co2EmissionsGramsTotal;
-                    var dateTime = stat.timestamp;
+                    // {"operationName":"KitchenStatsPerMinute","variables":{"kitchenSlug":"untere-mensa","locationSlug":"uzh-zentrum","timestamp":"2023-07-27T14:33:14.628Z"},"query":"query KitchenStatsPerMinute($locationSlug: String!, $kitchenSlug: String!, $timestamp: DateTime!) {\n  location(id: $locationSlug) {\n    id\n    kitchen(slug: $kitchenSlug) {\n      id\n      publicLabel\n      statsPerMinute(\n        where: {timestamp: {lte: $timestamp}}\n        orderBy: {timestamp: desc}\n        take: 1\n      ) {\n        co2EmissionsGramsDelta\n        co2EmissionsGramsTotal\n        temperatureChangeStats {\n          temperatureChange\n          temperatureChangeDelta\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  climateRatingFromDegrees {\n    HIGHMinDegCelsius\n    MEDIUMMinDegCelsius\n    __typename\n  }\n}"}
 
-                    /*var message = $"Restaurant: {restaurant.Name}\n" +
-                        $"Temperatur: {temperatureChange}°C\n" +
-                        $"Temperatur Delta: {temperatureChangeDelta}°C\n" +
-                        $"CO2 Delta: {co2EmissionsGramsDelta}g\n" +
-                        $"CO2 Total: {co2EmissionsGramsTotal}g\n";*/
+                    var url = $"https://api.app.food2050.ch/";
 
-                    //var channel = Program.Client.GetGuild(747752542741725244).GetTextChannel(768600365602963496);
-                    //await channel.SendMessageAsync(message);
+                    // get utc time now in 2023-07-28T09:56:21.562Z format
+                    var utcNow = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
 
-                    var added = foodDBManager.AddFood2050CO2Entry(new ETHBot.DataLayer.Data.ETH.Food.Food2050CO2Entry()
+                    int take = 5000;
+
+                    var payload = new
                     {
-                        DateTime = dateTime,
-                        RestaurantId = restaurant.RestaurantId,
-                        CO2Delta = co2EmissionsGramsDelta,
-                        CO2Total = co2EmissionsGramsTotal,
-                        TemperatureChange = temperatureChange,
-                        TemperatureChangeDelta = temperatureChangeDelta,
-                    });
+                        operationName = "KitchenStatsPerMinute",
+                        variables = new
+                        {
+                            kitchenSlug = restaurant.AdditionalInternalName,
+                            locationSlug = restaurant.InternalName,
+                            timestamp = utcNow
+                        },
+                        query = "query KitchenStatsPerMinute($locationSlug: String!, $kitchenSlug: String!) {\n  location(id: $locationSlug) {\n    id\n    kitchen(slug: $kitchenSlug) {\n      id\n      publicLabel\n      statsPerMinute(\n        where: {co2EmissionsGramsDelta: {gt: 0}}\n        orderBy: {timestamp: desc}\n        take: " + take + "\n      ) {\n        timestamp\n        co2EmissionsGramsDelta\n        co2EmissionsGramsTotal\n        temperatureChangeStats {\n          temperatureChange\n          temperatureChangeDelta\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  climateRatingFromDegrees {\n    HIGHMinDegCelsius\n    MEDIUMMinDegCelsius\n    __typename\n  }\n}"
+                    };
 
-                    if(added)
-                        count++;
+                    var json = JsonConvert.SerializeObject(payload, Formatting.Indented);
+
+                    //System.IO.File.WriteAllText("food2050.json", json);
+
+                    var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+                    var response = await client.PostAsync(url, data);
+                    string result = response.Content.ReadAsStringAsync().Result;
+
+                    //System.IO.File.WriteAllText("food2050result.json", result);
+
+                    if (result == "Service Unavailable")
+                    {
+                        // todo handle properly
+                        errorLog += $"Service Unavailable for {restaurant.Name}" + Environment.NewLine;
+                        continue;
+                    }
+
+                    var food2050Response = JsonConvert.DeserializeObject<Food2050StatPerMinute>(result);
+
+                    // enfore ascending sort order
+                    foreach (var stat in food2050Response.data.location.kitchen.statsPerMinute.OrderBy(x => x.timestamp))
+                    {
+                        if (stat.temperatureChangeStats == null)
+                            continue;
+
+                        var temperatureChange = stat.temperatureChangeStats.temperatureChange;
+                        var temperatureChangeDelta = stat.temperatureChangeStats.temperatureChangeDelta;
+                        var co2EmissionsGramsDelta = stat.co2EmissionsGramsDelta;
+                        var co2EmissionsGramsTotal = stat.co2EmissionsGramsTotal;
+                        var dateTime = stat.timestamp;
+
+                        /*var message = $"Restaurant: {restaurant.Name}\n" +
+                            $"Temperatur: {temperatureChange}°C\n" +
+                            $"Temperatur Delta: {temperatureChangeDelta}°C\n" +
+                            $"CO2 Delta: {co2EmissionsGramsDelta}g\n" +
+                            $"CO2 Total: {co2EmissionsGramsTotal}g\n";*/
+
+                        //var channel = Program.Client.GetGuild(747752542741725244).GetTextChannel(768600365602963496);
+                        //await channel.SendMessageAsync(message);
+
+                        var added = foodDBManager.AddFood2050CO2Entry(new ETHBot.DataLayer.Data.ETH.Food.Food2050CO2Entry()
+                        {
+                            DateTime = dateTime,
+                            RestaurantId = restaurant.RestaurantId,
+                            CO2Delta = co2EmissionsGramsDelta,
+                            CO2Total = co2EmissionsGramsTotal,
+                            TemperatureChange = temperatureChange,
+                            TemperatureChangeDelta = temperatureChangeDelta,
+                        });
+
+                        if (added)
+                            count++;
+                    }
+
+                    if (count > 0)
+                        restaurantCO2Added.Add(restaurant.Name, count);
                 }
-
-                if (count > 0)
-                    restaurantCO2Added.Add(restaurant.Name, count);
+                catch (Exception ex)
+                {
+                    errorLog += $"Error for {restaurant.Name}: {ex.Message}" + Environment.NewLine;
+                }
             }
 
             // send to spam how many records added for restaurant
@@ -141,6 +149,9 @@ namespace ETHDINFKBot.CronJobs.Jobs
                 message += $"{item.Key}: {item.Value}\n";
 
             await channel.SendMessageAsync(message);
+
+            if (!string.IsNullOrEmpty(errorLog))
+                await channel.SendMessageAsync($"Food2050 CO2 Data Errors:\n{errorLog}");
         }
 
         public override Task DoWork(CancellationToken cancellationToken)
