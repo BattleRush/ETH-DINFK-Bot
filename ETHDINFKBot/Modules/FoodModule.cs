@@ -123,8 +123,19 @@ namespace ETHDINFKBot.Modules
             var titleFont = DrawingHelper.TitleTextPaint;
             titleFont.FakeBoldText = true;
 
-            canvas.DrawText(menuName, new SKPoint(left, top), titleFont);
-            usedHeight += 20;
+            //canvas.DrawText(menuName, new SKPoint(left, top), titleFont);
+            //usedHeight += 20;
+
+            usedHeight += (int)DrawingHelper.DrawTextArea(
+                canvas,
+                titleFont,
+                left,
+                top + usedHeight,
+                colWidth - 30,
+                titleFont.TextSize,
+                menuName
+            );
+
 
             usedHeight += (int)DrawingHelper.DrawTextArea(
                 canvas,

@@ -190,6 +190,10 @@ namespace ETHDINFKBot.Helpers
             }
         }
 
+        /// <summary>
+        /// Retrieves all ETH menus for the current week from the ETH Cookpit API.
+        /// </summary>
+        /// <returns>An ETHFoodResponse object containing the menu data, or null if the API call fails.</returns>
         public ETHFoodResponse GetAllETHMenus()
         {
             string today = DateTime.UtcNow.ToString("yyyy-MM-dd");
@@ -208,6 +212,11 @@ namespace ETHDINFKBot.Helpers
             return responseJson;
         }
 
+        /// <summary>
+        /// Handles the menu of an ETH restaurant by parsing the food response and creating menu items for each meal.
+        /// </summary>
+        /// <param name="restaurant">The restaurant for which to handle the menu.</param>
+        /// <param name="ethFoodResponse">The food response from the ETH API.</param>
         public void HandleETHRestaurantMenu(Restaurant restaurant, ETHFoodResponse ethFoodResponse)
         {
             // find in foor response the facility id = restaurant.internalname
