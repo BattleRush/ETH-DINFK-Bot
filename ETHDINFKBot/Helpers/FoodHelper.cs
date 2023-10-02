@@ -265,6 +265,9 @@ namespace ETHDINFKBot.Helpers
                             {
                                 var meal = line.meal;
 
+                                if(meal == null)
+                                    continue;
+
                                 var price = meal.mealpricearray?.FirstOrDefault(i => i.customergroupdesc == "students")?.price ?? -1;
                                 var isVegan = meal.mealclassarray?.FirstOrDefault(i => i.descshort == "Vegan") != null;
                                 var isVegetarian = meal.mealclassarray?.FirstOrDefault(i => i.descshort == "Vegetarian") != null;

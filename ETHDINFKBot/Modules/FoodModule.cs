@@ -136,19 +136,19 @@ namespace ETHDINFKBot.Modules
                 menuName
             );
 
+            usedHeight += 5;
 
             usedHeight = (int)DrawingHelper.DrawTextArea(
                 canvas,
                 DrawingHelper.MediumTextPaint,
                 left,
-                top + usedHeight,
+                usedHeight,
                 colWidth - 30,
                 DrawingHelper.MediumTextPaint.TextSize,
                 menu.Description
             );
 
-            // Bring kcal a bit closer up
-            usedHeight -= 5;
+            usedHeight += 10;
 
             // TODO for n/a values maybe hide it by default
             //canvas.DrawText(menu.Description, new SKPoint(, ), DrawingHelper.DefaultTextPaint);
@@ -171,11 +171,9 @@ namespace ETHDINFKBot.Modules
                 usedHeight += 14;
             }
 
-            usedHeight += 5;
+            usedHeight += 10;
             canvas.DrawText("CHF " + menu.Amount.ToString("#,##0.00"), new SKPoint(left, usedHeight), titleFont);
-            usedHeight += 15;
-
-
+            usedHeight += 10;
 
             if (menuUserSettings?.DisplayAllergies == true)
             {
