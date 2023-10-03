@@ -132,6 +132,7 @@ namespace ETHDINFKBot.Helpers
                             DateTime.Now,
                             restaurant.RestaurantId
                         );
+
             if (allMenus.Count != 0)
                 return; // We have some menus loaded do not reload
 
@@ -144,10 +145,7 @@ namespace ETHDINFKBot.Helpers
             for (int i = 0; i < 5; i++)
             {
                 today = today.AddDays(1);
-                if (
-                    today.DayOfWeek == DayOfWeek.Saturday
-                    || today.DayOfWeek == DayOfWeek.Sunday
-                )
+                if (today.DayOfWeek == DayOfWeek.Saturday || today.DayOfWeek == DayOfWeek.Sunday)
                     break;
 
                 remainingWeekdays.Add(today);
@@ -265,7 +263,7 @@ namespace ETHDINFKBot.Helpers
                             {
                                 var meal = line.meal;
 
-                                if(meal == null)
+                                if (meal == null)
                                     continue;
 
                                 var price = meal.mealpricearray?.FirstOrDefault(i => i.customergroupdesc == "students")?.price ?? -1;
@@ -280,22 +278,22 @@ namespace ETHDINFKBot.Helpers
                                 if (meal.imageurl != null)
                                     imageUrl = meal.imageurl + "?client-id=ethz-wcms";
 
-                                if(meal.name.Contains("Geschlossen"))
+                                if (meal.name.Contains("Geschlossen"))
                                     continue;
-                                
+
                                 if (meal.name.Contains("Closed"))
                                     continue;
 
-                                if(meal.name.Contains("Beachten Sie"))
+                                if (meal.name.Contains("Beachten Sie"))
                                     continue;
 
-                                if(meal.name.Contains("Note our"))
+                                if (meal.name.Contains("Note our"))
                                     continue;
 
                                 var menu = new Menu()
                                 {
-                                    Name = meal.name,
-                                    Description = meal.description,
+                                    Name = line.name,
+                                    Description = meal.name + Environment.NewLine + meal.description,
                                     Amount = price,
                                     IsVegetarian = isVegetarian,
                                     IsVegan = isVegan,
@@ -1016,7 +1014,7 @@ namespace ETHDINFKBot.Helpers
                                 continue;
 
                             // if recipe datetime is older than now minus 1 day then skip
-                            if(recipe.date < DateTime.UtcNow.AddDays(-1))
+                            if (recipe.date < DateTime.UtcNow.AddDays(-1))
                                 continue;
 
                             // example https://app.food2050.ch/_next/data/fWt87G0z-iWkq_diJzXc_/uzh-zentrum/untere-mensa/food-profile/2023-07-28-mittag-butcher.json?locationSlug=uzh-zentrum&kitchenSlug=untere-mensa&slug=2023-07-28-mittag-butcher
