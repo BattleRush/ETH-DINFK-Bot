@@ -156,7 +156,7 @@ namespace ETHDINFKBot
                        services.AddCronJob<StartAllSubredditsJobs>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 4 * * *"; });// 4 am utc -> 5 am cet
 
                        // At 2:20 UTC fetch current day menus and until 10:20 UTC fetch next day menus to potentially fix broken menus
-                       services.AddCronJob<FoodFetchJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"15,45 5-11 * * *"; });
+                       services.AddCronJob<FoodFetchJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"15,45 5-11,15-16 * * *"; });
 
                        // add food2050 job to run once a day
                        services.AddCronJob<Food2050TickerJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"00 14 * * *"; });

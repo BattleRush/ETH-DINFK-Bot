@@ -292,6 +292,28 @@ namespace ETHDINFKBot.Data
         }
 
 
+        public void ClearMenuAllergies(int menuId, List<int> allergies)
+        {
+            using (ETHBotDBContext context = new ETHBotDBContext())
+            {
+                try
+                {
+                    // delete all allergies not in the allergies list
+                    var menuAllergies = context.MenuAllergies.Where(i => i.MenuId == menuId && !allergies.Contains(i.AllergyId));
+                    if (menuAllergies.Any())
+                    {
+                        context.MenuAllergies.RemoveRange(menuAllergies);
+                        context.SaveChanges();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // TODO log
+                }
+            }
+        }
+
+
         public bool CreateMenuAllergy(int menuId, int allergyId)
         {
             using (ETHBotDBContext context = new ETHBotDBContext())

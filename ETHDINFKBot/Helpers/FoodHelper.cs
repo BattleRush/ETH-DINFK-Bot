@@ -178,6 +178,9 @@ namespace ETHDINFKBot.Helpers
                         {
                             FoodDBManager.CreateMenuAllergy(dbMenu.MenuId, allergyId);
                         }
+
+                        // delete any allergy not in the list above
+                        FoodDBManager.ClearMenuAllergies(dbMenu.MenuId, svRestaurantMenu.AllergyIds);
                     }
                     catch (Exception ex)
                     {
@@ -316,6 +319,8 @@ namespace ETHDINFKBot.Helpers
                                 if (meal.allergenarray != null)
                                 {
 
+                                    List<int> allergyIds = new List<int>();
+
                                     // allergies
                                     foreach (var allergy in meal.allergenarray)
                                     {
@@ -333,8 +338,12 @@ namespace ETHDINFKBot.Helpers
                                                 continue;
 
                                             FoodDBManager.CreateMenuAllergy(dbMenu.MenuId, allergyId);
+                                            allergyIds.Add(allergyId);
                                         }
                                     }
+
+                                    // delete any allergy not in the list above
+                                    FoodDBManager.ClearMenuAllergies(dbMenu.MenuId, allergyIds);
                                 }
                             }
                             catch (Exception ex)
@@ -371,6 +380,9 @@ namespace ETHDINFKBot.Helpers
 
                             FoodDBManager.CreateMenuAllergy(dbMenu.MenuId, allergyId);
                         }
+
+                        // delete any allergy not in the list above
+                        FoodDBManager.ClearMenuAllergies(dbMenu.MenuId, allergies);
                     }
                     catch (Exception ex)
                     {
@@ -1066,7 +1078,7 @@ namespace ETHDINFKBot.Helpers
                                 }
                             }
 
-                            if(price == 0)
+                            if (price == 0)
                             {
                                 // no price found just get the first one if there exists one
                                 price = responseRecipe?.prices?.FirstOrDefault()?.amount ?? 0;
