@@ -1051,11 +1051,25 @@ namespace ETHDINFKBot.Helpers
 
                             foreach (var priceItem in responseRecipe.prices)
                             {
+                                // eng
                                 if (priceItem.category.title == "Student")
                                 {
                                     price = priceItem.amount;
                                     break;
                                 }
+
+                                // Sometimes the price comes as german
+                                if (priceItem.category.title == "Studierende")
+                                {
+                                    price = priceItem.amount;
+                                    break;
+                                }
+                            }
+
+                            if(price == 0)
+                            {
+                                // no price found just get the first one if there exists one
+                                price = responseRecipe?.prices?.FirstOrDefault()?.amount ?? 0;
                             }
 
                             var imageUrl = responseRecipe.imageUrl ?? "";
