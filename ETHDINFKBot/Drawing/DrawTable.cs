@@ -295,7 +295,7 @@ namespace ETHDINFKBot.Drawing
             {
                 try
                 {
-                    canvas.DrawLine(padding, currentHeight - 13, Math.Max(width - padding - 3, 0), currentHeight - 13, DrawingHelper.DefaultDrawing);
+                    canvas.DrawLine(padding, currentHeight - 13, Math.Max(width - padding - 1, 0), currentHeight - 13, DrawingHelper.DefaultDrawing);
                 }
                 catch (Exception ex)
                 {
@@ -319,7 +319,7 @@ namespace ETHDINFKBot.Drawing
 
             try
             {
-                canvas.DrawLine(padding, currentHeight - 13, Math.Max(width - padding - 3, 0), currentHeight - 13, DrawingHelper.DefaultDrawing);
+                canvas.DrawLine(padding, currentHeight - 13, Math.Max(width - padding - 1, 0), currentHeight - 13, DrawingHelper.DefaultDrawing);
             }
             catch (Exception ex)
             {
