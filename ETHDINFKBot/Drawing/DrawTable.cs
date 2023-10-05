@@ -124,8 +124,63 @@ namespace ETHDINFKBot.Drawing
             for (int i = 0; i < row.Count; i++)
                 currentWidthStart += widths.ElementAt(i);
 
+            bool lightRow = rowId % 2 == 0;
 
-            return (int)highestSize;
+            Console.WriteLine($"Row: {rowId} Light: {lightRow} Left: {padding} Top: {currentHeight - 13} Right: {currentWidthStart} Bottom: {highestSize - 13}");
+
+            if (lightRow)
+            {
+                // TODO move init to helper
+                var lightPaint = new SKPaint()
+                {
+                    Color = DrawingHelper.DiscordBackgroundLightColor,
+                    Style = SKPaintStyle.Fill
+                };
+
+                // draw the row as a bit ligher shade of grey
+                canvas.DrawRect(new SKRect(padding, currentHeight - 13, currentWidthStart, highestSize - 5), lightPaint);
+
+                // TODO CODE DUPLICATE FROM ABOVE -> TODO FIX
+                // Since we need to do first pass to determine the used height, then draw rectangle which then covers the text
+
+                highestSize = 0;
+                currentWidthStart = padding;
+                for (int i = 0; i < row.Count; i++)
+                {
+                    int cellWidth = widths.ElementAt(i);
+
+                    string text = row.ElementAt(i);
+
+                    var paint = isTitle ? DrawingHelper.TitleTextPaint : DrawingHelper.DefaultTextPaint;
+
+                    var tableInfo = TableRowInfo?.SingleOrDefault(i => i.RowId == rowId);
+                    if (tableInfo?.Cells != null)
+                    {
+                        if (tableInfo.Value.Cells?.Any(c => c.ColumnId == i) ?? false)
+                        {
+                            var cellInfo = tableInfo.Value.Cells.Single(c => c.ColumnId == i);
+                            paint.Color = cellInfo.FontColor;
+                        }
+                    }
+
+                    int usedHeight = (int)DrawTextArea(canvas, paint, currentWidthStart + 5, currentHeight, widths[i], paint.TextSize, text);
+
+                    if (usedHeight > highestSize)
+                        highestSize = usedHeight;
+
+                    currentWidthStart += cellWidth;
+                }
+
+                //currentHeight = (int)highestSize + padding / 5;
+
+                currentWidthStart = padding;
+
+                for (int i = 0; i < row.Count; i++)
+                    currentWidthStart += widths.ElementAt(i);
+            }
+
+
+            return (int)highestSize + 3;
         }
 
         private List<int> DefineTableCellWidths(int normalCellWidth, SKPaint headerPaint, SKPaint normalPaint)
@@ -240,12 +295,13 @@ namespace ETHDINFKBot.Drawing
             {
                 try
                 {
-                    canvas.DrawLine(padding, currentHeight - 13, Math.Max(width - padding, 0), currentHeight - 13, DrawingHelper.DefaultDrawing);
+                    canvas.DrawLine(padding, currentHeight - 13, Math.Max(width - padding - 3, 0), currentHeight - 13, DrawingHelper.DefaultDrawing);
                 }
                 catch (Exception ex)
                 {
                     failedDrawLineCount++;
                 }
+
                 try
                 {
                     currentHeight = DrawRow(canvas, row, rowId, padding, currentHeight, widths);
@@ -263,7 +319,7 @@ namespace ETHDINFKBot.Drawing
 
             try
             {
-                canvas.DrawLine(padding, currentHeight - 13, Math.Max(width - padding, 0), currentHeight - 13, DrawingHelper.DefaultDrawing);
+                canvas.DrawLine(padding, currentHeight - 13, Math.Max(width - padding - 3, 0), currentHeight - 13, DrawingHelper.DefaultDrawing);
             }
             catch (Exception ex)
             {

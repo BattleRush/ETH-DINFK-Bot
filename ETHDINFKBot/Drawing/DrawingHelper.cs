@@ -493,6 +493,11 @@ namespace ETHDINFKBot.Drawing
         {
             get { return new SKColor(54, 57, 63); }
         }
+        public static SKColor DiscordBackgroundLightColor
+        {
+            get { return new SKColor(80, 82, 87); }
+        }
+
         public static SKColor WhiteColor
         {
             get { return new SKColor(255, 255, 255); }
