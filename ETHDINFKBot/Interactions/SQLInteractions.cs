@@ -542,7 +542,10 @@ namespace ETHDINFKBot.Interactions
             catch (Exception e)
             {
                 await Context.Interaction.RespondAsync(e.Message);
-                await Context.Interaction.RespondAsync(e.ToString());
+                string fullError = e.ToString();
+
+                // upload error as text file
+                await Context.Interaction.Channel.SendFileAsync(new System.IO.MemoryStream(Encoding.UTF8.GetBytes(fullError)), "error.txt");
             }
         }
 
