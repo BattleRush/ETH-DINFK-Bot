@@ -1,6 +1,7 @@
 using Discord;
 using Discord.Commands;
 using Discord.Interactions;
+using Discord.Net;
 using Discord.WebSocket;
 using ETHBot.DataLayer;
 using ETHBot.DataLayer.Data.Discord;
@@ -532,7 +533,7 @@ namespace ETHDINFKBot.Interactions
                 };
 
                 builder.AddTextInput("Command Name", "commandName", placeholder: "Command Name", value: savedQuery.CommandName, required: true);
-                builder.AddTextInput("Description", "description", placeholder: "Description", value: savedQuery.Description, required: true);
+                builder.AddTextInput("Description", "description", placeholder: "Description", value: savedQuery.Description, style: TextInputStyle.Paragraph, required: true);
                 builder.AddTextInput("SQL Query", "sqlQuery", placeholder: "SQL Query", value: savedQuery.Content, style: TextInputStyle.Paragraph, required: true);
 
                 var modal2 = builder.Build();
@@ -546,6 +547,14 @@ namespace ETHDINFKBot.Interactions
 
                 // upload error as text file
                 await Context.Interaction.Channel.SendFileAsync(new System.IO.MemoryStream(Encoding.UTF8.GetBytes(fullError)), "error.txt");
+
+                if (e is HttpException httpException)
+                {
+                    foreach (var item in httpException.Errors)
+                    {
+                        await Context.Interaction.Channel.SendMessageAsync("Path: " + item.Path);
+                    }
+                }
             }
         }
 
