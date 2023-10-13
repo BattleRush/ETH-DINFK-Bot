@@ -542,6 +542,11 @@ namespace ETHDINFKBot.Interactions
             catch (Exception e)
             {
                 await Context.Interaction.RespondAsync(e.Message);
+                await Context.Interaction.RespondAsync(e.StackTrace);
+                await Context.Interaction.RespondAsync(e.InnerException.Message);
+                await Context.Interaction.RespondAsync(e.InnerException.StackTrace);
+
+                await Context.Interaction.RespondAsync(e.ToString());
             }
         }
 
