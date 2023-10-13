@@ -275,7 +275,7 @@ namespace ETHDINFKBot.Interactions
                     Title = "Error",
                     Description = e.Message
                 };
-                
+
                 await Context.Interaction.RespondAsync("", embed: embedBuilder.Build());
             }
         }
@@ -513,31 +513,36 @@ namespace ETHDINFKBot.Interactions
         [ComponentInteraction("sql-edit-cmd-*")]
         public async Task EditSQLCommand(int savedQueryId)
         {
-            await Context.Channel.SendMessageAsync("Called with " + savedQueryId);
-
-            var savedQuery = SQLDBManager.Instance().GetSavedQueryById(savedQueryId);
-
-            var user = Context.Interaction.User;
-
-            if (savedQuery.DiscordUserId != user.Id)
+            try
             {
-                await Context.Interaction.RespondAsync("You are not allowed to edit someone elses command.");
-                return;
+                var savedQuery = SQLDBManager.Instance().GetSavedQueryById(savedQueryId);
+
+                var user = Context.Interaction.User;
+
+                if (savedQuery.DiscordUserId != user.Id)
+                {
+                    await Context.Interaction.RespondAsync("You are not allowed to edit someone elses command.");
+                    return;
+                }
+
+                var builder = new ModalBuilder()
+                {
+                    Title = "Create SQL Command",
+                    CustomId = "sql-edit-cmd-modal-" + savedQuery.SavedQueryId
+                };
+
+                builder.AddTextInput("Command Name", "commandName", placeholder: "Command Name", value: savedQuery.CommandName, required: true);
+                builder.AddTextInput("Description", "description", placeholder: "Description", value: savedQuery.Description, required: true);
+                builder.AddTextInput("SQL Query", "sqlQuery", placeholder: "SQL Query", value: savedQuery.Content, style: TextInputStyle.Paragraph, required: true);
+
+                var modal2 = builder.Build();
+
+                await Context.Interaction.RespondWithModalAsync(modal2);
             }
-
-            var builder = new ModalBuilder()
+            catch (Exception e)
             {
-                Title = "Create SQL Command",
-                CustomId = "sql-edit-cmd-modal-" + savedQuery.SavedQueryId
-            };
-
-            builder.AddTextInput("Command Name", "commandName", placeholder: "Command Name", value: savedQuery.CommandName, required: true);
-            builder.AddTextInput("Description", "description", placeholder: "Description", value: savedQuery.Description, required: true);
-            builder.AddTextInput("SQL Query", "sqlQuery", placeholder: "SQL Query", value: savedQuery.Content, style: TextInputStyle.Paragraph, required: true);
-
-            var modal2 = builder.Build();
-
-            await Context.Interaction.RespondWithModalAsync(modal2);
+                await Context.Interaction.RespondAsync(e.Message);
+            }
         }
 
         [ModalInteraction("sql-edit-cmd-modal-*")]
@@ -642,7 +647,7 @@ namespace ETHDINFKBot.Interactions
             embedBuilder.WithColor(255, 0, 0);
             embedBuilder.WithAuthor(Context.Interaction.User);
 
-            await Context.Interaction.RespondAsync(embeds: new Embed[] {embedBuilder.Build()}, components: messageBuilder.Build());
+            await Context.Interaction.RespondAsync(embeds: new Embed[] { embedBuilder.Build() }, components: messageBuilder.Build());
         }
 
         [ComponentInteraction("sql-change-defaultvalue-cmd-*")]
