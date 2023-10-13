@@ -272,6 +272,28 @@ namespace ETHDINFKBot.Handlers
                     DiscordThreadId = SocketThreadChannel?.Id
                 }, true);
 
+                if (!discordUser.NoTrack)
+                {
+                    foreach (var attachment in SocketMessage.Attachments)
+                    {
+                        DatabaseManager.CreateDiscordAttachment(new DiscordAttachment()
+                        {
+                            DiscordAttachmentId = attachment.Id,
+                            DiscordMessageId = SocketMessage.Id,
+                            ContentType = attachment.ContentType,
+                            Description = attachment.Description,
+                            Filename = attachment.Filename,
+                            Height = attachment.Height,
+                            Width = attachment.Width,
+                            Size = attachment.Size,
+                            Url = attachment.Url,
+                            Waveform = attachment.Waveform,
+                            Duration = attachment.Duration,
+                            IsSpoiler = attachment.IsSpoiler()
+                        });
+                    }
+                }
+
                 if (SocketMessage.Reference != null && newDiscordMessageEntryCreated)
                 {
                     // This message is a reply to some message -> Create PingHistory
@@ -287,6 +309,38 @@ namespace ETHDINFKBot.Handlers
                 }
 
                 return newDiscordMessageEntryCreated;
+            }
+            else
+            {
+                // NO DM Tracking
+                return false;
+            }
+        }
+
+        public async Task<bool> CreateDiscordMessageAttachmentDBEntry(DiscordMessage discordMessage)
+        {
+            if (ChannelSettings != null && ((BotPermissionType)ChannelSettings?.ChannelPermissionFlags).HasFlag(BotPermissionType.Read))
+            {
+                foreach (var attachment in SocketMessage.Attachments)
+                {
+                    var newDiscordAttachmentEntryCreated = DatabaseManager.CreateDiscordAttachment(new DiscordAttachment()
+                    {
+                        DiscordMessageId = discordMessage.DiscordMessageId,
+                        ContentType = attachment.ContentType,
+                        Description = attachment.Description,
+                        Filename = attachment.Filename,
+                        Height = attachment.Height,
+                        Width = attachment.Width,
+                        Size = attachment.Size,
+                        Url = attachment.Url,
+                        Waveform = attachment.Waveform
+                    });
+
+                    if (!newDiscordAttachmentEntryCreated)
+                        return false;
+                }
+
+                return true;
             }
             else
             {

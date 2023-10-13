@@ -675,6 +675,29 @@ namespace ETHDINFKBot
             return true;
         }
 
+        public bool CreateDiscordAttachment(DiscordAttachment attachment)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    // check if that attachment already exists
+                    if (context.DiscordAttachments.Any(i => i.DiscordAttachmentId == attachment.DiscordAttachmentId))
+                        return false;
+
+                    context.DiscordAttachments.Add(attachment);
+                    context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return false;
+            }
+
+            return true;
+        }
+
         public void GetMessage()
         {
             // todo

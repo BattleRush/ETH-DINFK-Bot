@@ -3,6 +3,7 @@ using System;
 using ETHBot.DataLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ETHBot.DataLayer.Migrations
 {
     [DbContext(typeof(ETHBotDBContext))]
-    partial class ETHBotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20231010133835_AddDiscordAttachmentsAndSQLCommands")]
+    partial class AddDiscordAttachmentsAndSQLCommands
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -691,7 +693,7 @@ namespace ETHBot.DataLayer.Migrations
                     b.Property<string>("DefaultValue")
                         .HasColumnType("longtext");
 
-                    b.Property<string>("ParameterNameName")
+                    b.Property<string>("ParameterName")
                         .HasColumnType("longtext");
 
                     b.Property<string>("ParameterType")

@@ -13,6 +13,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
 using ETHBot.DataLayer.Data.ETH.Food;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace ETHBot.DataLayer
 {
@@ -113,7 +114,10 @@ namespace ETHBot.DataLayer
 
         public DbSet<Food2050CO2Entry> Food2050CO2Entries { get; set; }
 
-        //public DbSet<SavedSQLQuery> SavedSQLQueries { get; set; }
+        public DbSet<DiscordAttachment> DiscordAttachments { get; set; }
+
+        public DbSet<SavedQuery> SavedQueries { get; set; }
+        public DbSet<SavedQueryParameter> SavedQueryParameters { get; set; }
 
         /*
 

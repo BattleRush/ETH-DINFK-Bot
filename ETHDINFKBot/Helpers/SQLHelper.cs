@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
+using Discord.Interactions;
 using MySqlConnector;
 using Npgsql;
 using System;
@@ -89,11 +90,21 @@ namespace ETHDINFKBot.Helpers
             return resultString + Environment.NewLine + $"{queryResult.TotalResults.ToString("N0")} Row(s) affected Time: {queryResult.Time.ToString("N0")}ms";
         }
 
-        public static async Task<(List<string> Header, List<List<string>> Data, int TotalResults, long Time)> GetQueryResults(SocketCommandContext context, string commandSql, bool limitRows = false, int limitLength = 2000, bool fullUser = false, bool disableCap = false)
+        public static async Task<(List<string> Header, List<List<string>> Data, int TotalResults, long Time)> GetQueryResultsInteraction(SocketInteractionContext context, string commandSql, bool limitRows = false, int limitLength = 2000, bool fullUser = false, bool disableCap = false, List<MySqlParameter> parameters = null)
+        {
+            ulong? authorId = context?.Interaction?.User?.Id;
+            return await GetQueryResultsId(authorId, commandSql, limitRows, limitLength, fullUser, disableCap, null, context, parameters);
+        }
+
+        public static async Task<(List<string> Header, List<List<string>> Data, int TotalResults, long Time)> GetQueryResults(SocketCommandContext context, string commandSql, bool limitRows = false, int limitLength = 2000, bool fullUser = false, bool disableCap = false, List<MySqlParameter> parameters = null)
+        {
+            ulong? authorId = context?.Message?.Author?.Id;
+            return await GetQueryResultsId(authorId, commandSql, limitRows, limitLength, fullUser, disableCap, context, null, parameters);
+        }
+
+        public static async Task<(List<string> Header, List<List<string>> Data, int TotalResults, long Time)> GetQueryResultsId(ulong? authorId, string commandSql, bool limitRows = false, int limitLength = 2000, bool fullUser = false, bool disableCap = false, SocketCommandContext context = null, SocketInteractionContext interactionContext = null, List<MySqlParameter> parameters = null)
         {
             // TODO Admin perms for daily jobs with no context object
-            var author = context?.Message?.Author;
-
             List<string> Header = new List<string>();
             List<List<string>> Data = new List<List<string>>();
             int TotalResults = 0;
@@ -111,7 +122,7 @@ namespace ETHDINFKBot.Helpers
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
 
-                if (author?.Id == Program.ApplicationSetting.Owner)
+                if (authorId == Program.ApplicationSetting.Owner)
                     fullUser = true;
 
                 string connectionString = fullUser ? Program.ApplicationSetting.ConnectionStringsSetting.ConnectionString_Full : Program.ApplicationSetting.ConnectionStringsSetting.ConnectionString_ReadOnly;
@@ -123,6 +134,9 @@ namespace ETHDINFKBot.Helpers
                         command.CommandTimeout = fullUser ? 240 : 15;
 
                         connection.Open();
+
+                        if(parameters != null)
+                            command.Parameters.AddRange(parameters.ToArray());
 
                         var reader = command.ExecuteReader();
 
@@ -262,7 +276,7 @@ namespace ETHDINFKBot.Helpers
             }
             catch (Exception ex)
             {
-                if (context == null)
+                if (context == null && interactionContext == null)
                     throw ex; // if no context is provided dont handle it
 
 
@@ -276,7 +290,10 @@ namespace ETHDINFKBot.Helpers
                 builder.WithCurrentTimestamp();
 
                 // TODO include maybe the sql query also in the embed
-                await context.Channel.SendMessageAsync("", false, builder.Build(), null, null, new MessageReference(context.Message.Id, context.Channel.Id));
+                if(context != null)
+                    await context.Channel.SendMessageAsync("", false, builder.Build(), null, null, new MessageReference(context.Message.Id, context.Channel.Id));
+                else
+                    await interactionContext.Channel.SendMessageAsync("", false, builder.Build());
             }
 
             return (Header, Data, TotalResults, Time);
@@ -305,7 +322,7 @@ namespace ETHDINFKBot.Helpers
                 watch.Start();
                 var postgreSettings = Program.ApplicationSetting.PostgreSQLSetting;
                 var connString = $"Host={postgreSettings.Host};Port={postgreSettings.Port};Command Timeout=10;Username={postgreSettings.DMDBUserUsername.ToLower()};Password={postgreSettings.DMDBUserPassword};Database={database}";
-                if(fullUser)
+                if (fullUser)
                     connString = $"Host={postgreSettings.Host};Port={postgreSettings.Port};Command Timeout=10;Username={postgreSettings.OwnerUsername.ToLower()};Password={postgreSettings.OwnerPassword};Database={database}";
 
                 await using var connection = new NpgsqlConnection(connString);

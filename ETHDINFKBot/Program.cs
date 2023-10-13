@@ -447,6 +447,8 @@ namespace ETHDINFKBot
             Client.JoinedGuild += Client_JoinedGuild;
             Client.LeftGuild += Client_LeftGuild;
 
+            Client.ButtonExecuted += Client_ButtonExecuted;
+
             Client.Log += Client_Log;
 
             // For message commands
@@ -513,6 +515,14 @@ namespace ETHDINFKBot
         }
 
 
+        private Task Client_ButtonExecuted(SocketMessageComponent component)
+        {
+            //Console.WriteLine("Button pressed: " + component.Data.CustomId);
+
+            return Task.CompletedTask;
+        }
+
+
         // TODO flag in db the users
         private Task Client_LeftGuild(SocketGuild arg)
         {
@@ -557,13 +567,13 @@ namespace ETHDINFKBot
             //throw new NotImplementedException();
         }
 
-        private async Task Client_ButtonExecuted(SocketMessageComponent arg)
+        /*private async Task Client_ButtonExecuted(SocketMessageComponent arg)
         {
             return;
             ButtonHandler buttonHandler = new ButtonHandler(arg);
             var result = await buttonHandler.Run();
             await arg.DeferAsync(false);
-        }
+        }*/
 
         public async Task MessageCommandHandler(SocketMessageCommand arg)
         {
@@ -830,9 +840,17 @@ namespace ETHDINFKBot
                     Thread.Sleep(1000);
                     Process.GetCurrentProcess().Kill();
                 }
+
+
+                Console.WriteLine("Discord Exception: " + arg.Exception.ToString());
+
+
             }
 #if DEBUG
+            Console.WriteLine("Discord log source: " + arg.Source);
             Console.WriteLine("Discord log: " + arg.Message);
+            Console.WriteLine("Discord Exception: " + arg.Exception?.ToString());
+
 #else
             if (arg.Severity == LogSeverity.Error || arg.Severity == LogSeverity.Critical)
                 Console.Write("Discord log: " + arg.Message);
@@ -1163,7 +1181,7 @@ namespace ETHDINFKBot
                 // non tracked users dont get included
                 // else check if new message was made in the current new day
                 firstMessage = FirstDailyPostsCandidates
-                    .Where(i => 
+                    .Where(i =>
                         i.CreatedAt.AddHours(TimeZoneInfo.IsDaylightSavingTime(DateTime.Now) ? 2 : 1).Hour != 23
                         && NoTrackUsers.All(n => n != i.Id)
                         )
@@ -1363,6 +1381,12 @@ namespace ETHDINFKBot
 
                 // TODO private channels
 
+                if (msg.Author is SocketWebhookUser)
+                {
+                    // TODO what to do here?
+                    return;
+                }
+
                 var user = (SocketGuildUser)msg.Author;
 
                 var dbManager = DatabaseManager.Instance();
@@ -1514,7 +1538,7 @@ namespace ETHDINFKBot
             if (BannedUsers.Any(i => i == m.Author.Id))
             {
                 // rip bozo message
-                if((m.Channel.Id == DiscordHelper.DiscordChannels["spam"] || m.Channel.Id == DiscordHelper.DiscordChannels["botfun"]))
+                if ((m.Channel.Id == DiscordHelper.DiscordChannels["spam"] || m.Channel.Id == DiscordHelper.DiscordChannels["botfun"]))
                     await m.Channel.SendMessageAsync($"<@{m.Author.Id}> rip bozo");
 
                 await m.DeleteAsync();

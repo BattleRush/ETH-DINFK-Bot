@@ -43,18 +43,22 @@ namespace ETHDINFKBot.CronJobs.Jobs
             var restaurants = foodDBManager.GetAllFood2050Restaurants();
 
             Dictionary<string, int> restaurantCO2Added = new Dictionary<string, int>();
+
+            List<string> processedMensas = new List<string>();
             string errorLog = "";
             foreach (var restaurant in restaurants)
             {
                 try
                 {
-                    int count = 0;
-                    if (restaurant.RestaurantId == 10)
+                    // not used for now
+                    string mensaKey = restaurant.InternalName + "_" + restaurant.AdditionalInternalName;
+                    if(processedMensas.Contains(mensaKey))
                     {
-                        // continue for this one as its dinner for lower which is captured by the lunch case
-                        // todo handle properly
-                        continue;
+                        //continue;
                     }
+
+                    int count = 0;
+
 
                     // {"operationName":"KitchenStatsPerMinute","variables":{"kitchenSlug":"untere-mensa","locationSlug":"uzh-zentrum","timestamp":"2023-07-27T14:33:14.628Z"},"query":"query KitchenStatsPerMinute($locationSlug: String!, $kitchenSlug: String!, $timestamp: DateTime!) {\n  location(id: $locationSlug) {\n    id\n    kitchen(slug: $kitchenSlug) {\n      id\n      publicLabel\n      statsPerMinute(\n        where: {timestamp: {lte: $timestamp}}\n        orderBy: {timestamp: desc}\n        take: 1\n      ) {\n        co2EmissionsGramsDelta\n        co2EmissionsGramsTotal\n        temperatureChangeStats {\n          temperatureChange\n          temperatureChangeDelta\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  climateRatingFromDegrees {\n    HIGHMinDegCelsius\n    MEDIUMMinDegCelsius\n    __typename\n  }\n}"}
 
@@ -76,6 +80,8 @@ namespace ETHDINFKBot.CronJobs.Jobs
                         },
                         query = "query KitchenStatsPerMinute($locationSlug: String!, $kitchenSlug: String!) {\n  location(id: $locationSlug) {\n    id\n    kitchen(slug: $kitchenSlug) {\n      id\n      publicLabel\n      statsPerMinute(\n        where: {co2EmissionsGramsDelta: {gt: 0}}\n        orderBy: {timestamp: desc}\n        take: " + take + "\n      ) {\n        timestamp\n        co2EmissionsGramsDelta\n        co2EmissionsGramsTotal\n        temperatureChangeStats {\n          temperatureChange\n          temperatureChangeDelta\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  climateRatingFromDegrees {\n    HIGHMinDegCelsius\n    MEDIUMMinDegCelsius\n    __typename\n  }\n}"
                     };
+
+                    processedMensas.Add(mensaKey);
 
                     var json = JsonConvert.SerializeObject(payload, Formatting.Indented);
 

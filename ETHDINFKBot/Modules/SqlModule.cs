@@ -21,6 +21,9 @@ using ETHDINFKBot.Drawing;
 
 using MySqlConnector;
 using Npgsql;
+using ETHDINFKBot.Data;
+using ETHBot.DataLayer.Data.Discord;
+using System.Linq.Expressions;
 
 namespace ETHDINFKBot.Modules
 {
@@ -424,8 +427,8 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
 
                 // Allow the query to be send in a code block
                 query = query.Trim('`');
-                
-                if(query.StartsWith("sql"))
+
+                if (query.StartsWith("sql"))
                     query = query.Substring(3);
 
                 if (ForbiddenQuery(query, Context.Message.Author.Id))
@@ -472,8 +475,8 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
 
                 // Allow the query to be send in a code block
                 query = query.Trim('`');
-                
-                if(query.StartsWith("sql"))
+
+                if (query.StartsWith("sql"))
                     query = query.Substring(3);
 
                 if (ForbiddenQuery(query, Context.Message.Author.Id))
@@ -539,6 +542,311 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
 
+
+                EmbedBuilder builder = new EmbedBuilder();
+
+                builder.WithTitle($"{Program.Client.CurrentUser.Username} DB INFO");
+                builder.WithDescription($@"SQL Command help page");
+                builder.WithColor(65, 17, 187);
+
+                builder.WithThumbnailUrl(Program.Client.CurrentUser.GetAvatarUrl());
+                builder.WithCurrentTimestamp();
+
+                builder.AddField($"**{prefix}sql schema**", "MariaDB Schema graph");
+                builder.AddField($"**{prefix}sql stats help**", "Stats page help");
+                builder.AddField($"**{prefix}sql dmdb help**", "DMDB help");
+                builder.AddField($"**{prefix}sql size**", "DB Size info and row count (May take 10 seconds)");
+                builder.AddField($"**{prefix}sql query <query>**", "Run query on the main MariaDB");
+                builder.AddField($"**{prefix}sql queryd <query>**", "Run query on the main MariaDB and return the result as an image");
+
+                // related to the sql saved query feature
+                builder.AddField($"**{prefix}sql create**", "Create an SQL Command via discord modal");
+                builder.AddField($"**{prefix}sql run <command_name>**", "Searches for a list of queries matching the command and runs it");
+                builder.AddField($"**{prefix}sql delete <command_name>**", "Delete a SQL command");
+                builder.AddField($"**{prefix}sql list [<command_name>|all]**", "List all saved SQL commands for current user, or search for a specific command. If 'all' is passed all queries are shown");
+                builder.AddField($"**{prefix}sql view <command_name>**", "View a SQL command");
+                builder.AddField($"**{prefix}sql get <command_id>**", "Get a SQL command by its id");
+                builder.AddField($"**{prefix}sql template <command_name>**", "Get the template for a SQL command");
+                builder.AddField($"**{prefix}sql datatype <command_name>**", "Change the datatype for each parameter of a SQL command");
+                builder.AddField($"**{prefix}sql execute <command_name> <parameters>**", "Execute a SQL command with the given parameters. To get the template run list or template command");
+
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
+            }
+            catch (Exception ex)
+            {
+                // TODO user Logger
+                Console.WriteLine(ex.ToString());
+            }
+        }
+
+        [Command("create")]
+        public async Task CreateSQLCommand()
+        {
+            // create a message with a dropdown of how many parameters the command should have and a button create which opens a modal
+            // the modal has a dropdown for each parameter and a text box for the command
+
+            string message = "Click the button to create a new SQL Command";
+
+            var messageBuilder = new ComponentBuilder().WithButton("Create SQL Command", "sql-create-command", ButtonStyle.Primary);
+
+            await Context.Channel.SendMessageAsync(message, components: messageBuilder.Build());
+        }
+
+        [Command("view")]
+        public async Task ViewCommand(string commandName)
+        {
+            var command = SQLDBManager.Instance().GetSavedQueryByCommandName(commandName);
+
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.WithTitle($"Command: {command.CommandName}");
+            embedBuilder.WithDescription("```sql" + Environment.NewLine + command.Content + Environment.NewLine + "```");
+            embedBuilder.WithColor(255, 0, 0);
+            embedBuilder.AddField("Description", command.Description);
+            embedBuilder.AddField("Owner", $"<@{command.DiscordUserId}>");
+            embedBuilder.WithAuthor(Context.Message.Author);
+
+            // add fields for each parameter with the default value
+            var queryParameters = SQLDBManager.Instance().GetQueryParameters(command);
+
+            foreach (var parameter in queryParameters)
+            {
+                embedBuilder.AddField($"Parameter: {parameter.ParameterName} ({parameter.ParameterType})", $"{parameter.DefaultValue}");
+            }
+
+            await Context.Channel.SendMessageAsync("", false, embedBuilder.Build());
+        }
+
+        [Command("get")]
+        public async Task GetCommandById(int savedQueryId)
+        {
+            var userId = Context.Message.Author.Id;
+            var savedQuery = SQLDBManager.Instance().GetSavedQueryById(savedQueryId);
+
+            if (savedQuery == null)
+            {
+                await Context.Channel.SendMessageAsync("Command not found");
+                return;
+            }
+
+            bool sameUser = savedQuery.DiscordUserId == userId;
+            (EmbedBuilder embedBuilder, ComponentBuilder messageBuilder) = SQLInteractionHelper.GetSavedInfoQueryById(savedQuery, sameUser);
+            await Context.Channel.SendMessageAsync("", embed: embedBuilder.Build(), components: messageBuilder.Build());
+        }
+
+        // TODO pagination
+        [Command("list")]
+        public async Task ListSQLCommands(string search = "")
+        {
+            var user = Context.Message.Author;
+
+
+            List<SavedQuery> commands = new List<SavedQuery>();
+
+            if (search.ToLower() == "all")
+                commands = await SQLDBManager.Instance().GetAllSQLCommands();
+            else if(string.IsNullOrWhiteSpace(search))
+                commands = await SQLDBManager.Instance().GetAllSQLCommands(user.Id);
+            else
+                commands = await SQLDBManager.Instance().GetAllSQLCommands(search);
+
+            string text = "";
+
+            foreach (var command in commands)
+                text += $"[{command.SavedQueryId}] {command.CommandName} - {command.Description} - <@{command.DiscordUserId}>" + Environment.NewLine;
+
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+
+            embedBuilder.WithTitle("SQL Commands");
+
+            embedBuilder.WithDescription(text);
+
+            // for each command create view button
+            var messageBuilder = new ComponentBuilder();
+
+            int count = 0;
+
+            // take only up to 20 commands -> todo pagination
+            commands = commands.Take(20).ToList();
+
+            foreach (var command in commands)
+            {
+                int row = count / 5;
+                messageBuilder.WithButton(command.CommandName, $"sql-view-command-{command.SavedQueryId}", ButtonStyle.Primary, row: row);
+
+                count++;
+            }
+
+            await Context.Channel.SendMessageAsync("", false, embedBuilder.Build(), components: messageBuilder.Build());
+
+            //await Context.Channel.SendMessageAsync(text);
+        }
+
+        [Command("template")]
+        public async Task RunSQLCommand(string commandName)
+        {
+            EmbedBuilder embedBuilder = SQLInteractionHelper.GetCommandTemplate(commandName);
+            await Context.Channel.SendMessageAsync("", false, embedBuilder.Build());
+        }
+
+        // TODO maybe remove for simplicity reasons and go over view interaction
+        [Command("datatype")]
+        public async Task ChangeCommandDateType(string command)
+        {
+            var commandInfo = SQLDBManager.Instance().GetSavedQueryByCommandName(command);
+
+            if (commandInfo == null)
+            {
+                await Context.Channel.SendMessageAsync("Command not found");
+                return;
+            }
+
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.WithTitle($"Command: {commandInfo.CommandName}");
+            embedBuilder.WithDescription(@"Change datatype for each parameter.
+            Red: int
+            Green: string
+            Blue: datetime");
+
+            embedBuilder.WithColor(255, 0, 0);
+            embedBuilder.WithAuthor(Context.Message.Author);
+
+            var messageBuilder = SQLInteractionHelper.GetSavedSQLCommandParameters(commandInfo.SavedQueryId);
+            await Context.Channel.SendMessageAsync("", embed: embedBuilder.Build(), components: messageBuilder.Build());
+        }
+
+        // todo execute with queryd capability
+
+        [Command("execute")]
+        public async Task RunSQLCommand(string commandName, [Remainder] string parameters)
+        {
+            try
+            {
+                var command = SQLDBManager.Instance().GetSavedQueryByCommandName(commandName);
+
+                if (command == null)
+                {
+                    await Context.Channel.SendMessageAsync("Command not found");
+                    return;
+                }
+
+                var queryParameters = SQLDBManager.Instance().GetQueryParameters(command);
+
+                // split by new line
+                var parameterList = parameters.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
+
+                // split by space
+
+                var parameterDict = new Dictionary<string, string>();
+
+                foreach (var parameter in parameterList)
+                {
+                    // find first = index
+                    var firstEq = parameter.IndexOf("=");
+
+                    if (firstEq == -1)
+                    {
+                        await Context.Channel.SendMessageAsync("Invalid parameter format");
+                        return;
+                    }
+
+                    var split = new string[] { parameter.Substring(0, firstEq), parameter.Substring(firstEq + 1) };
+
+                    if (split.Length != 2)
+                    {
+                        await Context.Channel.SendMessageAsync("Invalid parameter format");
+                        return;
+                    }
+
+                    // if first char is a ! replace it with a @
+                    if (split[0].StartsWith("!"))
+                        split[0] = "@" + split[0].Substring(1);
+
+                    parameterDict.Add(split[0], split[1]);
+                }
+
+                List<MySqlParameter> sqlParameters = new List<MySqlParameter>();
+
+                // check if all parameters are there
+                foreach (var parameter in queryParameters)
+                {
+                    if (!parameterDict.ContainsKey(parameter.ParameterName))
+                    {
+                        await Context.Channel.SendMessageAsync($"Missing parameter {parameter.ParameterName}");
+                        return;
+                    }
+
+                    string value = parameterDict[parameter.ParameterName];
+                    switch (parameter.ParameterType)
+                    {
+                        // todo double, long, ulong tests
+                        case "int":
+                            sqlParameters.Add(SQLInteractionHelper.GetNumberParameter(parameter.ParameterName, value));
+                            break;
+                        case "string":
+                            sqlParameters.Add(SQLInteractionHelper.GetStringParameter(parameter.ParameterName, value));
+                            break;
+                        case "datetime":
+                            sqlParameters.Add(SQLInteractionHelper.GetDateTimeParameter(parameter.ParameterName, value));
+                            break;
+                    }
+                }
+
+                // run the query
+                var queryResult = await SQLHelper.GetQueryResults(Context, command.Content, true, 100, parameters: sqlParameters);
+                var resultString = SQLHelper.GetRowStringFromResult(queryResult.Header, queryResult.Data, new List<int>());
+
+                string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
+
+                await Context.Channel.SendMessageAsync(resultString + additionalString, false);
+
+            }
+            catch (Exception ex)
+            {
+                EmbedBuilder embedBuilder = new EmbedBuilder();
+                embedBuilder.WithTitle("Error");
+                embedBuilder.WithDescription(ex.Message);
+                embedBuilder.WithColor(255, 0, 0);
+                embedBuilder.WithAuthor(Context.Message.Author);
+
+                await Context.Channel.SendMessageAsync("", false, embedBuilder.Build());
+            }
+        }
+
+        [Command("delete")]
+        public async Task DeleteSQLCommand(string commandName)
+        {
+            var userId = Context.Message.Author.Id;
+
+            if (!CommonHelper.AllowedToRun(BotPermissionType.EnableType2Commands, Context.Message.Channel.Id, userId))
+                return;
+            
+            var command = SQLDBManager.Instance().GetSavedQueryByCommandName(commandName);
+
+            if (command == null)
+            {
+                await Context.Channel.SendMessageAsync("Command not found");
+                return;
+            }
+
+            if (command.DiscordUserId != userId)
+            {
+                await Context.Channel.SendMessageAsync("You are not the owner of this command");
+                return;
+            }
+
+            await SQLDBManager.Instance().DeleteSavedQuery(command.SavedQueryId, userId);
+        }
+
+        [Command("size")]
+        public async Task TableSize()
+        {
+            string prefix = Program.CurrentPrefix;
+
+            try
+            {
+                Stopwatch watch = new Stopwatch();
+                watch.Start();
+
                 var queryResult = await SQLHelper.GetQueryResults(Context, $@"
 SELECT table_name FROM information_schema.tables
 WHERE table_schema = '{Program.ApplicationSetting.MariaDBName}' 
@@ -548,7 +856,7 @@ ORDER BY table_name DESC;", true, 50);
 
                 builder.WithTitle($"{Program.Client.CurrentUser.Username} DB INFO");
                 builder.WithDescription($@"SQL Tables 
-DB Diagram: **{prefix}sql table info** 
+DB Diagram: **{prefix}sql info** 
 DB Stats Help: **{prefix}sql stats help**
 DMDB Help: **{prefix}sql dmdb help**");
                 builder.WithColor(65, 17, 187);
@@ -725,173 +1033,174 @@ WHERE
             }
         }
 
-        [Group("table")]
-        public class SqlTableModule : ModuleBase<SocketCommandContext>
+
+        //public class SqlTableModule : ModuleBase<SocketCommandContext>
+        //{
+
+        private readonly ILogger _logger = new Logger<DiscordModule>(Program.Logger);
+        // help
+
+
+        // list
+
+        // into <table>
+
+        // query <type> (select, insert, update)
+
+        // draw image?
+
+        /* [Command("help")]
+         public async Task SqlTableHelp()
+         {
+
+         }*/
+
+
+
+
+
+        private List<ForeignKeyInfo> GetForeignKeyInfo(DbCommand command, string tableName)
+        {
+            var list = new List<ForeignKeyInfo>();
+
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    try
+                    {
+                        ForeignKeyInfo info = new ForeignKeyInfo()
+                        {
+                            FromTable = tableName, //reader.GetString(2),
+                            FromTableFieldName = reader.GetString(1),
+                            ToTable = reader.GetString(2),
+                            ToTableFieldName = reader.GetString(3),
+
+
+                        };
+                        //0   0   DiscordServers DiscordServerId DiscordServerId NO ACTION CASCADE NONE
+
+                        list.Add(info);
+
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, ex.Message);
+                    }
+
+                }
+            }
+
+            return list;
+        }
+
+        private DBTableInfo GetTableInfo(DbCommand command, string tableName)
+        {
+            DBTableInfo dbTableInfo = new DBTableInfo()
+            {
+                TableName = tableName,
+                FieldInfos = new List<DBFieldInfo>()
+            };
+
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    try
+                    {
+
+                        string genetalType = "null";
+                        string type = reader.GetString(1).ToLower();
+
+                        switch (type)
+                        {
+                            case "tinyint(1)":
+                                genetalType = "bool";
+                                break;
+                            case string int_1 when int_1.StartsWith("tinyint"):
+                            case string int_2 when int_2.StartsWith("int"):
+                            case string int_3 when int_3.StartsWith("bigint"):
+                                genetalType = "int";
+                                break;
+                            case string string_1 when string_1.StartsWith("varchar"):
+                            case string string_2 when string_2.StartsWith("longtext"):
+                                genetalType = "string";
+                                break;
+                            case string dateTime when dateTime.StartsWith("datetime"):
+                                genetalType = "datetime";
+                                break;
+                            default:
+                                break;
+                        }
+
+                        DBFieldInfo field = new DBFieldInfo()
+                        {
+                            //Id = reader.GetInt32(0),
+                            Name = reader.GetString(0),
+                            Type = reader.GetString(1),
+                            GeneralType = genetalType,
+                            Nullable = reader.GetString(2) == "YES",
+                            // df value needed?
+                            IsPrimaryKey = reader.GetString(3) == "PRI"
+
+                        };
+
+
+                        dbTableInfo.FieldInfos.Add(field);
+
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, ex.Message);
+                    }
+
+                }
+            }
+
+            return dbTableInfo;
+        }
+
+
+
+
+        [Command("info")]
+        [Alias("about")]
+        public async Task TableInfoTables()
         {
 
-            private readonly ILogger _logger = new Logger<DiscordModule>(Program.Logger);
-            // help
 
-
-            // list
-
-            // into <table>
-
-            // query <type> (select, insert, update)
-
-            // draw image?
-
-            /* [Command("help")]
-             public async Task SqlTableHelp()
-             {
-
-             }*/
-
-
-
-
-
-            private List<ForeignKeyInfo> GetForeignKeyInfo(DbCommand command, string tableName)
+            try
             {
-                var list = new List<ForeignKeyInfo>();
+                var dbInfos = await GetAllDBTableInfos();
 
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        try
-                        {
-                            ForeignKeyInfo info = new ForeignKeyInfo()
-                            {
-                                FromTable = tableName, //reader.GetString(2),
-                                FromTableFieldName = reader.GetString(1),
-                                ToTable = reader.GetString(2),
-                                ToTableFieldName = reader.GetString(3),
+                // TODO dispose with using
+                DrawDbSchema drawDbSchema = new DrawDbSchema(dbInfos);
+                drawDbSchema.DrawAllTables();
 
 
-                            };
-                            //0   0   DiscordServers DiscordServerId DiscordServerId NO ACTION CASCADE NONE
 
-                            list.Add(info);
+                var stream = CommonHelper.GetStream(drawDbSchema.Bitmap);
+                await Context.Channel.SendFileAsync(stream, "test.png");
 
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, ex.Message);
-                        }
+                drawDbSchema.Dispose();
+                stream.Dispose();
 
-                    }
-                }
-
-                return list;
             }
-
-            private DBTableInfo GetTableInfo(DbCommand command, string tableName)
+            catch (Exception ex)
             {
-                DBTableInfo dbTableInfo = new DBTableInfo()
-                {
-                    TableName = tableName,
-                    FieldInfos = new List<DBFieldInfo>()
-                };
-
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        try
-                        {
-
-                            string genetalType = "null";
-                            string type = reader.GetString(1).ToLower();
-
-                            switch (type)
-                            {
-                                case "tinyint(1)":
-                                    genetalType = "bool";
-                                    break;
-                                case string int_1 when int_1.StartsWith("tinyint"):
-                                case string int_2 when int_2.StartsWith("int"):
-                                case string int_3 when int_3.StartsWith("bigint"):
-                                    genetalType = "int";
-                                    break;
-                                case string string_1 when string_1.StartsWith("varchar"):
-                                case string string_2 when string_2.StartsWith("longtext"):
-                                    genetalType = "string";
-                                    break;
-                                case string dateTime when dateTime.StartsWith("datetime"):
-                                    genetalType = "datetime";
-                                    break;
-                                default:
-                                    break;
-                            }
-
-                            DBFieldInfo field = new DBFieldInfo()
-                            {
-                                //Id = reader.GetInt32(0),
-                                Name = reader.GetString(0),
-                                Type = reader.GetString(1),
-                                GeneralType = genetalType,
-                                Nullable = reader.GetString(2) == "YES",
-                                // df value needed?
-                                IsPrimaryKey = reader.GetString(3) == "PRI"
-
-                            };
-
-
-                            dbTableInfo.FieldInfos.Add(field);
-
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, ex.Message);
-                        }
-
-                    }
-                }
-
-                return dbTableInfo;
+                _logger.LogError(ex, ex.Message);
+                await Context.Channel.SendMessageAsync(ex.ToString());
             }
-
-
-
-
-            [Command("info")]
-            public async Task TableInfoTables()
-            {
-
-
-                try
-                {
-                    var dbInfos = await GetAllDBTableInfos();
-
-                    // TODO dispose with using
-                    DrawDbSchema drawDbSchema = new DrawDbSchema(dbInfos);
-                    drawDbSchema.DrawAllTables();
-
-
-
-                    var stream = CommonHelper.GetStream(drawDbSchema.Bitmap);
-                    await Context.Channel.SendFileAsync(stream, "test.png");
-
-                    drawDbSchema.Dispose();
-                    stream.Dispose();
-
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, ex.Message);
-                    await Context.Channel.SendMessageAsync(ex.ToString());
-                }
-            }
+        }
 
 
 
 
 
-            // todo maybe move to a separate class
-            private async Task<List<DBTableInfo>> GetAllDBTableInfos()
-            {
-                List<string> tableList = new List<string>()
+        // todo maybe move to a separate class
+        private async Task<List<DBTableInfo>> GetAllDBTableInfos()
+        {
+            List<string> tableList = new List<string>()
                 {
                     "CommandTypes",
                     "CommandStatistics",
@@ -928,65 +1237,65 @@ WHERE
 
 
 #if DEBUG
-                tableList = new List<string>(); // Clear because on windows the capitalization of tables is different and currently that breaks some SQL Queries
+            tableList = new List<string>(); // Clear because on windows the capitalization of tables is different and currently that breaks some SQL Queries
 #endif
 
 
-                var queryResult = await SQLHelper.GetQueryResults(Context, $@"
+            var queryResult = await SQLHelper.GetQueryResults(Context, $@"
 SELECT table_name FROM information_schema.tables
 WHERE table_schema = '{Program.ApplicationSetting.MariaDBName ?? "ETHBot"}' 
 ORDER BY table_name DESC;", true, 50);
 
-                // Add tables incase they arent in the list above for their correct order
-                foreach (var item in queryResult.Data)
+            // Add tables incase they arent in the list above for their correct order
+            foreach (var item in queryResult.Data)
+            {
+                string tableName = item.ElementAt(0);
+
+                bool found = false;
+                foreach (var table in tableList)
                 {
-                    string tableName = item.ElementAt(0);
-
-                    bool found = false;
-                    foreach (var table in tableList)
+                    if (table.ToLower() == tableName.ToLower())
                     {
-                        if (table.ToLower() == tableName.ToLower())
-                        {
-                            found = true;
-                            break;
-                        }
+                        found = true;
+                        break;
                     }
-
-                    if (found)
-                        continue;
-
-                    tableList.Add(tableName);
                 }
 
-                //;$"PRAGMA table_info('{item}')";
-                //PRAGMA foreign_key_list('DiscordChannels');
+                if (found)
+                    continue;
 
-                string text = "";
-                string header = "";
+                tableList.Add(tableName);
+            }
 
-                List<DBTableInfo> DbTableInfos = new List<DBTableInfo>();
-                List<List<ForeignKeyInfo>> ForeignKeyInfos = new List<List<ForeignKeyInfo>>();
+            //;$"PRAGMA table_info('{item}')";
+            //PRAGMA foreign_key_list('DiscordChannels');
 
-                using (var context = new ETHBotDBContext())
+            string text = "";
+            string header = "";
+
+            List<DBTableInfo> DbTableInfos = new List<DBTableInfo>();
+            List<List<ForeignKeyInfo>> ForeignKeyInfos = new List<List<ForeignKeyInfo>>();
+
+            using (var context = new ETHBotDBContext())
+            {
+                foreach (var item in tableList)
                 {
-                    foreach (var item in tableList)
+                    using (var command = context.Database.GetDbConnection().CreateCommand())
                     {
-                        using (var command = context.Database.GetDbConnection().CreateCommand())
+                        command.CommandText = $"SHOW COLUMNS FROM {item} FROM {Program.ApplicationSetting.MariaDBName ?? "ETHBot"}";
+                        context.Database.OpenConnection();
+                        if (item == "EmojiStatistics")
                         {
-                            command.CommandText = $"SHOW COLUMNS FROM {item} FROM {Program.ApplicationSetting.MariaDBName ?? "ETHBot"}";
-                            context.Database.OpenConnection();
-                            if (item == "EmojiStatistics")
-                            {
-                                //TODO workaround until graphs drawing is done
-                                //DbTableInfos.Add(new DBTableInfo());
-                            }
-                            DbTableInfos.Add(GetTableInfo(command, item));
+                            //TODO workaround until graphs drawing is done
+                            //DbTableInfos.Add(new DBTableInfo());
                         }
+                        DbTableInfos.Add(GetTableInfo(command, item));
+                    }
 
 
-                        using (var command = context.Database.GetDbConnection().CreateCommand())
-                        {
-                            command.CommandText = $@"select
+                    using (var command = context.Database.GetDbConnection().CreateCommand())
+                    {
+                        command.CommandText = $@"select
     c.table_name,
     c.column_name,
     c.referenced_table_name,
@@ -995,12 +1304,12 @@ ORDER BY table_name DESC;", true, 50);
   join information_schema.key_column_usage c
     on c.constraint_name = fk.constraint_name
   where fk.constraint_type = 'FOREIGN KEY' AND c.TABLE_SCHEMA = '{Program.ApplicationSetting.MariaDBName ?? "ETHBot"}' AND c.table_name = '{item}'; ";
-                            context.Database.OpenConnection();
+                        context.Database.OpenConnection();
 
-                            ForeignKeyInfos.Add(GetForeignKeyInfo(command, item));
-                        }
+                        ForeignKeyInfos.Add(GetForeignKeyInfo(command, item));
                     }
                 }
+            }
 
 
 
@@ -1008,54 +1317,54 @@ ORDER BY table_name DESC;", true, 50);
 
 
 
-                foreach (var item in DbTableInfos)
+            foreach (var item in DbTableInfos)
+            {
+                text += "**" + item.TableName + "**" + Environment.NewLine;
+
+                if (item.FieldInfos == null)
+                    item.FieldInfos = new List<DBFieldInfo>();
+
+                foreach (var item2 in item.FieldInfos)
                 {
-                    text += "**" + item.TableName + "**" + Environment.NewLine;
 
-                    if (item.FieldInfos == null)
-                        item.FieldInfos = new List<DBFieldInfo>();
-
-                    foreach (var item2 in item.FieldInfos)
+                    // TODO cleanup
+                    foreach (var ForeignKeyInfo in ForeignKeyInfos)
                     {
-
-                        // TODO cleanup
-                        foreach (var ForeignKeyInfo in ForeignKeyInfos)
+                        foreach (var fk in ForeignKeyInfo)
                         {
-                            foreach (var fk in ForeignKeyInfo)
+                            if (item2.Name == fk.FromTableFieldName && item.TableName.ToLower() == fk.FromTable.ToLower())
                             {
-                                if (item2.Name == fk.FromTableFieldName && item.TableName.ToLower() == fk.FromTable.ToLower())
-                                {
-                                    item2.IsForeignKey = true;
-                                    item2.ForeignKeyInfo = fk;
-                                }
+                                item2.IsForeignKey = true;
+                                item2.ForeignKeyInfo = fk;
                             }
                         }
-
-                        string isPkFk = "";
-
-                        if (item2.IsPrimaryKey)
-                            isPkFk = "PK";
-                        else if (item2.IsForeignKey)
-                            isPkFk = $"FK to {item2.ForeignKeyInfo.ToTable}";
-
-
-
-                        text += $"    {item2.Name} ({item2.Type}) {isPkFk} {(item2.Nullable ? "NULLABLE" : "NOT NULLABLE")}" + Environment.NewLine;
                     }
 
-                    text += Environment.NewLine;
+                    string isPkFk = "";
 
-                    if (text.Length > 1500)
-                    {
-                        //Context.Channel.SendMessageAsync(text, false);
-                        text = "";
-                    }
+                    if (item2.IsPrimaryKey)
+                        isPkFk = "PK";
+                    else if (item2.IsForeignKey)
+                        isPkFk = $"FK to {item2.ForeignKeyInfo.ToTable}";
 
+
+
+                    text += $"    {item2.Name} ({item2.Type}) {isPkFk} {(item2.Nullable ? "NULLABLE" : "NOT NULLABLE")}" + Environment.NewLine;
                 }
-                return DbTableInfos;
+
+                text += Environment.NewLine;
+
+                if (text.Length > 1500)
+                {
+                    //Context.Channel.SendMessageAsync(text, false);
+                    text = "";
+                }
 
             }
+            return DbTableInfos;
+
         }
+        //}
 
 
         // TODO DUPLICATE REMOVE
@@ -1117,10 +1426,10 @@ ORDER BY table_name DESC;", true, 50);
 
             // Allow the query to be send in a code block
             commandSql = commandSql.Trim('`');
-            
-            if(commandSql.StartsWith("sql"))
+
+            if (commandSql.StartsWith("sql"))
                 commandSql = commandSql.Substring(3);
-                
+
             if (ForbiddenQuery(commandSql, userId))
                 return;
 
@@ -1174,8 +1483,8 @@ ORDER BY table_name DESC;", true, 50);
 
             // Allow the query to be send in a code block
             commandSql = commandSql.Trim('`');
-            
-            if(commandSql.StartsWith("sql"))
+
+            if (commandSql.StartsWith("sql"))
                 commandSql = commandSql.Substring(3);
 
             if (ForbiddenQuery(commandSql, Context.Message.Author.Id))
