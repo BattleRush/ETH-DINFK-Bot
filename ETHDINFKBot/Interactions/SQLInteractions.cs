@@ -513,6 +513,8 @@ namespace ETHDINFKBot.Interactions
         [ComponentInteraction("sql-edit-cmd-*")]
         public async Task EditSQLCommand(int savedQueryId)
         {
+            await Context.Channel.SendMessageAsync("Called with " + savedQueryId);
+
             var savedQuery = SQLDBManager.Instance().GetSavedQueryById(savedQueryId);
 
             var user = Context.Interaction.User;

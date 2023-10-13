@@ -49,7 +49,7 @@ namespace ETHDINFKBot.Modules
                 builder.WithCurrentTimestamp();
                 builder.AddField($"{Program.CurrentPrefix}sql dmdb help", "This message :)");
                 builder.AddField($"{Program.CurrentPrefix}sql dmdb restore", "Restore the Database (Any Admin/Mod can do this)");
-                builder.AddField($"{Program.CurrentPrefix}sql dmdb info <database>", "Get the Table Graph. Available DBs: employee, zvv and tpch");
+                builder.AddField($"{Program.CurrentPrefix}sql dmdb schema <database>", "Get the Table Graph. Available DBs: employee, zvv and tpch");
                 builder.AddField($"{Program.CurrentPrefix}sql dmdb query <database> <query>", "Run the query on a specified Database (employee, zvv or tpch), restult will be in text form");
                 builder.AddField($"{Program.CurrentPrefix}sql dmdb queryd <database> <query>", "Run the query on a specified Database (employee, zvv or tpch), but returns the result as an Image ");
 
@@ -314,7 +314,7 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
             }
 
 
-            [Command("info")]
+            [Command("schema")]
             public async Task TableInfoTables(string database)
             {
                 try
@@ -717,7 +717,7 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
         // todo execute with queryd capability
 
         [Command("execute")]
-        public async Task RunSQLCommand(string commandName, [Remainder] string parameters)
+        public async Task RunSQLCommand(string commandName, [Remainder] string parameters = "")
         {
             try
             {
@@ -1163,8 +1163,7 @@ WHERE
 
 
 
-        [Command("info")]
-        [Alias("about")]
+        [Command("schema")]
         public async Task TableInfoTables()
         {
 
