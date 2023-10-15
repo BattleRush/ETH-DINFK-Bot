@@ -289,12 +289,15 @@ namespace ETHDINFKBot.Interactions
 
             var user = Context.Interaction.User;
 
+
             if (savedQuery.DiscordUserId != user.Id)
             {
                 await Context.Interaction.RespondAsync("You are not allowed to execute someone elses command.");
                 return;
             }
 
+            await Context.Interaction.DeferAsync();
+            
             var savedQueryParameters = SQLDBManager.Instance().GetQueryParameters(savedQuery);
 
             if (savedQueryParameters.Count == 0)
@@ -307,7 +310,7 @@ namespace ETHDINFKBot.Interactions
 
                     string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
 
-                    await Context.Interaction.RespondAsync(resultString + additionalString);
+                    await Context.Channel.SendMessageAsync(resultString + additionalString);
                 }
                 catch (Exception e)
                 {
