@@ -27,9 +27,7 @@ namespace ETHDINFKBot.Interactions
         [ComponentInteraction("food-fav-main")]
         public async Task FoodMain()
         {
-
             var message = Context.Interaction as SocketMessageComponent;
-            var original = Context.Interaction.GetOriginalResponseAsync().Result;
             var user = Context.Interaction.User;
 
             // TODO Find better solution for this
@@ -121,19 +119,17 @@ namespace ETHDINFKBot.Interactions
                 }*/
 
                 await message.Message.ModifyAsync(i =>
-            {
-                //i.Attachments = attachments;
-                //i.Embed = builder.Build();
-                //i.Content = emoteResult.textBlock;
-                i.Components = builderComponent.Build();
-            });
+                {
+                    //i.Attachments = attachments;
+                    //i.Embed = builder.Build();
+                    //i.Content = emoteResult.textBlock;
+                    i.Components = builderComponent.Build();
+                });
             }
             catch (Exception ex)
             {
                 await Context.Channel.SendMessageAsync(ex.ToString());
             }
-
-
         }
 
 
@@ -225,7 +221,7 @@ namespace ETHDINFKBot.Interactions
             if (int.TryParse(favChange, out int restaurantId))
             {
                 await Context.Interaction.DeferAsync();
-                
+
                 // Restaurant fav change
                 var returnedFavRestaurant = FoodDBManager.GetUsersFavouriteRestaurant(user.Id, restaurantId);
                 if (returnedFavRestaurant != null)
@@ -270,7 +266,7 @@ namespace ETHDINFKBot.Interactions
                 }
 
                 // allow only one of the two
-                if(userMenuSetting.VeganPreference && userMenuSetting.VegetarianPreference)
+                if (userMenuSetting.VeganPreference && userMenuSetting.VegetarianPreference)
                 {
                     userMenuSetting.VegetarianPreference = false;
 
