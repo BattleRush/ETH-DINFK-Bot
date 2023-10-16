@@ -29,10 +29,11 @@ namespace ETHDINFKBot.Interactions
         {
 
             var message = Context.Interaction as SocketMessageComponent;
+            var original = Context.Interaction.GetOriginalResponseAsync().Result;
             var user = Context.Interaction.User;
 
             // TODO Find better solution for this
-            if (message.Message.Embeds.First().Author.Value.Name != $"{user.Username}#{user.Discriminator}")
+            if (message.Message.Embeds.First().Author.Value.Name != $"{user.Username}")
             {
                 await Context.Interaction.RespondAsync($"This isnt your setting. Call it with **{Program.CurrentPrefix}food fav** to change your settings", ephemeral: true);
                 return;
@@ -143,7 +144,7 @@ namespace ETHDINFKBot.Interactions
             var user = Context.Interaction.User;
 
             // TODO Find better solution for this
-            if (message.Message.Embeds.First().Author.Value.Name != $"{user.Username}#{user.Discriminator}")
+            if (message.Message.Embeds.First().Author.Value.Name != $"{user.Username}")
             {
                 await Context.Interaction.RespondAsync($"This isnt your setting. Call it with **{Program.CurrentPrefix}food fav** to change your settings", ephemeral: true);
                 return;
@@ -212,7 +213,7 @@ namespace ETHDINFKBot.Interactions
             var user = Context.Interaction.User;
 
             // TODO Find better solution for this
-            if (message.Message.Embeds.First().Author.Value.Name != $"{user.Username}#{user.Discriminator}")
+            if (message.Message.Embeds.First().Author.Value.Name != $"{user.Username}")
             {
                 await Context.Interaction.RespondAsync($"This isnt your setting. Call it with **{Program.CurrentPrefix}food fav** to change your settings", ephemeral: true);
                 return;
