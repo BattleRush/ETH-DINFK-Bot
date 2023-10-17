@@ -214,8 +214,12 @@ namespace ETHDINFKBot.Handlers
                     var upvoteCount = Message.Reactions.Where(i => i.Key is Emote emote && emote.Id == DiscordEmotes["this"]).FirstOrDefault();
                     var downvoteCount = Message.Reactions.Where(i => i.Key is Emote emote && emote.Id == DiscordEmotes["that"]).FirstOrDefault();
 
-
-                    if (upvoteCount.Value.ReactionCount > 15 && upvoteCount.Value.ReactionCount > downvoteCount.Value.ReactionCount)
+                    // Reaction count over 15
+                    // Only if opvote count is higher than downvotes
+                    // Only if message is not older than 14 days
+                    if (upvoteCount.Value.ReactionCount > 15 
+                        && upvoteCount.Value.ReactionCount > downvoteCount.Value.ReactionCount
+                        && Message.CreatedAt > DateTime.UtcNow.AddDays(-14))
                     {
                         // TODO not fixed ids
                         var adminSuggestionChannel = SocketGuild.GetTextChannel(DiscordChannels["pullrequest"]);
