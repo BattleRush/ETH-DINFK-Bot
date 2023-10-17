@@ -208,7 +208,11 @@ namespace ETHDINFKBot.Modules
 
                     var allergyIds = FoodDBManager.GetMenuAllergyIds(menu);
 
-                    int allergyIconOffset = 0;
+                    int row = 0;
+                    int column = 0;
+                    int maxColumns = 6;
+                    
+
                     foreach (var allergyId in allergyIds)
                     {
                         var allergyBitmap = SKBitmap.Decode(Path.Combine(pathToAllergyImages, $"{allergyId:D2}.png"));
@@ -218,12 +222,24 @@ namespace ETHDINFKBot.Modules
                         }
 
                         allergyBitmap = allergyBitmap.Resize(new SKSizeI(32, 32), SKFilterQuality.High);
-                        canvas.DrawBitmap(allergyBitmap, new SKPoint(left + allergyIconOffset * 36, usedHeight));
-                        allergyIconOffset++;
+                        canvas.DrawBitmap(allergyBitmap, new SKPoint(left + column * 36, usedHeight));
+
+                        column++;
+
+                        if(column >= maxColumns)
+                        {
+                            row++;
+                            column = 0;
+                            usedHeight += 36;
+                        }
                     }
 
-                    if (allergyIconOffset > 0)
-                        usedHeight += 40;
+                    // we have some left over icons
+                    if (column > 0)
+                        usedHeight += 36;
+
+                    // padding from allergies icons
+                    usedHeight += 5;
                 }
             }
 

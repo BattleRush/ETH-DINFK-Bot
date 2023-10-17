@@ -126,7 +126,7 @@ namespace ETHDINFKBot.Drawing
 
             bool lightRow = rowId % 2 == 0;
 
-            Console.WriteLine($"Row: {rowId} Light: {lightRow} Left: {padding} Top: {currentHeight - 13} Right: {currentWidthStart} Bottom: {highestSize - 13}");
+            //Console.WriteLine($"Row: {rowId} Light: {lightRow} Left: {padding} Top: {currentHeight - 13} Right: {currentWidthStart} Bottom: {highestSize - 13}");
 
             if (lightRow)
             {

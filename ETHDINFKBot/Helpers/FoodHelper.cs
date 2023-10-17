@@ -128,6 +128,7 @@ namespace ETHDINFKBot.Helpers
 
         public void HandleSVRestaurantMenu(Restaurant restaurant)
         {
+            throw new NotImplementedException();
             var allMenus = FoodDBManager.GetMenusByDay(
                             DateTime.Now,
                             restaurant.RestaurantId
@@ -316,6 +317,11 @@ namespace ETHDINFKBot.Helpers
 
                                 var dbMenu = FoodDBManager.CreateMenu(menu);
 
+                                if(dbMenu.MenuId == 1488)
+                                {
+                                    int i = 0;
+                                }
+
                                 if (meal.allergenarray != null)
                                 {
 
@@ -334,7 +340,7 @@ namespace ETHDINFKBot.Helpers
 
                                             //Console.WriteLine($"Found allergy {allergyId} for menuId {dbMenu.MenuId}");
 
-                                            if (menu.MenuId == 0)
+                                            if (dbMenu.MenuId == 0)
                                                 continue;
 
                                             FoodDBManager.CreateMenuAllergy(dbMenu.MenuId, allergyId);
@@ -441,7 +447,8 @@ namespace ETHDINFKBot.Helpers
                                 HandleETHRestaurantMenu(restaurant, ethMenus);
                                 break;
                             case FoodScraperType.SV_Restaurant:
-                                HandleSVRestaurantMenu(restaurant);
+                                //HandleSVRestaurantMenu(restaurant);
+                                // to phase out
                                 break;
                             default:
                                 break;
@@ -1011,7 +1018,6 @@ namespace ETHDINFKBot.Helpers
                 var result = JsonConvert.DeserializeObject<Food2050WeeklyResponse>(json);
                 var categories = result?.pageProps?.query?.location?.kitchen?.digitalMenu?.categories ?? new List<Category>();
 
-                List<int> allergyIds = new List<int>();
 
                 foreach (var category in categories)
                 {
@@ -1117,6 +1123,8 @@ namespace ETHDINFKBot.Helpers
                                         ?.DirectMenuImageUrl;
                                 }
                             }
+
+                            List<int> allergyIds = new List<int>();
 
                             //Console.WriteLine("Found allergens: " + recipe.recipe.allergens);
                             foreach (var allergy in recipe.recipe.allergens.Split(','))
