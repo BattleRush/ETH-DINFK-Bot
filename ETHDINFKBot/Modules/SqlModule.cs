@@ -837,9 +837,20 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
             await SQLDBManager.Instance().DeleteSavedQuery(command.SavedQueryId, userId);
         }
 
+        private static DateTimeOffset LastSizeCall = DateTimeOffset.MinValue;
+
         [Command("size")]
         public async Task TableSize()
         {
+            // allow call only once every 1min
+            if (LastSizeCall.AddMinutes(1) > DateTimeOffset.Now)
+            {
+                await Context.Channel.SendMessageAsync("You can only call this command once every minute");
+                return;
+            }
+
+            LastSizeCall = DateTimeOffset.Now;
+
             string prefix = Program.CurrentPrefix;
 
             try
