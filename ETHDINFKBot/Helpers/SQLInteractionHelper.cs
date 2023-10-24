@@ -73,7 +73,7 @@ namespace ETHDINFKBot.Helpers
             // delete (only if the user is the same as the creator), change datatype, change default value
             var embedBuilder = new EmbedBuilder()
             {
-                Title = savedQuery.CommandName,
+                Title = $"savedQuery.CommandName ({savedQuery.SavedQueryId})",
                 Description = $"```sql{Environment.NewLine}{savedQuery.Content}{Environment.NewLine}```",
                 Color = Color.Blue
             };
@@ -83,7 +83,7 @@ namespace ETHDINFKBot.Helpers
             embedBuilder.AddField("Description", savedQuery.Description ?? "No description provided.");
 
             foreach (var parameter in queryParameters)
-                embedBuilder.AddField(parameter.ParameterName, $"Type: {parameter.ParameterType}{Environment.NewLine}Default value: {parameter.DefaultValue}");
+                embedBuilder.AddField(parameter.ParameterName, $"ID: {parameter.SavedQueryParameterId}{Environment.NewLine}Type: {parameter.ParameterType}{Environment.NewLine}Default value: {parameter.DefaultValue}");
 
             var messageBuilder = new ComponentBuilder();
 

@@ -860,29 +860,48 @@ namespace ETHDINFKBot.Interactions
         [ComponentInteraction("sql-change-datatype-cmd-*")]
         public async Task ChangeSQLCommandParameterDatatype(int savedQueryId)
         {
-            var savedQuery = SQLDBManager.Instance().GetSavedQueryById(savedQueryId);
-
-            var user = Context.Interaction.User;
-
-            if (savedQuery.DiscordUserId != user.Id)
+            try
             {
-                await Context.Interaction.RespondAsync("You are not allowed to edit someone elses command.");
-                return;
-            }
+                var savedQuery = SQLDBManager.Instance().GetSavedQueryById(savedQueryId);
 
-            var messageBuilder = SQLInteractionHelper.GetSavedSQLCommandParameters(savedQueryId);
+                var user = Context.Interaction.User;
 
-            EmbedBuilder embedBuilder = new EmbedBuilder();
-            embedBuilder.WithTitle($"Command: {savedQuery.CommandName}");
-            embedBuilder.WithDescription(@"Change datatype for each parameter.
+                if (savedQuery.DiscordUserId != user.Id)
+                {
+                    await Context.Interaction.RespondAsync("You are not allowed to edit someone elses command.");
+                    return;
+                }
+
+                var messageBuilder = SQLInteractionHelper.GetSavedSQLCommandParameters(savedQueryId);
+
+                EmbedBuilder embedBuilder = new EmbedBuilder();
+                embedBuilder.WithTitle($"Command: {savedQuery.CommandName}");
+                embedBuilder.WithDescription(@"Change datatype for each parameter.
             Red: int
             Green: string
             Blue: datetime");
 
-            embedBuilder.WithColor(255, 0, 0);
-            embedBuilder.WithAuthor(Context.Interaction.User);
+                embedBuilder.WithColor(255, 0, 0);
+                embedBuilder.WithAuthor(Context.Interaction.User);
 
-            await Context.Interaction.RespondAsync(embeds: new Embed[] { embedBuilder.Build() }, components: messageBuilder.Build());
+                await Context.Interaction.RespondAsync(embeds: new Embed[] { embedBuilder.Build() }, components: messageBuilder.Build());
+            }
+            catch (Exception e)
+            {
+                await Context.Interaction.RespondAsync(e.Message);
+                string fullError = e.ToString();
+
+                // upload error as text file
+                await Context.Interaction.Channel.SendFileAsync(new System.IO.MemoryStream(Encoding.UTF8.GetBytes(fullError)), "error.txt");
+
+                if (e is HttpException httpException)
+                {
+                    foreach (var item in httpException.Errors)
+                    {
+                        await Context.Interaction.Channel.SendMessageAsync("Path: " + item.Path);
+                    }
+                }
+            }
         }
 
         [ComponentInteraction("sql-change-defaultvalue-cmd-*")]
