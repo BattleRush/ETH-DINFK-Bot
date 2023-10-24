@@ -42,8 +42,11 @@ namespace ETHDINFKBot.Helpers
                     case "int":
                         style = ButtonStyle.Danger;
                         break;
-                    case "datatime":
+                    case "datetime":
                         style = ButtonStyle.Secondary;
+                        break;
+                    case "bool":
+                        style = ButtonStyle.Primary;
                         break;
                 }
                 row = count / 5;
@@ -185,6 +188,18 @@ namespace ETHDINFKBot.Helpers
         public static MySqlParameter GetStringParameter(string name, string value)
         {
             return new MySqlParameter(name, value);
+        }
+
+        public static MySqlParameter GetBoolParameter(string name, string value)
+        {
+            if (bool.TryParse(value, out bool boolValue))
+            {
+                return new MySqlParameter(name, boolValue);
+            }
+            else
+            {
+                throw new Exception("Could not parse bool for field " + name + " with value " + value + ". Please use true or false");
+            }
         }
     }
 }

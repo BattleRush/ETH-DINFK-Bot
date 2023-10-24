@@ -238,6 +238,9 @@ namespace ETHDINFKBot.Interactions
                     newType = "datetime";
                     break;
                 case "datetime":
+                    newType = "bool";
+                    break;
+                case "bool":
                     newType = "int";
                     break;
             }
@@ -508,6 +511,9 @@ namespace ETHDINFKBot.Interactions
                     case "datetime":
                         queryParameters.Add(SQLInteractionHelper.GetDateTimeParameter(parameter.ParameterName, value));
                         break;
+                    case "bool":
+                        queryParameters.Add(SQLInteractionHelper.GetBoolParameter(parameter.ParameterName, value));
+                        break;
                 }
             }
 
@@ -579,6 +585,9 @@ namespace ETHDINFKBot.Interactions
                         break;
                     case "datetime":
                         queryParameters.Add(SQLInteractionHelper.GetDateTimeParameter(parameter.ParameterName, value));
+                        break;
+                    case "bool":
+                        queryParameters.Add(SQLInteractionHelper.GetBoolParameter(parameter.ParameterName, value));
                         break;
                 }
             }
@@ -879,7 +888,8 @@ namespace ETHDINFKBot.Interactions
                 embedBuilder.WithDescription(@"Change datatype for each parameter.
             Red: int
             Green: string
-            Blue: datetime");
+            Gray: datetime
+            Blue: bool");
 
                 embedBuilder.WithColor(255, 0, 0);
                 embedBuilder.WithAuthor(Context.Interaction.User);
