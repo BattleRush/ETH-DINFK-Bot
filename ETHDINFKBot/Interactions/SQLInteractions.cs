@@ -857,7 +857,7 @@ namespace ETHDINFKBot.Interactions
             await Context.Interaction.RespondAsync("", embed: embedBuilder.Build());
         }
 
-        [ComponentInteraction("sql-change-datatype-cmd-*")]
+        [ComponentInteraction("sql-change-dt-cmd-*")]
         public async Task ChangeSQLCommandParameterDatatype(int savedQueryId)
         {
             try
