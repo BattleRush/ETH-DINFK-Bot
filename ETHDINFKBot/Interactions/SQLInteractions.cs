@@ -297,12 +297,11 @@ namespace ETHDINFKBot.Interactions
                 return;
             }
 
-            await Context.Interaction.DeferAsync();
-
             var savedQueryParameters = SQLDBManager.Instance().GetQueryParameters(savedQuery);
 
             if (savedQueryParameters.Count == 0)
             {
+                await Context.Interaction.DeferAsync();
                 // we can run the command directly
                 try
                 {
@@ -350,6 +349,7 @@ namespace ETHDINFKBot.Interactions
                 }
                 else
                 {
+                    await Context.Interaction.DeferAsync();
                     // modals only support 5 fields we need to provide a template for the user to run
 
                     EmbedBuilder embedBuilder = SQLInteractionHelper.GetCommandTemplate(savedQuery.SavedQueryId);
@@ -373,12 +373,11 @@ namespace ETHDINFKBot.Interactions
                 return;
             }
 
-            await Context.Interaction.DeferAsync();
-
             var savedQueryParameters = SQLDBManager.Instance().GetQueryParameters(savedQuery);
 
             if (savedQueryParameters.Count == 0)
             {
+                await Context.Interaction.DeferAsync();
                 // we can run the command directly
                 try
                 {
@@ -429,6 +428,7 @@ namespace ETHDINFKBot.Interactions
                 }
                 else
                 {
+                    await Context.Interaction.DeferAsync();
                     // modals only support 5 fields we need to provide a template for the user to run
 
                     EmbedBuilder embedBuilder = SQLInteractionHelper.GetCommandTemplate(savedQuery.SavedQueryId);
