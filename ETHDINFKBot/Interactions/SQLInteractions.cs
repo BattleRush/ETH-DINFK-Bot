@@ -885,7 +885,7 @@ namespace ETHDINFKBot.Interactions
 
                 EmbedBuilder embedBuilder = new EmbedBuilder();
                 embedBuilder.WithTitle($"Command: {savedQuery.CommandName}");
-                embedBuilder.WithDescription(@"Change datatype for each parameter.
+                embedBuilder.WithDescription(@"Change datatype for each parameter, first row is for datatype. Second row for default value.
             Red: int
             Green: string
             Gray: datetime
