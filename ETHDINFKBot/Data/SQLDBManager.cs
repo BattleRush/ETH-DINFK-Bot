@@ -253,5 +253,28 @@ namespace ETHDINFKBot.Data
             }
         }
 
+        public bool DeleteSavedQueryParameter(int savedQueryId)
+        {
+            using (var db = new ETHBotDBContext())
+            {
+                try
+                {
+                    var savedQueryParameter = db.SavedQueryParameters.FirstOrDefault(x => x.SavedQueryParameterId == savedQueryId);
+                    if (savedQueryParameter == null)
+                        return false;
+
+                    db.SavedQueryParameters.Remove(savedQueryParameter);
+                    db.SaveChanges();
+
+                    return true;
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, "Error deleting saved query parameter");
+                    return false;
+                }
+            }
+        }
+
     }
 }

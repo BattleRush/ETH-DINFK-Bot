@@ -722,6 +722,7 @@ namespace ETHDINFKBot.Interactions
         public async Task EditSQLCommand(int savedQueryId, CreateSQLCommandModal modal)
         {
             var savedQuery = SQLDBManager.Instance().GetSavedQueryById(savedQueryId);
+            var sqlDBManager = SQLDBManager.Instance();
 
             var user = Context.Interaction.User;
 
@@ -736,10 +737,71 @@ namespace ETHDINFKBot.Interactions
             savedQuery.Description = modal.Description;
             savedQuery.Content = modal.SQLQuery;
 
-            await SQLDBManager.Instance().UpdateSQLCommand(savedQuery, user.Id);
 
-            await Context.Interaction.RespondAsync("Updated command name to " + savedQuery.CommandName);
+            // TODO Duplicate code from create command
+            // regex find all sql parameters in the query
+            var regexSQLVariables = new System.Text.RegularExpressions.Regex(@"@([a-zA-Z_][\w]*)");
 
+            var parameters = regexSQLVariables.Matches(modal.SQLQuery).Select(x => x.Groups[0].Value).ToList();
+
+            // if any variable is longer than 40 chars we need to abort
+            foreach (var parameter in parameters)
+            {
+                if (parameter.Length > 40)
+                {
+                    EmbedBuilder embedBuilderParam = new EmbedBuilder()
+                    {
+                        Title = "Error",
+                        Description = "Parameter " + parameter + " is longer than 40 characters. Please shorten it."
+                    };
+
+                    await Context.Interaction.RespondAsync("", embed: embedBuilderParam.Build());
+                    return;
+                }
+            }
+
+            foreach (var parameter in parameters)
+            {
+                // create parameter
+                await sqlDBManager.CreateSavedQueryParameter(savedQuery.SavedQueryId, new SavedQueryParameter()
+                {
+                    SavedQueryId = savedQuery.SavedQueryId,
+                    ParameterName = parameter,
+                    ParameterType = "string",
+                    DefaultValue = ""
+                });
+            }
+
+            // find parameters that may need to be deleted because no longer used
+            var savedQueryParameters = sqlDBManager.GetQueryParameters(savedQuery);
+
+            List<string> deletedParameters = new List<string>();
+
+            foreach (var savedQueryParameter in savedQueryParameters)
+            {
+                if (!parameters.Contains(savedQueryParameter.ParameterName))
+                {
+                    // delete parameter
+                    sqlDBManager.DeleteSavedQueryParameter(savedQueryParameter.SavedQueryParameterId);
+                    deletedParameters.Add(savedQueryParameter.ParameterName);
+                }
+            }
+
+
+            await sqlDBManager.UpdateSQLCommand(savedQuery, user.Id);
+
+            EmbedBuilder embedBuilder = new EmbedBuilder()
+            {
+                Title = "Updated command " + savedQuery.CommandName,
+                Description = "Updated command " + savedQuery.CommandName
+            };
+
+            foreach (var deletedParameter in deletedParameters)
+            {
+                embedBuilder.AddField("Deleted parameter", deletedParameter);
+            }
+
+            await Context.Interaction.RespondAsync("", embed: embedBuilder.Build());
 
             //SQLDBManager.Instance().UpdateSQLCommand(savedQuery, user.Id);
 
