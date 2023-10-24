@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace ETHDINFKBot.Drawing
@@ -59,6 +60,8 @@ namespace ETHDINFKBot.Drawing
 
             var words = text.Split(new[] { " " }, StringSplitOptions.None);
 
+            //var aggressiveCharSplits = new char[] { '-', '/', '\\', '(', ')', '[', ']', '{', '}', '<', '>', ':', ';', ',', '.', '!', '?', ' ', '\t' };
+
             var line = new StringBuilder();
             float width = 0;
             foreach (var word in words)
@@ -67,11 +70,50 @@ namespace ETHDINFKBot.Drawing
                 var wordWithSpaceWidth = wordWidth + spaceWidth;
                 var wordWithSpace = word + " ";
 
+                // if the current width + next word would overflow then add the current line and start a new one
                 if (width + wordWidth > maxWidth)
                 {
-                    result.Add(line.ToString());
-                    line = new StringBuilder(wordWithSpace);
-                    width = wordWithSpaceWidth;
+                    if (width > 0)
+                    {
+                        result.Add(line.ToString());
+                        width = 0;
+                    }
+
+                    if (wordWidth > maxWidth)
+                    {
+                        // word is too big for the line itself so do more aggressive splitting
+                        var wordParts = Regex.Split(word, @"(?<=[-/\\()\[\]{}<>:;,\.!\? \t])");
+
+                        var wordPartSB = new StringBuilder();
+
+                        // TODO outsource to method as the code is a duplicate of the code encapsulated in the foreach loop
+                        foreach (var wordPart in wordParts)
+                        {
+                            var wordPartWidth = paint.MeasureText(wordPart);
+
+                            if (width + wordPartWidth > maxWidth)
+                            {
+                                result.Add(wordPartSB.ToString());
+                                wordPartSB.Clear();
+                                width = 0;
+                            }
+
+                            wordPartSB.Append(wordPart);
+                            width += wordPartWidth;
+                        }
+
+                        if (wordPartSB.Length > 0)
+                        {
+                            // TODO check if space is needed
+                            line.Append(wordPartSB.ToString() + " ");
+                        }
+                    }
+                    else
+                    {
+                        // new line and the word is not too long
+                        line = new StringBuilder(wordWithSpace);
+                        width = wordWithSpaceWidth;
+                    }
                 }
                 else
                 {
