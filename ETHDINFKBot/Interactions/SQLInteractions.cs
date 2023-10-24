@@ -358,7 +358,7 @@ namespace ETHDINFKBot.Interactions
             }
         }
 
-        [ComponentInteraction("sql-executedraw-command-*")]
+        [ComponentInteraction("sql-executedraw-cmd-*")]
         public async Task ExecuteDrawCommand(int savedQueryId)
         {
             //await Context.Interaction.DeferAsync();
