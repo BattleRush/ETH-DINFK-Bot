@@ -460,6 +460,8 @@ namespace ETHDINFKBot.Interactions
         {
             var savedQueryObject = SQLDBManager.Instance().GetSavedQueryById(savedQuery);
 
+            await Context.Interaction.DeferAsync();
+
             var user = Context.Interaction.User;
 
             if (savedQueryObject.DiscordUserId != user.Id)
@@ -516,11 +518,11 @@ namespace ETHDINFKBot.Interactions
 
                 string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
 
-                await Context.Interaction.RespondAsync(resultString + additionalString);
+                await Context.Interaction.Channel.SendMessageAsync(resultString + additionalString);
             }
             catch (Exception e)
             {
-                await Context.Channel.SendMessageAsync(e.Message);
+                await Context.Interaction.Channel.SendMessageAsync(e.Message);
             }
         }
 
@@ -590,12 +592,12 @@ namespace ETHDINFKBot.Interactions
                 if (stream == null)
                     return;// todo some message
 
-                await Context.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null);
+                await Context.Interaction.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null);
                 stream.Dispose();
             }
             catch (Exception e)
             {
-                await Context.Channel.SendMessageAsync(e.Message);
+                await Context.Interaction.Channel.SendMessageAsync(e.Message);
             }
         }
 
