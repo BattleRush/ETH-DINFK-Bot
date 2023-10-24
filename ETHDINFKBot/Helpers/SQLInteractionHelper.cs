@@ -87,17 +87,17 @@ namespace ETHDINFKBot.Helpers
 
             var messageBuilder = new ComponentBuilder();
 
-            messageBuilder.WithButton("Execute command", $"sql-execute-command-{savedQuery.SavedQueryId}", ButtonStyle.Success);
-            messageBuilder.WithButton("Create template", $"sql-template-command-{savedQuery.SavedQueryId}", ButtonStyle.Secondary);
+            messageBuilder.WithButton("Execute command", $"sql-execute-command-{savedQuery.SavedQueryId}", ButtonStyle.Success, row: 1);
+            messageBuilder.WithButton("Execute command (Draw)", $"sql-executedraw-cmd-{savedQuery.SavedQueryId}", ButtonStyle.Success, row: 1);
+            messageBuilder.WithButton("Create template", $"sql-template-command-{savedQuery.SavedQueryId}", ButtonStyle.Secondary, row: 1);
+            messageBuilder.WithButton("Change parameter datatype/default value", $"sql-change-datatype-cmd-{savedQuery.SavedQueryId}", ButtonStyle.Secondary, row: 1);
+            //messageBuilder.WithButton("Change parameter default value", $"sql-change-defaultvalue-cmd-{savedQuery.SavedQueryId}", ButtonStyle.Secondary);
 
             if (sameUser)
             {
-                messageBuilder.WithButton("Edit", $"sql-edit-cmd-{savedQuery.SavedQueryId}", ButtonStyle.Primary);
-                messageBuilder.WithButton("Delete", $"sql-delete-cmd-{savedQuery.SavedQueryId}", ButtonStyle.Danger);
+                messageBuilder.WithButton("Edit", $"sql-edit-cmd-{savedQuery.SavedQueryId}", ButtonStyle.Primary, row: 2);
+                messageBuilder.WithButton("Delete", $"sql-delete-cmd-{savedQuery.SavedQueryId}", ButtonStyle.Danger, row: 2);
             }
-
-            messageBuilder.WithButton("Change parameter datatype/default value", $"sql-change-datatype-cmd-{savedQuery.SavedQueryId}", ButtonStyle.Secondary);
-            //messageBuilder.WithButton("Change parameter default value", $"sql-change-defaultvalue-cmd-{savedQuery.SavedQueryId}", ButtonStyle.Secondary);
 
             //await Context.Interaction.RespondAsync("", embed: embedBuilder.Build(), components: messageBuilder.Build());
 
@@ -131,6 +131,8 @@ namespace ETHDINFKBot.Helpers
             }
 
             text += "```";
+
+            text += $"{Environment.NewLine}For image response use executedraw instead of execute.";
 
             EmbedBuilder embedBuilder = new EmbedBuilder();
             embedBuilder.WithTitle("SQL Command Template");

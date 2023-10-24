@@ -8,6 +8,7 @@ using ETHBot.DataLayer.Data.Discord;
 using ETHBot.DataLayer.Data.Enums;
 using ETHBot.DataLayer.Data.ETH.Food;
 using ETHDINFKBot.Data;
+using ETHDINFKBot.Drawing;
 using ETHDINFKBot.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -297,7 +298,7 @@ namespace ETHDINFKBot.Interactions
             }
 
             await Context.Interaction.DeferAsync();
-            
+
             var savedQueryParameters = SQLDBManager.Instance().GetQueryParameters(savedQuery);
 
             if (savedQueryParameters.Count == 0)
@@ -331,6 +332,85 @@ namespace ETHDINFKBot.Interactions
                     {
                         Title = "Execute SQL Command",
                         CustomId = "sql-execute-command-modal-" + savedQuery.SavedQueryId
+                    };
+
+                    int count = 1;
+                    foreach (var parameter in savedQueryParameters)
+                    {
+                        builder.AddTextInput($"{parameter.ParameterName} ({parameter.ParameterType})",
+                                     customId: "parameter" + count, placeholder: parameter.ParameterName,
+                                     value: parameter.DefaultValue, required: false);
+
+                        count++;
+                    }
+
+                    var modal = builder.Build();
+
+                    await Context.Interaction.RespondWithModalAsync(modal);
+                }
+                else
+                {
+                    // modals only support 5 fields we need to provide a template for the user to run
+
+                    EmbedBuilder embedBuilder = SQLInteractionHelper.GetCommandTemplate(savedQuery.SavedQueryId);
+                    await Context.Channel.SendMessageAsync("Modals support only 5 parameters. Execute query with template command", false, embedBuilder.Build());
+                }
+            }
+        }
+
+        [ComponentInteraction("sql-executedraw-command-*")]
+        public async Task ExecuteDrawCommand(int savedQueryId)
+        {
+            //await Context.Interaction.DeferAsync();
+            var savedQuery = SQLDBManager.Instance().GetSavedQueryById(savedQueryId);
+
+            var user = Context.Interaction.User;
+
+
+            if (savedQuery.DiscordUserId != user.Id)
+            {
+                await Context.Interaction.RespondAsync("You are not allowed to execute someone elses command.");
+                return;
+            }
+
+            await Context.Interaction.DeferAsync();
+
+            var savedQueryParameters = SQLDBManager.Instance().GetQueryParameters(savedQuery);
+
+            if (savedQueryParameters.Count == 0)
+            {
+                // we can run the command directly
+                try
+                {
+                    var queryResult = await SQLHelper.GetQueryResultsInteraction(Context, savedQuery.Content, true, 100);
+                    var drawTable = new DrawTable(queryResult.Header, queryResult.Data, "Query", null);
+
+                    var stream = await drawTable.GetImage();
+                    if (stream == null)
+                        return;// todo some message
+
+                    await Context.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null);
+                    stream.Dispose();
+                }
+                catch (Exception e)
+                {
+                    await Context.Channel.SendMessageAsync(e.Message);
+                }
+                return;
+            }
+            else
+            {
+                // we need to spawn a modal to get the parameters
+
+                if (savedQueryParameters.Count <= 5)
+                {
+                    // we can do it over modal
+                    // todo provide the user maybe a way to also get a template
+
+                    var builder = new ModalBuilder()
+                    {
+                        Title = "Execute SQL Command",
+                        CustomId = "sql-executedraw-cmd-modal-" + savedQuery.SavedQueryId
                     };
 
                     int count = 1;
@@ -437,6 +517,81 @@ namespace ETHDINFKBot.Interactions
                 string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
 
                 await Context.Interaction.RespondAsync(resultString + additionalString);
+            }
+            catch (Exception e)
+            {
+                await Context.Channel.SendMessageAsync(e.Message);
+            }
+        }
+
+
+        [ModalInteraction("sql-executedraw-cmd-modal-*")]
+        public async Task ExecuteCommandWithParamsModalDraw(int savedQuery, GetParameterValuesModal modal)
+        {
+            var savedQueryObject = SQLDBManager.Instance().GetSavedQueryById(savedQuery);
+
+            await Context.Interaction.DeferAsync();
+
+            var user = Context.Interaction.User;
+
+            if (savedQueryObject.DiscordUserId != user.Id)
+            {
+                await Context.Interaction.RespondAsync("You are not allowed to execute someone elses command.");
+                return;
+            }
+
+            var savedQueryParameters = SQLDBManager.Instance().GetQueryParameters(savedQueryObject);
+
+            var queryParameters = new List<MySqlParameter>();
+
+            //var data = Context.Interaction.Data;
+
+            //var json = Newtonsoft.Json.JsonConvert.SerializeObject(data);
+
+            //var values = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+
+            int count = 1;
+            foreach (var parameter in savedQueryParameters)
+            {
+                string value = modal.GetValueByIndex(count);
+
+                count++;
+
+                if (value == null)
+                    value = parameter.DefaultValue;
+
+                if (value == "NULL")
+                {
+                    queryParameters.Add(new MySqlParameter(parameter.ParameterName, DBNull.Value));
+                    continue;
+                }
+
+                switch (parameter.ParameterType)
+                {
+                    // todo double, long, ulong tests
+                    case "int":
+                        queryParameters.Add(SQLInteractionHelper.GetNumberParameter(parameter.ParameterName, value));
+                        break;
+                    case "string":
+                        queryParameters.Add(SQLInteractionHelper.GetStringParameter(parameter.ParameterName, value));
+                        break;
+                    case "datetime":
+                        queryParameters.Add(SQLInteractionHelper.GetDateTimeParameter(parameter.ParameterName, value));
+                        break;
+                }
+            }
+
+            try
+            {
+                var queryResult = await SQLHelper.GetQueryResultsInteraction(Context, savedQueryObject.Content, true, 100, parameters: queryParameters);
+                var drawTable = new DrawTable(queryResult.Header, queryResult.Data, "Query", null);
+
+                var stream = await drawTable.GetImage();
+                if (stream == null)
+                    return;// todo some message
+
+                await Context.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null);
+                stream.Dispose();
             }
             catch (Exception e)
             {
