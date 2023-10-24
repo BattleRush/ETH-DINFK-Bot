@@ -385,7 +385,9 @@ namespace ETHDINFKBot.Interactions
                 try
                 {
                     var queryResult = await SQLHelper.GetQueryResultsInteraction(Context, savedQuery.Content, true, 100);
-                    var drawTable = new DrawTable(queryResult.Header, queryResult.Data, "Query", null);
+                    string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
+
+                    var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString, null);
 
                     var stream = await drawTable.GetImage();
                     if (stream == null)
@@ -595,7 +597,9 @@ namespace ETHDINFKBot.Interactions
             try
             {
                 var queryResult = await SQLHelper.GetQueryResultsInteraction(Context, savedQueryObject.Content, true, 100, parameters: queryParameters);
-                var drawTable = new DrawTable(queryResult.Header, queryResult.Data, "Query", null);
+                string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
+
+                var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString, null);
 
                 var stream = await drawTable.GetImage();
                 if (stream == null)

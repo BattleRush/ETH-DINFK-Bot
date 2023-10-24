@@ -644,7 +644,7 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
 
             if (search.ToLower() == "all")
                 commands = await SQLDBManager.Instance().GetAllSQLCommands();
-            else if(string.IsNullOrWhiteSpace(search))
+            else if (string.IsNullOrWhiteSpace(search))
                 commands = await SQLDBManager.Instance().GetAllSQLCommands(user.Id);
             else
                 commands = await SQLDBManager.Instance().GetAllSQLCommands(search);
@@ -890,7 +890,9 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
 
                 // run the query
                 var queryResult = await SQLHelper.GetQueryResults(Context, command.Content, true, 100, parameters: sqlParameters);
-                var drawTable = new DrawTable(queryResult.Header, queryResult.Data, "Query", null);
+                string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
+
+                var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString, null);
 
                 var stream = await drawTable.GetImage();
                 if (stream == null)
@@ -919,7 +921,7 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
 
             if (!CommonHelper.AllowedToRun(BotPermissionType.EnableType2Commands, Context.Message.Channel.Id, userId))
                 return;
-            
+
             var command = SQLDBManager.Instance().GetSavedQueryByCommandName(commandName);
 
             if (command == null)

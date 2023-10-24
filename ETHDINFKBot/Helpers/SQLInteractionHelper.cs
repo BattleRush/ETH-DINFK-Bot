@@ -76,7 +76,7 @@ namespace ETHDINFKBot.Helpers
             // delete (only if the user is the same as the creator), change datatype, change default value
             var embedBuilder = new EmbedBuilder()
             {
-                Title = $"savedQuery.CommandName ({savedQuery.SavedQueryId})",
+                Title = $"{savedQuery.CommandName} ({savedQuery.SavedQueryId})",
                 Description = $"```sql{Environment.NewLine}{savedQuery.Content}{Environment.NewLine}```",
                 Color = Color.Blue
             };
