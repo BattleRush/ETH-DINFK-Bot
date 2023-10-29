@@ -35,9 +35,13 @@ namespace ETHDINFKBot.Drawing
         // TODO check if this is correct (linear srgb to oklab)
         SKColor linear_srgb_to_oklab(SKColor c) 
         {
-            double l = 0.4122214708f * c.Red + 0.5363325363f * c.Green + 0.0514459929f * c.Blue;
-            double m = 0.2119034982f * c.Red + 0.6806995451f * c.Green + 0.1073969566f * c.Blue;
-            double s = 0.0883024619f * c.Red + 0.2817188376f * c.Green + 0.6299787005f * c.Blue;
+            double r = c.Red / 255.0;
+            double g = c.Green / 255.0;
+            double b = c.Blue / 255.0;
+
+            double l = 0.4122214708f * r + 0.5363325363f * g + 0.0514459929f * b;
+            double m = 0.2119034982f * r + 0.6806995451f * g + 0.1073969566f * b;
+            double s = 0.0883024619f * r + 0.2817188376f * g + 0.6299787005f * b;
 
             double l_ = Math.Cbrt(l);
             double m_ = Math.Cbrt(m);
