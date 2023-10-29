@@ -99,12 +99,12 @@ namespace ETHDINFKBot.Drawing
                 if(currAngle < 90 || currAngle > 270)
                 {
                     Canvas.DrawLine(pointEnd, new SKPoint(pointEnd.X + lineLength, pointEnd.Y), randPen);
-                    lineEnd = new SKPoint(pointEnd.X + lineLength, pointEnd.Y);
+                    lineEnd = new SKPoint(pointEnd.X + lineLength - 2, pointEnd.Y);
                 }
                 else
                 {
                     Canvas.DrawLine(pointEnd, new SKPoint(pointEnd.X - lineLength, pointEnd.Y), randPen);
-                    lineEnd = new SKPoint(pointEnd.X - lineLength, pointEnd.Y);
+                    lineEnd = new SKPoint(pointEnd.X - lineLength + 2, pointEnd.Y);
                 }
 
                 

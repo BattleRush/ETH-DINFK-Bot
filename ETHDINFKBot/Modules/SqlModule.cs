@@ -1668,7 +1668,8 @@ ORDER BY table_name DESC;", true, 50);
                 else
                     ActiveSQLCommands.Add(userId, DateTime.Now);
 
-                var queryResult = await SQLHelper.GetQueryResults(Context, commandSql, true, 100);
+                // TODO limit the number of rows better
+                var queryResult = await SQLHelper.GetQueryResults(Context, commandSql, true, 10000);
                 //string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
 
                 // TODO auto detect chart type
