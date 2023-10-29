@@ -36,15 +36,28 @@ namespace ETHDINFKBot.Drawing
         SKColor linear_srgb_to_oklab(SKColor c)
         {
             // make color linear
-            c = new SKColor(
+            /*c = new SKColor(
                 (byte)(c.Red <= 10 ? c.Red / 3294.6 : Math.Pow((c.Red + 14) / 269.3, 2.4) * 3294.6),
                 (byte)(c.Green <= 10 ? c.Green / 3294.6 : Math.Pow((c.Green + 14) / 269.3, 2.4) * 3294.6),
                 (byte)(c.Blue <= 10 ? c.Blue / 3294.6 : Math.Pow((c.Blue + 14) / 269.3, 2.4) * 3294.6)
-            );
-            
+            );*/
+
             double r = c.Red / 255.0;
             double g = c.Green / 255.0;
             double b = c.Blue / 255.0;
+
+
+            double toLinear(double val)
+            {
+                if (val <= 0.04045)
+                    return val / 12.92;
+                else
+                    return Math.Pow((val + 0.055) / 1.055, 2.4);
+            }
+
+            r = toLinear(r);
+            g = toLinear(g);
+            b = toLinear(b);
 
             double l = 0.4122214708f * r + 0.5363325363f * g + 0.0514459929f * b;
             double m = 0.2119034982f * r + 0.6806995451f * g + 0.1073969566f * b;
@@ -87,7 +100,8 @@ namespace ETHDINFKBot.Drawing
                 {
                     Color = linear_srgb_to_oklab(SKColor.FromHsl(360 * i / sizeLabels, 100, 50)),
                     StrokeWidth = 5,
-                    IsAntialias = true
+                    IsAntialias = true,
+                    
                 };
 
                 var randBrush = new SKPaint
