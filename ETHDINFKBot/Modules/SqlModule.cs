@@ -1636,5 +1636,66 @@ ORDER BY table_name DESC;", true, 50);
                 await Context.Channel.SendMessageAsync("Is this all you got <:kekw:768912035928735775> " + ex.ToString(), false);
             }
         }
+
+        [Command("queryc", RunMode = RunMode.Async)] // better name xD
+        [Alias("chart")]
+        public async Task SqlC([Remainder] string commandSql)
+        {
+            var userId = Context.Message.Author.Id;
+
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
+
+            // Allow the query to be send in a code block
+            commandSql = commandSql.Trim('`');
+
+            if (commandSql.StartsWith("sql"))
+                commandSql = commandSql.Substring(3);
+
+            if (ForbiddenQuery(commandSql, Context.Message.Author.Id))
+                return;
+
+            if (ActiveSQLCommands.ContainsKey(userId) && ActiveSQLCommands[userId].AddSeconds(15) > DateTime.Now)
+            {
+                await Context.Channel.SendMessageAsync("Are you in such a hurry, that you cant wait out the last query you send out?", false);
+                return;
+            }
+
+            try
+            {
+                if (ActiveSQLCommands.ContainsKey(userId))
+                    ActiveSQLCommands[userId] = DateTime.Now;
+                else
+                    ActiveSQLCommands.Add(userId, DateTime.Now);
+
+                var queryResult = await SQLHelper.GetQueryResults(Context, commandSql, true, 100);
+                //string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
+
+                // TODO auto detect chart type
+
+                PieChart pieChart = new PieChart();
+
+                // TODO make it not reliant on int parse
+                pieChart.Data(queryResult.Data.Select(x => x.ElementAt(0)).ToList(), queryResult.Data.Select(x => int.Parse(x.ElementAt(1))).ToList());
+
+                var bitmap = pieChart.GetBitmap();
+
+                //var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString, null);
+
+                var stream = CommonHelper.GetStream(bitmap);
+
+                await Context.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null, new Discord.MessageReference(Context.Message.Id));
+                stream.Dispose();
+
+                pieChart.Dispose();
+
+                // release the user again as the query finished
+                ActiveSQLCommands[userId] = DateTime.MinValue;
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync("Is this all you got <:kekw:768912035928735775> " + ex.ToString(), false);
+            }
+        }
     }
 }

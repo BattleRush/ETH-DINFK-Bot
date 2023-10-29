@@ -46,6 +46,38 @@ namespace ETHDINFKBot.Modules
             public List<SocialCreditTransaction> Transactions { get; set; }
         }
 
+        // pie chart command
+        [Command("pie", RunMode = RunMode.Async)]
+        public async Task PieChart()
+        {
+            var author = Context.Message.Author;
+            if (author.Id != Program.ApplicationSetting.Owner)
+            {
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
+            PieChart pieChart = new PieChart();
+
+            // Generate 10 random values
+            Random rnd = new Random();
+            List<string> labels = new List<string>();
+            List<int> values = new List<int>();
+            for (int i = 0; i < 10; i++)
+            {
+                labels.Add($"Label {i}");
+                values.Add(rnd.Next(1, 100));
+            }
+
+            pieChart.Data(labels, values);           
+
+            var bitmap = pieChart.GetBitmap();
+
+            await Context.Channel.SendFileAsync(CommonHelper.GetStream(bitmap), "pie.png");
+
+            pieChart.Dispose();
+        }
+
         [Command("sc", RunMode = RunMode.Async)]
         public async Task SocialCreditGraph()
         {

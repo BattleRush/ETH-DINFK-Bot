@@ -442,6 +442,93 @@ namespace ETHDINFKBot.Interactions
             }
         }
 
+
+        [ComponentInteraction("sql-executechart-cmd-*")]
+        public async Task ExecuteChartCommand(int savedQueryId)
+        {
+            // TODO
+            await Context.Interaction.DeferAsync();
+            await Context.Channel.SendMessageAsync("Not implemented yet.");
+            return;
+            
+            //await Context.Interaction.DeferAsync();
+            var savedQuery = SQLDBManager.Instance().GetSavedQueryById(savedQueryId);
+
+            var user = Context.Interaction.User;
+
+
+            if (savedQuery.DiscordUserId != user.Id)
+            {
+                await Context.Interaction.RespondAsync("You are not allowed to execute someone elses command.");
+                return;
+            }
+
+            var savedQueryParameters = SQLDBManager.Instance().GetQueryParameters(savedQuery);
+
+            if (savedQueryParameters.Count == 0)
+            {
+                await Context.Interaction.DeferAsync();
+                // we can run the command directly
+                try
+                {
+                    var queryResult = await SQLHelper.GetQueryResultsInteraction(Context, savedQuery.Content, true, 100);
+                    string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
+
+                    var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString, null);
+
+                    var stream = await drawTable.GetImage();
+                    if (stream == null)
+                        return;// todo some message
+
+                    await Context.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null);
+                    stream.Dispose();
+                }
+                catch (Exception e)
+                {
+                    await Context.Channel.SendMessageAsync(e.Message);
+                }
+                return;
+            }
+            else
+            {
+                // we need to spawn a modal to get the parameters
+
+                if (savedQueryParameters.Count <= 5)
+                {
+                    // we can do it over modal
+                    // todo provide the user maybe a way to also get a template
+
+                    var builder = new ModalBuilder()
+                    {
+                        Title = "Execute SQL Command",
+                        CustomId = "sql-executedraw-cmd-modal-" + savedQuery.SavedQueryId
+                    };
+
+                    int count = 1;
+                    foreach (var parameter in savedQueryParameters)
+                    {
+                        builder.AddTextInput($"{parameter.ParameterName} ({parameter.ParameterType})",
+                                     customId: "parameter" + count, placeholder: parameter.ParameterName,
+                                     value: parameter.DefaultValue, required: false);
+
+                        count++;
+                    }
+
+                    var modal = builder.Build();
+
+                    await Context.Interaction.RespondWithModalAsync(modal);
+                }
+                else
+                {
+                    await Context.Interaction.DeferAsync();
+                    // modals only support 5 fields we need to provide a template for the user to run
+
+                    EmbedBuilder embedBuilder = SQLInteractionHelper.GetCommandTemplate(savedQuery.SavedQueryId);
+                    await Context.Channel.SendMessageAsync("Modals support only 5 parameters. Execute query with template command", false, embedBuilder.Build());
+                }
+            }
+        }
+
         [ComponentInteraction("sql-template-command-*")]
         public async Task GenerateTemplateForCommand(int savedQueryId)
         {
