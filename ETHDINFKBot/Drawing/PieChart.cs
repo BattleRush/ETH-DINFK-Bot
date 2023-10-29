@@ -33,7 +33,7 @@ namespace ETHDINFKBot.Drawing
 
         // https://bottosson.github.io/posts/oklab/
         // TODO check if this is correct (linear srgb to oklab)
-        SKColor linear_srgb_to_oklab(SKColor c)
+        (double L, double c, double h) linear_srgb_to_oklab(SKColor c)
         {
             // make color linear
             /*c = new SKColor(
@@ -46,13 +46,17 @@ namespace ETHDINFKBot.Drawing
             double g = c.Green / 255.0;
             double b = c.Blue / 255.0;
 
-
             double toLinear(double val)
             {
                 if (val <= 0.04045)
                     return val / 12.92;
                 else
                     return Math.Pow((val + 0.055) / 1.055, 2.4);
+            }
+
+            (double c, double h) cartesian_to_polar(double x, double y)
+            {
+                return (Math.Sqrt(x * x + y * y), Math.Atan2(y, x));
             }
 
             r = toLinear(r);
@@ -67,10 +71,48 @@ namespace ETHDINFKBot.Drawing
             double m_ = Math.Cbrt(m);
             double s_ = Math.Cbrt(s);
 
+            double oklab_L = (0.2104542553f * l_ + 0.7936177850f * m_ - 0.0040720468f * s_);
+            double oklab_a = (1.9779984951f * l_ - 2.4285922050f * m_ + 0.4505937099f * s_);
+            double oklab_b = (0.0259040371f * l_ + 0.7827717662f * m_ - 0.8086757660f * s_);
+
+            (double oklch_c, double oklch_h) = cartesian_to_polar(oklab_a, oklab_b);
+
+            return (oklab_L, oklch_c, oklch_h);
+        }
+
+        SKColor oklach_to_skcolor(double L, double c, double h)
+        {
+            double toSrgb(double val)
+            {
+                if (val <= 0.0031308)
+                    return val * 12.92;
+                else
+                    return 1.055 * Math.Pow(val, 1 / 2.4) - 0.055;
+            }
+
+            (double c, double h) polar_to_cartesian_x(double r, double a)
+            {
+                return (r * Math.Cos(a), r * Math.Sin(a));
+            }
+
+            (double a, double b) = polar_to_cartesian_x(c, h);
+
+            double l_ = L + 0.3963377774f * a + 0.2158037573f * b;
+            double m_ = L - 0.1055613458f * a - 0.0638541728f * b;
+            double s_ = L - 0.0894841775f * a - 1.2914855480f * b;
+
+            double l = l_ * l_ * l_;
+            double m = m_ * m_ * m_;
+            double s = s_ * s_ * s_;
+
+            double l_r = +4.0767416621f * l - 3.3077115913f * m + 0.2309699292f * s;
+            double l_g = -1.2684380046f * l + 2.6097574011f * m - 0.3413193965f * s;
+            double l_b = -0.0041960863f * l - 0.7034186147f * m + 1.7076147010f * s;
+
             return new SKColor(
-                (byte)((0.2104542553f * l_ + 0.7936177850f * m_ - 0.0040720468f * s_) * 255),
-                (byte)((1.9779984951f * l_ - 2.4285922050f * m_ + 0.4505937099f * s_) * 255),
-                (byte)((0.0259040371f * l_ + 0.7827717662f * m_ - 0.8086757660f * s_) * 255)
+                (byte)(toSrgb(l_r) * 255),
+                (byte)(toSrgb(l_g) * 255),
+                (byte)(toSrgb(l_b) * 255)
             );
         }
 
@@ -96,17 +138,20 @@ namespace ETHDINFKBot.Drawing
             {
                 float percentage = (float)data[i] / total;
 
+                (double L, double c, double h) = linear_srgb_to_oklab(SKColor.FromHsl(360 * i / sizeLabels, 100, 50));
+                SKColor color = oklach_to_skcolor(L, c, h);
+
                 var randPen = new SKPaint
                 {
-                    Color = linear_srgb_to_oklab(SKColor.FromHsl(360 * i / sizeLabels, 100, 50)),
+                    Color = color,
                     StrokeWidth = 5,
                     IsAntialias = true,
-                    
+
                 };
 
                 var randBrush = new SKPaint
                 {
-                    Color = linear_srgb_to_oklab(SKColor.FromHsl(360 * i / sizeLabels, 100, 50)),
+                    Color = color,
                     IsAntialias = true
                 };
 
@@ -157,7 +202,7 @@ namespace ETHDINFKBot.Drawing
                 var label = labels[i] + " " + data[i];
                 var labelPaint = new SKPaint
                 {
-                    Color = linear_srgb_to_oklab(SKColor.FromHsl(360 * i / sizeLabels, 100, 50)),
+                    Color = color,
                     TextSize = 26,
                     IsAntialias = true
                 };
