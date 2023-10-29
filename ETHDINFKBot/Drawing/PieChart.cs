@@ -71,9 +71,9 @@ namespace ETHDINFKBot.Drawing
             double m_ = Math.Cbrt(m);
             double s_ = Math.Cbrt(s);
 
-            double oklab_L = (0.2104542553f * l_ + 0.7936177850f * m_ - 0.0040720468f * s_);
-            double oklab_a = (1.9779984951f * l_ - 2.4285922050f * m_ + 0.4505937099f * s_);
-            double oklab_b = (0.0259040371f * l_ + 0.7827717662f * m_ - 0.8086757660f * s_);
+            double oklab_L = 0.2104542553f * l_ + 0.7936177850f * m_ - 0.0040720468f * s_;
+            double oklab_a = 1.9779984951f * l_ - 2.4285922050f * m_ + 0.4505937099f * s_;
+            double oklab_b = 0.0259040371f * l_ + 0.7827717662f * m_ - 0.8086757660f * s_;
 
             (double oklch_c, double oklch_h) = cartesian_to_polar(oklab_a, oklab_b);
 
@@ -138,7 +138,12 @@ namespace ETHDINFKBot.Drawing
             {
                 float percentage = (float)data[i] / total;
 
-                (double L, double c, double h) = linear_srgb_to_oklab(SKColor.FromHsl(360 * i / sizeLabels, 100, 50));
+                (double L, double c, double h) = linear_srgb_to_oklab(SKColor.FromHsl(0, 100, 50));
+                //h += 255 * (i / (float)sizeLabels);
+                double oldHue = h;
+                h += 2 * Math.PI * (i / (float)sizeLabels);
+                Console.WriteLine($"old h: {oldHue} | new h: {h}");
+
                 SKColor color = oklach_to_skcolor(L, c, h);
 
                 var randPen = new SKPaint
