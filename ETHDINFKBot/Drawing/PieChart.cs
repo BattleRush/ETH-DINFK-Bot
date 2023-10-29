@@ -31,6 +31,25 @@ namespace ETHDINFKBot.Drawing
             Canvas.Clear(DrawingHelper.DiscordBackgroundColor); // TODO Gray color of discord
         }
 
+        // https://bottosson.github.io/posts/oklab/
+        // TODO check if this is correct (linear srgb to oklab)
+        SKColor linear_srgb_to_oklab(SKColor c) 
+        {
+            double l = 0.4122214708f * c.Red + 0.5363325363f * c.Green + 0.0514459929f * c.Blue;
+            double m = 0.2119034982f * c.Red + 0.6806995451f * c.Green + 0.1073969566f * c.Blue;
+            double s = 0.0883024619f * c.Red + 0.2817188376f * c.Green + 0.6299787005f * c.Blue;
+
+            double l_ = Math.Cbrt(l);
+            double m_ = Math.Cbrt(m);
+            double s_ = Math.Cbrt(s);
+
+            return new SKColor(
+                (byte)(0.2104542553f*l_ + 0.7936177850f*m_ - 0.0040720468f*s_),
+                (byte)(1.9779984951f*l_ - 2.4285922050f*m_ + 0.4505937099f*s_),
+                (byte)(0.0259040371f*l_ + 0.7827717662f*m_ - 0.8086757660f*s_)
+            );
+        }
+
         public void Data(List<string> labels, List<int> data)
         {
             var rect = new SKRect(Padding, Padding, Width - Padding, Height - Padding);
@@ -55,14 +74,14 @@ namespace ETHDINFKBot.Drawing
 
                 var randPen = new SKPaint
                 {
-                    Color = SKColor.FromHsl(360 * i / sizeLabels, 100, 50),
+                    Color = linear_srgb_to_oklab(SKColor.FromHsl(360 * i / sizeLabels, 100, 50)),
                     StrokeWidth = 5,
                     IsAntialias = true
                 };
 
                 var randBrush = new SKPaint
                 {
-                    Color = SKColor.FromHsl(360 * i / sizeLabels, 100, 50),
+                    Color = linear_srgb_to_oklab(SKColor.FromHsl(360 * i / sizeLabels, 100, 50)),
                     IsAntialias = true
                 };
 
@@ -113,7 +132,7 @@ namespace ETHDINFKBot.Drawing
                 var label = labels[i] + " " + data[i];
                 var labelPaint = new SKPaint
                 {
-                    Color = SKColor.FromHsl(360 * i / sizeLabels, 100, 50),
+                    Color = linear_srgb_to_oklab(SKColor.FromHsl(360 * i / sizeLabels, 100, 50)),
                     TextSize = 26,
                     IsAntialias = true
                 };
