@@ -33,7 +33,7 @@ namespace ETHDINFKBot.Drawing
 
         // https://bottosson.github.io/posts/oklab/
         // TODO check if this is correct (linear srgb to oklab)
-        SKColor linear_srgb_to_oklab(SKColor c) 
+        SKColor linear_srgb_to_oklab(SKColor c)
         {
             double r = c.Red / 255.0;
             double g = c.Green / 255.0;
@@ -48,9 +48,9 @@ namespace ETHDINFKBot.Drawing
             double s_ = Math.Cbrt(s);
 
             return new SKColor(
-                (byte)(0.2104542553f*l_ + 0.7936177850f*m_ - 0.0040720468f*s_),
-                (byte)(1.9779984951f*l_ - 2.4285922050f*m_ + 0.4505937099f*s_),
-                (byte)(0.0259040371f*l_ + 0.7827717662f*m_ - 0.8086757660f*s_)
+                (byte)((0.2104542553f * l_ + 0.7936177850f * m_ - 0.0040720468f * s_) * 255),
+                (byte)((1.9779984951f * l_ - 2.4285922050f * m_ + 0.4505937099f * s_) * 255),
+                (byte)((0.0259040371f * l_ + 0.7827717662f * m_ - 0.8086757660f * s_) * 255)
             );
         }
 
@@ -119,7 +119,7 @@ namespace ETHDINFKBot.Drawing
 
                 var lineEnd = new SKPoint(pointEnd.X + lineLength, pointEnd.Y);
                 var currLineAngle = currAngle + middleAngle;
-                if(currAngle < 90 || currAngle > 270)
+                if (currAngle < 90 || currAngle > 270)
                 {
                     Canvas.DrawLine(pointEnd, new SKPoint(pointEnd.X + lineLength, pointEnd.Y), randPen);
                     lineEnd = new SKPoint(pointEnd.X + lineLength - 2, pointEnd.Y);
@@ -130,7 +130,7 @@ namespace ETHDINFKBot.Drawing
                     lineEnd = new SKPoint(pointEnd.X - lineLength + 2, pointEnd.Y);
                 }
 
-                
+
 
                 // draw label
                 var label = labels[i] + " " + data[i];
@@ -141,10 +141,10 @@ namespace ETHDINFKBot.Drawing
                     IsAntialias = true
                 };
 
-                if(currAngle < 90 || currAngle > 270)
+                if (currAngle < 90 || currAngle > 270)
                     Canvas.DrawText(label, new SKPoint(lineEnd.X + 5, lineEnd.Y + labelPaint.TextSize / 2 - 4), labelPaint);
                 else
-                    Canvas.DrawText(label, new SKPoint(lineEnd.X - labelPaint.MeasureText(label), lineEnd.Y + labelPaint.TextSize / 2 -  4), labelPaint);
+                    Canvas.DrawText(label, new SKPoint(lineEnd.X - labelPaint.MeasureText(label), lineEnd.Y + labelPaint.TextSize / 2 - 4), labelPaint);
 
                 //Canvas.DrawText(label, lineEnd, labelPaint);
 
