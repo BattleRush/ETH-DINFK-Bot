@@ -109,6 +109,13 @@ namespace ETHDINFKBot.Drawing
             double l_g = -1.2684380046f * l + 2.6097574011f * m - 0.3413193965f * s;
             double l_b = -0.0041960863f * l - 0.7034186147f * m + 1.7076147010f * s;
 
+            Console.WriteLine($"l_r: {l_r} | l_g: {l_g} | l_b: {l_b}");
+
+            l_r = Math.Clamp(l_r, 0, 1);
+            l_g = Math.Clamp(l_g, 0, 1);
+            l_b = Math.Clamp(l_b, 0, 1);
+
+
             return new SKColor(
                 (byte)(toSrgb(l_r) * 255),
                 (byte)(toSrgb(l_g) * 255),
@@ -138,10 +145,26 @@ namespace ETHDINFKBot.Drawing
             {
                 float percentage = (float)data[i] / total;
 
-                (double L, double c, double h) = linear_srgb_to_oklab(SKColor.FromHsl(0, 100, 50));
+                (double L, double c, double h) = linear_srgb_to_oklab(SKColor.FromHsl(0, 70, 50));
                 //h += 255 * (i / (float)sizeLabels);
                 double oldHue = h;
-                h += 2 * Math.PI * (i / (float)sizeLabels);
+                h = 2 * Math.PI * (i / (float)sizeLabels);
+
+                /*if(i % 2 == 0)
+                    h += Math.PI;
+
+                h %= 2 * Math.PI;*/
+
+                if(i % 2 == 0)
+                    L *= 1.1;
+
+                if(i % 4 == 0)
+                {
+                    L /= 1.1;
+                    L *= 0.9;
+                }
+                
+                //h -= 0.01;
                 Console.WriteLine($"old h: {oldHue} | new h: {h}");
 
                 SKColor color = oklach_to_skcolor(L, c, h);
@@ -193,12 +216,12 @@ namespace ETHDINFKBot.Drawing
                 if (currAngle < 90 || currAngle > 270)
                 {
                     Canvas.DrawLine(pointEnd, new SKPoint(pointEnd.X + lineLength, pointEnd.Y), randPen);
-                    lineEnd = new SKPoint(pointEnd.X + lineLength - 2, pointEnd.Y);
+                    lineEnd = new SKPoint(pointEnd.X + lineLength - 5, pointEnd.Y);
                 }
                 else
                 {
                     Canvas.DrawLine(pointEnd, new SKPoint(pointEnd.X - lineLength, pointEnd.Y), randPen);
-                    lineEnd = new SKPoint(pointEnd.X - lineLength + 2, pointEnd.Y);
+                    lineEnd = new SKPoint(pointEnd.X - lineLength + 5, pointEnd.Y);
                 }
 
 
