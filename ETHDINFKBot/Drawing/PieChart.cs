@@ -213,7 +213,7 @@ namespace ETHDINFKBot.Drawing
 
                 var lineEnd = new SKPoint(pointEnd.X + lineLength, pointEnd.Y);
                 var currLineAngle = currAngle + middleAngle;
-                if (currAngle < 90 || currAngle > 270)
+                if (currLineAngle < 90 || currLineAngle > 270)
                 {
                     Canvas.DrawLine(pointEnd, new SKPoint(pointEnd.X + lineLength, pointEnd.Y), randPen);
                     lineEnd = new SKPoint(pointEnd.X + lineLength - 5, pointEnd.Y);
@@ -235,10 +235,10 @@ namespace ETHDINFKBot.Drawing
                     IsAntialias = true
                 };
 
-                if (currAngle < 90 || currAngle > 270)
-                    Canvas.DrawText(label, new SKPoint(lineEnd.X + 5, lineEnd.Y + labelPaint.TextSize / 2 - 4), labelPaint);
+                if (currLineAngle < 90 || currLineAngle > 270)
+                    Canvas.DrawText(label, new SKPoint(lineEnd.X + 10, lineEnd.Y + labelPaint.TextSize / 2 - 4), labelPaint);
                 else
-                    Canvas.DrawText(label, new SKPoint(lineEnd.X - labelPaint.MeasureText(label), lineEnd.Y + labelPaint.TextSize / 2 - 4), labelPaint);
+                    Canvas.DrawText(label, new SKPoint(lineEnd.X - labelPaint.MeasureText(label) - 15, lineEnd.Y + labelPaint.TextSize / 2 - 4), labelPaint);
 
                 //Canvas.DrawText(label, lineEnd, labelPaint);
 
