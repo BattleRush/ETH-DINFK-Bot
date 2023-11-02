@@ -121,7 +121,9 @@ namespace ETHDINFKBot.Handlers
                     {
                         EmbedBuilder embedBuilder = new EmbedBuilder();
                         embedBuilder.WithTitle("VIS Website Status");
-                        embedBuilder.WithDescription($"This is a status check of the VIS websites.{Environment.NewLine}Status website: https://monitoring-lee.vis.ethz.ch/grafana");
+                        embedBuilder.WithDescription(@$"This is a status check of the VIS websites.
+VIS status website: https://monitoring-lee.vis.ethz.ch/grafana
+External status site: https://up.markc.su/status/vis");
 
                         Dictionary<string, string> websites = new Dictionary<string, string>
                         {
