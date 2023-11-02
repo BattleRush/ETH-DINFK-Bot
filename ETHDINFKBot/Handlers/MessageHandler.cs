@@ -111,58 +111,65 @@ namespace ETHDINFKBot.Handlers
             {
                 if (LastCheck.AddMinutes(1) < DateTimeOffset.Now)
                 {
-                    LastCheck = DateTimeOffset.Now;
-                    // check if the content contains " down" or " down?" together with "vis", "exams", "website"
-                    string msg = SocketMessage.Content.ToLower();
-
-                    if (msg.Contains(" down") 
-                        && (msg.Contains("vis") || msg.Contains("exams") || msg.Contains("website"))
-                        && msg.Length < 40)
+                    try
                     {
-                        EmbedBuilder embedBuilder = new EmbedBuilder();
-                        embedBuilder.WithTitle("VIS Website Status");
-                        embedBuilder.WithDescription(@$"This is a status check of the VIS websites.
+                        LastCheck = DateTimeOffset.Now;
+                        // check if the content contains " down" or " down?" together with "vis", "exams", "website"
+                        string msg = SocketMessage.Content.ToLower();
+
+                        if (msg.Contains(" down")
+                            && (msg.Contains("vis") || msg.Contains("exams") || msg.Contains("website"))
+                            && msg.Length < 40)
+                        {
+                            EmbedBuilder embedBuilder = new EmbedBuilder();
+                            embedBuilder.WithTitle("VIS Website Status");
+                            embedBuilder.WithDescription(@$"This is a status check of the VIS websites.
 VIS status website: https://monitoring-lee.vis.ethz.ch/grafana
 External status site: https://up.markc.su/status/vis");
 
-                        Dictionary<string, string> websites = new Dictionary<string, string>
+                            Dictionary<string, string> websites = new Dictionary<string, string>
                         {
                             { "VIS Website", "https://vis.ethz.ch" },
                             { "VIS Exams", "https://exams.vis.ethz.ch" },
                             { "ETHZ Website", "https://ethz.ch" }
                         };
 
-                        int success = 0;
+                            int success = 0;
 
-                        foreach (var website in websites)
-                        {
-                            var (code, error) = CheckVisWebsite(website.Value);
-
-                            if (code == HttpStatusCode.OK)
+                            foreach (var website in websites)
                             {
-                                success++;
-                                embedBuilder.AddField(website.Key, $"Status: ✅ ({code}){Environment.NewLine}URL: {website.Value}");
+                                var (code, error) = CheckVisWebsite(website.Value);
+
+                                if (code == HttpStatusCode.OK)
+                                {
+                                    success++;
+                                    embedBuilder.AddField(website.Key, $"Status: ✅ ({code}){Environment.NewLine}URL: {website.Value}");
+                                }
+                                else
+                                {
+                                    embedBuilder.AddField(website.Key, $"Status ❌ ({code}){Environment.NewLine}Error: {error}");
+                                }
                             }
+
+                            // all websites are down -> red
+                            // only one down -> yellow
+                            // all websites are up -> green
+                            if (success == 0)
+                                embedBuilder.WithColor(255, 0, 0);
+                            else if (success == websites.Count)
+                                embedBuilder.WithColor(0, 255, 0);
                             else
-                            {
-                                embedBuilder.AddField(website.Key, $"Status ❌ ({code}){Environment.NewLine}Error: {error}");
-                            }
+                                embedBuilder.WithColor(255, 225, 32);
+
+                            // add to footer that this check is done only once a minute
+                            embedBuilder.WithFooter("This check is done only once a minute :)");
+
+                            await SocketTextChannel.SendMessageAsync("", false, embedBuilder.Build());
                         }
-
-                        // all websites are down -> red
-                        // only one down -> yellow
-                        // all websites are up -> green
-                        if (success == 0)
-                            embedBuilder.WithColor(255, 0, 0);
-                        else if (success == websites.Count)
-                            embedBuilder.WithColor(0, 255, 0);
-                        else
-                            embedBuilder.WithColor(255, 225, 32);
-
-                        // add to footer that this check is done only once a minute
-                        embedBuilder.WithFooter("This check is done only once a minute :)");
-
-                        await SocketTextChannel.SendMessageAsync("", false, embedBuilder.Build());
+                    }
+                    catch (Exception ex)
+                    {
+                        await SocketTextChannel.SendMessageAsync($"Error: {ex.ToString()}");
                     }
                 }
             }
