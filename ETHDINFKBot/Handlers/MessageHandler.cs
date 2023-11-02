@@ -85,8 +85,8 @@ namespace ETHDINFKBot.Handlers
             {
                 EmoteDetection();
                 Autoreact();
-                LiveInBestCanton();
-                CheckVisWebsiteStatus();
+                //LiveInBestCanton();
+                await CheckVisWebsiteStatus();
             }
             catch (Exception ex)
             {
@@ -105,9 +105,9 @@ namespace ETHDINFKBot.Handlers
         private static DateTimeOffset LastCheck = DateTimeOffset.MinValue;
         private async Task CheckVisWebsiteStatus()
         {
-            ulong visWebsiteStatusChannelId = 945018442522701894;
+            ulong visChannelId = 945018442522701894;
 
-            if (SocketMessage.Channel.Id == visWebsiteStatusChannelId)
+            if (SocketMessage?.Channel?.Id == visChannelId)
             {
                 if (LastCheck.AddMinutes(1) < DateTimeOffset.Now)
                 {
@@ -118,7 +118,7 @@ namespace ETHDINFKBot.Handlers
                         string msg = SocketMessage.Content.ToLower();
 
                         if (msg.Contains(" down")
-                            && (msg.Contains("vis") || msg.Contains("exams") || msg.Contains("website"))
+                            && (msg.Contains("vis") || msg.Contains("exams") || msg.Contains("website") || msg.Contains("comsol"))
                             && msg.Length < 40)
                         {
                             EmbedBuilder embedBuilder = new EmbedBuilder();
