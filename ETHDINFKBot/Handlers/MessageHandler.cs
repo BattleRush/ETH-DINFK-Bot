@@ -125,7 +125,7 @@ namespace ETHDINFKBot.Handlers
                         Dictionary<string, string> websites = new Dictionary<string, string>
                         {
                             { "VIS Website", "https://vis.ethz.ch" },
-                            { "VIS Exams", "https://vis.ethz.ch/exams" },
+                            { "VIS Exams", "https://exams.vis.ethz.ch" },
                             { "ETHZ Website", "https://ethz.ch" }
                         };
 
