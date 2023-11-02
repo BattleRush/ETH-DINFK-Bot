@@ -115,12 +115,13 @@ namespace ETHDINFKBot.Handlers
                     // check if the content contains " down" or " down?" together with "vis", "exams", "website"
                     string msg = SocketMessage.Content.ToLower();
 
-                    if ((msg.Contains(" down") || msg.Contains(" down?")) 
-                        && (msg.Contains("vis") || msg.Contains("exams") || msg.Contains("website") || msg.Contains("is")))
+                    if (msg.Contains(" down") 
+                        && (msg.Contains("vis") || msg.Contains("exams") || msg.Contains("website"))
+                        && msg.Length < 40)
                     {
                         EmbedBuilder embedBuilder = new EmbedBuilder();
                         embedBuilder.WithTitle("VIS Website Status");
-                        embedBuilder.WithDescription("This is a status check of the VIS websites.");
+                        embedBuilder.WithDescription($"This is a status check of the VIS websites.{Environment.NewLine}Status website: https://monitoring-lee.vis.ethz.ch/grafana");
 
                         Dictionary<string, string> websites = new Dictionary<string, string>
                         {
@@ -149,13 +150,12 @@ namespace ETHDINFKBot.Handlers
                         // all websites are down -> red
                         // only one down -> yellow
                         // all websites are up -> green
-
                         if (success == 0)
                             embedBuilder.WithColor(255, 0, 0);
                         else if (success == websites.Count)
                             embedBuilder.WithColor(0, 255, 0);
                         else
-                            embedBuilder.WithColor(255, 255, 0);
+                            embedBuilder.WithColor(255, 225, 32);
 
                         // add to footer that this check is done only once a minute
                         embedBuilder.WithFooter("This check is done only once a minute :)");
