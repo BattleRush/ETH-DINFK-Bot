@@ -1369,7 +1369,6 @@ namespace ETHDINFKBot
                 {
                     MessageHandler msgHandler = new MessageHandler(msg, CommandNames, channelSettings);
                     await msgHandler.Run();
-
                 }
                 catch (Exception ex)
                 {

@@ -90,7 +90,7 @@ namespace ETHDINFKBot.Handlers
             }
             catch (Exception ex)
             {
-                // TODO log
+                await SocketMessage?.Channel?.SendMessageAsync($"Error: {ex.ToString()}");
             }
 
             // Log to DB
@@ -113,7 +113,6 @@ namespace ETHDINFKBot.Handlers
                 {
                     try
                     {
-                        LastCheck = DateTimeOffset.Now;
                         // check if the content contains " down" or " down?" together with "vis", "exams", "website"
                         string msg = SocketMessage.Content.ToLower();
 
@@ -121,6 +120,8 @@ namespace ETHDINFKBot.Handlers
                             && (msg.Contains("vis") || msg.Contains("exams") || msg.Contains("website") || msg.Contains("comsol"))
                             && msg.Length < 40)
                         {
+                            LastCheck = DateTimeOffset.Now;
+
                             EmbedBuilder embedBuilder = new EmbedBuilder();
                             embedBuilder.WithTitle("VIS Website Status");
                             embedBuilder.WithDescription(@$"This is a status check of the VIS websites.
@@ -128,17 +129,22 @@ VIS status website: https://monitoring-lee.vis.ethz.ch/grafana
 External status site: https://up.markc.su/status/vis");
 
                             Dictionary<string, string> websites = new Dictionary<string, string>
-                        {
-                            { "VIS Website", "https://vis.ethz.ch" },
-                            { "VIS Exams", "https://exams.vis.ethz.ch" },
-                            { "ETHZ Website", "https://ethz.ch" }
-                        };
+                            {
+                                { "VIS Website", "https://vis.ethz.ch" },
+                                { "VIS Exams", "https://exams.vis.ethz.ch" },
+                                { "ETHZ Website", "https://ethz.ch" }
+                            };
 
                             int success = 0;
 
+                            HttpClient httpClient = new HttpClient
+                            {
+                                Timeout = TimeSpan.FromSeconds(5)
+                            };
+
                             foreach (var website in websites)
                             {
-                                var (code, error) = CheckVisWebsite(website.Value);
+                                var (code, error) = await CheckVisWebsite(httpClient, website.Value);
 
                                 if (code == HttpStatusCode.OK)
                                 {
@@ -175,16 +181,11 @@ External status site: https://up.markc.su/status/vis");
             }
         }
 
-        private (HttpStatusCode code, string error) CheckVisWebsite(string url)
+        private async Task<(HttpStatusCode code, string error)> CheckVisWebsite(HttpClient httpClient, string url)
         {
             try
             {
-                HttpClient httpClient = new HttpClient
-                {
-                    Timeout = TimeSpan.FromSeconds(5)
-                };
-
-                var response = httpClient.GetAsync(url).Result;
+                var response = await httpClient.GetAsync(url);
 
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
