@@ -131,7 +131,7 @@ ORDER BY MAX(PH.DiscordMessageId)";
                 {
                     var dateTimeLastPing = SnowflakeUtils.FromSnowflake(Convert.ToUInt64(row[1]));
 
-                    if ((utcNow - dateTimeLastPing).TotalHours >= 72)
+                    if ((utcNow - dateTimeLastPing).TotalHours >= 96)
                     {
 
                         ulong userId = Convert.ToUInt64(row[0]);
