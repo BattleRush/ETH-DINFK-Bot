@@ -1000,8 +1000,19 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
 
                 PieChart pieChart = new PieChart();
 
+                int labelIndex = 0;
+                int valueIndex = 1;
+
+                // check if first colum may be a string
+                if (queryResult.Data.Any(x => !ulong.TryParse(x.ElementAt(valueIndex), out ulong _)))
+                {
+                    labelIndex = 1;
+                    valueIndex = 0;
+                }
+
                 // TODO make it not reliant on int parse
-                pieChart.Data(queryResult.Data.Select(x => x.ElementAt(0)).ToList(), queryResult.Data.Select(x => int.Parse(x.ElementAt(1))).ToList());
+                pieChart.Data(queryResult.Data.Select(x => x.ElementAt(labelIndex)).ToList(), 
+                    queryResult.Data.Select(x => int.Parse(x.ElementAt(valueIndex))).ToList());
 
                 var bitmap = pieChart.GetBitmap();
 
@@ -1790,8 +1801,21 @@ ORDER BY table_name DESC;", true, 50);
                 PieChart pieChart = new PieChart();
 
                 // TODO make it not reliant on int parse
-                pieChart.Data(queryResult.Data.Select(x => x.ElementAt(0)).ToList(), queryResult.Data.Select(x => int.Parse(x.ElementAt(1))).ToList());
+                
+                int labelIndex = 0;
+                int valueIndex = 1;
 
+                // check if first colum may be a string
+                if (queryResult.Data.Any(x => !ulong.TryParse(x.ElementAt(valueIndex), out ulong _)))
+                {
+                    labelIndex = 1;
+                    valueIndex = 0;
+                }
+
+                // TODO make it not reliant on int parse
+                pieChart.Data(queryResult.Data.Select(x => x.ElementAt(labelIndex)).ToList(), 
+                    queryResult.Data.Select(x => int.Parse(x.ElementAt(valueIndex))).ToList());
+                    
                 var bitmap = pieChart.GetBitmap();
 
                 //var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString, null);
