@@ -318,7 +318,7 @@ namespace ETHDINFKBot.Interactions
                 }
                 catch (Exception e)
                 {
-                    await Context.Channel.SendMessageAsync(e.Message);
+                    await Context.Channel.SendMessageAsync(e.ToString());
                 }
                 return;
             }
@@ -400,7 +400,7 @@ namespace ETHDINFKBot.Interactions
                 }
                 catch (Exception e)
                 {
-                    await Context.Channel.SendMessageAsync(e.Message);
+                    await Context.Channel.SendMessageAsync(e.ToString());
                 }
                 return;
             }
@@ -493,7 +493,7 @@ namespace ETHDINFKBot.Interactions
                 }
                 catch (Exception e)
                 {
-                    await Context.Channel.SendMessageAsync(e.Message);
+                    await Context.Channel.SendMessageAsync(e.ToString());
                 }
                 return;
             }
@@ -629,7 +629,7 @@ namespace ETHDINFKBot.Interactions
             }
             catch (Exception e)
             {
-                await Context.Interaction.Channel.SendMessageAsync(e.Message);
+                await Context.Interaction.Channel.SendMessageAsync(e.ToString());
             }
         }
 
@@ -711,7 +711,7 @@ namespace ETHDINFKBot.Interactions
             }
             catch (Exception e)
             {
-                await Context.Interaction.Channel.SendMessageAsync(e.Message);
+                await Context.Interaction.Channel.SendMessageAsync(e.ToString());
             }
         }
 
@@ -802,7 +802,7 @@ namespace ETHDINFKBot.Interactions
             }
             catch (Exception e)
             {
-                await Context.Interaction.Channel.SendMessageAsync(e.Message);
+                await Context.Interaction.Channel.SendMessageAsync(e.ToString());
             }
         }
 
@@ -907,7 +907,7 @@ namespace ETHDINFKBot.Interactions
             }
             catch (Exception e)
             {
-                await Context.Interaction.RespondAsync(e.Message);
+                await Context.Interaction.RespondAsync(e.ToString());
                 string fullError = e.ToString();
 
                 // upload error as text file
@@ -1094,7 +1094,7 @@ namespace ETHDINFKBot.Interactions
             }
             catch (Exception e)
             {
-                await Context.Interaction.RespondAsync(e.Message);
+                await Context.Interaction.RespondAsync(e.ToString());
                 string fullError = e.ToString();
 
                 // upload error as text file
