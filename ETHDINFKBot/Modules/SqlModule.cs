@@ -914,6 +914,119 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
             }
         }
 
+
+        // same code as above TODO refactor
+        [Command("executechart")]
+        public async Task RunSQLCommandChart(string commandName, [Remainder] string parameters = "")
+        {
+            try
+            {
+                var command = SQLDBManager.Instance().GetSavedQueryByCommandName(commandName);
+
+                if (command == null)
+                {
+                    await Context.Channel.SendMessageAsync("Command not found");
+                    return;
+                }
+
+                var queryParameters = SQLDBManager.Instance().GetQueryParameters(command);
+
+                // split by new line
+                var parameterList = parameters.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
+
+                // split by space
+
+                var parameterDict = new Dictionary<string, string>();
+
+                foreach (var parameter in parameterList)
+                {
+                    // find first = index
+                    var firstEq = parameter.IndexOf("=");
+
+                    if (firstEq == -1)
+                    {
+                        await Context.Channel.SendMessageAsync("Invalid parameter format");
+                        return;
+                    }
+
+                    var split = new string[] { parameter.Substring(0, firstEq), parameter.Substring(firstEq + 1) };
+
+                    if (split.Length != 2)
+                    {
+                        await Context.Channel.SendMessageAsync("Invalid parameter format");
+                        return;
+                    }
+
+                    // if first char is a ! replace it with a @
+                    if (split[0].StartsWith("!"))
+                        split[0] = "@" + split[0].Substring(1);
+
+                    parameterDict.Add(split[0], split[1]);
+                }
+
+                List<MySqlParameter> sqlParameters = new List<MySqlParameter>();
+
+                // check if all parameters are there
+                foreach (var parameter in queryParameters)
+                {
+                    if (!parameterDict.ContainsKey(parameter.ParameterName))
+                    {
+                        await Context.Channel.SendMessageAsync($"Missing parameter {parameter.ParameterName}");
+                        return;
+                    }
+
+                    string value = parameterDict[parameter.ParameterName];
+                    switch (parameter.ParameterType)
+                    {
+                        // todo double, long, ulong tests
+                        case "int":
+                            sqlParameters.Add(SQLInteractionHelper.GetNumberParameter(parameter.ParameterName, value));
+                            break;
+                        case "string":
+                            sqlParameters.Add(SQLInteractionHelper.GetStringParameter(parameter.ParameterName, value));
+                            break;
+                        case "datetime":
+                            sqlParameters.Add(SQLInteractionHelper.GetDateTimeParameter(parameter.ParameterName, value));
+                            break;
+                    }
+                }
+
+                // run the query
+                var queryResult = await SQLHelper.GetQueryResults(Context, command.Content, true, 10000, parameters: sqlParameters);
+                // TODO limit the number of rows better
+                //string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
+
+                // TODO auto detect chart type
+
+                PieChart pieChart = new PieChart();
+
+                // TODO make it not reliant on int parse
+                pieChart.Data(queryResult.Data.Select(x => x.ElementAt(0)).ToList(), queryResult.Data.Select(x => int.Parse(x.ElementAt(1))).ToList());
+
+                var bitmap = pieChart.GetBitmap();
+
+                //var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString, null);
+
+                var stream = CommonHelper.GetStream(bitmap);
+
+                await Context.Channel.SendFileAsync(stream, "graph.png", "");
+                stream.Dispose();
+
+                pieChart.Dispose();
+
+            }
+            catch (Exception ex)
+            {
+                EmbedBuilder embedBuilder = new EmbedBuilder();
+                embedBuilder.WithTitle("Error");
+                embedBuilder.WithDescription(ex.Message);
+                embedBuilder.WithColor(255, 0, 0);
+                embedBuilder.WithAuthor(Context.Message.Author);
+
+                await Context.Channel.SendMessageAsync("", false, embedBuilder.Build());
+            }
+        }
+
         [Command("delete")]
         public async Task DeleteSQLCommand(string commandName)
         {

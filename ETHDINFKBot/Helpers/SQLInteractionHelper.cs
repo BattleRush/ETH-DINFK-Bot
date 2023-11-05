@@ -136,7 +136,7 @@ namespace ETHDINFKBot.Helpers
 
             text += "```";
 
-            text += $"{Environment.NewLine}For image response use executedraw instead of execute.";
+            text += $"{Environment.NewLine}For image response use 'executedraw' instead of 'execute' and for chart use 'executechart'.";
 
             EmbedBuilder embedBuilder = new EmbedBuilder();
             embedBuilder.WithTitle("SQL Command Template");

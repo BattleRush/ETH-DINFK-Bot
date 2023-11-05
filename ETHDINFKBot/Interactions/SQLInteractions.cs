@@ -293,12 +293,13 @@ namespace ETHDINFKBot.Interactions
 
             var user = Context.Interaction.User;
 
-
+            // TODO Check owner of interaction
+            /*
             if (savedQuery.DiscordUserId != user.Id)
             {
                 await Context.Interaction.RespondAsync("You are not allowed to execute someone elses command.");
                 return;
-            }
+            }*/
 
             var savedQueryParameters = SQLDBManager.Instance().GetQueryParameters(savedQuery);
 
@@ -369,12 +370,13 @@ namespace ETHDINFKBot.Interactions
 
             var user = Context.Interaction.User;
 
-
+            // TODO Check owner of interaction
+            /*
             if (savedQuery.DiscordUserId != user.Id)
             {
                 await Context.Interaction.RespondAsync("You are not allowed to execute someone elses command.");
                 return;
-            }
+            }*/
 
             var savedQueryParameters = SQLDBManager.Instance().GetQueryParameters(savedQuery);
 
@@ -446,22 +448,18 @@ namespace ETHDINFKBot.Interactions
         [ComponentInteraction("sql-executechart-cmd-*")]
         public async Task ExecuteChartCommand(int savedQueryId)
         {
-            // TODO
-            await Context.Interaction.DeferAsync();
-            await Context.Channel.SendMessageAsync("Not implemented yet.");
-            return;
-            
             //await Context.Interaction.DeferAsync();
             var savedQuery = SQLDBManager.Instance().GetSavedQueryById(savedQueryId);
 
             var user = Context.Interaction.User;
 
-
+            // TODO Check owner of interaction
+            /*
             if (savedQuery.DiscordUserId != user.Id)
             {
                 await Context.Interaction.RespondAsync("You are not allowed to execute someone elses command.");
                 return;
-            }
+            }*/
 
             var savedQueryParameters = SQLDBManager.Instance().GetQueryParameters(savedQuery);
 
@@ -471,17 +469,27 @@ namespace ETHDINFKBot.Interactions
                 // we can run the command directly
                 try
                 {
-                    var queryResult = await SQLHelper.GetQueryResultsInteraction(Context, savedQuery.Content, true, 100);
-                    string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
+                    var queryResult = await SQLHelper.GetQueryResultsInteraction(Context, savedQuery.Content, true, 10000);
+                    // TODO limit the number of rows better
+                    //string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
 
-                    var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString, null);
+                    // TODO auto detect chart type
 
-                    var stream = await drawTable.GetImage();
-                    if (stream == null)
-                        return;// todo some message
+                    PieChart pieChart = new PieChart();
 
-                    await Context.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null);
+                    // TODO make it not reliant on int parse
+                    pieChart.Data(queryResult.Data.Select(x => x.ElementAt(0)).ToList(), queryResult.Data.Select(x => int.Parse(x.ElementAt(1))).ToList());
+
+                    var bitmap = pieChart.GetBitmap();
+
+                    //var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString, null);
+
+                    var stream = CommonHelper.GetStream(bitmap);
+
+                    await Context.Channel.SendFileAsync(stream, "graph.png", "");
                     stream.Dispose();
+
+                    pieChart.Dispose();
                 }
                 catch (Exception e)
                 {
@@ -501,7 +509,7 @@ namespace ETHDINFKBot.Interactions
                     var builder = new ModalBuilder()
                     {
                         Title = "Execute SQL Command",
-                        CustomId = "sql-executedraw-cmd-modal-" + savedQuery.SavedQueryId
+                        CustomId = "sql-executechart-cmd-modal-" + savedQuery.SavedQueryId
                     };
 
                     int count = 1;
@@ -536,11 +544,13 @@ namespace ETHDINFKBot.Interactions
 
             var user = Context.Interaction.User;
 
+            // TODO Check owner of interaction
+            /*
             if (savedQuery.DiscordUserId != user.Id)
             {
                 await Context.Interaction.RespondAsync("You are not allowed to execute someone elses command.");
                 return;
-            }
+            }*/
 
             EmbedBuilder embedBuilder = SQLInteractionHelper.GetCommandTemplate(savedQuery.SavedQueryId);
 
@@ -556,11 +566,13 @@ namespace ETHDINFKBot.Interactions
 
             var user = Context.Interaction.User;
 
+            // TODO Check owner of interaction
+            /*
             if (savedQueryObject.DiscordUserId != user.Id)
             {
                 await Context.Interaction.RespondAsync("You are not allowed to execute someone elses command.");
                 return;
-            }
+            }*/
 
             var savedQueryParameters = SQLDBManager.Instance().GetQueryParameters(savedQueryObject);
 
@@ -631,11 +643,13 @@ namespace ETHDINFKBot.Interactions
 
             var user = Context.Interaction.User;
 
+            // TODO Check owner of interaction
+            /*
             if (savedQueryObject.DiscordUserId != user.Id)
             {
                 await Context.Interaction.RespondAsync("You are not allowed to execute someone elses command.");
                 return;
-            }
+            }*/
 
             var savedQueryParameters = SQLDBManager.Instance().GetQueryParameters(savedQueryObject);
 
@@ -694,6 +708,97 @@ namespace ETHDINFKBot.Interactions
 
                 await Context.Interaction.Channel.SendFileAsync(stream, "graph.png", "", false, null, null, false, null);
                 stream.Dispose();
+            }
+            catch (Exception e)
+            {
+                await Context.Interaction.Channel.SendMessageAsync(e.Message);
+            }
+        }
+
+        [ModalInteraction("sql-executechart-cmd-modal-*")]
+        public async Task ExecuteCommandWithParamsModalChart(int savedQuery, GetParameterValuesModal modal)
+        {
+            var savedQueryObject = SQLDBManager.Instance().GetSavedQueryById(savedQuery);
+
+            await Context.Interaction.DeferAsync();
+
+            var user = Context.Interaction.User;
+
+            // TODO Check owner of interaction
+            /*
+            if (savedQueryObject.DiscordUserId != user.Id)
+            {
+                await Context.Interaction.RespondAsync("You are not allowed to execute someone elses command.");
+                return;
+            }*/
+
+            var savedQueryParameters = SQLDBManager.Instance().GetQueryParameters(savedQueryObject);
+
+            var queryParameters = new List<MySqlParameter>();
+
+            //var data = Context.Interaction.Data;
+
+            //var json = Newtonsoft.Json.JsonConvert.SerializeObject(data);
+
+            //var values = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+
+            int count = 1;
+            foreach (var parameter in savedQueryParameters)
+            {
+                string value = modal.GetValueByIndex(count);
+
+                count++;
+
+                if (value == null)
+                    value = parameter.DefaultValue;
+
+                if (value == "NULL")
+                {
+                    queryParameters.Add(new MySqlParameter(parameter.ParameterName, DBNull.Value));
+                    continue;
+                }
+
+                switch (parameter.ParameterType)
+                {
+                    // todo double, long, ulong tests
+                    case "int":
+                        queryParameters.Add(SQLInteractionHelper.GetNumberParameter(parameter.ParameterName, value));
+                        break;
+                    case "string":
+                        queryParameters.Add(SQLInteractionHelper.GetStringParameter(parameter.ParameterName, value));
+                        break;
+                    case "datetime":
+                        queryParameters.Add(SQLInteractionHelper.GetDateTimeParameter(parameter.ParameterName, value));
+                        break;
+                    case "bool":
+                        queryParameters.Add(SQLInteractionHelper.GetBoolParameter(parameter.ParameterName, value));
+                        break;
+                }
+            }
+
+            try
+            {
+                var queryResult = await SQLHelper.GetQueryResultsInteraction(Context, savedQueryObject.Content, true, 10000, parameters: queryParameters);
+                // TODO limit the number of rows better
+                //string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
+
+                // TODO auto detect chart type
+
+                PieChart pieChart = new PieChart();
+
+                // TODO make it not reliant on int parse
+                pieChart.Data(queryResult.Data.Select(x => x.ElementAt(0)).ToList(), queryResult.Data.Select(x => int.Parse(x.ElementAt(1))).ToList());
+
+                var bitmap = pieChart.GetBitmap();
+
+                //var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString, null);
+
+                var stream = CommonHelper.GetStream(bitmap);
+
+                await Context.Channel.SendFileAsync(stream, "graph.png", "");
+                stream.Dispose();
+
+                pieChart.Dispose();
             }
             catch (Exception e)
             {
