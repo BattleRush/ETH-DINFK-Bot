@@ -200,6 +200,7 @@ namespace ETHDINFKBot
             }
             catch (Exception ex)
             {
+                await Context.Channel.SendMessageAsync(ex.Message.ToString());
                 await Context.Channel.SendMessageAsync(ex.ToString());
             }
         }
