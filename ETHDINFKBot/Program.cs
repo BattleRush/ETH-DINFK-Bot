@@ -1330,8 +1330,9 @@ namespace ETHDINFKBot
                 return;
             }
 
-            // ignore this channel -> high msg volume
-            if (!(PlaceChannels.Any(i => i == msg.Channel.Id) || IgnoreThreads.Any(i => i == msg.Channel.Id)))
+            // if message is from place channels or ignore threads -> ignore
+            // however if the message is from user dont ignore
+            if (!((PlaceChannels.Any(i => i == msg.Channel.Id) || IgnoreThreads.Any(i => i == msg.Channel.Id)) && m.Author.IsBot))
             {
                 ulong channelId = msg.Channel.Id;
 
