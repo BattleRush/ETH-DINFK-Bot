@@ -1880,7 +1880,7 @@ Total todays menus: {allTodaysMenus.Count}");
                         var channel = guildChannel.Guild.GetChannel(channelId.Value);
 
                         DatabaseManager.Instance().UpdateChannelSetting(channel.Id, flag);
-                        Context.Channel.SendMessageAsync($"Set flag {flag} for channel {channel.Name}", false);
+                        await Context.Channel.SendMessageAsync($"Set flag {flag} for channel {channel.Name}", false);
                     }
                 }
             }
@@ -1915,7 +1915,7 @@ Total todays menus: {allTodaysMenus.Count}");
                 var author = Context.Message.Author;
                 if (author.Id != Program.ApplicationSetting.Owner)
                 {
-                    Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
                 }
 

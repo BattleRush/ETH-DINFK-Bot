@@ -87,7 +87,7 @@ namespace ETHDINFKBot
 
         private static List<string> AllowedBotCommands = new List<string>() { CurrentPrefix + "place setpixel ", CurrentPrefix + "place pixelverify " };
         private static List<ulong> PlaceChannels = new List<ulong>() { 819966095070330950, 955751651942211604 };
-        private static List<ulong> IgnoreThreads = new List<ulong>() { 996746797236105236 }; // Not used atm
+        private static List<ulong> IgnoreThreads = new List<ulong>() { 996746797236105236, 1099705217337016330 };
 
         //public static WebSocketServer PlaceWebsocket;
         public static WebSocketServer PlaceServer;
@@ -1331,7 +1331,7 @@ namespace ETHDINFKBot
             }
 
             // ignore this channel -> high msg volume
-            if (!PlaceChannels.Any(i => i == msg.Channel.Id))
+            if (!(PlaceChannels.Any(i => i == (msg.Channel?.Id ?? 0)) || IgnoreThreads.Any(i => i == (msg.Thread?.Id ?? 0))))
             {
                 ulong channelId = msg.Channel.Id;
 
