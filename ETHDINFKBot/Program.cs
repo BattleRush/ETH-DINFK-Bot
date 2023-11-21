@@ -1331,7 +1331,7 @@ namespace ETHDINFKBot
             }
 
             // ignore this channel -> high msg volume
-            if (!(PlaceChannels.Any(i => i == (msg.Channel?.Id ?? 0)) || IgnoreThreads.Any(i => i == (msg.Thread?.Id ?? 0))))
+            if (!(PlaceChannels.Any(i => i == msg.Channel.Id) || IgnoreThreads.Any(i => i == msg.Channel.Id)))
             {
                 ulong channelId = msg.Channel.Id;
 
