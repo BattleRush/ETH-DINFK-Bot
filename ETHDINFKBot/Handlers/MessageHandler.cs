@@ -588,9 +588,14 @@ External status site: https://up.markc.su/status/vis");
                         {
                             // likeky no webhook perms -> skip
                         }
-
+try
+{
                         await SocketMessage.DeleteAsync();
-
+}
+                        catch(Exception ex)
+                        {
+                            // likely msg deleted
+                        }
                         // TODO Keep relevant webhook infos in cache
 
 
