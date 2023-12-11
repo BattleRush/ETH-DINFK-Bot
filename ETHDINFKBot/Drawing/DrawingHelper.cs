@@ -433,6 +433,7 @@ namespace ETHDINFKBot.Drawing
         public static float DrawTextArea(SKCanvas canvas, SKPaint paint, float x, float y, float maxWidth, float lineHeight, string text)
         {
             var spaceWidth = paint.MeasureText(" ");
+            text = text ?? "no text";
             var lines = text.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
             lines = lines.SelectMany(l => SplitLine(paint, maxWidth, l, spaceWidth)).ToArray();
 
