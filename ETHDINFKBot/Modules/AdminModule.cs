@@ -1026,6 +1026,15 @@ Total todays menus: {allTodaysMenus.Count}");
                                     if (fullName.ToLower().Contains("uzh"))
                                         restaurantLocation = RestaurantLocation.ETH_UZH_Zentrum;
 
+                                    if (fullName.ToLower().Contains("zhaw"))
+                                        restaurantLocation = RestaurantLocation.ZHAW;
+
+                                    if (fullName.ToLower().Contains("ubs"))
+                                        restaurantLocation = RestaurantLocation.UBS;
+
+                                    if (fullName.ToLower().Contains("sbb") || fullName.ToLower().Contains("cff") || fullName.ToLower().Contains("ffs"))
+                                        restaurantLocation = RestaurantLocation.SBB_CFF_FFS;
+
                                     // TODO maybe other to auto detect
 
                                     // create new restaurant

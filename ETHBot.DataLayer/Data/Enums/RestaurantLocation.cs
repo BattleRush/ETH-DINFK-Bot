@@ -30,6 +30,15 @@ namespace ETHBot.DataLayer.Data.Enums
         [Display(Name = "Bern (Uni Bern)")]
         Bern = 7,
 
+        [Display(Name = "ZHAW")]
+        ZHAW = 8,
+        
+        [Display(Name = "UBS")]
+        UBS = 9,
+        
+        [Display(Name = "SBB CFF FFS")]
+        SBB_CFF_FFS = 10,
+
         [Display(Name = "Unkwown Location")]
         Other = 99        
     }

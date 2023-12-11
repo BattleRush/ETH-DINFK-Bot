@@ -1233,6 +1233,15 @@ It is also likely that there are no menus currently available today." + weekendS
                             case RestaurantLocation.Bern:
                                 row = 2;
                                 break;
+                            case RestaurantLocation.ZHAW:
+                                row = 2;
+                                break;
+                            case RestaurantLocation.UBS:
+                                row = 2;
+                                break;
+                            case RestaurantLocation.SBB_CFF_FFS:
+                                row = 2;
+                                break;
                             case RestaurantLocation.Other:
                                 row = 3;
                                 break;                            
