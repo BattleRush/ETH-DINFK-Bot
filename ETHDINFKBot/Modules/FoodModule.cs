@@ -695,8 +695,7 @@ It is also likely that there are no menus currently available today." + weekendS
                         // Limit to 2 rows max
                         if (maxMenus > 3)
                             maxColumnCount = (int)Math.Ceiling(maxMenus / 2m);
-
-
+                        
                         canvas.DrawText(meal.ToString(), new SKPoint(maxColumnCount * colWidth - 75, 35), paint);
 
                         foreach (var menu in restaurant.Value)

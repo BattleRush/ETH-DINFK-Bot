@@ -146,7 +146,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.DiscordUsers.AsQueryable().OrderByDescending(i => i.FirstDailyPostCount).Take(amount).ToList();
+                    return context.DiscordUsers.OrderByDescending(i => i.FirstDailyPostCount).Take(amount).ToList();
                 }
             }
             catch (Exception ex)
@@ -162,7 +162,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.DiscordUsers.AsQueryable().OrderByDescending(i => i.FirstAfternoonPostCount).Take(amount).ToList();
+                    return context.DiscordUsers.OrderByDescending(i => i.FirstAfternoonPostCount).Take(amount).ToList();
                 }
             }
             catch (Exception ex)
@@ -568,7 +568,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.DiscordChannels.AsQueryable().Where(i => i.DiscordServerId == serverId).ToList();
+                    return context.DiscordChannels.Where(i => i.DiscordServerId == serverId).ToList();
                 }
             }
             catch (Exception ex)
@@ -584,7 +584,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.DiscordUsers.AsQueryable().Where(i => i.Banned).Select(i => i.DiscordUserId).ToList();
+                    return context.DiscordUsers.Where(i => i.Banned).Select(i => i.DiscordUserId).ToList();
                 }
             }
             catch (Exception ex)
@@ -600,7 +600,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.DiscordUsers.AsQueryable().Where(i => i.NoTrack).Select(i => i.DiscordUserId).ToList();
+                    return context.DiscordUsers.Where(i => i.NoTrack).Select(i => i.DiscordUserId).ToList();
                 }
             }
             catch (Exception ex)
@@ -781,7 +781,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.DiscordMessages.AsQueryable().Where(i => i.DiscordChannelId == channelId).FirstOrDefault()?.DiscordMessageId;
+                    return context.DiscordMessages.Where(i => i.DiscordChannelId == channelId).FirstOrDefault()?.DiscordMessageId;
                 }
             }
             catch (Exception ex)
@@ -919,7 +919,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.DiscordMessages.AsQueryable().Where(i => i.DiscordUser.IsBot == false).Skip(skip).Take(15_000).ToList();
+                    return context.DiscordMessages.Where(i => i.DiscordUser.IsBot == false).Skip(skip).Take(15_000).ToList();
                 }
             }
             catch (Exception ex)
@@ -954,7 +954,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return null;// context.EmojiStatistics.AsQueryable().OrderByDescending(i => i.UsedByBots).Take(count).ToList();
+                    return null;// context.EmojiStatistics.OrderByDescending(i => i.UsedByBots).Take(count).ToList();
                 }
             }
             catch (Exception ex)
@@ -974,7 +974,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return null;// context.EmojiStatistics.AsQueryable().OrderByDescending(i => i.UsedInText).Take(count).ToList();
+                    return null;// context.EmojiStatistics.OrderByDescending(i => i.UsedInText).Take(count).ToList();
                 }
             }
             catch (Exception ex)
@@ -992,7 +992,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return null;//context.EmojiStatistics.AsQueryable().OrderByDescending(i => i.UsedInTextOnce).Take(count).ToList();
+                    return null;//context.EmojiStatistics.OrderByDescending(i => i.UsedInTextOnce).Take(count).ToList();
                 }
             }
             catch (Exception ex)
@@ -1011,7 +1011,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return null;// context.EmojiStatistics.AsQueryable().OrderByDescending(i => i.UsedAsReaction).Take(count).ToList();
+                    return null;// context.EmojiStatistics.OrderByDescending(i => i.UsedAsReaction).Take(count).ToList();
                 }
             }
             catch (Exception ex)
@@ -1032,7 +1032,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return null;// context.CommandStatistics.AsQueryable().Where(i => i.CommandTypeId == (int)type).OrderByDescending(i => i.Count).Take(count).ToList();
+                    return null;// context.CommandStatistics.Where(i => i.CommandTypeId == (int)type).OrderByDescending(i => i.Count).Take(count).ToList();
                 }
             }
             catch (Exception ex)
@@ -1351,7 +1351,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    return context.PingHistory.AsQueryable().Where(i => i.DiscordRoleId == roleId && i.DiscordUserId == userId).OrderByDescending(i => i.PingHistoryId).Take(amount).ToList();
+                    return context.PingHistory.Where(i => i.DiscordRoleId == roleId && i.DiscordUserId == userId).OrderByDescending(i => i.PingHistoryId).Take(amount).ToList();
                 }
             }
             catch (Exception ex)
@@ -1374,10 +1374,10 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    var messageIds = context.DiscordMessages.AsQueryable().Where(i => i.DiscordUserId == userId).OrderByDescending(i => i.DiscordMessageId).Take(queryMessageLength).Select(i => i.DiscordMessageId).ToList();
+                    var messageIds = context.DiscordMessages.Where(i => i.DiscordUserId == userId).OrderByDescending(i => i.DiscordMessageId).Take(queryMessageLength).Select(i => i.DiscordMessageId).ToList();
 
                     // We query only in the last 10k messages for performance reasons
-                    var messages = context.DiscordMessages.AsQueryable().OrderByDescending(i => i.DiscordMessageId).Take(10_000);/*Retrieve the last 10k messages into memory*///.Where(i => messageIds.Contains(i.ReplyMessageId ?? 0));
+                    var messages = context.DiscordMessages.OrderByDescending(i => i.DiscordMessageId).Take(10_000);/*Retrieve the last 10k messages into memory*///.Where(i => messageIds.Contains(i.ReplyMessageId ?? 0));
 
                     List<DiscordMessage> replyMessages = new List<DiscordMessage>();
 
@@ -1423,7 +1423,7 @@ namespace ETHDINFKBot
             {
                 using (ETHBotDBContext context = new ETHBotDBContext())
                 {
-                    var messageTimes = context.DiscordMessages.AsQueryable().Select(i => SnowflakeUtils.FromSnowflake(i.DiscordMessageId)).ToList().Where(i => from < i && i < to).ToList();
+                    var messageTimes = context.DiscordMessages.Select(i => SnowflakeUtils.FromSnowflake(i.DiscordMessageId)).ToList().Where(i => from < i && i < to).ToList();
 
 
                     var groups = messageTimes.GroupBy(x =>
@@ -1560,7 +1560,7 @@ namespace ETHDINFKBot
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
-                return context.CommandStatistics.AsQueryable().Where(i => i.Type.CommandTypeId == (int)type).OrderByDescending(i => i.Count).Take(amount).ToList(); // TODO check it works
+                return context.CommandStatistics.Where(i => i.Type.CommandTypeId == (int)type).OrderByDescending(i => i.Count).Take(amount).ToList(); // TODO check it works
             }
         }
 
@@ -1637,7 +1637,7 @@ namespace ETHDINFKBot
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
-                var subreddits = context.SubredditInfos.AsQueryable().Where(i => i.IsScraping != status);
+                var subreddits = context.SubredditInfos.Where(i => i.IsScraping != status);
                 foreach (var subreddit in subreddits)
                 {
                     subreddit.IsScraping = status;
@@ -1691,7 +1691,7 @@ namespace ETHDINFKBot
         {
             using (ETHBotDBContext context = new ETHBotDBContext())
             {
-                return context.SubredditInfos.AsQueryable().Where(i => i.IsScraping == status).ToList();
+                return context.SubredditInfos.Where(i => i.IsScraping == status).ToList();
             }
         }
 
@@ -1713,7 +1713,7 @@ namespace ETHDINFKBot
                 var subredditInfo = GetSubreddit(subreddit);
 
 
-                var posts = context.RedditPosts.AsQueryable().Where(i => i.SubredditInfo.SubredditId == subredditInfo.SubredditId).OrderBy(i => r.Next(0, 1000));
+                var posts = context.RedditPosts.Where(i => i.SubredditInfo.SubredditId == subredditInfo.SubredditId).OrderBy(i => r.Next(0, 1000));
 
 
                 //.First().RedditImages.First().Link; // I know this is performance garbage but its 1 AM so fuck you well slept future me who thinks is smarter than my past me

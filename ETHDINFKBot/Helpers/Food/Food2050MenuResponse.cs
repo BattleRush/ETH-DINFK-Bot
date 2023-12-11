@@ -38,6 +38,7 @@ namespace ETHDINFKBot.Helpers.Food
         public bool isVegan { get; set; }
         public bool isVegetarian { get; set; }
         public string imageUrl { get; set; }
+        public string title { get; set; }
         public string title_de { get; set; }
         public bool isImageVisible { get; set; }
         public string menuLineDescription { get; set; }

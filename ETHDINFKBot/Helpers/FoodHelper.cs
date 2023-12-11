@@ -1095,7 +1095,7 @@ namespace ETHDINFKBot.Helpers
                             var menu = new Menu()
                             {
                                 Name = item.displayName,
-                                Description = responseRecipe.title_de,
+                                Description = responseRecipe.title,
                                 Amount = price,
                                 IsVegan = responseRecipe.isVegan,
                                 IsVegetarian = responseRecipe.isVegetarian,
