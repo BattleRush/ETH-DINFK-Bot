@@ -1009,7 +1009,7 @@ namespace ETHDINFKBot.Helpers
                 int endIndex = buildIdString.IndexOf("\",");
                 string buildId = buildIdString.Substring(0, endIndex);
 
-                string url = $"https://app.food2050.ch/_next/data/{buildId}/{location}/{mensa}/menu/{timeString}weekly.json";
+                string url = $"https://app.food2050.ch/_next/data/{buildId}/de/{location}/{mensa}/menu/{timeString}weekly.json";
 
                 string json = client.DownloadString(url);
 
@@ -1036,7 +1036,7 @@ namespace ETHDINFKBot.Helpers
                                 continue;
 
                             // example https://app.food2050.ch/_next/data/fWt87G0z-iWkq_diJzXc_/uzh-zentrum/untere-mensa/food-profile/2023-07-28-mittag-butcher.json?locationSlug=uzh-zentrum&kitchenSlug=untere-mensa&slug=2023-07-28-mittag-butcher
-                            var menuUrl = $"https://app.food2050.ch/_next/data/{buildId}/{location}/{mensa}/food-profile/{recipe.recipe.slug}.json";
+                            var menuUrl = $"https://app.food2050.ch/_next/data/{buildId}/de/{location}/{mensa}/food-profile/{recipe.recipe.slug}.json";
 
                             Food2050MenuResponse menuResult = null;
 
