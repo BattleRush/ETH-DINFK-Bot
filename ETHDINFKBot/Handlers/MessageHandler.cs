@@ -185,6 +185,10 @@ External status site: https://up.markc.su/status/vis");
         {
             try
             {
+                // if exams.vis.ethz.ch url then append /health/ to the url
+                if (url.Contains("exams.vis.ethz.ch"))
+                    url += "/health/";
+                    
                 var response = await httpClient.GetAsync(url);
 
                 if (response.StatusCode == HttpStatusCode.OK)
