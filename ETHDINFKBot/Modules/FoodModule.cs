@@ -211,7 +211,7 @@ namespace ETHDINFKBot.Modules
                     int row = 0;
                     int column = 0;
                     int maxColumns = 6;
-                    
+
 
                     foreach (var allergyId in allergyIds)
                     {
@@ -226,7 +226,7 @@ namespace ETHDINFKBot.Modules
 
                         column++;
 
-                        if(column >= maxColumns)
+                        if (column >= maxColumns)
                         {
                             row++;
                             column = 0;
@@ -391,6 +391,123 @@ namespace ETHDINFKBot.Modules
             }
 
             return currentMenus;
+        }
+
+        [Command("f")]
+        [Priority(0)]
+        public async Task DrawFoodImages(int input = -1)
+        {
+            // just return default food images
+            if (input == -1)
+            {
+                await DrawFoodImages(null, null, false);
+                return;
+            }
+
+            // if input is 3 digits then its day,time,debug
+            // if input is 2 digits then its day,time
+            // if input is 1 digit then its day
+
+            if (input < 0 || input > 721) // 7 sun, 2 dinner, 1 debug so 722 is invalid
+                return;
+
+            int day = -1;
+            int time = -1;
+            int debug = -1;
+
+            if (input >= 100)
+            {
+                day = input / 100;
+                time = input % 100 / 10;
+                debug = input % 10;
+            }
+            else if (input >= 10)
+            {
+                day = input / 10;
+                time = input % 10;
+                debug = -1;
+            }
+            else
+            {
+                day = input;
+            }
+
+            // perform input validation
+            if (day < 1 || day > 7)
+            {
+                await Context.Message.Channel.SendMessageAsync("Invalid day input. Valid values are 1-7 for monday-sunday", messageReference: new MessageReference(Context.Message.Id));
+                return;
+            }
+
+            if (time < -1 || time > 2)
+            {
+                await Context.Message.Channel.SendMessageAsync("Invalid time input. Valid values are 0, 1, 2 for breakfast, lunch, dinner", messageReference: new MessageReference(Context.Message.Id));
+                return;
+            }
+
+            if (debug < -1 || debug > 1)
+            {
+                await Context.Message.Channel.SendMessageAsync("Invalid debug input. Valid values are 0, 1 for false, true", messageReference: new MessageReference(Context.Message.Id));
+                return;
+            }
+
+            await DrawFoodImages(day, time, debug);
+        }
+
+        [Command("f")]
+        [Priority(1)]
+        public async Task DrawFoodImages(int day, int time = -1, int debug = -1)
+        {
+            string dayStr = null;
+            string timeStr = null;
+
+            switch (day)
+            {
+                case -1:
+                    dayStr = null;
+                    break;
+                case 1:
+                    dayStr = "mon";
+                    break;
+                case 2:
+                    dayStr = "tue";
+                    break;
+                case 3:
+                    dayStr = "wed";
+                    break;
+                case 4:
+                    dayStr = "thu";
+                    break;
+                case 5:
+                    dayStr = "fri";
+                    break;
+                case 6:
+                    dayStr = "sat";
+                    break;
+                case 7:
+                    dayStr = "sun";
+                    break;
+            }
+
+            switch (time)
+            {
+                case -1:
+                    timeStr = null;
+                    break;
+                case 0:
+                    timeStr = "breakfast"; // atm not in use
+                    break;
+                case 1:
+                    timeStr = "lunch";
+                    break;
+                case 2:
+                    timeStr = "dinner";
+                    break;
+            }
+
+            bool debugBool = debug == 1;
+
+            await DrawFoodImages(dayStr, timeStr, debugBool);
         }
 
         [Command("food")]
@@ -566,7 +683,7 @@ It is also likely that there are no menus currently available today." + weekendS
                         bool done = false;
                         foreach (var restaurant in currentMenus)
                         {
-                            if(done)
+                            if (done)
                                 break;
 
                             foreach (var menu in restaurant.Value)
@@ -624,10 +741,10 @@ It is also likely that there are no menus currently available today." + weekendS
                                     bitmap.Dispose();
                                     canvas.Dispose();
 
-                                    if(streams.Count >= maxPages)
+                                    if (streams.Count >= maxPages)
                                     {
                                         // Limit to 10 max
-                                        done = true; 
+                                        done = true;
                                         currentColumn = -1;
                                         // TODO notify log
                                     }
@@ -695,7 +812,7 @@ It is also likely that there are no menus currently available today." + weekendS
                         // Limit to 2 rows max
                         if (maxMenus > 3)
                             maxColumnCount = (int)Math.Ceiling(maxMenus / 2m);
-                        
+
                         canvas.DrawText(meal.ToString(), new SKPoint(maxColumnCount * colWidth - 75, 35), paint);
 
                         foreach (var menu in restaurant.Value)
@@ -801,8 +918,16 @@ It is also likely that there are no menus currently available today." + weekendS
 
                 builder.WithCurrentTimestamp();
                 builder.AddField($"{Program.CurrentPrefix}food help", "This message :)");
+                builder.AddField($"{Program.CurrentPrefix}f[ood]", "Returns food for the current day and time. If the user has no settings then default mensas are retreived.");
                 builder.AddField($"{Program.CurrentPrefix}food <mon|tue|wed|thu|fri> <lunch|dinner>", $"Retreived food info. If the user has no settings then default mensas are retreived.{Environment.NewLine}" +
                     $"Optional: Time parameter 'lunch' or 'dinner'. If its not provided then the bot send currently appropriate menus depending on the time of day.");
+                
+                builder.AddField($"{Program.CurrentPrefix}f [1-7]", "Returns food for mon-sun where the day is encoded in the number. 1 = monday, 2 = tuesday, ...");
+                builder.AddField($"{Program.CurrentPrefix}f [1-7] [0-2]", "Returns food for mon-sun where the day is encoded in the number. 1 = monday, 2 = tuesday, ...{Environment.NewLine}" +
+                    $"Optional: Time parameter '0' = breakfast, '1' = lunch, '2' = dinner. If its not provided then the bot send currently appropriate menus depending on the time of day.");
+                builder.AddField($"{Program.CurrentPrefix}f [1-7][0-2]", "Same as above but without spaces :>");
+                builder.AddField($"{Program.CurrentPrefix}f [1-7][0-2][0-1]", "Same as above but with debug mode. Debug mode shows the menu id and the image id. This is useful for debugging purposes.");
+
                 builder.AddField($"{Program.CurrentPrefix}food fav {Program.CurrentPrefix}food settings", $"Edit your favourite restaurants and food preferences which are used when the user calls {Program.CurrentPrefix}food");
                 builder.AddField($"{Program.CurrentPrefix}food allergies", "Informations about the Allergy icons");
                 builder.AddField($"{Program.CurrentPrefix}admin food help", "For admins");
@@ -1213,7 +1338,7 @@ It is also likely that there are no menus currently available today." + weekendS
                     {
                         var locationDisplayName = location.GetType().GetMember(location.ToString()).First().GetCustomAttribute<DisplayAttribute>();
 
-                        switch(location)
+                        switch (location)
                         {
                             case RestaurantLocation.ETH_UZH_Zentrum:
                                 row = 1;
@@ -1244,7 +1369,7 @@ It is also likely that there are no menus currently available today." + weekendS
                                 break;
                             case RestaurantLocation.Other:
                                 row = 3;
-                                break;                            
+                                break;
                         }
 
                         int locationValue = (int)location;
