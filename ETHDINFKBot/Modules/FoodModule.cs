@@ -512,6 +512,7 @@ namespace ETHDINFKBot.Modules
             //await Context.Message.Channel.SendMessageAsync($"day: {dayStr}, time: {timeStr}, debug: {debugBool}", messageReference: new MessageReference(Context.Message.Id));
 
             await DrawFoodImages(dayStr, timeStr, debugBool);
+            await Context.Message.Channel.SendMessageAsync($"Searched for {dayStr ?? "null"} ({day}) and time: {timeStr ?? "null"} ({time})");
         }
 
         [Command("food")]
