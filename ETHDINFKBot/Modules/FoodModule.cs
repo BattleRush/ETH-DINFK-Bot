@@ -514,6 +514,39 @@ namespace ETHDINFKBot.Modules
             await DrawFoodImages(dayStr, timeStr, debugBool);
         }
 
+        // Too lazy to type a space for value, don't judge me
+        // TODO find a better way to do this lul
+
+        [Command("f11")] // mon/lunch
+        public async Task DrawFoodImages11() => await DrawFoodImages(1, 1);
+
+        [Command("f12")] // mon/dinner
+        public async Task DrawFoodImages12() => await DrawFoodImages(1, 2);
+
+        [Command("f21")] // tue/lunch
+        public async Task DrawFoodImages21() => await DrawFoodImages(2, 1);
+
+        [Command("f22")] // tue/dinner
+        public async Task DrawFoodImages22() => await DrawFoodImages(2, 2);
+
+        [Command("f31")] // wed/lunch
+        public async Task DrawFoodImages31() => await DrawFoodImages(3, 1);
+
+        [Command("f32")] // wed/dinner
+        public async Task DrawFoodImages32() => await DrawFoodImages(3, 2);
+
+        [Command("f41")] // thu/lunch
+        public async Task DrawFoodImages41() => await DrawFoodImages(4, 1);
+
+        [Command("f42")] // thu/dinner
+        public async Task DrawFoodImages42() => await DrawFoodImages(4, 2);
+
+        [Command("f51")] // fri/lunch
+        public async Task DrawFoodImages51() => await DrawFoodImages(5, 1);
+
+        [Command("f52")] // fri/dinner
+        public async Task DrawFoodImages52() => await DrawFoodImages(5, 2);
+
         [Command("food")]
         [Priority(1)]
         public async Task DrawFoodImages(string day = null, string time = null, bool debug = false)
@@ -547,7 +580,7 @@ namespace ETHDINFKBot.Modules
                     meal = MealTime.Dinner;
                 else if (time.ToLower() == "breakfast" || time.ToLower() == "b")
                     meal = MealTime.Breakfast;
-                
+
 
                 var author = Context.Message.Author;
                 var userId = author.Id;
@@ -928,7 +961,7 @@ It is also likely that there are no menus currently available today." + weekendS
                 builder.AddField($"{Program.CurrentPrefix}f[ood]", "Returns food for the current day and time. If the user has no settings then default mensas are retreived.");
                 builder.AddField($"{Program.CurrentPrefix}food <mon|tue|wed|thu|fri> <l[unch]|d[inner]>", $"Retreived food info. If the user has no settings then default mensas are retreived.{Environment.NewLine}" +
                     $"Optional: Time parameter 'lunch'/'l' or 'dinner'/'d'. If its not provided then the bot send currently appropriate menus depending on the time of day.");
-                
+
                 builder.AddField($"{Program.CurrentPrefix}f [1-7]", "Returns food for mon-sun where the day is encoded in the number. 1 = monday, 2 = tuesday, ...");
                 builder.AddField($"{Program.CurrentPrefix}f [1-7] [0-2]", "Returns food for mon-sun where the day is encoded in the number. 1 = monday, 2 = tuesday, ...{Environment.NewLine}" +
                     $"Optional: Time parameter '0' = breakfast, '1' = lunch, '2' = dinner. If its not provided then the bot send currently appropriate menus depending on the time of day.");
