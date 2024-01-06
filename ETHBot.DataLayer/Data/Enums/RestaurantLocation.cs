@@ -39,7 +39,7 @@ namespace ETHBot.DataLayer.Data.Enums
         [Display(Name = "SBB CFF FFS")]
         SBB_CFF_FFS = 10,
 
-        [Display(Name = "Unkwown Location")]
+        [Display(Name = "Unknown Location")]
         Other = 99        
     }
 }
