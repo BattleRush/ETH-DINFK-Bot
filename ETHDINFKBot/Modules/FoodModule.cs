@@ -518,35 +518,37 @@ namespace ETHDINFKBot.Modules
         // Too lazy to type a space for value, don't judge me
         // TODO find a better way to do this lul
 
-        [Command("f11")] // mon/lunch
-        public async Task DrawFoodImages11() => await DrawFoodImages(1, 1);
 
-        [Command("f12")] // mon/dinner
-        public async Task DrawFoodImages12() => await DrawFoodImages(1, 2);
 
-        [Command("f21")] // tue/lunch
-        public async Task DrawFoodImages21() => await DrawFoodImages(2, 1);
+        [Command("fxy")] // use aliases f1, f2, f3, f4, f5, f11, f12, f21, f22, f31, f32, f41, f42, f51, f52
+        [Alias(new string[] { "f1", "f2", "f3", "f4", "f5", "f11", "f12", "f21", "f22", "f31", "f32", "f41", "f42", "f51", "f52" })]
+        public async Task DrawFoodImagesShort()
+        {
+            var commandText = Context.Message.Content;
+            commandText = commandText.Substring(Program.CurrentPrefix.Length);
+            commandText = commandText.Substring(1);
 
-        [Command("f22")] // tue/dinner
-        public async Task DrawFoodImages22() => await DrawFoodImages(2, 2);
+            if(commandText == "xy")
+            {
+                await Context.Message.Channel.SendMessageAsync("Sneaky sneaky <@!{Context.Message.Author.Id}>, you need to provide a value for x and y", messageReference: new MessageReference(Context.Message.Id));
+                return;
+            }
 
-        [Command("f31")] // wed/lunch
-        public async Task DrawFoodImages31() => await DrawFoodImages(3, 1);
+            int day = -1;
+            int time = -1;
 
-        [Command("f32")] // wed/dinner
-        public async Task DrawFoodImages32() => await DrawFoodImages(3, 2);
+            if (commandText.Length == 1)
+            {
+                day = int.Parse(commandText);
+            }
+            else if (commandText.Length == 2)
+            {
+                day = int.Parse(commandText.Substring(0, 1));
+                time = int.Parse(commandText.Substring(1, 1));
+            }
 
-        [Command("f41")] // thu/lunch
-        public async Task DrawFoodImages41() => await DrawFoodImages(4, 1);
-
-        [Command("f42")] // thu/dinner
-        public async Task DrawFoodImages42() => await DrawFoodImages(4, 2);
-
-        [Command("f51")] // fri/lunch
-        public async Task DrawFoodImages51() => await DrawFoodImages(5, 1);
-
-        [Command("f52")] // fri/dinner
-        public async Task DrawFoodImages52() => await DrawFoodImages(5, 2);
+            await DrawFoodImages(day, time);
+        }
 
         [Command("food")]
         [Priority(1)]
@@ -964,7 +966,7 @@ It is also likely that there are no menus currently available today." + weekendS
                     $"Optional: Time parameter 'lunch'/'l' or 'dinner'/'d'. If its not provided then the bot send currently appropriate menus depending on the time of day.");
 
                 builder.AddField($"{Program.CurrentPrefix}f [1-7]", "Returns food for mon-sun where the day is encoded in the number. 1 = monday, 2 = tuesday, ...");
-                builder.AddField($"{Program.CurrentPrefix}f [1-7] [0-2]", "Returns food for mon-sun where the day is encoded in the number. 1 = monday, 2 = tuesday, ...{Environment.NewLine}" +
+                builder.AddField($"{Program.CurrentPrefix}f [1-7] [0-2]", $"Returns food for mon-sun where the day is encoded in the number. 1 = monday, 2 = tuesday, ...{Environment.NewLine}" +
                     $"Optional: Time parameter '0' = breakfast, '1' = lunch, '2' = dinner. If its not provided then the bot send currently appropriate menus depending on the time of day.");
                 builder.AddField($"{Program.CurrentPrefix}f [1-7][0-2]", "Same as above but without spaces :>");
                 builder.AddField($"{Program.CurrentPrefix}f [1-7][0-2][0-1]", "Same as above but with debug mode. Debug mode shows the menu id and the image id. This is useful for debugging purposes.");
@@ -977,6 +979,7 @@ It is also likely that there are no menus currently available today." + weekendS
             }
 
             [Command("week")]
+            [Alias("w")]
             [Priority(10)]
             public async Task GetWeeklyMenuImage(string time = null, bool debug = false)
             {
@@ -1288,6 +1291,7 @@ It is also likely that there are no menus currently available today." + weekendS
             }
 
             [Command("allergies")]
+            [Alias("a")]
             [Priority(10)]
             public async Task FoodAllergyInfo()
             {
