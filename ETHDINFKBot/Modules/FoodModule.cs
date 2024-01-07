@@ -530,7 +530,7 @@ namespace ETHDINFKBot.Modules
 
             if(commandText == "xy")
             {
-                await Context.Message.Channel.SendMessageAsync($"Sneaky sneaky <@!{Context.Message.Author.Id}>, you need to provide a value for x and y", messageReference: new MessageReference(Context.Message.Id));
+                await Context.Message.Channel.SendMessageAsync($"Sneaky sneaky <@!{Context.Message.Author.Id}>, you need to provide a value for x and y. x is the day 1-5 and y is the time 1 for lunch and 2 for dinner.", messageReference: new MessageReference(Context.Message.Id));
                 return;
             }
 
