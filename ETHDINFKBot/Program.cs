@@ -481,16 +481,19 @@ namespace ETHDINFKBot
                 List<string> returnInfo = new List<string>();
 
                 foreach (var command in module.Commands)
-                    returnInfo.Add(command.Aliases.First());
+                    returnInfo.AddRange(command.Aliases);
 
                 foreach (var subModule in module.Submodules)
                     returnInfo.AddRange(buildCommandString(subModule));
+
 
                 return returnInfo;
             };
 
             foreach (var module in Commands.Modules.Where(i => !i.IsSubmodule))
                 CommandNames.AddRange(buildCommandString(module));
+
+            Console.WriteLine("Commands: " + string.Join(", ", CommandNames));
 
             PlaceMultipixelHandler multipixelHandler = new PlaceMultipixelHandler();
             multipixelHandler.MultiPixelProcess();
