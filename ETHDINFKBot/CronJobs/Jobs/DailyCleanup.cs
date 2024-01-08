@@ -57,7 +57,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                 }
 
                 //if (textChannel != null && deletedFiles > 10)
-                    //textChannel.SendMessageAsync($"Found {deletedFiles} emotes to be deleted");
+                //textChannel.SendMessageAsync($"Found {deletedFiles} emotes to be deleted");
             }
         }
         private async void CleanUpOldMessages(SocketTextChannel channel, TimeSpan toDeleteOlderThan)
@@ -78,6 +78,53 @@ namespace ETHDINFKBot.CronJobs.Jobs
             //var messageDelete = await channel.SendMessageAsync($"Deleting {oldMessages.Count()} messages"); // enable when this message is correct
             //Task.Delay(TimeSpan.FromMinutes(5));
             //messageDelete.DeleteAsync();
+        }
+
+        private async void CleanupExpiredEvents()
+        {
+            var guild = Program.Client.GetGuild(747752542741725244);
+            var textChannel = guild.GetTextChannel(819864331192631346);
+            var logChannel = guild.GetTextChannel(747768907992924192);
+
+            // get last 100 messages
+            var messages = await textChannel.GetMessagesAsync(100).FlattenAsync();
+
+            // seach for messages created by the bot
+            var botMessages = messages.Where(i => i.Author.Id == Program.Client.CurrentUser.Id);
+
+            foreach (var botMessage in botMessages)
+            {
+                try
+                {
+                    var eventId = botMessage.Content.Split("/").LastOrDefault();
+
+                    if (ulong.TryParse(eventId, out ulong eventIdParsed))
+                    {
+                        // get active events from discord
+                        var discordEvent = guild.GetEvent(eventIdParsed);
+                        if (discordEvent == null || discordEvent.Status == GuildScheduledEventStatus.Completed)
+                        {
+                            // event is not active anymore
+                            await botMessage.DeleteAsync();
+                            await logChannel.SendMessageAsync($"Deleted expired event {eventIdParsed} with status {discordEvent?.Status}");
+                        }
+                        else
+                        {
+                            // event is still active
+                            await logChannel.SendMessageAsync($"Event {eventIdParsed} is still active");
+                        }
+                    }
+                    else
+                    {
+                        await logChannel.SendMessageAsync($"Failed to parse event id from {botMessage.Content}");
+                        continue;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await logChannel.SendMessageAsync($"Failed to delete event {botMessage.Content} | {ex.ToString()}");
+                }
+            }
         }
 
         public async void CleanupCDN()
@@ -191,6 +238,7 @@ ORDER BY MAX(PH.DiscordMessageId)";
                         RemovePingHell();
                         CleanupOldEmotes();
                         SyncVisEvents();
+                        CleanupExpiredEvents();
                         //CleanupCDN();
 #endif
                     }
