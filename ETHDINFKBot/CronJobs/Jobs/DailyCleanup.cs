@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -78,6 +79,44 @@ namespace ETHDINFKBot.CronJobs.Jobs
             //var messageDelete = await channel.SendMessageAsync($"Deleting {oldMessages.Count()} messages"); // enable when this message is correct
             //Task.Delay(TimeSpan.FromMinutes(5));
             //messageDelete.DeleteAsync();
+        }
+
+        private async void CheckVISAmpel()
+        {
+            string url = "https://ampel.vis.ethz.ch";
+
+            HttpClient client = new HttpClient();
+            var response = await client.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                if (content.Contains("green"))
+                {
+                    // green
+                    await Program.Client.SetStatusAsync(UserStatus.Online);
+                    // remove game status
+                    await Program.Client.SetGameAsync("");
+                }
+                else if (content.Contains("yellow"))
+                {
+                    // yellow
+                    await Program.Client.SetGameAsync("🟡 Clean up VIS room >:(", null, ActivityType.Watching);
+                    await Program.Client.SetStatusAsync(UserStatus.Idle);
+                }
+                else if (content.Contains("red"))
+                {
+                    // red
+                    await Program.Client.SetGameAsync("🔴 No more coffee for u", null, ActivityType.Watching);
+                    await Program.Client.SetStatusAsync(UserStatus.DoNotDisturb);
+                }
+                else
+                {
+                    // unknown
+                    await Program.Client.SetGameAsync("🟠 Help?!");
+                    await Program.Client.SetStatusAsync(UserStatus.AFK);
+                }
+            }
         }
 
         private async void CleanupExpiredEvents()
@@ -239,6 +278,7 @@ ORDER BY MAX(PH.DiscordMessageId)";
                         CleanupOldEmotes();
                         SyncVisEvents();
                         CleanupExpiredEvents();
+                        CheckVISAmpel();
                         //CleanupCDN();
 #endif
                     }
