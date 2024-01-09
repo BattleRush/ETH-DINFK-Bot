@@ -696,7 +696,7 @@ namespace ETHDINFKBot.Helpers
         }
 
         // idk where to put it so it lives here
-        private async static void CheckVISAmpel()
+        public async static void CheckVISAmpel()
         {
             string url = "https://ampel.vis.ethz.ch";
 
