@@ -66,7 +66,7 @@ namespace ETHDINFKBot.Helpers
             }
 
             var dbUser = dmManager.GetDiscordUserById(user.Id);
-            if(dbUser.Banned)
+            if (dbUser.Banned)
             {
                 await user.SendMessageAsync("no");
                 return false;
@@ -120,7 +120,7 @@ namespace ETHDINFKBot.Helpers
             foreach (var userRole in user.Roles)
             {
                 // TODO maybe use the Id of pinghell
-                if(filterPingHell && userRole.Id == 895231323034222593)
+                if (filterPingHell && userRole.Id == 895231323034222593)
                     continue;
 
                 ulong roleId = GetRoleIdFromMention(userRole);
@@ -149,7 +149,7 @@ namespace ETHDINFKBot.Helpers
 
             foreach (var item in pingHistory)
             {
-                if(count > total)
+                if (count > total)
                 {
                     messageText += $"... and more pings. To see more do {Program.CurrentPrefix}ping full";
                     break;
@@ -685,13 +685,52 @@ namespace ETHDINFKBot.Helpers
                         }
                     }
                 }
-                
+
                 if (eventsCreated > 0)
                     await adminBotChannel.SendMessageAsync("Events synced");
             }
             catch (Exception ex)
             {
                 await adminBotChannel.SendMessageAsync(ex.ToString());
+            }
+        }
+
+        // idk where to put it so it lives here
+        private async static void CheckVISAmpel()
+        {
+            string url = "https://ampel.vis.ethz.ch";
+
+            HttpClient client = new HttpClient();
+            var response = await client.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                if (content.Contains("green"))
+                {
+                    // green
+                    await Program.Client.SetStatusAsync(UserStatus.Online);
+                    // remove game status
+                    await Program.Client.SetGameAsync("");
+                }
+                else if (content.Contains("yellow"))
+                {
+                    // yellow
+                    await Program.Client.SetGameAsync("🟡 Clean up VIS room >:(", null, ActivityType.Watching);
+                    await Program.Client.SetStatusAsync(UserStatus.Idle);
+                }
+                else if (content.Contains("red"))
+                {
+                    // red
+                    await Program.Client.SetGameAsync("🔴 No more coffee for u", null, ActivityType.Watching);
+                    await Program.Client.SetStatusAsync(UserStatus.DoNotDisturb);
+                }
+                else
+                {
+                    // unknown
+                    await Program.Client.SetGameAsync("🟠 Help?!");
+                    await Program.Client.SetStatusAsync(UserStatus.AFK);
+                }
             }
         }
 

@@ -513,6 +513,12 @@ namespace ETHDINFKBot
             await Client.SetGameAsync($"{TotalEmotes} emotes", null, ActivityType.Watching);
 #endif
 
+            // Set to do not disturb
+            await Client.SetStatusAsync(UserStatus.Online);
+
+            // run ampel check
+            DiscordHelper.CheckVISAmpel();
+
             // Block this task until the program is closed.
             await Task.Delay(-1);
         }
