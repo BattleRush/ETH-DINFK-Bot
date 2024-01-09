@@ -147,11 +147,6 @@ namespace ETHDINFKBot.CronJobs.Jobs
                             await botMessage.DeleteAsync();
                             await logChannel.SendMessageAsync($"Deleted expired event {eventIdParsed} with status {discordEvent?.Status}");
                         }
-                        else
-                        {
-                            // event is still active
-                            await logChannel.SendMessageAsync($"Event {eventIdParsed} is still active");
-                        }
                     }
                     else
                     {
