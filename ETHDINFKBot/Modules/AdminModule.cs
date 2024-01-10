@@ -565,7 +565,7 @@ namespace ETHDINFKBot.Modules
         }
 
         [Command("journal")]
-        public async Task GenerateJournalLog(int days)
+        public async Task GenerateJournalLog(int days = 1)
         {
             try
             {
@@ -601,7 +601,7 @@ namespace ETHDINFKBot.Modules
                 // run command where we pipe into a file
                 string finalCommand = $"{command} > {tempFilePath}";
 
-                ProcessStartInfo startInfo = new ProcessStartInfo() { FileName = "sudo sh", Arguments = $"-c \"{finalCommand}\"", };
+                ProcessStartInfo startInfo = new ProcessStartInfo() { FileName = "/bin/bash", Arguments = $"-c \"{finalCommand}\"", };
                 Console.WriteLine($"Running command: {finalCommand}");
                 Process proc = new Process() { StartInfo = startInfo, };
                 proc.Start();
