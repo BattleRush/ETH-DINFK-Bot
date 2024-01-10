@@ -317,11 +317,6 @@ namespace ETHDINFKBot.Helpers
 
                                 var dbMenu = FoodDBManager.CreateMenu(menu);
 
-                                if(dbMenu.MenuId == 1488)
-                                {
-                                    int i = 0;
-                                }
-
                                 if (meal.allergenarray != null)
                                 {
 
@@ -392,14 +387,14 @@ namespace ETHDINFKBot.Helpers
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError("Exception while loading UZH menu: {ex.Message} STACK: {ex.StackTrace}", ex);
+                        _logger.LogError($"Exception while loading UZH menu: {ex.Message} STACK: {ex.StackTrace}", ex);
                         Console.WriteLine(ex);
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError("Exception while loading UZH menu Global: {ex.Message} STACK: {ex.StackTrace}", ex);
+                _logger.LogError($"Exception while loading UZH menu Global: {ex.Message} STACK: {ex.StackTrace}", ex);
                 Console.WriteLine(ex);
             }
         }
@@ -436,7 +431,7 @@ namespace ETHDINFKBot.Helpers
 
                     try
                     {
-                        Console.WriteLine($"Loading: {restaurant.Name}");
+                        //Console.WriteLine($"Loading: {restaurant.Name}");
 
                         switch (restaurant.ScraperTypeId)
                         {
@@ -970,12 +965,18 @@ namespace ETHDINFKBot.Helpers
 
                 case "wheat":
                 case "barley":
+                case "rye":
                     return 1; // ATM return cereals containing gluten
 
                 case "walnut":
                 case "almond":
                 case "cashew":
                 case "pistachio":
+                case "hazel":
+                case "pecan":
+                case "brazilNut":
+                case "macadamia":
+                case "queenslandNut":
                     return 8; // ATM return nuts            
 
                 default:
@@ -1097,17 +1098,15 @@ namespace ETHDINFKBot.Helpers
                                 Name = item.displayName,
                                 Description = responseRecipe.title,
                                 Amount = price,
-                                IsVegan = responseRecipe.isVegan,
-                                IsVegetarian = responseRecipe.isVegetarian,
+                                IsVegan = responseRecipe.isVegan ?? false,
+                                IsVegetarian = responseRecipe.isVegetarian ?? false,
                                 Calories = responseRecipe.energy != null ? (int)responseRecipe.energy : 0,
                                 Protein = Math.Round(responseRecipe.protein ?? 0, 1),
                                 Carbohydrates = Math.Round(responseRecipe.carbohydrates ?? 0, 1),
                                 Fat = Math.Round(responseRecipe.fat ?? 0, 1),
                                 Salt = Math.Round(responseRecipe.salt ?? 0, 1),
                                 DirectMenuImageUrl = responseRecipe.imageUrl,
-                                DateTime = recipe.date.AddHours(
-                                    Program.TimeZoneInfo.IsDaylightSavingTime(recipe.date) ? 2 : 1
-                                )
+                                DateTime = recipe.date.AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(recipe.date) ? 2 : 1)
                             };
 
                             if (menu.DirectMenuImageUrl == null)
@@ -1144,7 +1143,7 @@ namespace ETHDINFKBot.Helpers
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                Console.WriteLine($"Location: {location} Mensa: {mensa} Time: {time} Error: {ex}");
                 return null;
             }
         }

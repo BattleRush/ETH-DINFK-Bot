@@ -93,8 +93,8 @@ namespace ETHDINFKBot.Helpers.Food
         public string slug { get; set; }
         public Kitchen kitchen { get; set; }
         public string allergens { get; set; } // TODO Check if really a list
-        public bool isVegan { get; set; }
-        public bool isVegetarian { get; set; }
+        public bool? isVegan { get; set; }
+        public bool? isVegetarian { get; set; }
     }
 
     public class Food2050WeeklyResponse

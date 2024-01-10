@@ -38,6 +38,7 @@ using ETHBot.DataLayer.Data.Discord;
 using MySqlConnector;
 using ETHBot.DataLayer.Data.ETH.Food;
 using ETHDINFKBot.Helpers.Food;
+using System.Runtime.InteropServices;
 
 namespace ETHDINFKBot.Modules
 {
@@ -561,6 +562,49 @@ namespace ETHDINFKBot.Modules
             }
 
             await Context.Channel.SendMessageAsync($"Done {count} emotes and downloaded {downloaded} emotes", false);
+        }
+
+        [Command("journal")]
+        public async Task GenerateJournalLog(int hours = 24)
+        {
+            // if os isnt linux then return
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                return;
+
+            var author = Context.Message.Author;
+
+            if (author.Id != Program.ApplicationSetting.Owner)
+            {
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
+            string since = $"--since \"{hours} hours ago\""; // todo does 24+ work?
+
+            string command = $"journalctl {since} --no-pager --output=short-precise --unit=ETHBot.service";
+
+            string tempFilePath = Path.Combine(Program.ApplicationSetting.BasePath, "Data", "temp", "journal.log");
+
+            // if temp file exists delete it
+            if (File.Exists(tempFilePath))
+                File.Delete(tempFilePath);
+
+            // check if folder exists
+            if (!Directory.Exists(Path.GetDirectoryName(tempFilePath)))
+                Directory.CreateDirectory(Path.GetDirectoryName(tempFilePath));
+
+            // run command where we pipe into a file
+            string finalCommand = $"{command} > {tempFilePath}";
+
+            ProcessStartInfo startInfo = new ProcessStartInfo() { FileName = "/bin/bash", Arguments = $"-c \"{finalCommand}\"", };
+            Process proc = new Process() { StartInfo = startInfo, };
+            proc.Start();
+
+            // wait for process to finish
+            proc.WaitForExit();
+
+            // send file to discord
+            await Context.Channel.SendFileAsync(tempFilePath, $"Journal log for {hours} hours");
         }
 
         [Command("emotedump")]

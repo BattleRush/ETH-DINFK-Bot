@@ -35,8 +35,8 @@ namespace ETHDINFKBot.Helpers.Food
         public string id { get; set; }
         public MenuClimatePrediction climatePrediction { get; set; }
         public object producerStoryUrl { get; set; }
-        public bool isVegan { get; set; }
-        public bool isVegetarian { get; set; }
+        public bool? isVegan { get; set; }
+        public bool? isVegetarian { get; set; }
         public string imageUrl { get; set; }
         public string title { get; set; }
         public string title_de { get; set; }
