@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
 
     <MinVerSkip Condition="'$(Configuration)' == 'Debug'">true</MinVerSkip>
     <AssemblyInformationalVersion Condition="'$(GitCommit)' != ''">$(MinVerVersion)+$(GitCommit)</AssemblyInformationalVersion>
@@ -28,42 +28,42 @@
     <PackageReference Include="Cronos" Version="0.7.1" />
     <PackageReference Include="CSharpMath" Version="0.5.1" />
     <PackageReference Include="CSharpMath.SkiaSharp" Version="0.5.1" />
-    <PackageReference Include="Discord.Net" Version="3.12.0" />
-    <PackageReference Include="Discord.Net.Core" Version="3.12.0" />
-    <PackageReference Include="Discord.Net.Commands" Version="3.12.0" />
-    <PackageReference Include="Discord.Net.Interactions" Version="3.12.0" />
-    <PackageReference Include="Discord.Net.WebSocket" Version="3.12.0" />
-    <PackageReference Include="FFMediaToolkit" Version="4.4.1" />
-    <PackageReference Include="GitInfo" Version="2.2.0">
+    <PackageReference Include="Discord.Net" Version="3.13.0" />
+    <PackageReference Include="Discord.Net.Core" Version="3.13.0" />
+    <PackageReference Include="Discord.Net.Commands" Version="3.13.0" />
+    <PackageReference Include="Discord.Net.Interactions" Version="3.13.0" />
+    <PackageReference Include="Discord.Net.WebSocket" Version="3.13.0" />
+    <PackageReference Include="FFMediaToolkit" Version="4.5.1" />
+    <PackageReference Include="GitInfo" Version="3.3.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Google.Apis.CustomSearchAPI.v1" Version="1.57.0.2455" />
-    <PackageReference Include="HtmlAgilityPack" Version="1.11.46" />
-    <PackageReference Include="Magick.NET-Q8-x64" Version="12.1.0" />
-    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="6.0.9" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.9">
+    <PackageReference Include="Google.Apis.CustomSearchAPI.v1" Version="1.64.0.3106" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.54" />
+    <PackageReference Include="Magick.NET-Q8-x64" Version="13.5.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
-      <PackageReference Include="MinVer" Version="4.2.0">
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+      <PackageReference Include="MinVer" Version="4.3.0">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
     <PackageReference Include="Nekos-Sharp" Version="3.5.0" />
-    <PackageReference Include="NetCoreServer" Version="6.6.0" />
-    <PackageReference Include="Npgsql" Version="6.0.7" />
-    <PackageReference Include="Selenium.WebDriver" Version="4.4.0" />
-    <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="105.0.5195.5200" />
-    <PackageReference Include="SharpZipLib" Version="1.4.0" />
-    <PackageReference Include="SkiaSharp" Version="2.88.2" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.2" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="2.88.2" />
+    <PackageReference Include="NetCoreServer" Version="8.0.4" />
+    <PackageReference Include="Npgsql" Version="8.0.1" />
+    <PackageReference Include="Selenium.WebDriver" Version="4.16.2" />
+    <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="120.0.6099.7100" />
+    <PackageReference Include="SharpZipLib" Version="1.4.2" />
+    <PackageReference Include="SkiaSharp" Version="2.88.6" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.6" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="2.88.6" />
     <PackageReference Include="TheMulti0.DuckSharp" Version="1.0.2" />
-    <PackageReference Include="TimeZoneConverter" Version="6.0.1" />
+    <PackageReference Include="TimeZoneConverter" Version="6.1.0" />
     <PackageReference Include="websocketsharp.core" Version="1.0.0" />
-    <PackageReference Include="Xabe.FFmpeg" Version="5.2.0" />
+    <PackageReference Include="Xabe.FFmpeg" Version="5.2.6" />
   </ItemGroup>
 
   <ItemGroup>
