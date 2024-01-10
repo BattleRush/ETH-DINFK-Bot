@@ -590,10 +590,9 @@ namespace ETHDINFKBot.Modules
 
                 string tempFilePath = Path.Combine(Program.ApplicationSetting.BasePath, "Data", "temp", "journal.log");
 
-                // if temp file exists delete it
+                // if temp file exists clear it
                 if (File.Exists(tempFilePath))
-                    File.Delete(tempFilePath);
-
+                    File.WriteAllText(tempFilePath, "");
                 // check if folder exists
                 if (!Directory.Exists(Path.GetDirectoryName(tempFilePath)))
                     Directory.CreateDirectory(Path.GetDirectoryName(tempFilePath));
