@@ -559,6 +559,8 @@ namespace ETHDINFKBot.Modules
                 await Context.Channel.SendMessageAsync(ex.ToString(), false);
                 await Context.Channel.SendMessageAsync($"Done {count} emotes and downloaded {downloaded} emotes before error", false);
             }
+
+            await Context.Channel.SendMessageAsync($"Done {count} emotes and downloaded {downloaded} emotes", false);
         }
 
         [Command("emotedump")]
