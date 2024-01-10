@@ -584,7 +584,7 @@ namespace ETHDINFKBot.Modules
                     return;
                 }
 
-                string since = $"--since \"{days} days ago\""; // todo does 24+ work?
+                string since = $"--since \\\"{days} days ago\\\""; // todo does 24+ work?
 
                 string command = $"journalctl {since} --no-pager --output=short-precise --unit=ETHBot.service";
 
@@ -600,7 +600,7 @@ namespace ETHDINFKBot.Modules
                 // run command where we pipe into a file
                 string finalCommand = $"{command} > {tempFilePath}";
 
-                ProcessStartInfo startInfo = new ProcessStartInfo() { FileName = "sudo sh", Arguments = $"-c \"{finalCommand}\"", };
+                ProcessStartInfo startInfo = new ProcessStartInfo() { FileName = "sudo /bin/bash", Arguments = $"-c \"{finalCommand}\"", };
                 Console.WriteLine($"Running command: {finalCommand}");
                 Process proc = new Process() { StartInfo = startInfo, };
                 proc.Start();
