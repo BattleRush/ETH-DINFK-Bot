@@ -1001,9 +1001,9 @@ It is also likely that there are no menus currently available today." + weekendS
 
                 if (!string.IsNullOrEmpty(time))
                 {
-                    if (time.ToLower() == "lunch")
+                    if (time.ToLower() == "lunch" || time.ToLower() == "l")
                         meal = MealTime.Lunch;
-                    else if (time.ToLower() == "dinner")
+                    else if (time.ToLower() == "dinner" || time.ToLower() == "d")
                         meal = MealTime.Dinner;
                 }
 

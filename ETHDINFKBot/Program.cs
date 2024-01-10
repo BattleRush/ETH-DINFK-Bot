@@ -481,16 +481,19 @@ namespace ETHDINFKBot
                 List<string> returnInfo = new List<string>();
 
                 foreach (var command in module.Commands)
-                    returnInfo.Add(command.Aliases.First());
+                    returnInfo.AddRange(command.Aliases);
 
                 foreach (var subModule in module.Submodules)
                     returnInfo.AddRange(buildCommandString(subModule));
+
 
                 return returnInfo;
             };
 
             foreach (var module in Commands.Modules.Where(i => !i.IsSubmodule))
                 CommandNames.AddRange(buildCommandString(module));
+
+            Console.WriteLine("Commands: " + string.Join(", ", CommandNames));
 
             PlaceMultipixelHandler multipixelHandler = new PlaceMultipixelHandler();
             multipixelHandler.MultiPixelProcess();
@@ -509,6 +512,12 @@ namespace ETHDINFKBot
             TotalEmotes = DatabaseManager.EmoteDatabaseManager.TotalEmoteCount();
             await Client.SetGameAsync($"{TotalEmotes} emotes", null, ActivityType.Watching);
 #endif
+
+            // Set to do not disturb
+            await Client.SetStatusAsync(UserStatus.Online);
+
+            // run ampel check
+            DiscordHelper.CheckVISAmpel();
 
             // Block this task until the program is closed.
             await Task.Delay(-1);
