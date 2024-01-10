@@ -698,7 +698,7 @@ namespace ETHDINFKBot.Helpers
         // idk where to put it so it lives here
         public async static void CheckVISAmpel()
         {
-            string url = "https://ampel.vis.ethz.ch";
+            string url = "https://ampel.vis.ethz.ch/status";
 
             HttpClient client = new HttpClient();
             var response = await client.GetAsync(url);

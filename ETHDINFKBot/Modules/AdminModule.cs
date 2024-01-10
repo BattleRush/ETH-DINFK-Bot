@@ -91,6 +91,28 @@ namespace ETHDINFKBot.Modules
             }
         }
 
+        [Command("ampel")]
+        public async Task CheckVisAmpel()
+        {
+            try
+            {
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                DiscordHelper.CheckVISAmpel();
+
+                await Context.Channel.SendMessageAsync("Done", false);
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.ToString(), false);
+            }
+        }
+
         [Command("assign")]
         public async Task Test()
         {
@@ -631,7 +653,7 @@ namespace ETHDINFKBot.Modules
                 builder.AddField($"{Program.CurrentPrefix}admin food status <debug>", "Returns current menus status");
                 builder.AddField($"{Program.CurrentPrefix}admin food fix", "Fixes today menus");
                 builder.AddField($"{Program.CurrentPrefix}admin food 2050mensas <dryRun>", "Loads all mensas from food2050 and add missing ones");
-                builder.AddField($"{Program.CurrentPrefix}admin food ethmensas <dryRun>", "Loads all mensas from eth page and add missing ones");                
+                builder.AddField($"{Program.CurrentPrefix}admin food ethmensas <dryRun>", "Loads all mensas from eth page and add missing ones");
                 builder.AddField($"{Program.CurrentPrefix}admin food setlocation <locationid> <restaurantids>", "Sets the location for a restaurants (comma seperated)");
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
@@ -896,7 +918,7 @@ Total todays menus: {allTodaysMenus.Count}");
                             parts = parts.Skip(1).ToArray();
                             location.title = string.Join(" ", parts);
                         }
-                        
+
 
                         output += $"Slug: {location.slug} Title: {location.title}" + Environment.NewLine;
 
@@ -1164,7 +1186,8 @@ Total todays menus: {allTodaysMenus.Count}");
                                 messageString += $"[DRY] Would have added new restaurant {facility.facilityname} with InternalName: {facility.facilityid.ToString()} to DB at the location: {RestaurantLocation.ETH_UZH_Zentrum}" + Environment.NewLine;
                             }
                         }
-                        else{
+                        else
+                        {
                             messageString += $"Restaurant {facility.facilityname} already exists in DB with Internal name: {dbRestaurant.InternalName}" + Environment.NewLine;
                         }
                     }
