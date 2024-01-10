@@ -604,7 +604,7 @@ namespace ETHDINFKBot.Modules
             proc.WaitForExit();
 
             // send file to discord
-            await Context.Channel.SendFileAsync(tempFilePath, $"Journal log for {hours} hours");
+            await Context.Channel.SendFileAsync(tempFilePath, $"Journal log for {days} days");
         }
 
         [Command("emotedump")]
