@@ -23,7 +23,7 @@ namespace ETHDINFKBot.Audio
        */
         // You *MUST* mark these commands with 'RunMode.Async'
         // otherwise the bot will not respond until the Task times out.
-        [Command("join", RunMode = RunMode.Async)]
+        /*[Command("join", RunMode = RunMode.Async)]
         public async Task JoinCmd(IVoiceChannel channel = null)
         {
             //await _service.JoinAudio(Context.Guild, (Context.User as IVoiceState).VoiceChannel);
@@ -55,6 +55,6 @@ namespace ETHDINFKBot.Audio
         public async Task PlayCmd([Remainder] string song)
         {
             //await _service.SendAudioAsync(Context.Guild, Context.Channel, song);
-        }
+        }*/
     }
 }

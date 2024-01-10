@@ -565,7 +565,7 @@ namespace ETHDINFKBot.Modules
         }
 
         [Command("journal")]
-        public async Task GenerateJournalLog(int hours = 24)
+        public async Task GenerateJournalLog(int days)
         {
             // if os isnt linux then return
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -579,7 +579,7 @@ namespace ETHDINFKBot.Modules
                 return;
             }
 
-            string since = $"--since \"{hours} hours ago\""; // todo does 24+ work?
+            string since = $"--since \"{days} days ago\""; // todo does 24+ work?
 
             string command = $"journalctl {since} --no-pager --output=short-precise --unit=ETHBot.service";
 

@@ -18,7 +18,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 {
     public class JWSTUpdates : CronJobService
     {
-        private readonly ulong ServerSuggestion = 816776685407043614; // todo config?
+        //private readonly ulong ServerSuggestion = 816776685407043614; // todo config?
         private readonly ILogger<JWSTUpdates> _logger;
         private readonly string Name = "JWSTUpdates";
 

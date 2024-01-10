@@ -129,7 +129,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
             }
         }
 
-        public async void CleanupCDN()
+        /*public async void CleanupCDN()
         {
             return; // TODO
             string[] files = Directory.GetFiles(System.IO.Path.Combine(Program.ApplicationSetting.BasePath, "Emotes"));
@@ -145,7 +145,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                 if (fi.LastAccessTime < DateTime.Now.AddMonths(-3))
                     fi.Delete();
             }
-        }
+        }*/
 
         public async void RemovePingHell()
         {
