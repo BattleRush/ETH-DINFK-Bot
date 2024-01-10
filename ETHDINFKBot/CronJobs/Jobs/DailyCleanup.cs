@@ -34,6 +34,8 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
         private void CleanupOldEmotes()
         {
+            return;
+/*
             var fileEndings = new List<string>()
             {
                 "*.png", "*.gif"
@@ -58,8 +60,10 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                 //if (textChannel != null && deletedFiles > 10)
                     //textChannel.SendMessageAsync($"Found {deletedFiles} emotes to be deleted");
-            }
+            }*/
         }
+
+
         private async void CleanUpOldMessages(SocketTextChannel channel, TimeSpan toDeleteOlderThan)
         {
             try
@@ -189,7 +193,7 @@ ORDER BY MAX(PH.DiscordMessageId)";
                         //CleanUpOldMessages(channel, TimeSpan.FromDays(-7));
 #if !DEBUG
                         RemovePingHell();
-                        CleanupOldEmotes();
+                        //CleanupOldEmotes();
                         SyncVisEvents();
                         //CleanupCDN();
 #endif

@@ -473,6 +473,72 @@ namespace ETHDINFKBot.Modules
             await Context.Channel.SendFileAsync(stream, "DiscordUsersList.json", "DiscordUsers");
         }
 
+
+        [Command("emoterestore")]
+        public async Task EmoteRestore()
+        {                
+            int count = 0;
+            int downloaded = 0;
+
+            try
+            {
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
+                var emotes = DatabaseManager.EmoteDatabaseManager.GetEmotes(null, false);
+
+                await Context.Channel.SendMessageAsync($"Found {emotes.Count} emotes", false);
+
+
+                foreach (var emote in emotes)
+                {
+                    count++;
+
+                    // check if emote LocalPath exists
+                    if (File.Exists(emote.LocalPath))
+                        continue;
+
+                    downloaded++;
+
+                    // if not download it
+                    var emoteUrl = emote.Url;
+                    var emoteName = emote.EmoteName;
+
+                    using (var webClient = new WebClient())
+                    {
+                        byte[] bytes = webClient.DownloadData(emote.Url);
+                        string filePath = EmoteDBManager.MoveEmoteToDisk(emote, bytes);
+
+                        // if paths differ then log to chat
+                        if (filePath != emote.LocalPath)
+                        {
+                            await Context.Channel.SendMessageAsync($"Emote {emoteName} was moved from {emote.LocalPath} to {filePath}", false);
+
+                            using (var context = new ETHBotDBContext())
+                            {
+                                var emoteDb = context.DiscordEmotes.Where(i => i.DiscordEmoteId == emote.DiscordEmoteId).Single();
+                                emoteDb.LocalPath = filePath;
+                                context.SaveChanges();
+                            }
+                        }
+                    }
+
+
+                    if (count % 1000 == 0)
+                        await Context.Channel.SendMessageAsync($"Done {count} emotes and downloaded {downloaded} emotes", false);
+                }
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.ToString(), false);
+                await Context.Channel.SendMessageAsync($"Done {count} emotes and downloaded {downloaded} emotes before error", false);
+            }
+        }
+
         [Command("emotedump")]
         public async Task EmoteDump()
         {
@@ -631,7 +697,7 @@ namespace ETHDINFKBot.Modules
                 builder.AddField($"{Program.CurrentPrefix}admin food status <debug>", "Returns current menus status");
                 builder.AddField($"{Program.CurrentPrefix}admin food fix", "Fixes today menus");
                 builder.AddField($"{Program.CurrentPrefix}admin food 2050mensas <dryRun>", "Loads all mensas from food2050 and add missing ones");
-                builder.AddField($"{Program.CurrentPrefix}admin food ethmensas <dryRun>", "Loads all mensas from eth page and add missing ones");                
+                builder.AddField($"{Program.CurrentPrefix}admin food ethmensas <dryRun>", "Loads all mensas from eth page and add missing ones");
                 builder.AddField($"{Program.CurrentPrefix}admin food setlocation <locationid> <restaurantids>", "Sets the location for a restaurants (comma seperated)");
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
@@ -896,7 +962,7 @@ Total todays menus: {allTodaysMenus.Count}");
                             parts = parts.Skip(1).ToArray();
                             location.title = string.Join(" ", parts);
                         }
-                        
+
 
                         output += $"Slug: {location.slug} Title: {location.title}" + Environment.NewLine;
 
@@ -1164,7 +1230,8 @@ Total todays menus: {allTodaysMenus.Count}");
                                 messageString += $"[DRY] Would have added new restaurant {facility.facilityname} with InternalName: {facility.facilityid.ToString()} to DB at the location: {RestaurantLocation.ETH_UZH_Zentrum}" + Environment.NewLine;
                             }
                         }
-                        else{
+                        else
+                        {
                             messageString += $"Restaurant {facility.facilityname} already exists in DB with Internal name: {dbRestaurant.InternalName}" + Environment.NewLine;
                         }
                     }
