@@ -571,7 +571,10 @@ namespace ETHDINFKBot.Modules
             {
                 // if os isnt linux then return
                 if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                {
+                    await Context.Channel.SendMessageAsync("This command only works on linux", false);
                     return;
+                }
 
                 var author = Context.Message.Author;
 
@@ -598,7 +601,7 @@ namespace ETHDINFKBot.Modules
                 // run command where we pipe into a file
                 string finalCommand = $"{command} > {tempFilePath}";
 
-                ProcessStartInfo startInfo = new ProcessStartInfo() { FileName = "/bin/bash", Arguments = $"-c \"{finalCommand}\"", };
+                ProcessStartInfo startInfo = new ProcessStartInfo() { FileName = "sudo sh", Arguments = $"-c \"{finalCommand}\"", };
                 Process proc = new Process() { StartInfo = startInfo, };
                 proc.Start();
 
