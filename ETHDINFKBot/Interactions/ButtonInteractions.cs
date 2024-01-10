@@ -46,7 +46,7 @@ namespace ETHDINFKBot.Interactions
         public async Task DeleteFavEmote(string id)
         {
             await Context.Interaction.DeferAsync();
-            
+
             var emote = DatabaseManager.EmoteDatabaseManager.GetDiscordEmoteById(ulong.Parse(id));
 
             var mb = new ModalBuilder()
@@ -55,29 +55,47 @@ namespace ETHDINFKBot.Interactions
 //.AddComponents(new List<IMessageComponent>() { menuBuilder.Build() }, 0)
 .AddTextInput($"Confirm delete by typing \"DELETE\"", "custom-emote-name-delete", placeholder: "DELETE", required: true);
 
-            await Context.Interaction.RespondWithModalAsync(mb.Build());         
+            await Context.Interaction.RespondWithModalAsync(mb.Build());
         }
 
 
         [ComponentInteraction("emote-get-prev-page-*-*-*")]
         public async Task EmoteGetPrevPage(string searchTerm, string page, string debug)
         {
-            await Context.Interaction.DeferAsync();
-            await EmoteGetPage(-1, searchTerm, Convert.ToInt32(page), Convert.ToBoolean(debug));
+            try
+            {
+                await EmoteGetPage(-1, searchTerm, Convert.ToInt32(page), Convert.ToBoolean(debug));
+            }
+            catch (Exception ex)
+            {
+                await Context.Interaction.Channel.SendMessageAsync(ex.Message);
+            }
         }
 
         [ComponentInteraction("emote-get-next-page-*-*-*")]
         public async Task EmoteGetNextPage(string searchTerm, string page, string debug)
         {
-            await Context.Interaction.DeferAsync();
-            await EmoteGetPage(1, searchTerm, Convert.ToInt32(page), Convert.ToBoolean(debug));
+            try
+            {
+                await EmoteGetPage(1, searchTerm, Convert.ToInt32(page), Convert.ToBoolean(debug));
+            }
+            catch (Exception ex)
+            {
+                await Context.Interaction.Channel.SendMessageAsync(ex.Message);
+            }
         }
 
         [ComponentInteraction("emote-fav-get-prev-page-*-*")]
         public async Task EmoteFavGetPrevPage(string searchTerm, string page)
         {
-            await Context.Interaction.DeferAsync();
-            await FavEmoteGetPage(-1, searchTerm, Convert.ToInt32(page));
+            try
+            {
+                await FavEmoteGetPage(-1, searchTerm, Convert.ToInt32(page));
+            }
+            catch (Exception ex)
+            {
+                await Context.Interaction.Channel.SendMessageAsync(ex.Message);
+            }
         }
 
         [ComponentInteraction("emote-fav-get-next-page-*-*")]
@@ -85,12 +103,11 @@ namespace ETHDINFKBot.Interactions
         {
             try
             {
-                await Context.Interaction.DeferAsync();
                 await FavEmoteGetPage(1, searchTerm, Convert.ToInt32(page));
             }
             catch (Exception ex)
             {
-                await Context.Interaction.RespondAsync(ex.Message);
+                await Context.Interaction.Channel.SendMessageAsync(ex.Message);
             }
         }
 
@@ -98,12 +115,14 @@ namespace ETHDINFKBot.Interactions
         {
             var message = Context.Interaction as SocketMessageComponent;
             var user = Context.Interaction.User;
-            if (message.Message.Embeds.First().Author.Value.Name != $"{user.Username}#{user.Discriminator}")
+            if (message.Message.Embeds.First().Author.Value.Name != user.Username)
             {
                 await Context.Interaction.RespondAsync("You did not invoke this message.", null, false, true);
                 //Context.Interaction.DeferAsync();
                 return false;
             }
+
+            await Context.Interaction.DeferAsync();
 
             page += dir;
 
@@ -139,13 +158,14 @@ namespace ETHDINFKBot.Interactions
                 .WithButton("> Next", $"emote-get-next-page-{searchTerm}-{page}-{debug}", ButtonStyle.Success, null, null, (page + 1) * emoteResult.PageSize > emoteResult.TotalEmotesFound); // TODO detect max page
 
             FileAttachment attachment = new FileAttachment(Path.Combine(Program.ApplicationSetting.CDNPath, emoteResult.Url));
-            Optional<IEnumerable <FileAttachment>> attachments = new List<FileAttachment>() { attachment };
+            Optional<IEnumerable<FileAttachment>> attachments = new List<FileAttachment>() { attachment };
 
-            await message.Message.ModifyAsync(i => {
+            await message.Message.ModifyAsync(i =>
+            {
                 i.Attachments = attachments;
-                i.Embed = builder.Build(); 
-                i.Content = emoteResult.textBlock; 
-                i.Components = builderComponent.Build(); 
+                i.Embed = builder.Build();
+                i.Content = emoteResult.textBlock;
+                i.Components = builderComponent.Build();
             });
 
             //Context.Interaction.DeferAsync();
@@ -157,12 +177,14 @@ namespace ETHDINFKBot.Interactions
         {
             var message = Context.Interaction as SocketMessageComponent;
             var user = Context.Interaction.User;
-            if (message.Message.Embeds.First().Author.Value.Name != $"{user.Username}#{user.Discriminator}")
+            if (message.Message.Embeds.First().Author.Value.Name != user.Username)
             {
                 await Context.Interaction.RespondAsync("You did not invoke this message.", null, false, true);
                 //Context.Interaction.DeferAsync();
                 return false;
             }
+
+            await Context.Interaction.DeferAsync();
 
             page += dir;
 
@@ -225,7 +247,8 @@ namespace ETHDINFKBot.Interactions
                 FileAttachment attachment = new FileAttachment(Path.Combine(Program.ApplicationSetting.CDNPath, emoteResult.Url));
                 Optional<IEnumerable<FileAttachment>> attachments = new List<FileAttachment>() { attachment };
 
-                await message.Message.ModifyAsync(i => {
+                await message.Message.ModifyAsync(i =>
+                {
                     i.Attachments = attachments;
                     i.Embed = builder.Build();
                     i.Components = builderComponent.Build();
@@ -259,10 +282,10 @@ namespace ETHDINFKBot.Interactions
                 // Some emotes may no lonver be valid -> db entry to invalidate the emote
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 await Context.Channel.SendMessageAsync(ex.ToString());
-    }
+            }
             //Context.Interaction.DeferAsync();
             return true;
         }
