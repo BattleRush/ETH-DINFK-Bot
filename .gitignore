@@ -8,3 +8,5 @@ Plugins
 ExamQuestions
 PublishProfiles
 .config/dotnet-tools.json
+
+__pycache__
