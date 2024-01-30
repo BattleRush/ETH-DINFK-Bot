@@ -42,7 +42,6 @@ using System.Runtime.InteropServices;
 
 namespace ETHDINFKBot.Modules
 {
-
     public class Class1
     {
         public ulong id { get; set; }
@@ -66,8 +65,146 @@ namespace ETHDINFKBot.Modules
     [Group("admin")]
     public class AdminModule : ModuleBase<SocketCommandContext>
     {
+        [Command("download")]
+        [RequireUserPermission(GuildPermission.ManageChannels)]
+        public async Task DownloadImages(int count = 100)
+        {
+            Console.WriteLine("Downloading images");
+            var author = Context.Message.Author;
+            if (author.Id != Program.ApplicationSetting.Owner)
+            {
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
+            try
+            {
+                await Context.Channel.SendMessageAsync($"Calling {count} messages", false);
+                ulong channel = 747758757395562557;
+                var channelObj = Program.Client.GetChannel(channel) as SocketTextChannel;
+
+                var messages = await channelObj.GetMessagesAsync(count).FlattenAsync();
+
+                await Context.Channel.SendMessageAsync($"Found {messages.Count()} messages", false);
+
+                HttpClient client = new HttpClient();
+
+                int downloaded = 0;
+                int skipped = 0;
+
+                foreach (var message in messages)
+                {
+                    if (message.Content.Contains("https://media.discordapp.net/attachments/748707475137495121/1201901664701784165/IMG-20240118-WA0008.png"))
+                    {
+                        int i = 0;
+                    }
+
+                    if (message.Attachments.Count > 0)
+                    {
+                        foreach (var attachment in message.Attachments)
+                        {
+                            string url = attachment.Url;
+                            if (url.Contains("webp") || url.Contains("webm"))
+                            {
+                                int t = 1;
+                            }
+
+                            try
+                            {
+
+                                byte[] bytes = client.GetByteArrayAsync(url).Result;
+                                // put image into folder Python/memes
+                                string filePath = Path.Combine(Environment.CurrentDirectory, "..", "..", "..", "Python", "memes", attachment.Filename);
+
+                                // check if folder exists
+                                if (!Directory.Exists(Path.GetDirectoryName(filePath)))
+                                {
+                                    await Context.Channel.SendMessageAsync($"Folder {Path.GetDirectoryName(filePath)} does not exist", false);
+                                    return;
+                                }
+
+                                // check if file exists
+                                if (File.Exists(filePath))
+                                {
+                                    skipped++;
+                                    continue;
+                                }
+
+
+                                File.WriteAllBytes(filePath, bytes);
+
+                                downloaded++;
+                            }
+                            catch (Exception ex)
+                            {
+                                await Context.Channel.SendMessageAsync("Download error in attachment: " + ex.ToString(), false);
+                            }
+                        }
+                    }
+
+                    if (message.Embeds.Count > 0)
+                    {
+                        foreach (var embed in message.Embeds)
+                        {
+                            // TODO check other embed types
+                            if (embed.Type == EmbedType.Image || embed.Type == EmbedType.Gifv || embed.Type == EmbedType.Video)
+                            {
+                                string url = embed.Url.Replace("&format=webp", "");
+
+                                if (url.Contains("webp") || url.Contains("webm"))
+                                {
+                                    int t = 1;
+                                }
+
+                                try
+                                {
+                                    byte[] bytes = client.GetByteArrayAsync(url).Result;
+
+                                    string fileName = embed.Url.Split('/').Last();
+                                    fileName = fileName.Split('?').First();
+
+                                    // put image into folder Python/memes
+                                    string filePath = Path.Combine(Environment.CurrentDirectory, "..", "..", "..", "Python", "memes", fileName);
+
+                                    // check if folder exists
+                                    if (!Directory.Exists(Path.GetDirectoryName(filePath)))
+                                    {
+                                        await Context.Channel.SendMessageAsync($"Folder {Path.GetDirectoryName(filePath)} does not exist", false);
+                                        return;
+                                    }
+
+                                    // check if file exists
+                                    if (File.Exists(filePath))
+                                    {
+                                        skipped++;
+                                        continue;
+                                    }
+
+                                    File.WriteAllBytes(filePath, bytes);
+
+                                    downloaded++;
+                                }
+                                catch (Exception ex)
+                                {
+                                    await Context.Channel.SendMessageAsync("Download error in embed: " + ex.ToString(), false);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                await Context.Channel.SendMessageAsync($"Downloaded: {downloaded} and Skipped: {skipped}");
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.ToString(), false);
+            }
+        }
+
+
+
         [Command("image")]
-        public async Task IMgaeTest()
+        public async Task ImageTest()
         {
             try
             {

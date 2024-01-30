@@ -10,7 +10,7 @@ import cv2
 from skimage import metrics
 
 
-reader = easyocr.Reader(['en', 'de'], gpu=False)
+reader = easyocr.Reader(['en', 'de'])
 
 
 
@@ -206,21 +206,33 @@ print("done")
     
     
 def similarity_test(image1Path, image2Path):
-
+    #print(image1Path, image2Path)
     # Load images
     image1 = cv2.imread(image1Path)
     image2 = cv2.imread(image2Path)
     image2 = cv2.resize(image2, (image1.shape[1], image1.shape[0]), interpolation = cv2.INTER_AREA)
-    print(image1.shape, image2.shape)
+    #print(image1.shape, image2.shape)
     # Convert images to grayscale
     image1_gray = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
     image2_gray = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
     # Calculate SSIM
     ssim_score = metrics.structural_similarity(image1_gray, image2_gray, full=True)
-    print(f"SSIM Score between image1 {image1Path} and image2 {image2Path} is {round(ssim_score[0], 2)}")
+
+    # print only if score higher than x
+    if ssim_score[0] > 0.5:
+        print(f"SSIM Score between image1 {image1Path} and image2 {image2Path} is {round(ssim_score[0], 2)}")
     # SSIM Score: 0.38
 
-images = ["temp/20240129_020010.jpg", "temp/image_4.png", "temp/GE8_oCtXgAAdoM1.png", "temp/20220614_043525.png"]
+# get images from temp folder
+import os
+images = []
+for filename in os.listdir("temp"):
+    if filename.endswith(".jpg") or filename.endswith(".png"):
+        images.append("temp/" + filename)
+        continue
+    else:
+        continue
+
 
 for i in range(len(images)):
     for j in range(len(images)):
