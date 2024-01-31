@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import cv2
 import easyocr
+import sqlite3
+
 
 reader = easyocr.Reader(['en', 'de'])
 
@@ -38,6 +40,67 @@ def get_embedding(image_path):
     return embedding.squeeze().numpy()
 
 folder = "memes"
+model_name = "test"
+
+
+
+def ensure_db_exists():
+    # check if db exists
+    # sqlite db is in repost.db
+    if os.path.isfile("repost.db"):
+        print("db exists")
+    else:
+        # create db
+        print("db does not exist")
+        # create table
+        # create db
+        conn = sqlite3.connect('repost.db')
+        c = conn.cursor()
+        
+        # todo add img width and height
+        # create table: images with columns id, fullfilename, message_id, index, filename, fullpath, extension, filesize, ocrtext
+        c.execute('''CREATE TABLE images
+                        (id INTEGER PRIMARY KEY AUTOINCREMENT, fullfilename text, message_id integer, file_index integer, filename text, fullpath text, extension text, filesize integer, ocrtext text)''')
+        
+        # create table models with columns id, name
+        c.execute('''CREATE TABLE models
+                        (id INTEGER PRIMARY KEY AUTOINCREMENT, name text)''')
+        
+        # create table embeddings with columns id, image_id, model_id, embedding as blob
+        c.execute('''CREATE TABLE embeddings
+                        (id INTEGER PRIMARY KEY AUTOINCREMENT, image_id integer, model_id integer, embedding blob)''')
+        
+        # create table where we store each easyocr box with columns id, image_id, top_left_x, top_left_y, top_right_x, top_right_y, bottom_right_x, bottom_right_y, bottom_left_x, bottom_left_y, text, probability
+        c.execute('''CREATE TABLE ocrboxes
+                        (id INTEGER PRIMARY KEY AUTOINCREMENT, image_id integer, top_left_x integer, top_left_y integer, top_right_x integer, top_right_y integer, bottom_right_x integer, bottom_right_y integer, bottom_left_x integer, bottom_left_y integer, text text, probability real)''')
+        
+        conn.commit()
+        conn.close()
+
+ensure_db_exists()
+
+
+def get_model_id(model_name):
+    # if model doesnt exist create it
+    # save model to db
+    conn = sqlite3.connect('repost.db')
+    c = conn.cursor()
+    model_id = None
+    
+    # check if model has already been processed
+    c.execute("SELECT * FROM models WHERE name=?", (model_name,))
+    result = c.fetchone()
+    if result is None:
+        print("model has not been processed yet " + model_name)
+        c.execute("INSERT INTO models (name) VALUES (?)", (model_name,))
+        conn.commit()
+        model_id = c.lastrowid
+    else:
+        print("model has already been processed " + model_name)
+        model_id = result[0]
+        
+    conn.close()
+    return model_id
 
 # List of your image paths
 image_paths = []
@@ -48,14 +111,141 @@ for filename in os.listdir(folder):
     else:
         continue
 
+
+def create_db_images(paths):
+    for path in paths:
+        print(path)
+        
+        # get filename
+        fullfilename = path.split('/')[1]
+        
+        # messageid_index_filename
+        #filename is everything after the 2nd _ (it may include _)
+        index_of_second_underscore = fullfilename.find('_', fullfilename.find('_') + 1)
+        filename = fullfilename[index_of_second_underscore + 1:]
+        
+        index = fullfilename.split('_')[1]
+        index = int(index)
+        
+        message_id = fullfilename.split('_')[0]
+        
+        # get fullpath
+        fullpath = path
+        
+        # get extension
+        extension = path.split('.')[1]
+        
+        # get filesize
+        filesize = os.path.getsize(path)
+        
+        # save image to db
+        conn = sqlite3.connect('repost.db')
+        c = conn.cursor()
+        
+        # check if image has already been processed
+        c.execute("SELECT * FROM images WHERE fullpath=?", (path,))
+        result = c.fetchone()
+        if result is None:
+            print("image has not been processed yet " + path)
+            c.execute("INSERT INTO images (fullfilename, message_id, file_index, filename, fullpath, extension, filesize) VALUES (?, ?, ?, ?, ?, ?, ?)", (fullfilename, message_id, index, filename, fullpath, extension, filesize))
+            conn.commit()
+        else:
+            print("image has already been processed " + path)
+        
+        conn.close()
+        
+        
+create_db_images(image_paths)
+
+
+# check if embeddings_{mdoel}.npy exists
+# if not get embeddings and save them
+embeddings = []
+    
+for path in image_paths:
+    print(path)
+    
+
+    
+    # save embedding to db
+    conn = sqlite3.connect('repost.db')
+    c = conn.cursor()
+    
+    # check if image has already been processed
+    c.execute("SELECT * FROM images WHERE fullpath=?", (path,))
+    result = c.fetchone()
+    if result is None:
+        print("image has not been processed yet " + path)
+        continue
+    
+
+    
+    # get image id
+    image_id = result[0]
+    
+    # get model id
+    model_id = get_model_id(model_name)
+    
+    # save embedding to db if it doesnt exist for this image and model
+    c.execute("SELECT * FROM embeddings WHERE image_id=? AND model_id=?", (image_id, model_id))
+    result = c.fetchone()
+    if result is None:
+        print("embedding has not been processed yet " + path)
+        current_embedding = get_embedding(path)
+        
+        # convert embedding to blob
+        embedding_blob = current_embedding.tobytes()
+    
+        c.execute("INSERT INTO embeddings (image_id, model_id, embedding) VALUES (?, ?, ?)", (image_id, model_id, embedding_blob))
+        conn.commit()
+    else:
+        print("embedding has already been processed " + path)
+        
+    conn.close()
+    
+    
+# load all embeddings from db for the current model into a dictinary (fullpath, embedding)
+def load_embeddings_from_db(model_name):
+    # get model id
+    model_id = get_model_id(model_name)
+    
+    # get embeddings from db
+    conn = sqlite3.connect('repost.db')
+    c = conn.cursor()
+    
+    # check if image has already been processed
+    c.execute("SELECT * FROM embeddings WHERE model_id=?", (model_id,))
+    result = c.fetchall()
+    
+    embeddings = {}
+    for row in result:
+        # get fullpath
+        fullpath = row[2]
+        
+        # get embedding
+        embedding = np.frombuffer(row[3], dtype=np.float32)
+        
+        embeddings[fullpath] = embedding
+        
+    conn.close()
+    
+    return embeddings
+    
+embeddings = load_embeddings_from_db(model_name)
+
+# print first 1 embeddings
+for key in list(embeddings.keys())[:1]:
+    print(key)
+    print(embeddings[key])
+    print("")
+
 # Extract embeddings
-embeddings = [get_embedding(path) for path in image_paths]
+#embeddings = [get_embedding(path) for path in image_paths]
 
+# save embeddings to disk
+#np.save("embeddings_" + model_name + ".npy", embeddings)
+    
 # get dimensions of embeddings
-print(len(embeddings[0]))
-print(embeddings[0])
-
-print(len(embeddings))
 
 # Function to find similar images
 def find_similar_images(target_embedding, embeddings, top_k=10):
@@ -64,25 +254,69 @@ def find_similar_images(target_embedding, embeddings, top_k=10):
     return indices, similarities[indices]
 
 # Example usage: Find images similar to the first image in the list
-index = 0
+# index = 0
 
-indices, similarities = find_similar_images(embeddings[index], embeddings)
-print(f"Similarities for image {image_paths[index]}")
-similar_files = []
-for index in indices:
-    similar_files.append(image_paths[index])
+# indices, similarities = find_similar_images(embeddings[index], embeddings)
+# print(f"Similarities for image {image_paths[index]}")
+# similar_files = []
+# for index in indices:
+#     similar_files.append(image_paths[index])
 
-print(" Files similar: " + str(len(similar_files)))
-print(" File names: " + str(similar_files))
-print(similarities)
-print("")
+# print(" Files similar: " + str(len(similar_files)))
+# print(" File names: " + str(similar_files))
+# print(similarities)
+# print("")
 
 
 def easyOCR(reader, imagePath):
     
+    # check in sqlite db if image has already been processed
+    # if yes return text
+    
+    conn = sqlite3.connect('repost.db')
+    c = conn.cursor()
+    
+    # check if the current image has text in the db if not run easyocr
+    image_id = None
+    c.execute("SELECT * FROM images WHERE fullpath=?", (imagePath,))
+    result = c.fetchone()
+    if result is None:
+        print("image has not been processed yet " + imagePath)
+        return
+    else:
+        print("image has already been processed " + imagePath)
+        image_id = result[0]
+        
+        # check if the current image has text in the db if not run easyocr
+        image_text = result[8]
+        
+        # if image_text is not None return image_text
+        if image_text is not None:
+            print("image has text in db " + imagePath)
+            
+            # get ocr boxes
+            c.execute("SELECT * FROM ocrboxes WHERE image_id=?", (image_id,))
+            result = c.fetchone()
+            
+            # convert boundingbox to numpy array
+                        
+            if result is None:
+                print("image has no ocr boxes in db " + imagePath)
+                return (None, image_text)
+            
+            # todo boxes
+            
+                
+            return (None, image_text) # todo boxes
+        
+
+    
+    conn.close()
+    
     # check check if image with _border exists
     # if not create it
     border = 50
+    current_folder = os.getcwd()
     image = cv2.imread(imagePath)
     height = image.shape[0]
     width = image.shape[1]
@@ -97,6 +331,9 @@ def easyOCR(reader, imagePath):
     
     results = reader.readtext(newPath)
     print(results)
+    
+    # delete newPath
+    os.remove(newPath)
     
     # draw the text on the output image
     image = cv2.imread(newPath)
@@ -114,9 +351,33 @@ def easyOCR(reader, imagePath):
     fullText = ""
     for (bbox, text, prob) in results:
         fullText = fullText + " " + text
+        
     print(fullText)
+    
+    # update db with text
+    conn = sqlite3.connect('repost.db')
+    c = conn.cursor()
+    
+    # update text for image
+    c.execute("UPDATE images SET ocrtext=? WHERE id=?", (fullText, image_id))
+    conn.commit()
+    
+    # save boxes to db
+    for (bbox, text, prob) in results:
+        c.execute("INSERT INTO ocrboxes (image_id, top_left_x, top_left_y, top_right_x, top_right_y, bottom_right_x, bottom_right_y, bottom_left_x, bottom_left_y, text, probability)"
+                  + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (image_id, int(bbox[0][0]), int(bbox[0][1]), int(bbox[1][0]), int(bbox[1][1]), int(bbox[2][0]), int(bbox[2][1]), int(bbox[3][0]), int(bbox[3][1]), text, prob))
+    
+    conn.commit()
+    conn.close()
+    
     # show image with matplotlib
     return (image, fullText)
+
+# go trough all images and run easyocr on them
+# save results to db
+for imagePath in image_paths:
+    print("EasyOCR on " + imagePath)
+    easyOCR(reader, imagePath)
 
 
 # Function to display images and their similarities with the desired layout
@@ -152,12 +413,37 @@ def display_similar_images(reader, query_path, image_paths, similar_indices, sim
         (repost_image, repost_text) = easyOCR(reader, image_paths[similar_indices[i]])
         ax.imshow(repost_image)
         ax.axis('off')
-        ax.set_title(f"Similarity: {similarities[i]:.2f}")
+        filename = image_paths[similar_indices[i]].split('/')[1]
+        ax.set_title(f"Similarity: {similarities[i]:.2f} " + filename)
         ax.set_xlabel(repost_text)
     
     plt.tight_layout()
     plt.show()
+    
+    
+# # go trough all embedd combinations and find the ones that have least distance in the top 10
+# for index in range(len(embeddings)):
+#     indices, similarities = find_similar_images(embeddings[index], embeddings)
+#     print(f"Similarities for image {image_paths[index]}")
+#     similar_files = []
+#     for index in indices:
+#         similar_files.append(image_paths[index])
+
+#     print(" Files similar: " + str(len(similar_files)))
+#     print(" File names: " + str(similar_files))
+#     print(similarities)
+#     print("")
+    
+#     # check if there is a repost
+#     if similarities[3] > 0.9:
+#         print("Repost found")
+#         print("Query image: " + image_paths[index])
+#         print("Repost image: " + image_paths[indices[1]])
+#         print("Similarity: " + str(similarities[1]))
+#         print("")
+#         display_similar_images(reader, image_paths[index], image_paths, indices, similarities)
+        
 
 
-query_image_path = image_paths[0]
-display_similar_images(reader, query_image_path, image_paths, indices, similarities)
+#query_image_path = image_paths[0]
+#display_similar_images(reader, query_image_path, image_paths, indices, similarities)
