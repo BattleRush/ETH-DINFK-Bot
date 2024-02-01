@@ -3,7 +3,7 @@
 # Function to zip files without exceeding the max size limit
 zip_files() {
     filetype=$1
-    maxsize=$((300 * 1024 * 1024)) # 300 MB in bytes
+    maxsize=$((475 * 1024 * 1024)) # 475 MB in bytes
     zipname=$2
     counter=1
     currentsize=0

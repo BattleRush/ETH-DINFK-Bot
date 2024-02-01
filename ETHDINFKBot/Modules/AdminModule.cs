@@ -66,6 +66,97 @@ namespace ETHDINFKBot.Modules
     [Group("admin")]
     public class AdminModule : ModuleBase<SocketCommandContext>
     {
+        private async void DownloadFile(HttpClient client, SocketMessage message, string url, int index, string downloadFileName = null)
+        {
+            // dont download webp images if possible
+            url = url.Replace("&format=webp", "");
+
+            // remove width and height query params
+            url = Regex.Replace(url, @"&width=\d+", "");
+            url = Regex.Replace(url, @"&height=\d+", "");
+
+            // if the parameter is at the start with ? then remove it
+            url = Regex.Replace(url, @"\?width=\d+", "?");
+            url = Regex.Replace(url, @"\?height=\d+", "?");
+
+            // if url ends with ? then remove it
+            url = Regex.Replace(url, @"\?$", "");
+
+            if (url.Contains("webp") || url.Contains("webm"))
+            {
+                int t = 1;
+            }
+
+            try
+            {
+                string fileName = downloadFileName;
+                if (string.IsNullOrWhiteSpace(fileName))
+                {
+                    fileName = url.Split('/').Last();
+                    fileName = fileName.Split('?').First();
+                }
+
+                fileName = fileName.ToLower(); // so no png and PNG
+
+
+                if (!fileName.Contains("."))
+                {
+                    await Context.Channel.SendMessageAsync($"Filename '{fileName}' is invalid from content: ```{message.Content}```", false);
+                    throw new Exception("Invalid filename");
+                }
+
+
+                // remove any . except the last one
+                string fileExtension = fileName.Split('.').Last();
+                string name = fileName.Substring(0, fileName.Length - fileExtension.Length - 1);
+
+                // limit filename to 150 chars max
+                if (name.Length > 100)
+                    name = name.Substring(0, 100);
+
+
+                name = name.Replace(".", "");
+
+                // remove any non alphanumeric chars from name
+                name = Regex.Replace(name, @"[^a-zA-Z0-9_]", "");
+
+                fileName = $"{message.Id}_{index}_{name}.{fileExtension}";
+
+                // put image into folder Python/memes
+                string filePath = Path.Combine(Environment.CurrentDirectory, "Python", "memes", fileName);
+
+                // if os linux dont do ../../..
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    filePath = Path.Combine(Environment.CurrentDirectory, "Python", "memes", fileName);
+
+                // check if folder exists
+                if (!Directory.Exists(Path.GetDirectoryName(filePath)))
+                {
+                    await Context.Channel.SendMessageAsync($"Folder {Path.GetDirectoryName(filePath)} does not exist", false);
+                    await Context.Channel.SendMessageAsync($"Content: ```{message.Content}```");
+
+                }
+
+                // check if file exists
+                if (File.Exists(filePath))
+                {
+                    //await Context.Channel.SendMessageAsync($"File {filePath} already exists", false);
+                    return;
+                }
+
+
+                byte[] bytes = client.GetByteArrayAsync(url).Result;
+                File.WriteAllBytes(filePath, bytes);
+            }
+            catch (HttpException ex)
+            {
+                // if status code 404 then skip
+                if (ex.HttpCode == HttpStatusCode.NotFound) return;
+
+                await Context.Channel.SendMessageAsync($"Download error in attachment url <{url}>: " + ex.Message.ToString(), false);
+            }
+        }
+
         [Command("download")]
         [RequireUserPermission(GuildPermission.ManageChannels)]
         public async Task DownloadImages(int count = 100)
@@ -102,10 +193,17 @@ namespace ETHDINFKBot.Modules
                 int threadCreated = 0;
 
                 int tenorGifs = 0;
+                int imgur = 0;
                 int youtubeVideos = 0;
+                int currentCount = 0;
 
                 foreach (var message in messages)
                 {
+                    currentCount++;
+
+                    if (currentCount % 250 == 0)
+                        await Context.Channel.SendMessageAsync($"Done {currentCount} messages", false);
+
                     string link = $"https://discord.com/channels/747752542741725244/{channelId}/{message.Id}";
 
                     if (message.Content.Contains("tenor.com"))
@@ -114,8 +212,14 @@ namespace ETHDINFKBot.Modules
                         continue;
                     }
 
+                    if (message.Content.Contains("imgur.com"))
+                    {
+                        imgur++;
+                        continue;
+                    }
+
                     // if domain twitter skip because images dont have ending in url
-                    if (message.Content.Contains("twitter.com") || message.Content.Contains("//x.com"))
+                    if (message.Content.Contains("twitter.com") || message.Content.Contains("//x.com") || message.Content.Contains("twimg.com") || message.Content.Contains("fixupx.com"))
                     {
                         // handle them when i have time or never
                         skipped++;
@@ -156,6 +260,12 @@ namespace ETHDINFKBot.Modules
                             url = Regex.Replace(url, @"&width=\d+", "");
                             url = Regex.Replace(url, @"&height=\d+", "");
 
+                            // if the parameter is at the start with ? then remove it
+                            url = Regex.Replace(url, @"\?width=\d+", "?");
+                            url = Regex.Replace(url, @"\?height=\d+", "?");
+
+                            // if url ends with ? then remove it
+                            url = Regex.Replace(url, @"\?$", "");
 
                             if (url.Contains("webp") || url.Contains("webm"))
                             {
@@ -166,28 +276,35 @@ namespace ETHDINFKBot.Modules
                             {
                                 string fileName = attachment.Filename;
 
-                                // limit filename to 150 chars max
-                                if (fileName.Length > 150)
-                                    fileName = fileName.Substring(0, 150);
-
-                                // add to the filename the message id to ensure uniqueness
-                                fileName = $"{message.Id}_{index}_{fileName}";
-                                index++;
-
                                 fileName = fileName.ToLower(); // so no png and PNG
 
-                                // remove any . except the last one // this is to not confuse cv2
+
+                                if (!fileName.Contains("."))
+                                {
+                                    await Context.Channel.SendMessageAsync($"Filename '{fileName}' is invalid from content: ```{message.Content}```", false);
+                                    skipped++;
+                                    throw new Exception("Invalid filename");
+                                }
+
+
+                                // remove any . except the last one
                                 string fileExtension = fileName.Split('.').Last();
                                 string name = fileName.Substring(0, fileName.Length - fileExtension.Length - 1);
+
+                                // limit filename to 150 chars max
+                                if (name.Length > 100)
+                                    name = name.Substring(0, 100);
+
+
                                 name = name.Replace(".", "");
 
                                 // remove any non alphanumeric chars from name
-                                name = Regex.Replace(name, @"[^a-zA-Z0-9]", "");
+                                name = Regex.Replace(name, @"[^a-zA-Z0-9_]", "");
 
-                                fileName = $"{name}.{fileExtension}";
+                                fileName = $"{message.Id}_{index}_{name}.{fileExtension}";
 
                                 // put image into folder Python/memes
-                                string filePath = Path.Combine(Environment.CurrentDirectory, "..", "..", "..", "Python", "memes", fileName);
+                                string filePath = Path.Combine(Environment.CurrentDirectory, "Python", "memes", fileName);
 
                                 // if os linux dont do ../../..
                                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -197,7 +314,9 @@ namespace ETHDINFKBot.Modules
                                 if (!Directory.Exists(Path.GetDirectoryName(filePath)))
                                 {
                                     await Context.Channel.SendMessageAsync($"Folder {Path.GetDirectoryName(filePath)} does not exist", false);
-                                    return;
+                                    await Context.Channel.SendMessageAsync($"Content: ```{message.Content}```");
+                                    skipped++;
+                                    continue;
                                 }
 
                                 // check if file exists
@@ -220,7 +339,12 @@ namespace ETHDINFKBot.Modules
                                 // if status code 404 then skip
                                 if (ex.HttpCode == HttpStatusCode.NotFound) continue;
 
-                                await Context.Channel.SendMessageAsync($"Download error in attachment ({link}) and url <{url}>: " + ex.Message.ToString(), false);
+                                await Context.Channel.SendMessageAsync($"HTTP Download error in attachment ({link}) and url <{url}>: " + ex.Message.ToString(), false);
+                            }
+                            catch (Exception ex)
+                            {
+                                errors++;
+                                await Context.Channel.SendMessageAsync($"Download error in embed ({link}) and url <{url}>: " + ex.Message.ToString(), false);
                             }
                         }
                     }
@@ -237,6 +361,13 @@ namespace ETHDINFKBot.Modules
                                 url = Regex.Replace(url, @"&width=\d+", "");
                                 url = Regex.Replace(url, @"&height=\d+", "");
 
+                                // if the parameter is at the start with ? then remove it
+                                url = Regex.Replace(url, @"\?width=\d+", "?");
+                                url = Regex.Replace(url, @"\?height=\d+", "?");
+
+                                // if url ends with ? then remove it
+                                url = Regex.Replace(url, @"\?$", "");
+
                                 if (url.Contains("webp") || url.Contains("webm"))
                                 {
                                     int t = 1;
@@ -247,28 +378,35 @@ namespace ETHDINFKBot.Modules
                                     string fileName = embed.Url.Split('/').Last();
                                     fileName = fileName.Split('?').First();
 
-                                    // limit filename to 150 chars max
-                                    if (fileName.Length > 150)
-                                        fileName = fileName.Substring(0, 150);
-
-                                    // add to the filename the message id to ensure uniqueness
-                                    fileName = $"{message.Id}_{index}_{fileName}";
-                                    index++;
-
                                     fileName = fileName.ToLower(); // so no png and PNG
+
+
+                                    if (!fileName.Contains("."))
+                                    {
+                                        await Context.Channel.SendMessageAsync($"Filename '{fileName}' is invalid from content: ```{message.Content}```", false);
+                                        skipped++;
+                                        throw new Exception("Invalid filename");
+                                    }
+
 
                                     // remove any . except the last one
                                     string fileExtension = fileName.Split('.').Last();
                                     string name = fileName.Substring(0, fileName.Length - fileExtension.Length - 1);
+
+                                    // limit filename to 150 chars max
+                                    if (name.Length > 100)
+                                        name = name.Substring(0, 100);
+
+
                                     name = name.Replace(".", "");
 
                                     // remove any non alphanumeric chars from name
-                                    name = Regex.Replace(name, @"[^a-zA-Z0-9]", "");
+                                    name = Regex.Replace(name, @"[^a-zA-Z0-9_]", "");
 
-                                    fileName = $"{name}.{fileExtension}";
+                                    fileName = $"{message.Id}_{index}_{name}.{fileExtension}";
 
                                     // put image into folder Python/memes
-                                    string filePath = Path.Combine(Environment.CurrentDirectory, "..", "..", "..", "Python", "memes", fileName);
+                                    string filePath = Path.Combine(Environment.CurrentDirectory, "Python", "memes", fileName);
 
                                     // if os linux dont do ../../..
                                     if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -300,6 +438,11 @@ namespace ETHDINFKBot.Modules
                                     // if status code 404 then skip
                                     if (ex.HttpCode == HttpStatusCode.NotFound) continue;
 
+                                    await Context.Channel.SendMessageAsync($"HTTP Download error in embed ({link}) and url <{url}>: " + ex.Message.ToString(), false);
+                                }
+                                catch (Exception ex)
+                                {
+                                    errors++;
                                     await Context.Channel.SendMessageAsync($"Download error in embed ({link}) and url <{url}>: " + ex.Message.ToString(), false);
                                 }
                             }
@@ -312,13 +455,18 @@ namespace ETHDINFKBot.Modules
                     }
                 }
 
-                await Context.Channel.SendMessageAsync($"Downloaded: {downloaded} | Skipped: {skipped} | Errors: {errors} | NoAttachments: {noAttachments} | ThreadCreated: {threadCreated} " +
-                    $"| TenorGifs: {tenorGifs} | YoutubeVideos: {youtubeVideos}", false);
+                int totalCalls = downloaded + skipped + errors + noAttachments + threadCreated + tenorGifs + youtubeVideos + imgur;
+
+                await Context.Channel.SendMessageAsync($"Total: {totalCalls} | Downloaded: {downloaded} | Skipped: {skipped} | Errors: {errors} | NoAttachments: {noAttachments} | ThreadCreated: {threadCreated} " +
+                    $"| TenorGifs: {tenorGifs} | YoutubeVideos: {youtubeVideos} | Imgur: {imgur}", false);
             }
             catch (Exception ex)
             {
-                await Context.Channel.SendMessageAsync(ex.ToString(), false);
+                await Context.Channel.SendMessageAsync(ex.Message.ToString(), false);
+                await Context.Channel.SendMessageAsync(ex.StackTrace.ToString(), false);
             }
+
+            await Context.Channel.SendMessageAsync("Done", false);
         }
 
         [Command("image")]

@@ -27,11 +27,11 @@ to_hr() {
     elif [ $num -lt 1024 ]; then 
         echo "${num}B"
     elif [ $num -lt 1048576 ]; then 
-        echo "$(echo "scale=2; $num/1024" | bc)K"
+        echo "$(echo "scale=2; $num/1024" | bc) KB"
     elif [ $num -lt 1073741824 ]; then 
-        echo "$(echo "scale=2; $num/1048576" | bc)M"
+        echo "$(echo "scale=2; $num/1048576" | bc) MB"
     else 
-        echo "$(echo "scale=2; $num/1073741824" | bc)G"
+        echo "$(echo "scale=2; $num/1073741824" | bc) GB"
     fi
 }
 

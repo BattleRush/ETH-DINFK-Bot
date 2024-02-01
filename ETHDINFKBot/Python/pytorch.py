@@ -42,8 +42,6 @@ def get_embedding(image_path):
 folder = "memes"
 model_name = "test"
 
-
-
 def ensure_db_exists():
     # check if db exists
     # sqlite db is in repost.db
