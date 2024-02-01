@@ -11,6 +11,7 @@ PublishProfiles
 
 __pycache__
 memes
+plots
 
 *.zip
 repost.db

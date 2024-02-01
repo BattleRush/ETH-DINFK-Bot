@@ -94,7 +94,6 @@ def get_model_id(model_name):
         conn.commit()
         model_id = c.lastrowid
     else:
-        print("model has already been processed " + model_name)
         model_id = result[0]
         
     conn.close()
@@ -112,7 +111,6 @@ for filename in os.listdir(folder):
 
 def create_db_images(paths):
     for path in paths:
-        print(path)
         
         # get filename
         fullfilename = path.split('/')[1]
@@ -147,8 +145,6 @@ def create_db_images(paths):
             print("image has not been processed yet " + path)
             c.execute("INSERT INTO images (fullfilename, message_id, file_index, filename, fullpath, extension, filesize) VALUES (?, ?, ?, ?, ?, ?, ?)", (fullfilename, message_id, index, filename, fullpath, extension, filesize))
             conn.commit()
-        else:
-            print("image has already been processed " + path)
         
         conn.close()
         
@@ -158,12 +154,18 @@ create_db_images(image_paths)
 
 # check if embeddings_{mdoel}.npy exists
 # if not get embeddings and save them
-embeddings = []
+embeddings = {}
     
 for path in image_paths:
-    print(path)
+    #print(path)
     
+    # break on 1000 images
+    #if len(embeddings.keys()) > 1000:
+    #    break
 
+    # every 500 images print the number of images processed
+    if len(embeddings.keys()) % 500 == 0:
+        print("images processed: " + str(len(embeddings.keys())))
     
     # save embedding to db
     conn = sqlite3.connect('repost.db')
@@ -180,6 +182,7 @@ for path in image_paths:
     
     # get image id
     image_id = result[0]
+
     
     # get model id
     model_id = get_model_id(model_name)
@@ -193,11 +196,15 @@ for path in image_paths:
         
         # convert embedding to blob
         embedding_blob = current_embedding.tobytes()
+
+        embeddings[image_id] = current_embedding
     
         c.execute("INSERT INTO embeddings (image_id, model_id, embedding) VALUES (?, ?, ?)", (image_id, model_id, embedding_blob))
         conn.commit()
     else:
-        print("embedding has already been processed " + path)
+        # add to embeddings dict of img id and embed as valuue
+        db_embedding = np.frombuffer(result[3], dtype=np.float32)
+        embeddings[image_id] = db_embedding
         
     conn.close()
     
@@ -229,13 +236,17 @@ def load_embeddings_from_db(model_name):
     
     return embeddings
     
-embeddings = load_embeddings_from_db(model_name)
+#embeddings = load_embeddings_from_db(model_name)
 
 # print first 1 embeddings
 for key in list(embeddings.keys())[:1]:
     print(key)
     print(embeddings[key])
     print("")
+
+#print number of keys in embeddings
+print(len(embeddings.keys()))
+
 
 # Extract embeddings
 #embeddings = [get_embedding(path) for path in image_paths]
@@ -246,10 +257,29 @@ for key in list(embeddings.keys())[:1]:
 # get dimensions of embeddings
 
 # Function to find similar images
-def find_similar_images(target_embedding, embeddings, top_k=10):
+def find_similar_images(target_embedding, embeddings_dict, top_k=10):
+    # Extract the image IDs and their embeddings from the dictionary
+    image_ids = list(embeddings_dict.keys())
+    embeddings = np.array(list(embeddings_dict.values()))
+    
+    # Compute cosine similarities between the target embedding and each of the embeddings in the list
     similarities = cosine_similarity([target_embedding], embeddings)[0]
+    
+    # Get the indices of the top_k most similar embeddings, sorted by similarity
     indices = np.argsort(similarities)[::-1][:top_k]
-    return indices, similarities[indices]
+    
+    # Map the indices back to image IDs
+    similar_image_ids = [image_ids[idx] for idx in indices]
+
+    print("similar_image_ids")
+    print(similar_image_ids)
+    print("")
+    print("similarities")
+    print(similarities[indices])
+    
+    # Return the image IDs of the most similar images and their similarities
+    return similar_image_ids, similarities[indices]
+
 
 # Example usage: Find images similar to the first image in the list
 # index = 0
@@ -282,7 +312,7 @@ def easyOCR(reader, imagePath):
         print("image has not been processed yet " + imagePath)
         return
     else:
-        print("image has already been processed " + imagePath)
+        #print("image has already been processed " + imagePath)
         image_id = result[0]
         
         # check if the current image has text in the db if not run easyocr
@@ -290,22 +320,55 @@ def easyOCR(reader, imagePath):
         
         # if image_text is not None return image_text
         if image_text is not None:
-            print("image has text in db " + imagePath)
+            #print("image has text in db " + imagePath)
             
             # get ocr boxes
             c.execute("SELECT * FROM ocrboxes WHERE image_id=?", (image_id,))
-            result = c.fetchone()
+            result = c.fetchall()
             
             # convert boundingbox to numpy array
-                        
+            image = cv2.imread(imagePath)   
+
             if result is None:
                 print("image has no ocr boxes in db " + imagePath)
-                return (None, image_text)
+                return (image, image_text)
             
             # todo boxes
             
                 
-            return (None, image_text) # todo boxes
+            boxes = []
+            probabilities = []
+            texts = []
+            for row in result:
+                # get fullpath
+                box = np.array([[row[2], row[3]], [row[4], row[5]], [row[6], row[7]], [row[8], row[9]]])
+                boxes.append(box)
+                probabilities.append(row[11])
+                texts.append(row[10])
+
+            
+            # draw the text on the output image
+            image = cv2.imread(imagePath)
+
+            # add padding to image
+            border = 50
+            image = cv2.copyMakeBorder(image, border, border, border, border, cv2.BORDER_CONSTANT, value=[100, 100, 100])
+
+            for i in range(len(boxes)):
+                bbox = boxes[i]
+                text = texts[i]
+                prob = probabilities[i]
+                cv2.rectangle(image, (int(bbox[0][0]) + border, int(bbox[0][1])+ border), (int(bbox[2][0]) + border, int(bbox[2][1]) + border), (0, 255, 0), 2)
+                cv2.putText(image, text, (int(bbox[0][0])+ border, int(bbox[0][1] - 10) + border), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 2)
+                # put prob on image
+                cv2.putText(image, str(round(prob, 2)), (int(bbox[0][0]) + border, int(bbox[0][1] - 30)+ border), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 255), 2)
+
+
+
+            # show image with matplotlib
+            return (image, image_text)
+
+            
         
 
     
@@ -373,14 +436,14 @@ def easyOCR(reader, imagePath):
 
 # go trough all images and run easyocr on them
 # save results to db
-for imagePath in image_paths:
-    print("EasyOCR on " + imagePath)
-    easyOCR(reader, imagePath)
+#for imagePath in image_paths:
+    #print("EasyOCR on " + imagePath)
+#    easyOCR(reader, imagePath)
 
 
 # Function to display images and their similarities with the desired layout
 def display_similar_images(reader, query_path, image_paths, similar_indices, similarities):
-    fig_width, fig_height = 10, 5  # dimensions in inches
+    fig_width, fig_height = 20, 10  # dimensions in inches
     fig = plt.figure(figsize=(fig_width, fig_height))
     row = 2
     col = 5    
@@ -397,7 +460,7 @@ def display_similar_images(reader, query_path, image_paths, similar_indices, sim
 
     ax1.imshow(reference_image)
     ax1.axis('off')  # Turn off axis
-    ax1.set_title("Query image")
+    ax1.set_title("Query image " + query_path.split('/')[1])
     ax1.set_xlabel(reference_text)
 
 
@@ -416,30 +479,46 @@ def display_similar_images(reader, query_path, image_paths, similar_indices, sim
         ax.set_xlabel(repost_text)
     
     plt.tight_layout()
-    plt.show()
-    
-    
-# # go trough all embedd combinations and find the ones that have least distance in the top 10
-# for index in range(len(embeddings)):
-#     indices, similarities = find_similar_images(embeddings[index], embeddings)
-#     print(f"Similarities for image {image_paths[index]}")
-#     similar_files = []
-#     for index in indices:
-#         similar_files.append(image_paths[index])
+    # save plot to plot folder
 
-#     print(" Files similar: " + str(len(similar_files)))
-#     print(" File names: " + str(similar_files))
-#     print(similarities)
-#     print("")
+    # check if plot folder exists
+    if not os.path.isdir("plots"):
+        os.mkdir("plots")
     
-#     # check if there is a repost
-#     if similarities[3] > 0.9:
-#         print("Repost found")
-#         print("Query image: " + image_paths[index])
-#         print("Repost image: " + image_paths[indices[1]])
-#         print("Similarity: " + str(similarities[1]))
-#         print("")
-#         display_similar_images(reader, image_paths[index], image_paths, indices, similarities)
+    plt.savefig("plots/" + query_path.split('/')[1] + ".png")
+
+    #plt.show()
+    
+    
+ # go trough all embedd combinations and find the ones that have least distance in the top 10
+index = 0
+count = 0
+for key in list(embeddings.keys()):
+    indices, similarities = find_similar_images(embeddings[key], embeddings)
+    print(f"Similarities for image {key}")
+    similar_files = []
+    #for index in indices:
+        #similar_files.append(image_paths[index])
+
+    print(" Files similar: " + str(len(similar_files)))
+    print(" File names: " + str(similar_files))
+    print(similarities)
+    print("")
+
+    # check if there is a repost
+    if similarities[3] > 0.9:
+        print("Repost found")
+        #print("Query image: " + image_paths[index])
+        #print("Repost image: " + image_paths[indices[1]])
+        #print("Similarity: " + str(similarities[1]))
+        print("")
+        display_similar_images(reader, image_paths[index], image_paths, indices, similarities)
+        count = count + 1
+
+        if count > 100:
+            break
+    
+    index = index + 1
         
 
 
