@@ -153,8 +153,8 @@ namespace ETHDINFKBot
 
                 var processorCount = Environment.ProcessorCount;
                 var ram = proc.WorkingSet64;
-                var freeBytes = new DriveInfo(Environment.ProcessPath).AvailableFreeSpace;
-                var totalBytes = new DriveInfo(Environment.ProcessPath).TotalSize;
+
+                // get all partitions available
 
                 EmbedBuilder builder = new EmbedBuilder();
 
@@ -194,7 +194,20 @@ namespace ETHDINFKBot
 
                 builder.AddField("CPU", $"{Math.Round(cpuUsage, 2)}%", true);
                 builder.AddField("RAM", $"{Math.Round(ram / 1024d / 1024d / 1024d, 2)} GB", true);
-                builder.AddField("DISK", $"{Math.Round((totalBytes - freeBytes) / 1024d / 1024d / 1024d, 2)} GB out of {Math.Round(totalBytes / 1024d / 1024d / 1024d, 2)} GB ({Math.Round(100 * ((totalBytes - freeBytes) / (decimal)totalBytes), 2)}%)", true);
+
+                DriveInfo[] allDrives = DriveInfo.GetDrives();
+
+                foreach (DriveInfo d in allDrives)
+                {
+                    var freeBytes = d.AvailableFreeSpace;
+                    var totalBytes = d.TotalSize;
+                    long usedBytes = totalBytes - freeBytes;
+                    string driveName = d.Name;
+
+                    double gb = 1024d * 1024d * 1024d;
+
+                    builder.AddField("DISK " + driveName, $"{Math.Round(usedBytes / gb, 2)} GB out of {Math.Round(totalBytes / gb, 2)} GB ({Math.Round(100 * (usedBytes / (decimal)totalBytes), 2)}%)", true);
+                }
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
@@ -1930,11 +1943,11 @@ ORDER BY RAND() LIMIT 1";// todo nsfw test
 
             }
             /*
- * 
- * SELECT column FROM table 
-ORDER BY RANDOM() LIMIT 1
+        * 
+        * SELECT column FROM table 
+        ORDER BY RANDOM() LIMIT 1
 
-*/
+        */
         }
 
         [Command("space")]
@@ -2159,11 +2172,11 @@ ORDER BY RAND() LIMIT 1";// todo nsfw test
                 }
             }
             /*
- * 
- * SELECT column FROM table 
-ORDER BY RANDOM() LIMIT 1
+        * 
+        * SELECT column FROM table 
+        ORDER BY RANDOM() LIMIT 1
 
-*/
+        */
         }
 
         /*
@@ -2195,7 +2208,7 @@ ORDER BY RANDOM() LIMIT 1
                     break;
 
                 case "start":
-                    
+
                     break;
                 default:
                     break;
