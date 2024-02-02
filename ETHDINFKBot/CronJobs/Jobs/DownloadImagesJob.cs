@@ -62,9 +62,6 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
         private async void ProcessChannels()
         {
-
-
-
             // todo config
             ulong guildId = 747752542741725244;
             //ulong spamChannel = 768600365602963496;
@@ -73,14 +70,19 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
             var keyValueDBManager = DatabaseManager.KeyValueManager;
 
-            var imageScrapeChannelIdsString = keyValueDBManager.Get<string>("ImageScrapeChannelIds");
+            string basePath = keyValueDBManager.Get<string>("ImageScrapeBasePath");
 
             int scrapePerRun = keyValueDBManager.Get<int>("MessageScrapePerRun");
+            string imageScrapeChannelIdsString = keyValueDBManager.Get<string>("ImageScrapeChannelIds");
+
+            if (string.IsNullOrWhiteSpace(basePath))
+            {
+                _logger.LogError("ImageScrapeBasePath not set");
+                return;
+            }
 
             if (scrapePerRun == 0)
-            {
                 scrapePerRun = 10_000;
-            }
 
             if (imageScrapeChannelIdsString == null)
             {
