@@ -105,7 +105,8 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                 if (messages.Count == 0)
                 {
-                    _logger.LogInformation($"No new messages for channel {channel.Name}");
+                    _logger.LogInformation($"No new messages left for channel {channel.Name}");
+                    continue;
                 }
 
                 _logger.LogInformation($"Found {messages.Count} new messages for channel {channel.Name}");
@@ -127,8 +128,34 @@ namespace ETHDINFKBot.CronJobs.Jobs
                         continue;
                     }
 
-                    
+                    List<string> urls = new List<string>();
+
+                    foreach (var attachment in message.Attachments)
+                    {
+                        urls.Add(attachment.Url);
+                    }
+
+                    foreach (var embed in message.Embeds)
+                    {
+                        if (embed.Type == EmbedType.Image)
+                        {
+                            urls.Add(embed.Url);
+                        }
+
+                        if (embed.Type == EmbedType.Video)
+                        {
+                            urls.Add(embed.Url);
+                        }
+
+                        if (embed.Type == EmbedType.Rich)
+                        {
+                            urls.Add(embed.Url);
+                        }
+                    }
                 }
+
+                // update last message id
+                keyValueDBManager.Update($"LastScapedMessageForChannel_{channel.Id}", messages.Max(x => x.Id));
             }
         }
 
