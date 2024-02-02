@@ -152,6 +152,11 @@ namespace ETHDINFKBot.CronJobs.Jobs
                             urls.Add(embed.Url);
                         }
                     }
+
+                    foreach (var url in urls)
+                    {
+                        DownloadFile(new HttpClient(), message, message.Id, url, urls.IndexOf(url), basePath, "");
+                    }
                 }
 
                 // update last message id
@@ -159,7 +164,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
             }
         }
 
-        private async void DownloadFile(HttpClient client, SocketMessage message, ulong messageId, string url, int index, string basePath, string downloadFileName)
+        private async void DownloadFile(HttpClient client, IMessage message, ulong messageId, string url, int index, string basePath, string downloadFileName)
         {
             // dont download webp images if possible
             url = url.Replace("&format=webp", "");
@@ -230,13 +235,49 @@ namespace ETHDINFKBot.CronJobs.Jobs
                 // check if file exists
                 if (File.Exists(filePath))
                 {
-                    //await Context.Channel.SendMessageAsync($"File {filePath} already exists", false);
+                    _logger.LogInformation($"File {filePath} already exists", false);
                     return;
                 }
 
 
-                byte[] bytes = client.GetByteArrayAsync(url).Result;
-                File.WriteAllBytes(filePath, bytes);
+                // check if opening the url how big the file is
+                // if its too big then skip
+                var headRequest = new HttpRequestMessage(HttpMethod.Head, url);
+                var headResponse = client.SendAsync(headRequest).Result;
+
+                if (headResponse.Content.Headers.ContentLength > 10_000_000)
+                {
+                    _logger.LogInformation($"File {filePath} is too big: {headResponse.Content.Headers.ContentLength}", false);
+                    return;
+                }
+
+                // check if the url is a downloadable file
+                // if not then skip
+                var headContentType = headResponse.Content.Headers.ContentType.MediaType;
+                // check if image or video
+                if (headContentType.StartsWith("image") || headContentType.StartsWith("video"))
+                {
+                    // download the file
+                    byte[] bytes = client.GetByteArrayAsync(url).Result;
+
+                    // get the file extension from the content type
+                    string fileExtensionFromContentType = headContentType.Split('/').Last();
+
+                    // check if the filename has the correct extension if not then replace it or add if missing
+                    if (!fileName.EndsWith(fileExtensionFromContentType))
+                    {
+                        if(fileName.Contains("."))
+                            fileName = fileName.Split('.').First() + "." + fileExtensionFromContentType;
+                        else
+                            fileName = fileName + "." + fileExtensionFromContentType;
+                    }
+
+                    File.WriteAllBytes(filePath, bytes);
+                }
+                else
+                {
+                    _logger.LogInformation($"File {filePath} is not an image or video: {headContentType}", false);
+                }
             }
             catch (HttpException ex)
             {
