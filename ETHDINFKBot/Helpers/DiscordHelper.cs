@@ -285,7 +285,10 @@ namespace ETHDINFKBot.Helpers
                 var headRequest = new HttpRequestMessage(HttpMethod.Head, url);
                 var headResponse = client.SendAsync(headRequest).Result;
 
-                if (headResponse.Content.Headers.ContentLength > 10_000_000)
+                int maxMb = 10;
+                int maxBytes = maxMb * 1024 * 1024;
+
+                if (headResponse.Content.Headers.ContentLength > maxBytes)
                 {
                     //_logger.LogInformation($"File {filePath} is too big: {headResponse.Content.Headers.ContentLength}", false);
                     return null;
