@@ -81,6 +81,14 @@ namespace ETHDINFKBot.CronJobs.Jobs
                 StringContent json = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
 
                 var result = await HttpClient.PostAsync(url, json);
+
+                if(result.StatusCode != HttpStatusCode.OK)
+                {
+                    // sleep for 1 second and try again
+                    Thread.Sleep(1000);
+                    return false;
+                }
+
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
                     // get result
