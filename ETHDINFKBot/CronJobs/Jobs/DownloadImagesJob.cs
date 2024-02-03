@@ -1,6 +1,9 @@
 ﻿using Discord;
 using Discord.Net;
 using Discord.WebSocket;
+using ETHBot.DataLayer.Data.Discord;
+using ETHDINFKBot.Data;
+using ETHDINFKBot.Helpers;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -53,15 +56,32 @@ namespace ETHDINFKBot.CronJobs.Jobs
         }
         public override Task DoWork(CancellationToken cancellationToken)
         {
-
-            ProcessChannels();
-
+            try
+            {
+                ProcessChannels();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in ProcessChannels");
+            }
 
             return Task.CompletedTask;
         }
 
         private async void ProcessChannels()
         {
+            ///////////////
+            /// Commands to run to setupo the key value db
+            /// .admin keyval add ImageScrapeBasePath "<path>"
+            /// .admin keyval add MessageScrapePerRun 1000 Int32 // optional else it will default to 10_000
+            /// .admin keyval add ImageScrapeChannelIds "<channelid>,<channelid>"
+            /// .admin keyval add LastScapedMessageForChannel_<channelid> 0 // for each channel optionally
+            ///////////////
+
+
+
+
+
             // todo config
             ulong guildId = 747752542741725244;
             //ulong spamChannel = 768600365602963496;
@@ -95,11 +115,18 @@ namespace ETHDINFKBot.CronJobs.Jobs
             var guild = Program.Client.GetGuild(guildId);
 
             var channels = guild.Channels.Where(x => imageScrapeChannelIds.Contains(x.Id)).ToList();
+            var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0");
+
+            FileDBManager fileDBManager = FileDBManager.Instance();
 
             foreach (var channel in channels)
             {
                 var textChannel = channel as SocketTextChannel;
                 ulong lastMessageForChannel = keyValueDBManager.Get<ulong>($"LastScapedMessageForChannel_{channel.Id}");
+
+                if (lastMessageForChannel == 0)
+                    lastMessageForChannel = SnowflakeUtils.ToSnowflake(DateTimeOffset.UtcNow);
 
                 var messages = textChannel.GetMessagesAsync(lastMessageForChannel, Direction.Before, scrapePerRun).FlattenAsync().Result.ToList();
 
@@ -116,7 +143,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                 foreach (var message in messages)
                 {
-                    if(message.Author.IsBot)
+                    if (message.Author.IsBot)
                     {
                         botCount++;
                         continue;
@@ -155,138 +182,33 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                     foreach (var url in urls)
                     {
-                        DownloadFile(new HttpClient(), message, message.Id, url, urls.IndexOf(url), basePath, "");
+                        try
+                        {
+                            var result = await DiscordHelper.DownloadFile(client, message, message.Id, url, urls.IndexOf(url), basePath, "");
+
+                            if(result != null)
+                            {
+                                fileDBManager.SaveDiscordFile(result);
+                            }
+                            else
+                            {
+                                _logger.LogError($"Failed to download file {url}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.ToString());
+                        }
+
                     }
                 }
 
                 // update last message id
-                keyValueDBManager.Update($"LastScapedMessageForChannel_{channel.Id}", messages.Max(x => x.Id));
+                keyValueDBManager.Update($"LastScapedMessageForChannel_{channel.Id}", messages.Min(x => x.Id));
             }
         }
 
-        private async void DownloadFile(HttpClient client, IMessage message, ulong messageId, string url, int index, string basePath, string downloadFileName)
-        {
-            // dont download webp images if possible
-            url = url.Replace("&format=webp", "");
-
-            // remove width and height query params
-            url = Regex.Replace(url, @"&width=\d+", "");
-            url = Regex.Replace(url, @"&height=\d+", "");
-
-            // if the parameter is at the start with ? then remove it
-            url = Regex.Replace(url, @"\?width=\d+", "?");
-            url = Regex.Replace(url, @"\?height=\d+", "?");
-
-            // if url ends with ? then remove it
-            url = Regex.Replace(url, @"\?$", "");
-
-            try
-            {
-                string fileName = downloadFileName;
-                if (string.IsNullOrWhiteSpace(fileName))
-                {
-                    fileName = url.Split('/').Last();
-                    fileName = fileName.Split('?').First();
-                }
-
-                fileName = fileName.ToLower(); // so no png and PNG
-
-
-                if (!fileName.Contains("."))
-                {
-                    _logger.LogInformation($"Filename '{fileName}' is invalid from content: ```{message.Content}```", false);
-                    throw new Exception("Invalid filename");
-                }
-
-
-                // remove any . except the last one
-                string fileExtension = fileName.Split('.').Last();
-                string name = fileName.Substring(0, fileName.Length - fileExtension.Length - 1);
-
-                // limit filename to 150 chars max
-                if (name.Length > 100)
-                    name = name.Substring(0, 100);
-
-
-                name = name.Replace(".", "");
-
-                // remove any non alphanumeric chars from name
-                name = Regex.Replace(name, @"[^a-zA-Z0-9_]", "");
-
-                fileName = $"{message.Id}_{index}_{name}.{fileExtension}";
-
-                var emojiDate = SnowflakeUtils.FromSnowflake(messageId);
-                string additionalFolder = $"{emojiDate.Year}-{emojiDate.Month:00}";
-
-                // put image into folder Python/memes
-                string filePath = Path.Combine(basePath, additionalFolder, fileName);
-
-                if(Directory.Exists(Path.GetDirectoryName(filePath)))
-                    Directory.CreateDirectory(Path.GetDirectoryName(filePath));
-
-                // check if folder exists
-                if (!Directory.Exists(Path.GetDirectoryName(filePath)))
-                {
-                    _logger.LogInformation($"Folder {Path.GetDirectoryName(filePath)} does not exist", false);
-                    _logger.LogInformation($"Content: ```{message.Content}```");
-
-                }
-
-                // check if file exists
-                if (File.Exists(filePath))
-                {
-                    _logger.LogInformation($"File {filePath} already exists", false);
-                    return;
-                }
-
-
-                // check if opening the url how big the file is
-                // if its too big then skip
-                var headRequest = new HttpRequestMessage(HttpMethod.Head, url);
-                var headResponse = client.SendAsync(headRequest).Result;
-
-                if (headResponse.Content.Headers.ContentLength > 10_000_000)
-                {
-                    _logger.LogInformation($"File {filePath} is too big: {headResponse.Content.Headers.ContentLength}", false);
-                    return;
-                }
-
-                // check if the url is a downloadable file
-                // if not then skip
-                var headContentType = headResponse.Content.Headers.ContentType.MediaType;
-                // check if image or video
-                if (headContentType.StartsWith("image") || headContentType.StartsWith("video"))
-                {
-                    // download the file
-                    byte[] bytes = client.GetByteArrayAsync(url).Result;
-
-                    // get the file extension from the content type
-                    string fileExtensionFromContentType = headContentType.Split('/').Last();
-
-                    // check if the filename has the correct extension if not then replace it or add if missing
-                    if (!fileName.EndsWith(fileExtensionFromContentType))
-                    {
-                        if(fileName.Contains("."))
-                            fileName = fileName.Split('.').First() + "." + fileExtensionFromContentType;
-                        else
-                            fileName = fileName + "." + fileExtensionFromContentType;
-                    }
-
-                    File.WriteAllBytes(filePath, bytes);
-                }
-                else
-                {
-                    _logger.LogInformation($"File {filePath} is not an image or video: {headContentType}", false);
-                }
-            }
-            catch (HttpException ex)
-            {
-                // if status code 404 then skip
-                if (ex.HttpCode == HttpStatusCode.NotFound) return;
-
-                _logger.LogInformation($"Download error in attachment url <{url}>: " + ex.Message.ToString(), false);
-            }
-        }
+        
 
         public override Task StopAsync(CancellationToken cancellationToken)
         {

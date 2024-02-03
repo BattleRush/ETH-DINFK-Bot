@@ -39,8 +39,17 @@ namespace ETHDINFKBot.Handlers
         private BotChannelSetting ChannelSettings;
         private List<string> CommandInfos;
 
+        private HttpClient HttpClient;
+
+        private static string FileBasePath = ""; // todo load from keyval
+        private static List<ulong> ChannelIdsToDownload = new List<ulong>();
+        private static DateTimeOffset LastKeyValUpdate = DateTimeOffset.MinValue;
+
         public MessageHandler(SocketUserMessage socketMessage, List<string> commandList, BotChannelSetting channelSettings = null)
         {
+            HttpClient = new HttpClient();
+            HttpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0");
+
             SocketMessage = socketMessage;
 
             // verify what to do when these 2 cant be cast
@@ -50,6 +59,8 @@ namespace ETHDINFKBot.Handlers
             SocketThreadChannel = socketMessage.Channel as SocketThreadChannel;
             SocketGuildChannel = socketMessage.Channel as SocketGuildChannel;
 
+            UpdateKeyVals();
+            
             if (socketMessage.Channel is SocketThreadChannel)
             {
                 // The message if from a thread -> Replace the SocketChannel to the parent channel
@@ -74,11 +85,28 @@ namespace ETHDINFKBot.Handlers
             DatabaseManager = DatabaseManager.Instance();
         }
 
+        private void UpdateKeyVals()
+        {
+            if(LastKeyValUpdate.AddMinutes(5) < DateTimeOffset.Now)
+            {
+                LastKeyValUpdate = DateTimeOffset.Now;
+
+                // Load from DB (cache it)
+                var keyValueDBManager = DatabaseManager.KeyValueManager;
+
+                FileBasePath = keyValueDBManager.Get<string>("ImageScrapeBasePath");
+                string imageScrapeChannelIdsString = keyValueDBManager.Get<string>("ImageScrapeChannelIds");
+                ChannelIdsToDownload = imageScrapeChannelIdsString.Split(',').Select(x => ulong.Parse(x)).ToList();
+            }
+        }
+
         // TODO do it in pararel 
         public async Task<bool> Run()
         {
             if (SocketMessage.Author.IsWebhook || SocketGuildChannel == null || SocketThreadChannel?.Id == 996746797236105236)
                 return false; // slash commands are webhooks ???
+
+            UpdateKeyVals();
 
             //AdministratorBait();
             try
@@ -99,7 +127,66 @@ namespace ETHDINFKBot.Handlers
             var discordUser = await CreateOrUpdateDBUser();
             await CreateDiscordMessageDBEntry(discordUser);
 
+            await DownloadContent();
+
             return true; // kinda useless
+        }
+
+        private async Task DownloadContent()
+        {
+            if(!ChannelIdsToDownload.Contains(SocketGuildChannel.Id))
+            {
+                return;
+            }
+            
+            var message = SocketMessage;
+            if (message.Author.IsBot)
+            {
+                return;
+            }
+
+            if (message.Attachments.Count == 0 && message.Embeds.Count == 0)
+            {
+                return;
+            }
+
+            List<string> urls = new List<string>();
+
+            foreach (var attachment in message.Attachments)
+            {
+                urls.Add(attachment.Url);
+            }
+
+            foreach (var embed in message.Embeds)
+            {
+                if (embed.Type == EmbedType.Image)
+                {
+                    urls.Add(embed.Url);
+                }
+
+                if (embed.Type == EmbedType.Video)
+                {
+                    urls.Add(embed.Url);
+                }
+
+                if (embed.Type == EmbedType.Rich)
+                {
+                    urls.Add(embed.Url);
+                }
+            }
+
+            foreach (var url in urls)
+            {
+                try
+                {
+                    var result = await DiscordHelper.DownloadFile(HttpClient, message, message.Id, url, urls.IndexOf(url), FileBasePath, "");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
+
+            }
         }
 
         private static DateTimeOffset LastCheck = DateTimeOffset.MinValue;
@@ -189,7 +276,7 @@ External status site: https://up.markc.su/status/vis");
                 // if exams.vis.ethz.ch url then append /health/ to the url
                 if (url.Contains("exams.vis.ethz.ch"))
                     url += "/health/";
-                    
+
                 var response = await httpClient.GetAsync(url);
 
                 if (response.StatusCode == HttpStatusCode.OK)
@@ -593,11 +680,11 @@ External status site: https://up.markc.su/status/vis");
                         {
                             // likeky no webhook perms -> skip
                         }
-try
-{
-                        await SocketMessage.DeleteAsync();
-}
-                        catch(Exception ex)
+                        try
+                        {
+                            await SocketMessage.DeleteAsync();
+                        }
+                        catch (Exception ex)
                         {
                             // likely msg deleted
                         }

@@ -12,15 +12,12 @@ namespace ETHBot.DataLayer.Data.Discord
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int DiscordFileId { get; set; }
 
-        [StringLength(255)]
-        public string OriginalFileName { get; set; }
-
         [ForeignKey("DiscordMessage")]
         public ulong DiscordMessageId { get; set; }
         public DiscordMessage DiscordMessage { get; set; }
 
-        [StringLength(255)]
         public string FileName { get; set; }
+        public string FullPath { get; set; }
 
         public bool Downloaded { get; set; } 
 
@@ -36,16 +33,22 @@ namespace ETHBot.DataLayer.Data.Discord
 
         public int? Height { get; set; }
 
+        // not yet implemented
         public int? Duration { get; set; }
+        public decimal? FPS { get; set; }
+        public int? Bitrate { get; set; }
 
         public int FileSize { get; set; }
 
         public string MimeType { get; set; }
+        public string Extension { get; set; }
 
         public string Url { get; set; }
+        public string UrlWithoutParams { get; set; }
 
         public string OcrText { get; set; }
+        public bool OcrDone { get; set; }
 
-
+        public DateTime CreatedAt { get; set; }
     }
 }

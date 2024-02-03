@@ -66,7 +66,7 @@ namespace ETHDINFKBot.Modules
     [Group("admin")]
     public class AdminModule : ModuleBase<SocketCommandContext>
     {
-        
+
 
         [Command("download")]
         [RequireUserPermission(GuildPermission.ManageChannels)]
@@ -2682,8 +2682,13 @@ Total todays menus: {allTodaysMenus.Count}");
                 await Context.Channel.SendMessageAsync($"Key: **{key}** has the value: **{result.Value}** with type: **{result.Type}**");
             }
 
+            private string CheckSupportedType(string type)
+            {
+                return SupportedTypes.FirstOrDefault(item => item.Equals(type, StringComparison.OrdinalIgnoreCase));
+            }
+            
             [Command("add")]
-            public async Task AddKeyValuePair(string key, string value, string type)
+            public async Task AddKeyValuePair(string key, string value, string type = "string")
             {
                 var author = Context.Message.Author;
                 if (author.Id != Program.ApplicationSetting.Owner)
@@ -2692,7 +2697,10 @@ Total todays menus: {allTodaysMenus.Count}");
                     return;
                 }
 
-                if (!SupportedTypes.Contains(type))
+                // if the case is different take the one from the list
+                type = CheckSupportedType(type);
+
+                if (type == null)
                 {
                     await Context.Channel.SendMessageAsync($"**{type}** is not supported");
                     return;
@@ -2710,7 +2718,7 @@ Total todays menus: {allTodaysMenus.Count}");
             }
 
             [Command("update")]
-            public async Task UpdateKeyValuePair(string key, string value, string type = null)
+            public async Task UpdateKeyValuePair(string key, string value, string type = "string")
             {
                 var author = Context.Message.Author;
                 if (author.Id != Program.ApplicationSetting.Owner)
@@ -2719,7 +2727,10 @@ Total todays menus: {allTodaysMenus.Count}");
                     return;
                 }
 
-                if (!SupportedTypes.Contains(type))
+                // if the case is different take the one from the list
+                type = CheckSupportedType(type);
+
+                if (type == null)
                 {
                     await Context.Channel.SendMessageAsync($"**{type}** is not supported");
                     return;

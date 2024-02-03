@@ -20,6 +20,8 @@ namespace ETHBot.DataLayer.Data.Discord
         public int PytorchModelId { get; set; }
         public PytorchModel PytorchModel { get; set; }
 
-        public byte[] Embed { get; set; }        
+        public byte[] Embed { get; set; }   
+
+        public DateTime CreatedAt { get; set; }     
     }
 }

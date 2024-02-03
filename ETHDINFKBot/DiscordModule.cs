@@ -153,6 +153,9 @@ namespace ETHDINFKBot
 
                 var processorCount = Environment.ProcessorCount;
                 var ram = proc.WorkingSet64;
+                var threadCount = proc.Threads;
+                var totalProcessorTime = proc.TotalProcessorTime;
+
 
                 // get all partitions available
 
@@ -185,6 +188,8 @@ namespace ETHDINFKBot
                 builder.AddField("OS Version", $"{osVersion?.ToString() ?? "N/A"}", true);
                 builder.AddField("Online for", $"{CommonHelper.ToReadableString(applicationOnlineTime)}", true);
                 builder.AddField("Processor Count", $"{processorCount.ToString("N0")}", true);
+                builder.AddField("Processor Thread Count", $"{threadCount.Count.ToString("N0")}", true);
+                builder.AddField("Processor Total Time", $"{totalProcessorTime}", true);
                 builder.AddField("Git Branch", $"{ThisAssembly.Git.Branch}", true);
                 builder.AddField("Git Commit", $"{ThisAssembly.Git.Commit}", true);
                 builder.AddField("Last Commit", $"{ThisAssembly.Git.CommitDate}", true);
@@ -204,9 +209,22 @@ namespace ETHDINFKBot
                     long usedBytes = totalBytes - freeBytes;
                     string driveName = d.Name;
 
+                    // convert to GB or TB if needed
                     double gb = 1024d * 1024d * 1024d;
+                    double freeSize = freeBytes / gb;
+                    double totalSize = totalBytes / gb;
+                    double usedSize = usedBytes / gb;
+                    string sizeType = "GB";
 
-                    builder.AddField("DISK " + driveName, $"{Math.Round(usedBytes / gb, 2)} GB out of {Math.Round(totalBytes / gb, 2)} GB ({Math.Round(100 * (usedBytes / (decimal)totalBytes), 2)}%)", true);
+                    if (totalSize >= 1024)
+                    {
+                        totalSize /= 1024;
+                        freeSize /= 1024;
+                        usedSize /= 1024;
+                        sizeType = "TB";
+                    }
+
+                    builder.AddField("DISK " + driveName, $"{Math.Round(usedSize, 2)} / {Math.Round(totalSize, 2)} {sizeType} ({Math.Round(100 * (usedSize / totalSize), 2)}%)", true);
                 }
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
