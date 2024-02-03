@@ -204,6 +204,9 @@
     <None Update="Python\python_deploy\imageprocessor.service">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Python\python_deploy\model.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Python\python_deploy\model_api.py">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

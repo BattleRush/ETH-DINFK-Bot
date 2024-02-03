@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 Restart=always
 RestartSec=5
-ExecStart=python3 /usr/local/bin/ETHBot/Python/python_deploy/model_api.py
+ExecStart=/usr/bin/python /usr/local/bin/ETHBot/Python/python_deploy/model_api.py
 Restart=always
 
 [Install]
