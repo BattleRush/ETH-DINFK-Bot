@@ -269,7 +269,14 @@ namespace ETHDINFKBot.Helpers
                 if (File.Exists(filePath))
                 {
                     //_logger.LogInformation($"File {filePath} already exists", false);
-                    return null;
+                    FileDBManager fileDBManager = FileDBManager.Instance();
+                    var dbFile = fileDBManager.GetDiscordFileByPath(filePath);
+                    if(dbFile != null)
+                    {
+                        return null; // file exists on db and on disk continue
+                    }
+
+                    // redownload file as likely its corrupted
                 }
 
 

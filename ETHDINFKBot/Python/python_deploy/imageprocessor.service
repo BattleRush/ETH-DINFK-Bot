@@ -3,6 +3,8 @@ Description=Runns on Images OCR or generates Embeddings
 After=network.target
 
 [Service]
+User=ubuntu
+Group=ubuntu
 Type=simple
 Restart=always
 RestartSec=5

@@ -202,7 +202,7 @@ namespace ETHDINFKBot
                 builder.AddField("RAM", $"{Math.Round(ram / 1024d / 1024d / 1024d, 2)} GB", true);
 
                 DriveInfo[] allDrives = DriveInfo.GetDrives();
-
+                string diskInfo = "";
                 foreach (DriveInfo d in allDrives)
                 {
                     var freeBytes = d.AvailableFreeSpace;
@@ -225,8 +225,10 @@ namespace ETHDINFKBot
                         sizeType = "TB";
                     }
 
-                    builder.AddField("DISK " + driveName, $"{Math.Round(usedSize, 2)} / {Math.Round(totalSize, 2)} {sizeType} ({Math.Round(100 * (usedSize / totalSize), 2)}%)", true);
+                    diskInfo += $"DISK {driveName}: {Math.Round(usedSize, 2)} / {Math.Round(totalSize, 2)} {sizeType} ({Math.Round(100 * (usedSize / totalSize), 2)}%)" + Environment.NewLine;
                 }
+
+                builder.AddField("DISK Info", diskInfo, true);
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
             }

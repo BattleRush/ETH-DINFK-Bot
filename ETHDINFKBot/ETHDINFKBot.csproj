@@ -201,6 +201,9 @@
     <None Update="Images\keyicon.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Python\info.sh">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Python\python_deploy\imageprocessor.service">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -85,6 +85,22 @@ namespace ETHDINFKBot.Data
             }
         }
 
+        public DiscordFile GetDiscordFileByPath(string path)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordFiles.SingleOrDefault(i => i.FullPath == path);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
+            }
+        }
+
         // ocr boxes by file id
         public List<OcrBox> GetOcrBoxesByFileId(int fileId)
         {
