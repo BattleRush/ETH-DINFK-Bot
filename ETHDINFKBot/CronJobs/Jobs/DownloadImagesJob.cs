@@ -200,7 +200,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine(ex.ToString());
+                            _logger.LogError(ex, $"Error to download file {url}");
                         }
 
                     }

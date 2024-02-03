@@ -9,7 +9,8 @@
 
 
 # Specify the base directory for the search, use "." for the current directory
-base_directory="/mnt/f/ETHBot/Images"
+base_directory="/mnt/ethbot_data/Images"
+#base_directory="/mnt/f/ETHBot/Images"
 #base_directory="memes"
 
 # Print header
