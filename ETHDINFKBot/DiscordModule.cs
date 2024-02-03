@@ -76,7 +76,48 @@ namespace ETHDINFKBot
             return false;
         }
 
+        [Command("disk")]
+        public async Task GetDiskInfo()
+        {
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
 
+            DriveInfo[] allDrives = DriveInfo.GetDrives();
+            string diskInfo = "";
+            foreach (DriveInfo d in allDrives)
+            {
+                var freeBytes = d.AvailableFreeSpace;
+                var totalBytes = d.TotalSize;
+                long usedBytes = totalBytes - freeBytes;
+                string driveName = d.Name;
+
+                // convert to GB or TB if needed
+                double gb = 1024d * 1024d * 1024d;
+                double freeSize = freeBytes / gb;
+                double totalSize = totalBytes / gb;
+                double usedSize = usedBytes / gb;
+                string sizeType = "GB";
+
+                if (totalSize >= 1024)
+                {
+                    totalSize /= 1024;
+                    freeSize /= 1024;
+                    usedSize /= 1024;
+                    sizeType = "TB";
+                }
+
+                diskInfo += $"DISK {driveName}: {Math.Round(usedSize, 2)} / {Math.Round(totalSize, 2)} {sizeType} ({Math.Round(100 * (usedSize / totalSize), 2)}%)" + Environment.NewLine;
+
+                // if disk info over 1500 chars send
+                if (diskInfo.Length > 1500)
+                {
+                    await Context.Channel.SendMessageAsync(diskInfo, false);
+                    diskInfo = "";
+                }
+            }
+
+            await Context.Channel.SendMessageAsync(diskInfo, false);
+        }
 
         [Command("code")]
         [Alias("source")]
@@ -126,6 +167,8 @@ namespace ETHDINFKBot
             var cpuUsageTotal = cpuUsedMs / (Environment.ProcessorCount * totalMsPassed);
             return cpuUsageTotal * 100;
         }
+
+
 
         [Command("version")]
         [Alias("about")]
