@@ -260,6 +260,11 @@ namespace ETHDINFKBot
                     double usedSize = usedBytes / gb;
                     string sizeType = "GB";
 
+                    if(totalSize < 32)
+                    {
+                        continue; // skip small disks
+                    }
+
                     if (totalSize >= 1024)
                     {
                         totalSize /= 1024;
