@@ -8,3 +8,11 @@ Plugins
 ExamQuestions
 PublishProfiles
 .config/dotnet-tools.json
+
+__pycache__
+memes
+plots
+
+*.zip
+repost.db
+deploy/

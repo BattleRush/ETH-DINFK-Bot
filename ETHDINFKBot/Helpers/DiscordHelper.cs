@@ -16,6 +16,8 @@ using System.Threading.Tasks;
 using System.Web;
 using HtmlAgilityPack;
 using System.Net.Http;
+using System.Text.RegularExpressions;
+using Discord.Net;
 
 namespace ETHDINFKBot.Helpers
 {
@@ -134,6 +136,279 @@ namespace ETHDINFKBot.Helpers
             pingHistory = pingHistory.Take(limit).ToList();
 
             return pingHistory;
+        }
+
+        public static async Task<DiscordFile> DownloadFile(HttpClient client, IMessage message, ulong messageId, string url, int index, string basePath, string downloadFileName)
+        {
+            DiscordFile currentFile = new DiscordFile();
+            List<string> confirmedDomains = new List<string>()
+            {
+                "cdn.discordapp.com",
+                "media.discordapp.net",
+                "pbs.twimg.com",
+                "media.tumblr.com",
+                "img.pr0gramm.com",
+                "vid.pr0gramm.com",
+                "video.twimg.com"
+            };
+
+            List<string> blockedDomains = new List<string>()
+            {
+                "twitter.com"
+            };
+
+            if (message.Content.Contains("tenor.com"))
+            {
+                int test = 1;
+                return null;
+            }
+
+            if (message.Content.Contains("imgur.com"))
+            {
+                int test = 1;
+            }
+
+            // if domain twitter skip because images dont have ending in url
+            if (message.Content.Contains("twitter.com") || message.Content.Contains("//x.com") || message.Content.Contains("fixupx.com"))
+            {
+                int test = 1;
+                return null;
+            }
+
+            if (message.Content.Contains("youtube.com") || message.Content.Contains("youtu.be"))
+            {
+                int test = 1;
+                return null; // idk what to do with videos now
+            }
+
+            // check if the url is now in the confirmedDomains
+            if (!confirmedDomains.Any(x => url.Contains(x)))
+            {
+                int i = 0;
+            }
+
+            // check if the url is now in the confirmedDomains
+            if (blockedDomains.Any(x => url.Contains(x)))
+            {
+                int i = 0;
+                return null;
+            }
+
+            // dont download webp images if possible
+            url = url.Replace("&format=webp", "");
+
+            // remove width and height query params
+            url = Regex.Replace(url, @"&width=\d+", "");
+            url = Regex.Replace(url, @"&height=\d+", "");
+
+            // if the parameter is at the start with ? then remove it
+            url = Regex.Replace(url, @"\?width=\d+", "?");
+            url = Regex.Replace(url, @"\?height=\d+", "?");
+
+            // if url ends with ? then remove it
+            url = Regex.Replace(url, @"\?$", "");
+
+            try
+            {
+                string fileName = downloadFileName;
+                if (string.IsNullOrWhiteSpace(fileName))
+                {
+                    fileName = url.Split('/').Last();
+                    fileName = fileName.Split('?').First();
+                }
+
+                fileName = fileName.ToLower(); // so no png and PNG
+
+
+                /*if (!fileName.Contains("."))
+                {
+                    _logger.LogInformation($"Filename '{fileName}' is invalid from content: ```{message.Content}```", false);
+                    throw new Exception("Invalid filename");
+                }*/
+
+
+                // remove any . except the last one
+                string fileExtension = "";
+                string name = fileName;
+
+                if (fileName.Contains("."))
+                {
+                    fileExtension = fileName.Split('.').Last();
+                    name = fileName.Substring(0, fileName.Length - fileExtension.Length - 1);
+                }
+
+                // limit filename to 150 chars max
+                if (name.Length > 100)
+                    name = name.Substring(0, 100);
+
+                name = name.Replace(".", "");
+
+                // remove any non alphanumeric chars from name
+                name = Regex.Replace(name, @"[^a-zA-Z0-9_]", "");
+
+                fileName = $"{message.Id}_{index}_{name}.{fileExtension}";
+
+                var emojiDate = SnowflakeUtils.FromSnowflake(messageId);
+                string additionalFolder = $"{emojiDate.Year}-{emojiDate.Month:00}";
+
+                // put image into folder Python/memes
+                string filePath = Path.Combine(basePath, additionalFolder, fileName);
+
+                if (!Directory.Exists(Path.GetDirectoryName(filePath)))
+                    Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+
+                // check if folder exists
+                if (!Directory.Exists(Path.GetDirectoryName(filePath)))
+                {
+                    //_logger.LogInformation($"Folder {Path.GetDirectoryName(filePath)} does not exist", false);
+                    //_logger.LogInformation($"Content: ```{message.Content}```");
+
+                }
+
+                // check if file exists
+                if (File.Exists(filePath))
+                {
+                    //_logger.LogInformation($"File {filePath} already exists", false);
+                    return null;
+                }
+
+
+                // check if opening the url how big the file is
+                // if its too big then skip
+                var headRequest = new HttpRequestMessage(HttpMethod.Head, url);
+                var headResponse = client.SendAsync(headRequest).Result;
+
+                if (headResponse.Content.Headers.ContentLength > 10_000_000)
+                {
+                    //_logger.LogInformation($"File {filePath} is too big: {headResponse.Content.Headers.ContentLength}", false);
+                    return null;
+                }
+
+                if (headResponse.StatusCode == HttpStatusCode.Forbidden)
+                {
+                    //_logger.LogInformation($"The url {url} returned forbidden.", false);
+                    return null;
+                }
+
+                if (headResponse.StatusCode == HttpStatusCode.NotFound)
+                {
+                    //_logger.LogInformation($"The url {url} returned not found.", false);
+                    return null;
+                }
+
+                if (headResponse.Content?.Headers?.ContentType == null)
+                {
+                    //_logger.LogInformation($"The url {url} has no content type.", false);
+                    return null;
+                }
+
+
+
+                // check if the url is a downloadable file
+                // if not then skip
+                var headContentType = headResponse.Content.Headers.ContentType.MediaType;
+                // check if image or video
+                if (headContentType.StartsWith("image") || headContentType.StartsWith("video"))
+                {
+                    // download the file
+                    byte[] bytes = client.GetByteArrayAsync(url).Result;
+
+                    // get the file extension from the content type
+                    string fileExtensionFromContentType = headContentType.Split('/').Last();
+
+                    // ewwww
+                    if (fileExtensionFromContentType == "quicktime")
+                    {
+                        int ii = 2;
+                        fileExtensionFromContentType = "mov";
+                    }
+
+                    // check if the filename has the correct extension if not then replace it or add if missing
+                    if (!filePath.EndsWith(fileExtensionFromContentType))
+                    {
+                        if (fileName.Contains("."))
+                        {
+                            filePath = filePath.Split('.').First() + "." + fileExtensionFromContentType;
+                            fileName = fileName.Split('.').First() + "." + fileExtensionFromContentType;
+                        }
+                        else
+                        {
+                            filePath = filePath + "." + fileExtensionFromContentType;
+                            fileName = fileName + "." + fileExtensionFromContentType;
+                        }
+                    }
+
+
+                    currentFile = new DiscordFile()
+                    {
+                        DiscordMessageId = messageId,
+                        FileName = fileName,
+                        Downloaded = true,
+                        IsImage = headContentType.StartsWith("image"),
+                        IsVideo = headContentType.StartsWith("video"),
+                        IsAudio = headContentType.StartsWith("audio"),
+                        IsText = headContentType.StartsWith("text"),
+                        FileSize = bytes.Length,
+                        MimeType = headContentType,
+                        Extension = fileExtensionFromContentType,
+                        Url = url,
+                        FullPath = filePath,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    if (url.Contains("?"))
+                    {
+                        currentFile.UrlWithoutParams = url.Split('?').First();
+                    }
+                    else
+                    {
+                        currentFile.UrlWithoutParams = url;
+                    }
+
+                    //if image get width and height
+                    if (headContentType.StartsWith("image"))
+                    {
+                        using (var ms = new MemoryStream(bytes))
+                        {
+                            // use skiasharp to get the width and height
+                            using (var bitmap = SKBitmap.Decode(ms))
+                            {
+                                currentFile.Width = bitmap.Width;
+                                currentFile.Height = bitmap.Height;
+                            }
+                        }
+                    }
+
+                    //if video get duration, fps and bitrate
+                    if (headContentType.StartsWith("video"))
+                    {
+                        // for that the file needs to be written to disk
+                        // TODO
+                    }
+
+
+                    File.WriteAllBytes(filePath, bytes);
+                }
+                else
+                {
+                    //_logger.LogInformation($"File {filePath} is not an image or video: {headContentType}", false);
+                }
+            }
+            catch (HttpException ex)
+            {
+                // if status code 404 then skip
+                if (ex.HttpCode == HttpStatusCode.NotFound)
+                    return null;
+
+                //_logger.LogInformation($"Download error in attachment url <{url}>: " + ex.Message.ToString(), false);
+            }
+            catch (Exception ex)
+            {
+                //_logger.LogInformation($"Download error in attachment url <{url}>: " + ex.Message.ToString(), false);
+                return null;
+            }
+
+            return currentFile; // TODO enum
         }
 
         public static EmbedBuilder GetEmbedForPingHistory(List<PingHistory> pingHistory, SocketGuildUser user, int total = 30)

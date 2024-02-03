@@ -519,6 +519,21 @@ namespace ETHDINFKBot.Modules
         // TODO find a better way to do this lul
 
 
+        // TODO Check if context is needed
+        [Command("fwl")]
+        [Priority(3)]
+        public async Task DrawFoodImagesWithLocation()
+        {
+            await new FoodCommandModule().GetWeeklyMenuImage("lunch", false);
+        }
+
+        [Command("fwd")]
+        [Priority(3)]
+        public async Task DrawFoodImagesWithLocationDinner()
+        {
+            await new FoodCommandModule().GetWeeklyMenuImage("dinner", false);
+        }
+
 
         [Command("fxy")] // use aliases f1, f2, f3, f4, f5, f11, f12, f21, f22, f31, f32, f41, f42, f51, f52
         [Alias(new string[] { "f1", "f2", "f3", "f4", "f5", "f11", "f12", "f21", "f22", "f31", "f32", "f41", "f42", "f51", "f52" })]
@@ -577,11 +592,25 @@ namespace ETHDINFKBot.Modules
                 if (time == null)
                     time = day; // in this case day is actually time
 
-                if (time.ToLower() == "lunch" || time.ToLower() == "l")
+                // if day is an int then its the day of the week and if 2 digits then its day and time
+                if(int.TryParse(day, out int dayInt))
+                {
+                    if(dayInt >= 1 && dayInt <= 7)
+                    {
+                        day = dayInt.ToString();
+                    }
+                    else if(dayInt >= 10 && dayInt <= 72)
+                    {
+                        day = (dayInt / 10).ToString();
+                        time = (dayInt % 10).ToString();
+                    }
+                }
+
+                if (time.ToLower() == "lunch" || time.ToLower() == "l" || time.ToLower() == "1")
                     meal = MealTime.Lunch;
-                else if (time.ToLower() == "dinner" || time.ToLower() == "d")
+                else if (time.ToLower() == "dinner" || time.ToLower() == "d" || time.ToLower() == "2")
                     meal = MealTime.Dinner;
-                else if (time.ToLower() == "breakfast" || time.ToLower() == "b")
+                else if (time.ToLower() == "breakfast" || time.ToLower() == "b" || time.ToLower() == "0")
                     meal = MealTime.Breakfast;
 
 
@@ -590,19 +619,19 @@ namespace ETHDINFKBot.Modules
 
                 DayOfWeek dayOfWeek = DateTime.UtcNow.DayOfWeek;
 
-                if (day.ToLower() == "monday" || day.ToLower() == "mon")
+                if (day.ToLower() == "monday" || day.ToLower() == "mon" || day.ToLower() == "1")
                     dayOfWeek = DayOfWeek.Monday;
-                else if (day.ToLower() == "tuesday" || day.ToLower() == "tue")
+                else if (day.ToLower() == "tuesday" || day.ToLower() == "tue" || day.ToLower() == "2")
                     dayOfWeek = DayOfWeek.Tuesday;
-                else if (day.ToLower() == "wednesday" || day.ToLower() == "wed")
+                else if (day.ToLower() == "wednesday" || day.ToLower() == "wed" || day.ToLower() == "3")
                     dayOfWeek = DayOfWeek.Wednesday;
-                else if (day.ToLower() == "thursday" || day.ToLower() == "thu")
+                else if (day.ToLower() == "thursday" || day.ToLower() == "thu" || day.ToLower() == "4")
                     dayOfWeek = DayOfWeek.Thursday;
-                else if (day.ToLower() == "friday" || day.ToLower() == "fri")
+                else if (day.ToLower() == "friday" || day.ToLower() == "fri" || day.ToLower() == "5")
                     dayOfWeek = DayOfWeek.Friday;
-                else if (day.ToLower() == "saturday" || day.ToLower() == "sat")
+                else if (day.ToLower() == "saturday" || day.ToLower() == "sat" || day.ToLower() == "6")
                     dayOfWeek = DayOfWeek.Saturday;
-                else if (day.ToLower() == "sunday" || day.ToLower() == "sun")
+                else if (day.ToLower() == "sunday" || day.ToLower() == "sun" || day.ToLower() == "7")
                     dayOfWeek = DayOfWeek.Sunday;
 
                 // get this weeks monday
@@ -945,7 +974,7 @@ It is also likely that there are no menus currently available today." + weekendS
 
 
         [Group("food")]
-        public class RantAdminModule : ModuleBase<SocketCommandContext>
+        public class FoodCommandModule : ModuleBase<SocketCommandContext>
         {
             private static FoodDBManager FoodDBManager = FoodDBManager.Instance();
             [Command("help")]

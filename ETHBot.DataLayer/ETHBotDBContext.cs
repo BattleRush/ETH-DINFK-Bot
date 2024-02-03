@@ -119,6 +119,11 @@ namespace ETHBot.DataLayer
         public DbSet<SavedQuery> SavedQueries { get; set; }
         public DbSet<SavedQueryParameter> SavedQueryParameters { get; set; }
 
+        public DbSet<DiscordFile> DiscordFiles { get; set; }
+        public DbSet<DiscordFileEmbeds> DiscordFileEmbeds { get; set; }
+        public DbSet<PytorchModel> PytorchModels { get; set; }
+        public DbSet<OcrBox> OcrBoxes { get; set; }
+
         /*
 
         // todo reconsider how to import them

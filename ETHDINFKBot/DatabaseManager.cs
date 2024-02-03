@@ -698,9 +698,21 @@ namespace ETHDINFKBot
             return true;
         }
 
-        public void GetMessage()
+        public DiscordMessage GetMessage(ulong messageId)
         {
-            // todo
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordMessages.SingleOrDefault(i => i.DiscordMessageId == messageId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
+            
+            return null;
         }
 
 
