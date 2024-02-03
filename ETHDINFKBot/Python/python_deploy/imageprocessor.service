@@ -1,0 +1,13 @@
+[Unit]
+Description=Runns on Images OCR or generates Embeddings
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+ExecStart=python3 /usr/local/bin/ETHBot/Python/python_deploy/model_api.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

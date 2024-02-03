@@ -59,6 +59,7 @@ namespace ETHDINFKBot.Handlers
             SocketThreadChannel = socketMessage.Channel as SocketThreadChannel;
             SocketGuildChannel = socketMessage.Channel as SocketGuildChannel;
 
+
             UpdateKeyVals();
             
             if (socketMessage.Channel is SocketThreadChannel)
@@ -175,11 +176,18 @@ namespace ETHDINFKBot.Handlers
                 }
             }
 
+            FileDBManager fileDBManager = FileDBManager.Instance();
+
             foreach (var url in urls)
             {
                 try
                 {
                     var result = await DiscordHelper.DownloadFile(HttpClient, message, message.Id, url, urls.IndexOf(url), FileBasePath, "");
+
+                    if (result != null)
+                    {
+                        fileDBManager.SaveDiscordFile(result);
+                    }
                 }
                 catch (Exception ex)
                 {

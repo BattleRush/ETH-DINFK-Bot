@@ -23,10 +23,17 @@ namespace ETHDINFKBot.CronJobs.Jobs
         private readonly ILogger<ProcessImagesJob> _logger;
         private readonly string Name = "ProcessImagesJob";
 
+        private HttpClient HttpClient { get; }
+
+        private FileDBManager FileDBManager { get; }
+
         public ProcessImagesJob(IScheduleConfig<ProcessImagesJob> config, ILogger<ProcessImagesJob> logger)
             : base(config.CronExpression, config.TimeZoneInfo)
         {
+            FileDBManager = FileDBManager.Instance();
+
             _logger = logger;
+            HttpClient = new HttpClient();
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)
@@ -40,6 +47,15 @@ namespace ETHDINFKBot.CronJobs.Jobs
         {
             try
             {
+                // get 1000 files to process
+                FileDBManager fileDBManager = FileDBManager.Instance();
+
+                var files = fileDBManager.GetFilesToOcrProcess();
+
+                foreach (var file in files)
+                {
+                    var success = DoOCR(file).Result;
+                }
 
             }
             catch (Exception ex)
@@ -50,18 +66,95 @@ namespace ETHDINFKBot.CronJobs.Jobs
             return Task.CompletedTask;
         }
 
-        public List<DiscordFile> GetFilesToOcrProcess()
+        private async Task<bool> DoOCR(DiscordFile discordFile)
         {
-            // call db to see files without ocr
-            return null;
+            try
+            {
+                string path = discordFile.FullPath;
+
+                int port = 13225;
+                string url = "http://localhost:" + port + "/run_ocr";
+
+                // parameter is path_to_file
+                var payload = new { path_to_file = path };
+
+                StringContent json = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+
+                var result = await HttpClient.PostAsync(url, json);
+                if (result.StatusCode == HttpStatusCode.OK)
+                {
+                    // get result
+                    var content = await result.Content.ReadAsStringAsync();
+                    // save result in db
+
+                    /*# process results into json
+    # structure of json:
+    # [{
+    #   "text": "text",
+    #   "coordinates": {
+    #       "top_left": [x, y],
+    #       "top_right": [x, y],
+    #       "bottom_left": [x, y],
+    #       "bottom_right": [x, y]
+    #   },
+    #   "confidence": confidence
+    # }]*/
+
+                    // string to object
+                    dynamic jsonResult = Newtonsoft.Json.JsonConvert.DeserializeObject(content);
+                    string fullText = "";
+                    foreach (var item in jsonResult)
+                    {
+                        string text = item.text;
+                        string confidenceStr = item.confidence;
+
+                        // allow for comma and dot
+                        double confidence = double.Parse(confidenceStr, System.Globalization.CultureInfo.InvariantCulture);
+
+                        int[] topLeft = item.coordinates.top_left.ToObject<int[]>();
+                        int[] topRight = item.coordinates.top_right.ToObject<int[]>();
+                        int[] bottomLeft = item.coordinates.bottom_left.ToObject<int[]>();
+                        int[] bottomRight = item.coordinates.bottom_right.ToObject<int[]>();
+
+                        OcrBox ocrBox = new OcrBox()
+                        {
+                            Text = text,
+                            Probability = confidence,
+                            TopLeftX = topLeft[0],
+                            TopLeftY = topLeft[1],
+                            TopRightX = topRight[0],
+                            TopRightY = topRight[1],
+                            BottomRightX = bottomRight[0],
+                            BottomRightY = bottomRight[1],
+                            BottomLeftX = bottomLeft[0],
+                            BottomLeftY = bottomLeft[1],
+                            DiscordFileId = discordFile.DiscordFileId,
+                        };
+
+                        // save in db
+                        FileDBManager.SaveOcrBox(ocrBox);
+
+                        fullText += text + " ";
+                    }
+
+                    discordFile.OcrText = fullText;
+                    discordFile.OcrDone = true;
+
+                    // update file with full text
+                    FileDBManager.UpdateDiscordFile(discordFile);
+
+                    Console.WriteLine(content);
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+            return true;
         }
 
-        private async void DoOCR()
-        {
-            
-        }
 
-        
 
         public override Task StopAsync(CancellationToken cancellationToken)
         {

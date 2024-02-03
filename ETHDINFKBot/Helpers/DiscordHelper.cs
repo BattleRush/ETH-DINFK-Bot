@@ -296,7 +296,7 @@ namespace ETHDINFKBot.Helpers
                     return null;
                 }
 
-                if(headResponse.Content?.Headers?.ContentType == null)
+                if (headResponse.Content?.Headers?.ContentType == null)
                 {
                     //_logger.LogInformation($"The url {url} has no content type.", false);
                     return null;
@@ -317,7 +317,7 @@ namespace ETHDINFKBot.Helpers
                     string fileExtensionFromContentType = headContentType.Split('/').Last();
 
                     // ewwww
-                    if(fileExtensionFromContentType == "quicktime")
+                    if (fileExtensionFromContentType == "quicktime")
                     {
                         int ii = 2;
                         fileExtensionFromContentType = "mov";
@@ -327,12 +327,18 @@ namespace ETHDINFKBot.Helpers
                     if (!filePath.EndsWith(fileExtensionFromContentType))
                     {
                         if (fileName.Contains("."))
+                        {
                             filePath = filePath.Split('.').First() + "." + fileExtensionFromContentType;
+                            fileName = fileName.Split('.').First() + "." + fileExtensionFromContentType;
+                        }
                         else
+                        {
                             filePath = filePath + "." + fileExtensionFromContentType;
+                            fileName = fileName + "." + fileExtensionFromContentType;
+                        }
                     }
 
-                    
+
                     currentFile = new DiscordFile()
                     {
                         DiscordMessageId = messageId,
@@ -350,7 +356,7 @@ namespace ETHDINFKBot.Helpers
                         CreatedAt = DateTime.UtcNow
                     };
 
-                    if(url.Contains("?"))
+                    if (url.Contains("?"))
                     {
                         currentFile.UrlWithoutParams = url.Split('?').First();
                     }
@@ -391,7 +397,7 @@ namespace ETHDINFKBot.Helpers
             catch (HttpException ex)
             {
                 // if status code 404 then skip
-                if (ex.HttpCode == HttpStatusCode.NotFound) 
+                if (ex.HttpCode == HttpStatusCode.NotFound)
                     return null;
 
                 //_logger.LogInformation($"Download error in attachment url <{url}>: " + ex.Message.ToString(), false);

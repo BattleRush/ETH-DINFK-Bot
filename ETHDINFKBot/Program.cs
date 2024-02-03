@@ -164,6 +164,9 @@ namespace ETHDINFKBot
                        // run every minute
                        services.AddCronJob<DownloadImagesJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"*/15 * * * *"; });
 
+                       // run every minute
+                       services.AddCronJob<ProcessImagesJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"*/5 * * * *"; });
+
                        // TODO adjust for summer time in CET/CEST
                        //services.AddCronJob<GitPullMessageJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"0 21 * * TUE"; });// 22 CET each Tuesday
 

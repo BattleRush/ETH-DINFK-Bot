@@ -234,6 +234,24 @@ namespace ETHDINFKBot.Data
             }
         }
 
+        public bool SaveOcrBox(OcrBox ocrBox)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    context.OcrBoxes.Add(ocrBox);
+                    context.SaveChanges();
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return false;
+            }
+        }
+
         public bool SaveOcrBoxes(List<OcrBox> ocrBoxes)
         {
             try
@@ -321,6 +339,22 @@ namespace ETHDINFKBot.Data
             {
                 _logger.LogError(ex, ex.Message);
                 return false;
+            }
+        }
+
+        public List<DiscordFile> GetFilesToOcrProcess(int count = 1000)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    return context.DiscordFiles.Where(i => i.OcrDone == false && i.IsImage && i.Extension != "gif").Take(count).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return null;
             }
         }
     }

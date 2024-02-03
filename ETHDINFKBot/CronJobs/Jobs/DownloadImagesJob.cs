@@ -3,6 +3,7 @@ using Discord.Net;
 using Discord.WebSocket;
 using ETHBot.DataLayer.Data.Discord;
 using ETHDINFKBot.Data;
+using ETHDINFKBot.Handlers;
 using ETHDINFKBot.Helpers;
 using Microsoft.Extensions.Logging;
 using System;
@@ -180,13 +181,15 @@ namespace ETHDINFKBot.CronJobs.Jobs
                         }
                     }
 
+                    SaveMessageIfNotFound(message, basePath, channel.Name);
+
                     foreach (var url in urls)
                     {
                         try
                         {
                             var result = await DiscordHelper.DownloadFile(client, message, message.Id, url, urls.IndexOf(url), basePath, "");
 
-                            if(result != null)
+                            if (result != null)
                             {
                                 fileDBManager.SaveDiscordFile(result);
                             }
@@ -208,7 +211,54 @@ namespace ETHDINFKBot.CronJobs.Jobs
             }
         }
 
-        
+        private void SaveMessageIfNotFound(IMessage message, string basePath, string path)
+        {
+            try
+            {
+                var dbManager = DatabaseManager.Instance();
+                var dbUser = dbManager.GetDiscordUserById(message.Author.Id);
+
+                if (dbUser == null)
+                {
+                    var user = message.Author;
+                    var socketGuildUser = user as SocketGuildUser;
+
+                    var dbUserNew = dbManager.CreateDiscordUser(new ETHBot.DataLayer.Data.Discord.DiscordUser()
+                    {
+                        DiscordUserId = user.Id,
+                        DiscriminatorValue = user.DiscriminatorValue,
+                        AvatarUrl = user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl(), // If user has no custom avatar load the url for the default avatar
+                        IsBot = user.IsBot,
+                        IsWebhook = user.IsWebhook,
+                        Nickname = socketGuildUser?.Nickname,
+                        Username = user.Username,
+                        JoinedAt = socketGuildUser?.JoinedAt
+                    });
+                }
+
+                var dbMessage = dbManager.GetMessage(message.Id);
+                if (dbMessage != null)
+                {
+                    return;
+                }
+
+                var newMessage = dbManager.CreateDiscordMessage(new ETHBot.DataLayer.Data.Discord.DiscordMessage()
+                {
+                    //Channel = discordChannel,
+                    DiscordChannelId = message.Channel.Id,
+                    //DiscordUser = dbAuthor,
+                    DiscordUserId = message.Author.Id,
+                    DiscordMessageId = message.Id,
+                    Content = message.Content,
+                    //ReplyMessageId = message.Reference.MessageId,
+                    Preloaded = true
+                }, true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to save message");
+            }
+        }
 
         public override Task StopAsync(CancellationToken cancellationToken)
         {

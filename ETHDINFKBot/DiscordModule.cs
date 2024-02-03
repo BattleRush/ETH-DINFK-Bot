@@ -38,6 +38,7 @@ using Google;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Web;
+using ETHDINFKBot.Data;
 
 namespace ETHDINFKBot
 {
@@ -1750,14 +1751,161 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         }
 
 
+        [Command("ocr")]
+        public async Task OcrImage(ulong messageId)
+        {
+            try
+            {
+                // find image
+                FileDBManager fileDBManager = FileDBManager.Instance();
+                var discordFiles = fileDBManager.GetDiscordFile(messageId);
+
+                if (discordFiles == null || discordFiles.Count == 0)
+                {
+                    await Context.Channel.SendMessageAsync("No image found with that message id", false);
+                    return;
+                }
+
+                // if any file hasnt been processed yet
+                var notProcessed = discordFiles.All(i => i.OcrDone && i.IsImage && i.Extension != "gif");
+                if (!notProcessed)
+                {
+                    await Context.Channel.SendMessageAsync("Some images have not been processed yet please wait up to a minute", false);
+                    return;
+                }
 
 
+                List<(Stream, string)> streams = new List<(Stream, string)>();
+                foreach (var file in discordFiles)
+                {
+                    if (file.IsImage && file.Extension != "gif") // TODO add gif support
+                    {
+                        // skia bitmap
+                        var filePath = file.FullPath;
+                        var bitmap = SKBitmap.Decode(filePath);
+                        var canvas = new SKCanvas(bitmap);
 
+                        var ocrBoxes = fileDBManager.GetOcrBoxesByFileId(file.DiscordFileId);
 
+                        if (ocrBoxes == null || ocrBoxes.Count == 0)
+                        {
+                            await Context.Channel.SendMessageAsync($"No text found in the image {file.FileName}", false);
+                            continue;
+                        }
 
+                        var text = file.OcrText;
+                        foreach (var box in ocrBoxes)
+                        {
+                            // draw lines around the text
+                            var paint = new SKPaint
+                            {
+                                Style = SKPaintStyle.Stroke,
+                                Color = SKColors.Red,
+                                StrokeWidth = 2
+                            };
 
+                            var topLeft = new SKPoint(box.TopLeftX, box.TopLeftY);
+                            var topRight = new SKPoint(box.TopRightX, box.TopRightY);
+                            var bottomRight = new SKPoint(box.BottomRightX, box.BottomRightY);
+                            var bottomLeft = new SKPoint(box.BottomLeftX, box.BottomLeftY);
 
+                            // draw the lines around the text
+                            canvas.DrawLine(topLeft, topRight, paint);
+                            canvas.DrawLine(topRight, bottomRight, paint);
+                            canvas.DrawLine(bottomRight, bottomLeft, paint);
+                            canvas.DrawLine(bottomLeft, topLeft, paint);
 
+                            // above the rect draw the text
+                            var textPaint = new SKPaint
+                            {
+                                Style = SKPaintStyle.Fill,
+                                Color = SKColors.Red,
+                                TextSize = 20
+                            };
+
+                            canvas.DrawText(box.Text, topLeft, textPaint);
+
+                            // and higher draw probability
+                            var probPaint = new SKPaint
+                            {
+                                Style = SKPaintStyle.Fill,
+                                Color = SKColors.Red,
+                                TextSize = 15
+                            };
+
+                            canvas.DrawText(box.Probability.ToString("N2"), new SKPoint(topLeft.X, topLeft.Y - 20), probPaint);
+                        }
+
+                        // save the image
+                        streams.Add((CommonHelper.GetStream(bitmap), text));
+                    }
+                }
+
+                if (streams.Count == 0)
+                {
+                    await Context.Channel.SendMessageAsync("No image found with that message id", false);
+                    return;
+                }
+
+                // send the images
+                foreach (var stream in streams)
+                {
+                    await Context.Channel.SendFileAsync(stream.Item1, "ocr.png", stream.Item2, false);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.ToString(), false);
+            }
+        }
+
+        // ocr with direct upload
+        [Command("ocr")]
+        public async Task OcrImage()
+        {
+            try
+            {
+                var attachments = Context.Message.Attachments;
+                if (attachments.Count == 0)
+                {
+                    await Context.Channel.SendMessageAsync("No image found with that message id", false);
+                    return;
+                }
+
+                await Context.Channel.SendMessageAsync("Processing the image... This may take up to a minute", false);
+
+                int count = 0;
+                var fileDBManager = FileDBManager.Instance();
+                while (count <= 100)
+                {
+                    count++;
+                    await Task.Delay(1000);
+
+                    var files = fileDBManager.GetDiscordFile(Context.Message.Id);
+
+                    if (files != null && files.Count > 0)
+                    {
+                        var processed = files.All(i => i.OcrDone && i.IsImage && i.Extension != "gif");
+                        if (processed)
+                        {
+                            await Context.Channel.SendMessageAsync("Processing done. Retreiving results", false);
+                            await OcrImage(Context.Message.Id);
+                            break;
+                        }
+                    }
+                }
+
+                if (count > 100)
+                {
+                    await Context.Channel.SendMessageAsync("Processing took too long. Please try again later", false);
+                }
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.ToString(), false);
+            }
+        }
 
         //[Command("countdown2021")]
         //public async Task countdown2021()
