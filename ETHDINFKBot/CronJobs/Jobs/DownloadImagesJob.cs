@@ -138,7 +138,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                     if (messages.Count == 0)
                     {
                         _logger.LogInformation($"No new messages left for channel {channel.Name}");
-                        continue;
+                        //continue;
                     }
 
                     _logger.LogInformation($"Found {messages.Count} new messages for channel {channel.Name}");
