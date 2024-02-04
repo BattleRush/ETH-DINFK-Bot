@@ -80,7 +80,7 @@ def run_ocr():
 
 
 #RESTART endpoint which stops the application
-@app.route('/restart', methods=['POST'])
+@app.route('/restart', methods=['GET'])
 def restart():
     # kill current process
     print("Restarting application")
