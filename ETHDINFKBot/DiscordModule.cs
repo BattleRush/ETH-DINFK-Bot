@@ -1898,7 +1898,9 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 // send the images
                 foreach (var stream in streams)
                 {
-                    await Context.Channel.SendFileAsync(stream.Item1, "ocr.png", stream.Item2, false);
+                    // Discord escape pings
+                    string ocrText = stream.Item2.Replace("`", "");
+                    await Context.Channel.SendFileAsync(stream.Item1, "ocr.png", "```" + stream.Item2 + "```", false);
                 }
 
             }
@@ -1946,7 +1948,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
 
                 if (count > 100)
                 {
-                    await Context.Channel.SendMessageAsync("Processing took too long. Please try again later", false);
+                    await Context.Channel.SendMessageAsync("Processing took too long. Please try again later. The file will still be processed. Check with .ocr " + Context.Message.Id, false);
                 }
             }
             catch (Exception ex)
