@@ -3,6 +3,7 @@ using System;
 using ETHBot.DataLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ETHBot.DataLayer.Migrations
 {
     [DbContext(typeof(ETHBotDBContext))]
-    partial class ETHBotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240204003711_MakeDiscordFileFullPathUnique")]
+    partial class MakeDiscordFileFullPathUnique
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -358,7 +361,7 @@ namespace ETHBot.DataLayer.Migrations
 
                     b.Property<string>("FullPath")
                         .IsRequired()
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("longtext");
 
                     b.Property<int?>("Height")
                         .HasColumnType("int");
@@ -396,9 +399,6 @@ namespace ETHBot.DataLayer.Migrations
                     b.HasKey("DiscordFileId");
 
                     b.HasIndex("DiscordMessageId");
-
-                    b.HasIndex("FullPath")
-                        .IsUnique();
 
                     b.ToTable("DiscordFiles");
                 });

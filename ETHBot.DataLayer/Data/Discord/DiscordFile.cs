@@ -17,6 +17,9 @@ namespace ETHBot.DataLayer.Data.Discord
         public DiscordMessage DiscordMessage { get; set; }
 
         public string FileName { get; set; }
+        
+        // set the column as unique and not null
+        [Required]
         public string FullPath { get; set; }
 
         public bool Downloaded { get; set; } 

@@ -134,6 +134,10 @@ namespace ETHBot.DataLayer
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<DiscordFile>()
+                .HasIndex(e => e.FullPath)
+                .IsUnique();
+                
             // https://github.com/dotnet/efcore/issues/11003#issuecomment-492333796
             // get all composite keys (entity decorated by more than 1 [Key] attribute
             foreach (var entity in modelBuilder.Model.GetEntityTypes()
