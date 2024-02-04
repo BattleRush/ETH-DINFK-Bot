@@ -265,19 +265,7 @@ namespace ETHDINFKBot.Helpers
 
                 }
 
-                // check if file exists
-                if (File.Exists(filePath))
-                {
-                    //_logger.LogInformation($"File {filePath} already exists", false);
-                    FileDBManager fileDBManager = FileDBManager.Instance();
-                    var dbFile = fileDBManager.GetDiscordFileByPath(filePath);
-                    if(dbFile != null)
-                    {
-                        return null; // file exists on db and on disk continue
-                    }
 
-                    // redownload file as likely its corrupted
-                }
 
 
                 // check if opening the url how big the file is
@@ -320,8 +308,6 @@ namespace ETHDINFKBot.Helpers
                 // check if image or video
                 if (headContentType.StartsWith("image") || headContentType.StartsWith("video"))
                 {
-                    // download the file
-                    byte[] bytes = client.GetByteArrayAsync(url).Result;
 
                     // get the file extension from the content type
                     string fileExtensionFromContentType = headContentType.Split('/').Last();
@@ -348,6 +334,22 @@ namespace ETHDINFKBot.Helpers
                         }
                     }
 
+                    // check if file exists
+                    if (File.Exists(filePath))
+                    {
+                        //_logger.LogInformation($"File {filePath} already exists", false);
+                        FileDBManager fileDBManager = FileDBManager.Instance();
+                        var dbFile = fileDBManager.GetDiscordFileByPath(filePath);
+                        if (dbFile != null)
+                        {
+                            return null; // file exists on db and on disk continue
+                        }
+
+                        // redownload file as likely its corrupted
+                    }
+
+                    // download the file
+                    byte[] bytes = client.GetByteArrayAsync(url).Result;
 
                     currentFile = new DiscordFile()
                     {

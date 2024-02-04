@@ -2678,6 +2678,13 @@ Total todays menus: {allTodaysMenus.Count}");
             [Command("get")]
             public async Task GetKeyValuePair(string key)
             {
+                var author = Context.Message.Author;
+                if (author.Id != Program.ApplicationSetting.Owner)
+                {
+                    await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                    return;
+                }
+
                 var result = DBManager.Get(key);
                 await Context.Channel.SendMessageAsync($"Key: **{key}** has the value: **{result.Value}** with type: **{result.Type}**");
             }
