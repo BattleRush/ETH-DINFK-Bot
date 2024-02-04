@@ -133,6 +133,8 @@ namespace ETHDINFKBot.CronJobs.Jobs
                     if (lastMessageForChannel == 0)
                         lastMessageForChannel = SnowflakeUtils.ToSnowflake(DateTimeOffset.UtcNow);
 
+                    _logger.LogInformation($"Last message for channel {channel.Name} is {lastMessageForChannel}");
+
                     messages = textChannel.GetMessagesAsync(lastMessageForChannel, Direction.Before, scrapePerRun).FlattenAsync().Result.ToList();
 
                     if (messages.Count == 0)
