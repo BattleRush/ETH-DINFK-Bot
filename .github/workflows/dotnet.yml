@@ -93,6 +93,15 @@ jobs:
         username: ${{ secrets.REMOTE_USER }}
         passphrase: ${{ secrets.REMOTE_SSH_PASSPHRASE }}
         privateKey: ${{ secrets.REMOTE_SSH_KEY }}
+
+    - name: CHMOD the executable (info.sh)
+      uses: garygrossgarten/github-action-ssh@release
+      with:
+        command: chmod +x ${{ secrets.REMOTE_TARGET }}/Python/python_deploy/info.sh
+        host: ${{ secrets.REMOTE_HOST }}
+        username: ${{ secrets.REMOTE_USER }}
+        passphrase: ${{ secrets.REMOTE_SSH_PASSPHRASE }}
+        privateKey: ${{ secrets.REMOTE_SSH_KEY }}
         
     - name: Declare variables
       id: vars
