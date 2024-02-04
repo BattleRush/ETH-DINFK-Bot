@@ -89,6 +89,8 @@ namespace ETHDINFKBot.Modules
             {
                 await Context.Channel.SendMessageAsync(ex.Message.ToString(), false);
             }
+
+            await Context.Channel.SendMessageAsync("Done", false);
         }
 
         [Command("download")]
