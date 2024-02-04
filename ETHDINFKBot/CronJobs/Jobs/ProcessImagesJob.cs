@@ -151,7 +151,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                     // update file with full text
                     FileDBManager.UpdateDiscordFile(discordFile);
 
-                    Console.WriteLine(content);
+                    //Console.WriteLine(content);
                 }
             }
             catch(Exception ex)

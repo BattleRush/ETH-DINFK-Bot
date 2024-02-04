@@ -348,6 +348,12 @@ namespace ETHDINFKBot.Helpers
                         // redownload file as likely its corrupted
                     }
 
+                    if(string.IsNullOrWhiteSpace(filePath))
+                    {
+                        Console.WriteLine("Path is empty for url " + url);
+                        return null;
+                    }
+
                     // download the file
                     byte[] bytes = client.GetByteArrayAsync(url).Result;
 
