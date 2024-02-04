@@ -6,6 +6,7 @@ using ETHDINFKBot.Data;
 using ETHDINFKBot.Handlers;
 using ETHDINFKBot.Helpers;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -123,91 +124,116 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
             foreach (var channel in channels)
             {
-                var textChannel = channel as SocketTextChannel;
-                ulong lastMessageForChannel = keyValueDBManager.Get<ulong>($"LastScapedMessageForChannel_{channel.Id}");
-
-                if (lastMessageForChannel == 0)
-                    lastMessageForChannel = SnowflakeUtils.ToSnowflake(DateTimeOffset.UtcNow);
-
-                var messages = textChannel.GetMessagesAsync(lastMessageForChannel, Direction.Before, scrapePerRun).FlattenAsync().Result.ToList();
-
-                if (messages.Count == 0)
+                List<IMessage> messages = new List<IMessage>();
+                try
                 {
-                    _logger.LogInformation($"No new messages left for channel {channel.Name}");
-                    continue;
-                }
+                    var textChannel = channel as SocketTextChannel;
+                    ulong lastMessageForChannel = keyValueDBManager.Get<ulong>($"LastScapedMessageForChannel_{channel.Id}");
 
-                _logger.LogInformation($"Found {messages.Count} new messages for channel {channel.Name}");
+                    if (lastMessageForChannel == 0)
+                        lastMessageForChannel = SnowflakeUtils.ToSnowflake(DateTimeOffset.UtcNow);
 
-                int botCount = 0;
-                int noUrlCount = 0;
+                    messages = textChannel.GetMessagesAsync(lastMessageForChannel, Direction.Before, scrapePerRun).FlattenAsync().Result.ToList();
 
-                foreach (var message in messages)
-                {
-                    if (message.Author.IsBot)
+                    if (messages.Count == 0)
                     {
-                        botCount++;
+                        _logger.LogInformation($"No new messages left for channel {channel.Name}");
                         continue;
                     }
 
-                    if (message.Attachments.Count == 0 && message.Embeds.Count == 0)
-                    {
-                        noUrlCount++;
-                        continue;
-                    }
+                    _logger.LogInformation($"Found {messages.Count} new messages for channel {channel.Name}");
 
-                    List<string> urls = new List<string>();
+                    int botCount = 0;
+                    int noUrlCount = 0;
 
-                    foreach (var attachment in message.Attachments)
+                    foreach (var message in messages)
                     {
-                        urls.Add(attachment.Url);
-                    }
-
-                    foreach (var embed in message.Embeds)
-                    {
-                        if (embed.Type == EmbedType.Image)
+                        if (message.Author.IsBot)
                         {
-                            urls.Add(embed.Url);
+                            botCount++;
+                            continue;
                         }
 
-                        if (embed.Type == EmbedType.Video)
+                        if (message.Attachments.Count == 0 && message.Embeds.Count == 0)
                         {
-                            urls.Add(embed.Url);
+                            noUrlCount++;
+                            continue;
                         }
 
-                        if (embed.Type == EmbedType.Rich)
+                        List<string> urls = new List<string>();
+
+                        foreach (var attachment in message.Attachments)
                         {
-                            urls.Add(embed.Url);
+                            urls.Add(attachment.Url);
                         }
-                    }
 
-                    SaveMessageIfNotFound(message, basePath, channel.Name);
-
-                    foreach (var url in urls)
-                    {
-                        try
+                        foreach (var embed in message.Embeds)
                         {
-                            var result = await DiscordHelper.DownloadFile(client, message, message.Id, url, urls.IndexOf(url), basePath, "");
-
-                            if (result != null)
+                            if (embed.Type == EmbedType.Image)
                             {
-                                fileDBManager.SaveDiscordFile(result);
+                                urls.Add(embed.Url);
                             }
-                            else
+
+                            if (embed.Type == EmbedType.Video)
                             {
-                                _logger.LogError($"Failed to download file {url}");
+                                urls.Add(embed.Url);
+                            }
+
+                            if (embed.Type == EmbedType.Rich)
+                            {
+                                urls.Add(embed.Url);
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, $"Error to download file {url}");
-                        }
 
+                        SaveMessageIfNotFound(message, basePath, channel.Name);
+
+                        foreach (var url in urls)
+                        {
+                            try
+                            {
+                                var result = await DiscordHelper.DownloadFile(client, message, message.Id, url, urls.IndexOf(url), basePath, "");
+
+                                if (result != null)
+                                {
+                                    if (string.IsNullOrWhiteSpace(result.FullPath))
+                                    {
+                                        _logger.LogError($"Failed to download file as it has empty full path {url} with result {JsonConvert.SerializeObject(result)}");
+                                        continue;
+                                    }
+
+                                    fileDBManager.SaveDiscordFile(result);
+                                }
+                                else
+                                {
+                                    _logger.LogError($"Failed to download file {url}");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError(ex, $"Error to download file {url}");
+                            }
+
+                        }
                     }
                 }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Error in ProcessChannels for channel {channel.Name}");
+                }
 
-                // update last message id
-                keyValueDBManager.Update($"LastScapedMessageForChannel_{channel.Id}", messages.Min(x => x.Id));
+                if (messages.Count > 0)
+                {
+                    // update last message id
+                    keyValueDBManager.Update($"LastScapedMessageForChannel_{channel.Id}", messages.Min(x => x.Id));
+                }
+                else
+                {
+                    int emptyCount = keyValueDBManager.Get<int>($"EmptyCount_{channel.Id}");
+                    emptyCount++;
+                    keyValueDBManager.Update($"EmptyCount_{channel.Id}", emptyCount);
+
+                    // if empty count bigger than 10 we should stop this channel TODO
+                }
             }
         }
 
