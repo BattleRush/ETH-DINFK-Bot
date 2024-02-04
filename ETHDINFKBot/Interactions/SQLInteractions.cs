@@ -365,7 +365,8 @@ namespace ETHDINFKBot.Interactions
             }
             catch (Exception ex)
             {
-                await Context.Interaction.Channel.SendMessageAsync(ex.ToString());
+                Console.WriteLine(ex.ToString());
+                await Context?.Interaction?.Channel?.SendMessageAsync(ex.ToString());
             }
         }
 

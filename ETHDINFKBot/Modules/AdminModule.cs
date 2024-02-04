@@ -67,6 +67,29 @@ namespace ETHDINFKBot.Modules
     public class AdminModule : ModuleBase<SocketCommandContext>
     {
 
+        //restartpy - restarts the python bot on port 13225
+        [Command("restartpy")]
+        public async Task RestartPythonBot()
+        {
+            var author = Context.Message.Author;
+            if (author.Id != Program.ApplicationSetting.Owner)
+            {
+                await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
+                return;
+            }
+
+            try
+            {
+                // call localhost:13225/restart
+                HttpClient client = new HttpClient();
+                var response = client.GetAsync("http://localhost:13225/restart").Result;
+                await Context.Channel.SendMessageAsync(response.StatusCode.ToString(), false);
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.Message.ToString(), false);
+            }
+        }
 
         [Command("download")]
         [RequireUserPermission(GuildPermission.ManageChannels)]
@@ -2693,7 +2716,7 @@ Total todays menus: {allTodaysMenus.Count}");
             {
                 return SupportedTypes.FirstOrDefault(item => item.Equals(type, StringComparison.OrdinalIgnoreCase));
             }
-            
+
             [Command("add")]
             public async Task AddKeyValuePair(string key, string value, string type = "string")
             {

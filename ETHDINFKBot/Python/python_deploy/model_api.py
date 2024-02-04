@@ -79,6 +79,13 @@ def run_ocr():
     return jsonify(results_json)
 
 
+#RESTART endpoint which stops the application
+@app.route('/restart', methods=['POST'])
+def restart():
+    # kill current process
+    print("Restarting application")
+    exit()
+
 if __name__ == '__main__':
     # run on port 13225
     app.run(host="0.0.0.0", port=13225, debug=True)
