@@ -4,20 +4,40 @@ from flask import Flask, request, jsonify
 from model import EmbedModel
 import easyocr
 import cv2
-
+#from PIL import Image
+#import torch
 
 app = Flask(__name__)
 reader = easyocr.Reader(['en', 'de'])
 
+
+
+#def get_embedding(model, transform, image_path):
+#    print("Generating embedding for: " + image_path)
+#    image = Image.open(image_path).convert('RGB')
+#    image = transform(image).unsqueeze(0)
+#    with torch.no_grad():
+#        embedding = model(image)
+#    return embedding.squeeze().numpy()
+
 # generate embedding 
 # parameters model_name, path_to_file
-@app.route('/generate_embedding', methods=['POST'])
-def generate_embedding():
-    model = EmbedModel(512, False)
-    model_name = request.form['model_name']
-    path_to_file = request.form['path_to_file']
+#@app.route('/generate_embedding', methods=['POST'])
+#def generate_embedding():
+#    content = request.json
+#    print(content['model_name'])
+#    print(content['path_to_file'])
+#    model_name = content['model_name']
+#    path_to_file = content['path_to_file']
 
-    return jsonify(model.generate_embedding(model_name, path_to_file))
+    
+#    model = EmbedModel(model_name=model_name)
+
+#    result = get_embedding(model, model.transform, path_to_file)
+
+#    print(result)
+
+#    return jsonify(result)
 
 # run ocr on image
 # parameters path_to_file

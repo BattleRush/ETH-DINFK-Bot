@@ -3,7 +3,7 @@ from torch.nn import functional as F
 import torchvision.models as models
 
 class EmbedModel(nn.Module):
-    def __init__(self, model_name="resnet18", use_pretrained=True):
+    def __init__(self, model_name="resnet18"):
         super(EmbedModel, self).__init__()
         
         # ResNet
