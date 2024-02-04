@@ -288,77 +288,84 @@ namespace ETHDINFKBot.Interactions
         [ComponentInteraction("sql-execute-command-*")]
         public async Task ExecuteCommand(int savedQueryId)
         {
-            //await Context.Interaction.DeferAsync();
-            var savedQuery = SQLDBManager.Instance().GetSavedQueryById(savedQueryId);
-
-            var user = Context.Interaction.User;
-
-            // TODO Check owner of interaction
-            /*
-            if (savedQuery.DiscordUserId != user.Id)
+            try
             {
-                await Context.Interaction.RespondAsync("You are not allowed to execute someone elses command.");
-                return;
-            }*/
+                //await Context.Interaction.DeferAsync();
+                var savedQuery = SQLDBManager.Instance().GetSavedQueryById(savedQueryId);
 
-            var savedQueryParameters = SQLDBManager.Instance().GetQueryParameters(savedQuery);
+                var user = Context.Interaction.User;
 
-            if (savedQueryParameters.Count == 0)
-            {
-                await Context.Interaction.DeferAsync();
-                // we can run the command directly
-                try
+                // TODO Check owner of interaction
+                /*
+                if (savedQuery.DiscordUserId != user.Id)
                 {
-                    var queryResult = await SQLHelper.GetQueryResultsInteraction(Context, savedQuery.Content, true, 100);
-                    var resultString = SQLHelper.GetRowStringFromResult(queryResult.Header, queryResult.Data, new List<int>());
+                    await Context.Interaction.RespondAsync("You are not allowed to execute someone elses command.");
+                    return;
+                }*/
 
-                    string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
+                var savedQueryParameters = SQLDBManager.Instance().GetQueryParameters(savedQuery);
 
-                    await Context.Channel.SendMessageAsync(resultString + additionalString);
-                }
-                catch (Exception e)
+                if (savedQueryParameters.Count == 0)
                 {
-                    await Context.Channel.SendMessageAsync(e.ToString());
-                }
-                return;
-            }
-            else
-            {
-                // we need to spawn a modal to get the parameters
-
-                if (savedQueryParameters.Count <= 5)
-                {
-                    // we can do it over modal
-                    // todo provide the user maybe a way to also get a template
-
-                    var builder = new ModalBuilder()
+                    await Context.Interaction.DeferAsync();
+                    // we can run the command directly
+                    try
                     {
-                        Title = "Execute SQL Command",
-                        CustomId = "sql-execute-command-modal-" + savedQuery.SavedQueryId
-                    };
+                        var queryResult = await SQLHelper.GetQueryResultsInteraction(Context, savedQuery.Content, true, 100);
+                        var resultString = SQLHelper.GetRowStringFromResult(queryResult.Header, queryResult.Data, new List<int>());
 
-                    int count = 1;
-                    foreach (var parameter in savedQueryParameters)
-                    {
-                        builder.AddTextInput($"{parameter.ParameterName} ({parameter.ParameterType})",
-                                     customId: "parameter" + count, placeholder: parameter.ParameterName,
-                                     value: parameter.DefaultValue, required: false);
+                        string additionalString = $"Total row(s) affected: {queryResult.TotalResults.ToString("N0")} QueryTime: {queryResult.Time.ToString("N0")}ms";
 
-                        count++;
+                        await Context.Channel.SendMessageAsync(resultString + additionalString);
                     }
-
-                    var modal = builder.Build();
-
-                    await Context.Interaction.RespondWithModalAsync(modal);
+                    catch (Exception e)
+                    {
+                        await Context.Channel.SendMessageAsync(e.ToString());
+                    }
+                    return;
                 }
                 else
                 {
-                    await Context.Interaction.DeferAsync();
-                    // modals only support 5 fields we need to provide a template for the user to run
+                    // we need to spawn a modal to get the parameters
 
-                    EmbedBuilder embedBuilder = SQLInteractionHelper.GetCommandTemplate(savedQuery.SavedQueryId);
-                    await Context.Channel.SendMessageAsync("Modals support only 5 parameters. Execute query with template command", false, embedBuilder.Build());
+                    if (savedQueryParameters.Count <= 5)
+                    {
+                        // we can do it over modal
+                        // todo provide the user maybe a way to also get a template
+
+                        var builder = new ModalBuilder()
+                        {
+                            Title = "Execute SQL Command",
+                            CustomId = "sql-execute-command-modal-" + savedQuery.SavedQueryId
+                        };
+
+                        int count = 1;
+                        foreach (var parameter in savedQueryParameters)
+                        {
+                            builder.AddTextInput($"{parameter.ParameterName} ({parameter.ParameterType})",
+                                         customId: "parameter" + count, placeholder: parameter.ParameterName,
+                                         value: parameter.DefaultValue, required: false);
+
+                            count++;
+                        }
+
+                        var modal = builder.Build();
+
+                        await Context.Interaction.RespondWithModalAsync(modal);
+                    }
+                    else
+                    {
+                        await Context.Interaction.DeferAsync();
+                        // modals only support 5 fields we need to provide a template for the user to run
+
+                        EmbedBuilder embedBuilder = SQLInteractionHelper.GetCommandTemplate(savedQuery.SavedQueryId);
+                        await Context.Channel.SendMessageAsync("Modals support only 5 parameters. Execute query with template command", false, embedBuilder.Build());
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                await Context.Interaction.Channel.SendMessageAsync(ex.ToString());
             }
         }
 
@@ -800,7 +807,7 @@ namespace ETHDINFKBot.Interactions
                 PieChart pieChart = new PieChart();
 
                 // TODO make it not reliant on int parse
-                
+
                 int labelIndex = 0;
                 int valueIndex = 1;
 
@@ -812,9 +819,9 @@ namespace ETHDINFKBot.Interactions
                 }
 
                 // TODO make it not reliant on int parse
-                pieChart.Data(queryResult.Data.Select(x => x.ElementAt(labelIndex)).ToList(), 
+                pieChart.Data(queryResult.Data.Select(x => x.ElementAt(labelIndex)).ToList(),
                     queryResult.Data.Select(x => int.Parse(x.ElementAt(valueIndex))).ToList());
-                    
+
                 var bitmap = pieChart.GetBitmap();
 
                 //var drawTable = new DrawTable(queryResult.Header, queryResult.Data, additionalString, null);

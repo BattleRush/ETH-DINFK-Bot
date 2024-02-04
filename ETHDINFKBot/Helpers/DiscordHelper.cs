@@ -351,7 +351,7 @@ namespace ETHDINFKBot.Helpers
                     if(string.IsNullOrWhiteSpace(filePath))
                     {
                         Console.WriteLine("Path is empty for url " + url);
-                        return null;
+                        throw new Exception("Path is empty for url " + url);
                     }
 
                     // download the file
