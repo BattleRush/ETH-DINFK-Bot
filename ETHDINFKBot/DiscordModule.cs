@@ -1900,10 +1900,11 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 {
                     // Discord escape pings
                     string ocrText = stream.Item2.Replace("`", "");
-                    // LIMIT TO 1990 CHARS
-                    if (ocrText.Length > 1990)
+
+                    // TODO for longer texts split up over multiple messages
+                    if (ocrText.Length > 1950)
                     {
-                        ocrText = ocrText.Substring(0, 1990);
+                        ocrText = ocrText.Substring(0, 1950);
                     }
                     
                     await Context.Channel.SendFileAsync(stream.Item1, "ocr.png", "```" + stream.Item2 + "```", false);
