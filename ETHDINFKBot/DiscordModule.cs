@@ -866,8 +866,14 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                             return;
                         }
 
+                        var postTitle = $"[{lectureId}] {lectureName}";
+
+                        // title can only be 100 chars
+                        if (postTitle.Length > 97)
+                            postTitle = postTitle.Substring(0, 97) + "...";
+
                         var newPost = await socketForumChannel.CreatePostAsync(
-                                $"[{lectureId}] {lectureName}",
+                                postTitle,
                                 ThreadArchiveDuration.OneWeek,
                                 null,
                                 "VVZ: " + newLink,
