@@ -753,6 +753,17 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         [Command("create")]
         public async Task CreateChannel(string vvzLink)
         {
+            Dictionary<string, ulong?> forbiddenSubjects = new Dictionary<string, ulong?>()
+            {
+                // FS
+                { "263-0007-00L", 1077359708635140097 }, // Advanced Systems Lab
+                { "263-0008-00L", 1077360555347685500 }, // Computational Intelligence Lab
+
+                // HS
+                { "263-0006-00L", 1151807326559412224}, // Algorithms Lab
+                { "263-0009-00L", 1151807394259669022}, // Information Security Lab
+            };
+
             // get the domain of the link
             string domain = Regex.Match(vvzLink, @"https?://(www\.)?([^/]*)").Groups[2].Value;
 
@@ -843,6 +854,15 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                             && !socketForumChannel.Name.Contains("master") && !socketForumChannel.Name.Contains("bot"))
                         {
                             await Context.Channel.SendMessageAsync("Could not find any tags to add", false);
+                            return;
+                        }
+
+                        // if lectureid is in forbiddenSubjects then return the channel to go for
+                        if (forbiddenSubjects.ContainsKey(lectureId))
+                        {
+                            // todo handle if a course is just banned for example with id = 0
+                            
+                            await Context.Channel.SendMessageAsync($"This lecture has a dedicated channel, please go to <#{forbiddenSubjects[lectureId]}>", false);
                             return;
                         }
 
