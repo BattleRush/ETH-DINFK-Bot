@@ -1169,16 +1169,14 @@ namespace ETHDINFKBot.Modules
 
             [Command("broken")]
             [RequireOwner]
-            public async Task FindBrokenMensas(int days = 7)
+            public async Task FindBrokenMensas(int days = 14)
             {
                 try
                 {
                     // list restaurants with no menus for the last 7 days or more
                     var allRestaurants = FoodDBManager.GetAllRestaurants();
 
-                    List<Restaurant> brokenRestaurants = new List<Restaurant>();
-
-                    Dictionary<string, string> brokenRestaurantList = new Dictionary<string, string>();
+                    List<Restaurant> workingRestaurants = new List<Restaurant>();
 
                     for (int i = 0; i < days; i++)
                     {
@@ -1191,25 +1189,24 @@ namespace ETHDINFKBot.Modules
 
                             var allMenus = FoodDBManager.GetMenusFromRestaurant(restaurant.RestaurantId, day);
 
-                            if (allMenus.Count == 0)
+                            if (allMenus.Count > 0)
                             {
-                                var name = $"{restaurant.Name} ({restaurant.RestaurantId})";
-                                if (!brokenRestaurantList.ContainsKey(name))
-                                    brokenRestaurantList.Add(name, day.DayOfWeek.ToString());
-                                else
-                                    brokenRestaurantList[name] += $", {day.DayOfWeek.ToString()}";
+                                if(!workingRestaurants.Contains(restaurant))
+                                    workingRestaurants.Add(restaurant);
                             }
                         }
                     }
+
+                    var brokenRestaurants = allRestaurants.Where(i => !workingRestaurants.Contains(i)).ToList();
 
                     await Context.Channel.SendMessageAsync($"Broken restaurants: {brokenRestaurants.Count}", false);
 
                     // list broken restaurants
                     List<string> brokenRestaurantInfo = new List<string>();
 
-                    foreach (var restaurant in brokenRestaurantList)
+                    foreach (var restaurant in brokenRestaurants)
                     {
-                        brokenRestaurantInfo.Add($"{restaurant.Key} - {restaurant.Value}");
+                        brokenRestaurantInfo.Add($"{restaurant.RestaurantId} - {restaurant.InternalName} - {restaurant.AdditionalInternalName} - {restaurant.TimeParameter}");
                     }
 
                     // print text but break lines when it would exceed 1990 chars
