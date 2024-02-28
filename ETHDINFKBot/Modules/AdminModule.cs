@@ -1178,6 +1178,8 @@ namespace ETHDINFKBot.Modules
 
                     List<Restaurant> brokenRestaurants = new List<Restaurant>();
 
+                    Dictionary<string, string> brokenRestaurantList = new Dictionary<string, string>();
+
                     for (int i = 0; i < days; i++)
                     {
                         foreach (var restaurant in allRestaurants)
@@ -1191,8 +1193,11 @@ namespace ETHDINFKBot.Modules
 
                             if (allMenus.Count == 0)
                             {
-                                if (!brokenRestaurants.Contains(restaurant))
-                                    brokenRestaurants.Add(restaurant);
+                                var name = $"{restaurant.Name} ({restaurant.RestaurantId})";
+                                if (!brokenRestaurantList.ContainsKey(name))
+                                    brokenRestaurantList.Add(name, day.DayOfWeek.ToString());
+                                else
+                                    brokenRestaurantList[name] += $", {day.DayOfWeek.ToString()}";
                             }
                         }
                     }
@@ -1200,24 +1205,24 @@ namespace ETHDINFKBot.Modules
                     await Context.Channel.SendMessageAsync($"Broken restaurants: {brokenRestaurants.Count}", false);
 
                     // list broken restaurants
-                    List<string> brokenRestaurantList = new List<string>();
+                    List<string> brokenRestaurantInfo = new List<string>();
 
-                    foreach (var restaurant in brokenRestaurants)
+                    foreach (var restaurant in brokenRestaurantList)
                     {
-                        brokenRestaurantList.Add($"{restaurant.RestaurantId} - {restaurant.Name} -{restaurant.InternalName} - {restaurant.AdditionalInternalName} - {restaurant.TimeParameter}");
+                        brokenRestaurantInfo.Add($"{restaurant.Key} - {restaurant.Value}");
                     }
 
                     // print text but break lines when it would exceed 1990 chars
                     string outputString = "";
-                    foreach (var restaurant in brokenRestaurantList)
+                    foreach (var info in brokenRestaurantInfo)
                     {
-                        if (outputString.Length + restaurant.Length > 1990)
+                        if (outputString.Length + info.Length > 1990)
                         {
                             await Context.Channel.SendMessageAsync(outputString, false);
                             outputString = "";
                         }
 
-                        outputString += restaurant + Environment.NewLine;
+                        outputString += info + Environment.NewLine;
                     }
 
                     if (!string.IsNullOrWhiteSpace(outputString))
