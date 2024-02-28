@@ -1117,6 +1117,9 @@ namespace ETHDINFKBot.Modules
                 builder.AddField($"{Program.CurrentPrefix}admin food ethmensas <dryRun>", "Loads all mensas from eth page and add missing ones");
                 builder.AddField($"{Program.CurrentPrefix}admin food setlocation <locationid> <restaurantids>", "Sets the location for a restaurants (comma seperated)");
 
+                builder.AddField($"{Program.CurrentPrefix}admin food broken <days>", "Lists all restaurants with no menus for the last X days or more");
+                builder.AddField($"{Program.CurrentPrefix}admin food similar", "Lists all similar restaurants");
+
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
 
@@ -1161,6 +1164,113 @@ namespace ETHDINFKBot.Modules
                 catch (Exception ex)
                 {
                     await Context.Message.Channel.SendMessageAsync(ex.ToString());
+                }
+            }
+
+            [Command("broken")]
+            public async Task FindBrokenMensas(int days = 7)
+            {
+                // list restaurants with no menus for the last 7 days or more
+                var allRestaurants = FoodDBManager.GetAllRestaurants();
+
+                List<Restaurant> brokenRestaurants = new List<Restaurant>();
+
+                for (int i = 1; i <= allRestaurants.Count; i++)
+                {
+                    // if the current day -i is not a weekday skip
+                    var day = DateTime.Now.AddDays(-i);
+                    if (day.DayOfWeek == DayOfWeek.Saturday || day.DayOfWeek == DayOfWeek.Sunday)
+                        continue;
+
+                    var restaurant = allRestaurants[i];
+                    var allMenus = FoodDBManager.GetMenusFromRestaurant(restaurant.RestaurantId, day);
+
+                    if (allMenus.Count == 0)
+                    {
+                        if (!brokenRestaurants.Contains(restaurant))
+                            brokenRestaurants.Add(restaurant);
+                    }
+                }
+
+                await Context.Channel.SendMessageAsync($"Broken restaurants: {brokenRestaurants.Count}", false);
+
+                // list broken restaurants
+                string brokenRestaurantsString = string.Join(Environment.NewLine, brokenRestaurants.Select(i => i.RestaurantId));
+
+                // print text but break lines when it would exceed 1990 chars
+                for (int i = 0; i < brokenRestaurantsString.Length; i += 1990)
+                {
+                    await Context.Channel.SendMessageAsync(brokenRestaurantsString.Substring(i, Math.Min(1990, brokenRestaurantsString.Length - i)), false);
+                }
+            }
+
+            // https://gist.github.com/Davidblkx/e12ab0bb2aff7fd8072632b396538560
+            public static class LevenshteinDistance
+            {
+                /// <summary>
+                ///     Calculate the difference between 2 strings using the Levenshtein distance algorithm
+                /// </summary>
+                /// <param name="source1">First string</param>
+                /// <param name="source2">Second string</param>
+                /// <returns></returns>
+                public static int Calculate(string source1, string source2) //O(n*m)
+                {
+                    var source1Length = source1.Length;
+                    var source2Length = source2.Length;
+
+                    var matrix = new int[source1Length + 1, source2Length + 1];
+
+                    // First calculation, if one entry is empty return full length
+                    if (source1Length == 0)
+                        return source2Length;
+
+                    if (source2Length == 0)
+                        return source1Length;
+
+                    // Initialization of matrix with row size source1Length and columns size source2Length
+                    for (var i = 0; i <= source1Length; matrix[i, 0] = i++) { }
+                    for (var j = 0; j <= source2Length; matrix[0, j] = j++) { }
+
+                    // Calculate rows and collumns distances
+                    for (var i = 1; i <= source1Length; i++)
+                    {
+                        for (var j = 1; j <= source2Length; j++)
+                        {
+                            var cost = (source2[j - 1] == source1[i - 1]) ? 0 : 1;
+
+                            matrix[i, j] = Math.Min(
+                                Math.Min(matrix[i - 1, j] + 1, matrix[i, j - 1] + 1),
+                                matrix[i - 1, j - 1] + cost);
+                        }
+                    }
+                    // return result
+                    return matrix[source1Length, source2Length];
+                }
+            }
+
+            [Command("similar")]
+            public async Task FindSimilarMensas()
+            {
+                var allRestaurants = FoodDBManager.GetAllRestaurants();
+
+                // do minimal edit distance to similar names
+                foreach (var restaurant in allRestaurants)
+                {
+                    var currentName = $"{restaurant.InternalName}-{restaurant.AdditionalInternalName}-{restaurant.TimeParameter}";
+
+                    foreach (var otherRestaurant in allRestaurants)
+                    {
+                        if (restaurant.RestaurantId == otherRestaurant.RestaurantId)
+                            continue;
+
+                        var otherName = $"{otherRestaurant.InternalName}-{otherRestaurant.AdditionalInternalName}-{otherRestaurant.TimeParameter}";
+
+                        int distance = LevenshteinDistance.Calculate(currentName, otherName);
+                        if (distance < 5)
+                        {
+                            await Context.Channel.SendMessageAsync($"Similar with distance {distance}: {restaurant.RestaurantId} ({currentName}) and {otherRestaurant.RestaurantId} ({otherName})", false);
+                        }
+                    }
                 }
             }
 
