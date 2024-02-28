@@ -1171,7 +1171,6 @@ namespace ETHDINFKBot.Modules
             [RequireOwner]
             public async Task FindBrokenMensas(int days = 7)
             {
-
                 try
                 {
                     // list restaurants with no menus for the last 7 days or more
@@ -1179,19 +1178,22 @@ namespace ETHDINFKBot.Modules
 
                     List<Restaurant> brokenRestaurants = new List<Restaurant>();
 
-                    foreach (var restaurant in allRestaurants)
+                    for (int i = 0; i < days; i++)
                     {
-                        // if the current day -i is not a weekday skip
-                        var day = DateTime.Now.AddDays(-i);
-                        if (day.DayOfWeek == DayOfWeek.Saturday || day.DayOfWeek == DayOfWeek.Sunday)
-                            continue;
-
-                        var allMenus = FoodDBManager.GetMenusFromRestaurant(restaurant.RestaurantId, day);
-
-                        if (allMenus.Count == 0)
+                        foreach (var restaurant in allRestaurants)
                         {
-                            if (!brokenRestaurants.Contains(restaurant))
-                                brokenRestaurants.Add(restaurant);
+                            // if the current day -i is not a weekday skip
+                            var day = DateTime.Now.AddDays(-i);
+                            if (day.DayOfWeek == DayOfWeek.Saturday || day.DayOfWeek == DayOfWeek.Sunday)
+                                continue;
+
+                            var allMenus = FoodDBManager.GetMenusFromRestaurant(restaurant.RestaurantId, day);
+
+                            if (allMenus.Count == 0)
+                            {
+                                if (!brokenRestaurants.Contains(restaurant))
+                                    brokenRestaurants.Add(restaurant);
+                            }
                         }
                     }
 
