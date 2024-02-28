@@ -1179,14 +1179,13 @@ namespace ETHDINFKBot.Modules
 
                     List<Restaurant> brokenRestaurants = new List<Restaurant>();
 
-                    for (int i = 1; i <= allRestaurants.Count; i++)
+                    foreach (var restaurant in allRestaurants)
                     {
                         // if the current day -i is not a weekday skip
                         var day = DateTime.Now.AddDays(-i);
                         if (day.DayOfWeek == DayOfWeek.Saturday || day.DayOfWeek == DayOfWeek.Sunday)
                             continue;
 
-                        var restaurant = allRestaurants[i];
                         var allMenus = FoodDBManager.GetMenusFromRestaurant(restaurant.RestaurantId, day);
 
                         if (allMenus.Count == 0)
