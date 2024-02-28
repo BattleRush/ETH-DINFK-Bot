@@ -1697,12 +1697,13 @@ Total todays menus: {allTodaysMenus.Count}");
 
                                     output += $"  LocationSlug: {location.slug} KitchenSlug: {kitchenSlug} MenuSlug: {menuSlug} Name: {name} Location: {restaurantLocation}" + Environment.NewLine;
 
-                                    string sqlInsert = $".sql query ```sql\nINSERT INTO `Restaurant` (`InternalName`, `AdditionalInternalName`, `TimeParameter`, `Name`, `IsOpen`, `OffersLunch`, `OffersDinner`, `Location`, `IsFood2050Supported`, `ScraperTypeId`) {Environment.NewLine}" +
-                                    $"VALUES ('{dbRestaurant.InternalName}', '{dbRestaurant.AdditionalInternalName}', '{dbRestaurant.TimeParameter}', '{dbRestaurant.Name}', {Convert.ToInt32(dbRestaurant.IsOpen)}, {Convert.ToInt32(dbRestaurant.OffersLunch)}, {Convert.ToInt32(dbRestaurant.OffersDinner)}, {Convert.ToInt32(dbRestaurant.Location)}, {Convert.ToInt32(dbRestaurant.IsFood2050Supported)}, {Convert.ToInt32(dbRestaurant.ScraperTypeId)});\n```";
+                                    string sqlInsert = $".sql query INSERT INTO Restaurant (InternalName, AdditionalInternalName, TimeParameter, Name, IsOpen, OffersLunch, OffersDinner, Location, IsFood2050Supported, ScraperTypeId) {Environment.NewLine}" +
+                                    $"VALUES ('{dbRestaurant.InternalName}', '{dbRestaurant.AdditionalInternalName}', '{dbRestaurant.TimeParameter}', '{dbRestaurant.Name}', {Convert.ToInt32(dbRestaurant.IsOpen)}, {Convert.ToInt32(dbRestaurant.OffersLunch)}, {Convert.ToInt32(dbRestaurant.OffersDinner)}, {Convert.ToInt32(dbRestaurant.Location)}, {Convert.ToInt32(dbRestaurant.IsFood2050Supported)}, {Convert.ToInt32(dbRestaurant.ScraperTypeId)});";
 
                                     await Context.Channel.SendMessageAsync($"{location.title} - {kitchen.name} - {digitalMenu.label} ```sql\n{sqlInsert}```", false);
 
 
+                                    bool anyKey = false;
                                     var dbRestaurantName = $"{dbRestaurant.InternalName}-{dbRestaurant.AdditionalInternalName}-{dbRestaurant.TimeParameter}";
                                     // do minimal edit distance to similar names
                                     foreach (var restaurant in allRestaurants)
@@ -1712,9 +1713,14 @@ Total todays menus: {allTodaysMenus.Count}");
                                         int distance = LevenshteinDistance.Calculate(currentName, dbRestaurantName);
                                         if (distance < 5)
                                         {
+                                            anyKey = true;
                                             await Context.Channel.SendMessageAsync($"Similar with distance {distance}: {restaurant.RestaurantId} ({currentName}) and {dbRestaurant.Name})", false);
                                         }
+                                    }
 
+                                    if (!anyKey)
+                                    {
+                                       await Context.Channel.SendMessageAsync($"No similar restaurant found for {dbRestaurantName}", false);
                                     }
                                 }
                                 else
