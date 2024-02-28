@@ -1474,7 +1474,7 @@ Total todays menus: {allTodaysMenus.Count}");
             [Command("insert2050mensa")]
             public async Task Insert2050Mensa(string link)
             {
-                if(link.EndsWith("/"))
+                if (link.EndsWith("/"))
                     link = link.Substring(0, link.Length - 1);
 
                 var locationName = link.Split('/').Last();
@@ -1486,6 +1486,11 @@ Total todays menus: {allTodaysMenus.Count}");
                     await Context.Channel.SendMessageAsync("You aren't allowed to run this command", false);
                     return;
                 }
+
+
+                var allRestaurants = FoodDBManager.GetAllRestaurants();
+
+
 
                 try
                 {
@@ -1518,8 +1523,10 @@ Total todays menus: {allTodaysMenus.Count}");
                     string output = "Found: " + locations.Count() + " restaurants" + Environment.NewLine;
                     foreach (var location in locations)
                     {
-                        if(location.slug != locationName)
+                        if (location.slug != locationName)
                             continue; // skip this one
+
+                        await Context.Channel.SendMessageAsync($"Found location: {location.title}", false);
 
                         // location title remove number at the start of the string divided by a space
                         var parts = location.title.Split(' ');
@@ -1615,7 +1622,6 @@ Total todays menus: {allTodaysMenus.Count}");
 
                                 // get all db restaurants (we call all here always to ensure no duplicates)
 
-                                var allRestaurants = FoodDBManager.GetAllRestaurants();
 
                                 var dbRestaurant = allRestaurants.Where(i =>
                                     i.InternalName == location.slug
@@ -1624,7 +1630,7 @@ Total todays menus: {allTodaysMenus.Count}");
 
                                 if (dbRestaurant == null)
                                 {
-                                    output += $"  LocationSlug: {location.slug} KitchenSlug: {kitchenSlug} MenuSlug: {menuSlug}" + Environment.NewLine;
+                                    //output += $"  LocationSlug: {location.slug} KitchenSlug: {kitchenSlug} MenuSlug: {menuSlug}" + Environment.NewLine;
 
                                     string menuName = "";
 
@@ -1671,6 +1677,8 @@ Total todays menus: {allTodaysMenus.Count}");
 
                                     // TODO maybe other to auto detect
 
+                                    name = name.Trim();
+
                                     // create new restaurant
                                     dbRestaurant = new Restaurant()
                                     {
@@ -1689,9 +1697,29 @@ Total todays menus: {allTodaysMenus.Count}");
 
                                     output += $"  LocationSlug: {location.slug} KitchenSlug: {kitchenSlug} MenuSlug: {menuSlug} Name: {name} Location: {restaurantLocation}" + Environment.NewLine;
 
-                                    string sqlInsert = $"INSERT INTO `Restaurant` (`InternalName`, `AdditionalInternalName`, `TimeParameter`, `Name`, `IsOpen`, `OffersLunch`, `OffersDinner`, `Location`, `IsFood2050Supported`, `ScraperTypeId`) VALUES ('{dbRestaurant.InternalName}', '{dbRestaurant.AdditionalInternalName}', '{dbRestaurant.TimeParameter}', '{dbRestaurant.Name}', {Convert.ToInt32(dbRestaurant.IsOpen)}, {Convert.ToInt32(dbRestaurant.OffersLunch)}, {Convert.ToInt32(dbRestaurant.OffersDinner)}, {Convert.ToInt32(dbRestaurant.Location)}, {Convert.ToInt32(dbRestaurant.IsFood2050Supported)}, {Convert.ToInt32(dbRestaurant.ScraperTypeId)});";
+                                    string sqlInsert = $"INSERT INTO `Restaurant` (`InternalName`, `AdditionalInternalName`, `TimeParameter`, `Name`, `IsOpen`, `OffersLunch`, `OffersDinner`, `Location`, `IsFood2050Supported`, `ScraperTypeId`) {Environment.NewLine}" +
+                                    $"VALUES ('{dbRestaurant.InternalName}', '{dbRestaurant.AdditionalInternalName}', '{dbRestaurant.TimeParameter}', '{dbRestaurant.Name}', {Convert.ToInt32(dbRestaurant.IsOpen)}, {Convert.ToInt32(dbRestaurant.OffersLunch)}, {Convert.ToInt32(dbRestaurant.OffersDinner)}, {Convert.ToInt32(dbRestaurant.Location)}, {Convert.ToInt32(dbRestaurant.IsFood2050Supported)}, {Convert.ToInt32(dbRestaurant.ScraperTypeId)});";
 
-                                    await Context.Channel.SendMessageAsync($"{name} - {restaurantLocation} - {menuSlug} ```sql\n{sqlInsert}```", false);
+                                    await Context.Channel.SendMessageAsync($"{location.title} - {kitchen.name} - {digitalMenu.label} ```sql\n{sqlInsert}```", false);
+
+
+                                    var dbRestaurantName = $"{dbRestaurant.InternalName}-{dbRestaurant.AdditionalInternalName}-{dbRestaurant.TimeParameter}";
+                                    // do minimal edit distance to similar names
+                                    foreach (var restaurant in allRestaurants)
+                                    {
+                                        var currentName = $"{restaurant.InternalName}-{restaurant.AdditionalInternalName}-{restaurant.TimeParameter}";
+
+                                        int distance = LevenshteinDistance.Calculate(currentName, dbRestaurantName);
+                                        if (distance < 5)
+                                        {
+                                            await Context.Channel.SendMessageAsync($"Similar with distance {distance}: {restaurant.RestaurantId} ({currentName}) and {dbRestaurant.Name})", false);
+                                        }
+
+                                    }
+                                }
+                                else
+                                {
+                                    output += $"  [SKIP] Found: {dbRestaurant.InternalName} {dbRestaurant.AdditionalInternalName} {dbRestaurant.TimeParameter}" + Environment.NewLine;
                                 }
                             }
                         }
@@ -1725,7 +1753,7 @@ Total todays menus: {allTodaysMenus.Count}");
                 }
             }
 
-            [Command("2050mensas", RunMode = RunMode.Async)]
+            /*[Command("2050mensas", RunMode = RunMode.Async)]
             public async Task Mensas2050(bool dryRun = true)
             {
                 var author = Context.Message.Author;
@@ -1976,7 +2004,7 @@ Total todays menus: {allTodaysMenus.Count}");
                 {
                     await Context.Channel.SendMessageAsync(ex.ToString(), false);
                 }
-            }
+            }*/
 
             // command to load ETHMensas
             [Command("ethmensas", RunMode = RunMode.Async)]
