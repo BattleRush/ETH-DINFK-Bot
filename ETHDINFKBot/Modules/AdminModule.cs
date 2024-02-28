@@ -1200,13 +1200,28 @@ namespace ETHDINFKBot.Modules
                     await Context.Channel.SendMessageAsync($"Broken restaurants: {brokenRestaurants.Count}", false);
 
                     // list broken restaurants
-                    string brokenRestaurantsString = string.Join(Environment.NewLine, brokenRestaurants.Select(i => i.RestaurantId));
+                    List<string> brokenRestaurantList = new List<string>();
+
+                    foreach (var restaurant in brokenRestaurants)
+                    {
+                        brokenRestaurantList.Add($"{restaurant.RestaurantId} - {restaurant.Name} -{restaurant.InternalName} - {restaurant.AdditionalInternalName} - {restaurant.TimeParameter}");
+                    }
 
                     // print text but break lines when it would exceed 1990 chars
-                    for (int i = 0; i < brokenRestaurantsString.Length; i += 1990)
+                    string outputString = "";
+                    foreach (var restaurant in brokenRestaurantList)
                     {
-                        await Context.Channel.SendMessageAsync(brokenRestaurantsString.Substring(i, Math.Min(1990, brokenRestaurantsString.Length - i)), false);
+                        if (outputString.Length + restaurant.Length > 1990)
+                        {
+                            await Context.Channel.SendMessageAsync(outputString, false);
+                            outputString = "";
+                        }
+
+                        outputString += restaurant + Environment.NewLine;
                     }
+
+                    if (!string.IsNullOrWhiteSpace(outputString))
+                        await Context.Channel.SendMessageAsync(outputString, false);
                 }
                 catch (Exception ex)
                 {
