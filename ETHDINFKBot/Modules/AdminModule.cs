@@ -1684,7 +1684,7 @@ Total todays menus: {allTodaysMenus.Count}");
                                         if (success)
                                             totalAdded++;
 
-                                        output += $"    Added new restaurant to DB: {success} at the location: {restaurantLocation}" + Environment.NewLine;
+                                        output += $"    Added new restaurant with name {name} to DB: {success} at the location: {restaurantLocation}" + Environment.NewLine;
                                     }
                                     else
                                     {
