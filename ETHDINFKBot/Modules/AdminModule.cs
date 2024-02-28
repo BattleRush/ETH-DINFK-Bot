@@ -1691,14 +1691,17 @@ Total todays menus: {allTodaysMenus.Count}");
                                         OffersDinner = false, // TODO this has to be done manually
                                         Location = restaurantLocation,
                                         IsFood2050Supported = true,
-                                        ScraperTypeId = FoodScraperType.Food2050
+                                        ScraperTypeId = FoodScraperType.Food2050,
+                                        HasMenu = true,
+                                        LastUpdate = DateTime.Now
                                     };
 
 
                                     output += $"  LocationSlug: {location.slug} KitchenSlug: {kitchenSlug} MenuSlug: {menuSlug} Name: {name} Location: {restaurantLocation}" + Environment.NewLine;
 
-                                    string sqlInsert = $".sql query INSERT INTO Restaurant (InternalName, AdditionalInternalName, TimeParameter, Name, IsOpen, OffersLunch, OffersDinner, Location, IsFood2050Supported, ScraperTypeId) {Environment.NewLine}" +
-                                    $"VALUES ('{dbRestaurant.InternalName}', '{dbRestaurant.AdditionalInternalName}', '{dbRestaurant.TimeParameter}', '{dbRestaurant.Name}', {Convert.ToInt32(dbRestaurant.IsOpen)}, {Convert.ToInt32(dbRestaurant.OffersLunch)}, {Convert.ToInt32(dbRestaurant.OffersDinner)}, {Convert.ToInt32(dbRestaurant.Location)}, {Convert.ToInt32(dbRestaurant.IsFood2050Supported)}, {Convert.ToInt32(dbRestaurant.ScraperTypeId)});";
+                                    string sqlInsert = $".sql query INSERT INTO Restaurants (InternalName, AdditionalInternalName, TimeParameter, Name, IsOpen, OffersLunch, OffersDinner, Location, IsFood2050Supported, ScraperTypeId, HasMenu, LastUpdate) {Environment.NewLine}" +
+                                    $"VALUES ('{dbRestaurant.InternalName}', '{dbRestaurant.AdditionalInternalName}', '{dbRestaurant.TimeParameter}', '{dbRestaurant.Name}', {Convert.ToInt32(dbRestaurant.IsOpen)}, {Convert.ToInt32(dbRestaurant.OffersLunch)}, {Convert.ToInt32(dbRestaurant.OffersDinner)}, " +
+                                    $"{Convert.ToInt32(dbRestaurant.Location)}, {Convert.ToInt32(dbRestaurant.IsFood2050Supported)}, {Convert.ToInt32(dbRestaurant.ScraperTypeId)}, {Convert.ToInt32(dbRestaurant.HasMenu)}, '{dbRestaurant.LastUpdate.ToString("yyyy-MM-dd HH:mm:ss")}')";
 
                                     await Context.Channel.SendMessageAsync($"{location.title} - {kitchen.name} - {digitalMenu.label} ```sql\n{sqlInsert}```", false);
 
