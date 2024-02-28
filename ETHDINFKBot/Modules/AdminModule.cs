@@ -1168,39 +1168,48 @@ namespace ETHDINFKBot.Modules
             }
 
             [Command("broken")]
+            [RequireOwner]
             public async Task FindBrokenMensas(int days = 7)
             {
-                // list restaurants with no menus for the last 7 days or more
-                var allRestaurants = FoodDBManager.GetAllRestaurants();
 
-                List<Restaurant> brokenRestaurants = new List<Restaurant>();
-
-                for (int i = 1; i <= allRestaurants.Count; i++)
+                try
                 {
-                    // if the current day -i is not a weekday skip
-                    var day = DateTime.Now.AddDays(-i);
-                    if (day.DayOfWeek == DayOfWeek.Saturday || day.DayOfWeek == DayOfWeek.Sunday)
-                        continue;
+                    // list restaurants with no menus for the last 7 days or more
+                    var allRestaurants = FoodDBManager.GetAllRestaurants();
 
-                    var restaurant = allRestaurants[i];
-                    var allMenus = FoodDBManager.GetMenusFromRestaurant(restaurant.RestaurantId, day);
+                    List<Restaurant> brokenRestaurants = new List<Restaurant>();
 
-                    if (allMenus.Count == 0)
+                    for (int i = 1; i <= allRestaurants.Count; i++)
                     {
-                        if (!brokenRestaurants.Contains(restaurant))
-                            brokenRestaurants.Add(restaurant);
+                        // if the current day -i is not a weekday skip
+                        var day = DateTime.Now.AddDays(-i);
+                        if (day.DayOfWeek == DayOfWeek.Saturday || day.DayOfWeek == DayOfWeek.Sunday)
+                            continue;
+
+                        var restaurant = allRestaurants[i];
+                        var allMenus = FoodDBManager.GetMenusFromRestaurant(restaurant.RestaurantId, day);
+
+                        if (allMenus.Count == 0)
+                        {
+                            if (!brokenRestaurants.Contains(restaurant))
+                                brokenRestaurants.Add(restaurant);
+                        }
+                    }
+
+                    await Context.Channel.SendMessageAsync($"Broken restaurants: {brokenRestaurants.Count}", false);
+
+                    // list broken restaurants
+                    string brokenRestaurantsString = string.Join(Environment.NewLine, brokenRestaurants.Select(i => i.RestaurantId));
+
+                    // print text but break lines when it would exceed 1990 chars
+                    for (int i = 0; i < brokenRestaurantsString.Length; i += 1990)
+                    {
+                        await Context.Channel.SendMessageAsync(brokenRestaurantsString.Substring(i, Math.Min(1990, brokenRestaurantsString.Length - i)), false);
                     }
                 }
-
-                await Context.Channel.SendMessageAsync($"Broken restaurants: {brokenRestaurants.Count}", false);
-
-                // list broken restaurants
-                string brokenRestaurantsString = string.Join(Environment.NewLine, brokenRestaurants.Select(i => i.RestaurantId));
-
-                // print text but break lines when it would exceed 1990 chars
-                for (int i = 0; i < brokenRestaurantsString.Length; i += 1990)
+                catch (Exception ex)
                 {
-                    await Context.Channel.SendMessageAsync(brokenRestaurantsString.Substring(i, Math.Min(1990, brokenRestaurantsString.Length - i)), false);
+                    await Context.Channel.SendMessageAsync(ex.ToString(), false);
                 }
             }
 
@@ -1249,6 +1258,7 @@ namespace ETHDINFKBot.Modules
             }
 
             [Command("similar")]
+            [RequireOwner]
             public async Task FindSimilarMensas()
             {
                 var allRestaurants = FoodDBManager.GetAllRestaurants();
@@ -1261,6 +1271,10 @@ namespace ETHDINFKBot.Modules
                     foreach (var otherRestaurant in allRestaurants)
                     {
                         if (restaurant.RestaurantId == otherRestaurant.RestaurantId)
+                            continue;
+
+                        // only food2050
+                        if (!restaurant.IsFood2050Supported || !otherRestaurant.IsFood2050Supported)
                             continue;
 
                         var otherName = $"{otherRestaurant.InternalName}-{otherRestaurant.AdditionalInternalName}-{otherRestaurant.TimeParameter}";
