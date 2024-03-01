@@ -422,8 +422,8 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
             {
                 var userId = Context.Message.Author.Id;
 
-                if (!CommonHelper.AllowedToRun(BotPermissionType.EnableType2Commands, Context.Message.Channel.Id, userId))
-                    return;
+                //if (!CommonHelper.AllowedToRun(BotPermissionType.EnableType2Commands, Context.Message.Channel.Id, userId))
+                //    return;
 
                 // Allow the query to be send in a code block
                 query = query.Trim('`');
@@ -470,8 +470,8 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
             {
                 var userId = Context.Message.Author.Id;
 
-                if (!CommonHelper.AllowedToRun(BotPermissionType.EnableType2Commands, Context.Message.Channel.Id, userId))
-                    return;
+                //if (!CommonHelper.AllowedToRun(BotPermissionType.EnableType2Commands, Context.Message.Channel.Id, userId))
+                //    return;
 
                 // Allow the query to be send in a code block
                 query = query.Trim('`');
@@ -1610,9 +1610,9 @@ ORDER BY table_name DESC;", true, 50);
             if (Context.Message.Author.Id != Program.ApplicationSetting.Owner
                 && !((BotPermissionType)(channelSettings?.ChannelPermissionFlags ?? 0)).HasFlag(type))
             {
-#if DEBUG
+//#if DEBUG
                 Context.Channel.SendMessageAsync("blocked by perms", false);
-#endif
+//#endif
                 return true;
             }
 
