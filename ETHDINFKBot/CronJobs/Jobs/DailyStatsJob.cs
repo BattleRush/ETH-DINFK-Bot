@@ -76,8 +76,6 @@ namespace ETHDINFKBot.CronJobs.Jobs
             _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
             Console.WriteLine("Run DailyStatsJob");
 
-
-
             // Clear /tmp folder
             DirectoryInfo directoryInfo = new DirectoryInfo("/tmp/");
             foreach (FileInfo file in directoryInfo.GetFiles())

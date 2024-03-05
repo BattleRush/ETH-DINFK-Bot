@@ -233,7 +233,24 @@ namespace ETHDINFKBot.Helpers
                 && i.validfrom == mondayString);
 
             if (facility == null)
-                return;
+            {
+                foreach(var foundFacility in ethFoodResponse.weeklyrotaarray.Where(i => i.facilityid.ToString() == restaurant.InternalName))
+                {
+                    // check if from to to is between today
+
+                    var validFrom = DateTime.Parse(foundFacility.validfrom);
+                    var validTo = DateTime.Parse(foundFacility.validto);
+
+                    if (validFrom <= today && validTo >= today)
+                    {
+                        facility = foundFacility;
+                        break;
+                    }
+                }
+            }
+
+            if (facility == null)
+                return; // TODO Log this
 
             if (facility.dayofweekarray == null)
                 return; // TODO Log this
