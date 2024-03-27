@@ -148,7 +148,7 @@ namespace ETHDINFKBot.Drawing
                 (double L, double c, double h) = linear_srgb_to_oklab(SKColor.FromHsl(0, 70, 50));
                 //h += 255 * (i / (float)sizeLabels);
                 double oldHue = h;
-                h = 2 * Math.PI * (i / (float)sizeLabels);
+                h = (2*Math.PI * i / sizeLabels + Math.PI*3/2) % (2*Math.PI);
 
                 /*if(i % 2 == 0)
                     h += Math.PI;
