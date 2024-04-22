@@ -34,7 +34,8 @@ namespace ETHDINFKBot.Helpers
             { "uzhmemes", 1091476764607398039 },
             { "serotonin", 814440115392348171 },
             { "spam", 768600365602963496 },
-            { "botfun", 747776646551175217 }
+            { "botfun", 747776646551175217 },
+            { "admin-memes", 1192547859577454722 }
         };
 
         public static readonly Dictionary<string, ulong> DiscordEmotes = new Dictionary<string, ulong>()

@@ -564,13 +564,14 @@ External status site: https://up.markc.su/status/vis");
                 {
                     // this that reaction
                     List<ulong> upvoteChannels = new List<ulong>()
-                {
-                    DiscordChannels["pullrequest"],
-                    DiscordChannels["serversuggestions"],
-                    DiscordChannels["memes"],
-                    DiscordChannels["ethmemes"],
-                    DiscordChannels["uzhmemes"]
-                };
+                    {
+                        DiscordChannels["pullrequest"],
+                        DiscordChannels["serversuggestions"],
+                        DiscordChannels["memes"],
+                        DiscordChannels["ethmemes"],
+                        DiscordChannels["uzhmemes"],
+                        DiscordChannels["admin-memes"]
+                    };
 
                     if (upvoteChannels.Contains(SocketGuildChannel.Id))
                     {
