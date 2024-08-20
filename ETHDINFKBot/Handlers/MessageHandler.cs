@@ -275,7 +275,7 @@ External status site: https://up.markc.su/status/vis");
                     }
                     catch (Exception ex)
                     {
-                        await SocketTextChannel.SendMessageAsync($"Error: {ex.ToString()}");
+                        await SocketTextChannel.SendMessageAsync($"Error: {ex.ToString().Substring(0, 1000)}");
                     }
                 }
             }
