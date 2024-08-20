@@ -159,7 +159,7 @@ namespace ETHDINFKBot
                        services.AddCronJob<FoodFetchJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"15,45 5-11,15-16 * * *"; });
 
                        // add food2050 job to run once a day
-                       services.AddCronJob<Food2050TickerJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"10 14 * * *"; });
+                       services.AddCronJob<Food2050TickerJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"20 14 * * *"; });
 
                        // run every minute
                        services.AddCronJob<DownloadImagesJob>(c => { c.TimeZoneInfo = TimeZoneInfo.Utc; c.CronExpression = @"*/20 * * * *"; });
