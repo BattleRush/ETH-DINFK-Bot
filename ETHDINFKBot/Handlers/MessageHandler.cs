@@ -242,6 +242,10 @@ External status site: https://up.markc.su/status/vis");
                             {
                                 var (code, error) = await CheckVisWebsite(httpClient, website.Value);
 
+                                // if error is longer than 500 char cut it
+                                if (error.Length > 500)
+                                    error = error.Substring(0, 500);
+
                                 if (code == HttpStatusCode.OK)
                                 {
                                     success++;

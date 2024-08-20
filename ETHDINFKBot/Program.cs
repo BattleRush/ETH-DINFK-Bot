@@ -522,8 +522,14 @@ namespace ETHDINFKBot
             // Set to do not disturb
             await Client.SetStatusAsync(UserStatus.Online);
 
-            // run ampel check
-            DiscordHelper.CheckVISAmpel();
+            try
+            {
+                // run ampel check
+                DiscordHelper.CheckVISAmpel();
+            }
+            catch(Exception ex){
+                Console.WriteLine("Error while checking VISAmpel: " + ex.ToString());
+            }
 
             // Block this task until the program is closed.
             await Task.Delay(-1);

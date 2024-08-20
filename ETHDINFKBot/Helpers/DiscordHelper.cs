@@ -1027,8 +1027,5 @@ namespace ETHDINFKBot.Helpers
                 }
             }
         }
-
-
-
     }
 }
