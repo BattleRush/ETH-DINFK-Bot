@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Reactive.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -152,12 +153,38 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
             string message = $"Food2050 CO2 Data added:\n";
             foreach (var item in restaurantCO2Added)
+            {
                 message += $"{item.Key}: {item.Value}\n";
 
-            await channel.SendMessageAsync(message);
+                if(message.Length > 1800)
+                {
+                    await channel.SendMessageAsync(message.Substring(0, 2000));
+                    message = "";
+                }
+            }
+
+            if (!string.IsNullOrEmpty(message))
+                await channel.SendMessageAsync(message);
 
             if (!string.IsNullOrEmpty(errorLog))
-                await channel.SendMessageAsync($"Food2050 CO2 Data Errors:\n{errorLog}");
+            {
+                // ensure error log is not too long
+                if (errorLog.Length > 1800)
+                {
+                    while (errorLog.Length > 1800)
+                    {
+                        // split by new line
+                        var split = errorLog.Split(Environment.NewLine);
+                        var messagePart = split.Take(10);
+                        errorLog = string.Join(Environment.NewLine, split.Skip(10));
+                        await channel.SendMessageAsync(string.Join(Environment.NewLine, messagePart).Substring(0, 2000));
+                    }
+                }
+                else
+                {
+                    await channel.SendMessageAsync(errorLog);
+                }
+            }
         }
 
         public override Task DoWork(CancellationToken cancellationToken)
