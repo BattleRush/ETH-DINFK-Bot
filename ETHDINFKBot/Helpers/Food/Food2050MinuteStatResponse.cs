@@ -20,7 +20,7 @@ namespace ETHDINFKBot.Helpers.Food
     public class StatKitchen
     {
         public string id { get; set; }
-        public string publicLabel { get; set; }
+        //public string publicLabel { get; set; }
         public List<StatsPerMinute> statsPerMinute { get; set; }
         public string __typename { get; set; }
     }
