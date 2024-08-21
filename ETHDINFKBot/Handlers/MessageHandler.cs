@@ -300,7 +300,7 @@ External status site: https://up.markc.su/status/vis");
                     return (response.StatusCode, response.ReasonPhrase);
                 }
             }
-            catch (WebException ex)
+            catch (Exception ex)
             {
                 return (HttpStatusCode.InternalServerError, ex.Message);
             }
