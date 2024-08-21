@@ -64,7 +64,7 @@ jobs:
         privateKey: ${{ secrets.REMOTE_SSH_KEY }}
       
     - name: Copy via ssh
-      uses: garygrossgarten/github-action-scp@release
+      uses: appleboy/scp-action@v0.1.7
       with:
         recursive: true
         local: /home/runner/work/ETH-DINFK-Bot/ETH-DINFK-Bot/deploy/
