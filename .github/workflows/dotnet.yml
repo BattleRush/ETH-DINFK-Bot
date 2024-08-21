@@ -64,7 +64,7 @@ jobs:
         privateKey: ${{ secrets.REMOTE_SSH_KEY }}
       
     - name: Copy via ssh
-      uses: garygrossgarten/github-action-scp@v0.7.3
+      uses: garygrossgarten/github-action-scp@release
       with:
         recursive: true
         atomicPut: true
