@@ -67,8 +67,8 @@ jobs:
       uses: appleboy/scp-action@v0.1.7
       with:
         recursive: true
-        local: /home/runner/work/ETH-DINFK-Bot/ETH-DINFK-Bot/deploy/
-        remote: ${{ secrets.REMOTE_TARGET }}
+        source: /home/runner/work/ETH-DINFK-Bot/ETH-DINFK-Bot/deploy/
+        target: ${{ secrets.REMOTE_TARGET }}
         host: ${{ secrets.REMOTE_HOST }}
         username: ${{ secrets.REMOTE_USER }}
         privateKey: ${{ secrets.REMOTE_SSH_KEY }}
