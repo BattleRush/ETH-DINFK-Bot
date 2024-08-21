@@ -71,7 +71,7 @@ jobs:
         target: ${{ secrets.REMOTE_TARGET }}
         host: ${{ secrets.REMOTE_HOST }}
         username: ${{ secrets.REMOTE_USER }}
-        privateKey: ${{ secrets.REMOTE_SSH_KEY }}
+        key: ${{ secrets.REMOTE_SSH_KEY }}
         passphrase: ${{ secrets.REMOTE_SSH_PASSPHRASE }}
         
     - name: CHMOD the executable
