@@ -1019,23 +1019,6 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
             }
         }
 
-        [Command("today")]
-        public async Task TodaysBirthdays()
-        {
-            if (AllowedToRun(BotPermissionType.EnableType2Commands))
-                return;
-
-            try
-            {
-                DiscordHelper.DiscordUserBirthday(Program.Client, Context.Guild.Id, Context.Message.Channel.Id, false);
-            }
-            catch (Exception ex)
-            {
-                await Context.Channel.SendMessageAsync(ex.ToString());
-                _logger.LogError(ex, "Error while DiscordHelper.DiscordUserBirthday");
-            }
-        }
-
         [Command("ping")]
         public async Task PingInfo()
         {
