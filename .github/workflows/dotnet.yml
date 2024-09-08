@@ -76,7 +76,7 @@ jobs:
     - name: CHMOD the executable
       uses: garygrossgarten/github-action-ssh@release
       with:
-        command: cp -r ${{ secrets.REMOTE_TARGET }}/github/workspace/deploy/* ${{ secrets.REMOTE_TARGET }} && rm -rf ${{ secrets.REMOTE_TARGET }}/github
+        command: rsync -av --delete ${{ secrets.REMOTE_TARGET }}/github/workspace/deploy/* ${{ secrets.REMOTE_TARGET }} && rm -rf ${{ secrets.REMOTE_TARGET }}/github
         host: ${{ secrets.REMOTE_HOST }}
         username: ${{ secrets.REMOTE_USER }}
         passphrase: ${{ secrets.REMOTE_SSH_PASSPHRASE }}
