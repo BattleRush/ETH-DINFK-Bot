@@ -131,7 +131,7 @@ namespace ETHDINFKBot.Helpers
                 {
                     using (var command = new MySqlCommand(commandSql, connection))
                     {
-                        command.CommandTimeout = fullUser ? 300 : 30;
+                        command.CommandTimeout = fullUser || authorId == 223932775474921472 ? 300 : 30;
 
                         connection.Open();
 

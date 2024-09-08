@@ -1403,8 +1403,6 @@ WHERE
         [Command("schema")]
         public async Task TableInfoTables()
         {
-
-
             try
             {
                 var dbInfos = await GetAllDBTableInfos();
