@@ -1422,9 +1422,9 @@ WHERE
                 stream.Dispose();
 
                 string dbSchemaWebsite = "https://dbdiagram.io/d/66ddd929eef7e08f0e0d9c97";
-                string password = "V*qhdF.rUm$}006Dv6!RNHdQxT"; // TODO config
+                string password = "";//V*qhdF.rUm$}006Dv6!RNHdQxT"; // TODO config
 
-                await Context.Channel.SendMessageAsync($"DB Website Schema: {dbSchemaWebsite} with Password: {password}");
+                await Context.Channel.SendMessageAsync($"DB Website Schema: <{dbSchemaWebsite}>x with Password: {password}");
             }
             catch (Exception ex)
             {
