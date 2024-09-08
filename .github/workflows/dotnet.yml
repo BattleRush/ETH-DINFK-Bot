@@ -66,14 +66,22 @@ jobs:
     - name: Copy via ssh
       uses: appleboy/scp-action@v0.1.7
       with:
-        #recursive: true
         source: /home/runner/work/ETH-DINFK-Bot/ETH-DINFK-Bot/deploy/
-        target: /usr/local/bin/ETHBot
+        target: ${{ secrets.REMOTE_TARGET }}
         host: ${{ secrets.REMOTE_HOST }}
         username: ${{ secrets.REMOTE_USER }}
         key: ${{ secrets.REMOTE_SSH_KEY }}
         passphrase: ${{ secrets.REMOTE_SSH_PASSPHRASE }}
         
+    - name: CHMOD the executable
+      uses: garygrossgarten/github-action-ssh@release
+      with:
+        command: cp -r ${{ secrets.REMOTE_TARGET }}/github/workspace/deploy/* ${{ secrets.REMOTE_TARGET }} && rm -rf ${{ secrets.REMOTE_TARGET }}/github
+        host: ${{ secrets.REMOTE_HOST }}
+        username: ${{ secrets.REMOTE_USER }}
+        passphrase: ${{ secrets.REMOTE_SSH_PASSPHRASE }}
+        privateKey: ${{ secrets.REMOTE_SSH_KEY }}
+
     - name: CHMOD the executable
       uses: garygrossgarten/github-action-ssh@release
       with:
