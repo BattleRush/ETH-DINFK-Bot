@@ -68,6 +68,29 @@ namespace ETHDINFKBot.Modules
     public class AdminModule : ModuleBase<SocketCommandContext>
     {
 
+        [Command("emotesync")]
+        [RequireUserPermission(GuildPermission.ManageChannels)]
+        public async Task SyncEmotes()
+        {
+            ulong serverId = Context.Guild.Id;
+
+            // find all emotes with this server id and clear it
+            int returnedCleared = DatabaseManager.EmoteDatabaseManager.ClearServerEmotes(serverId);
+
+            // get all emotes from the server
+            var emotes = Context.Guild.Emotes;
+
+            List<ulong> emoteIds = new List<ulong>();
+
+            foreach (var emote in emotes)
+                emoteIds.Add(emote.Id);
+
+            int setEmotes = DatabaseManager.EmoteDatabaseManager.SetServerEmotes(emoteIds, serverId);
+
+            await Context.Channel.SendMessageAsync($"Cleared {returnedCleared} and set {setEmotes} emotes", false);
+        }
+
+
         //restartpy - restarts the python bot on port 13225
         [Command("restartpy")]
         public async Task RestartPythonBot()
@@ -544,6 +567,7 @@ namespace ETHDINFKBot.Modules
             builder.AddField("admin cronjob <name>", "Manually start a CronJob");
             builder.AddField("admin blockemote <id> <block>", "Block an emote from being selectable");
             builder.AddField("admin events", "Sync VIS Events");
+            builder.AddField("admin emotesync", "Sync emotes from server to database");
 
             await Context.Channel.SendMessageAsync("", false, builder.Build());
         }

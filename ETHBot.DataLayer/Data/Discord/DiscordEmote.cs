@@ -34,5 +34,9 @@ namespace ETHBot.DataLayer.Data.Discord
         public DateTimeOffset LastUpdatedAt { get; set; }
 
         public bool IsValid { get; set; }
+
+        [ForeignKey("DiscordServer")]
+        public ulong? DiscordServerId { get; set; }
+        public DiscordServer DiscordServer { get; set; } 
     }
 }

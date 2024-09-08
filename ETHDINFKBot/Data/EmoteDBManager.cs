@@ -35,6 +35,52 @@ namespace ETHDINFKBot.Data
             return _instance;
         }
 
+        public int ClearServerEmotes(ulong serverId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var emotes = context.DiscordEmotes.Where(i => i.DiscordServerId == serverId).ToList();
+
+                    // set for these emotes the server id to null
+                    foreach (var emote in emotes)
+                        emote.DiscordServerId = null;
+ 
+                    context.SaveChanges();
+                    return emotes.Count;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return -1;
+            }
+        }
+
+        public int SetServerEmotes(List<ulong> emoteIds, ulong serverId)
+        {
+            try
+            {
+                using (ETHBotDBContext context = new ETHBotDBContext())
+                {
+                    var emotes = context.DiscordEmotes.Where(i => emoteIds.Contains(i.DiscordEmoteId)).ToList();
+
+                    // set for these emotes the server id to null
+                    foreach (var emote in emotes)
+                        emote.DiscordServerId = serverId;
+
+                    context.SaveChanges();
+                    return emotes.Count;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return -1;
+            }
+        }
+
         public DiscordEmote GetEmoteByName(string emoteName)
         {
             try

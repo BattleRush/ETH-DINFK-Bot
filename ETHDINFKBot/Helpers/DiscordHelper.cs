@@ -583,6 +583,11 @@ namespace ETHDINFKBot.Helpers
                 {
                     var userCreatedAt = SnowflakeUtils.FromSnowflake(user.DiscordUserId).AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(DateTime.UtcNow) ? 2 : 1);
 
+                    // check that the user wrote atleast 10 message
+                    int messageCount = DatabaseManager.Instance().GetDiscordUserMessageCount(user.DiscordUserId);
+                    if (messageCount < 10)
+                        continue;
+
                     if (userCreatedAt.Month == now.Month && userCreatedAt.Day == now.Day)
                     {
                         // birthday kid
