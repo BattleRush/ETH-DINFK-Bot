@@ -66,7 +66,7 @@ jobs:
     - name: Copy via ssh
       uses: appleboy/scp-action@v0.1.7
       with:
-        recursive: true
+        #recursive: true
         source: /home/runner/work/ETH-DINFK-Bot/ETH-DINFK-Bot/deploy/
         target: ${{ secrets.REMOTE_TARGET }}
         host: ${{ secrets.REMOTE_HOST }}
