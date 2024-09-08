@@ -68,7 +68,7 @@ jobs:
       with:
         #recursive: true
         source: /home/runner/work/ETH-DINFK-Bot/ETH-DINFK-Bot/deploy/
-        target: ${{ secrets.REMOTE_TARGET }}
+        target: /usr/local/bin/ETHBot
         host: ${{ secrets.REMOTE_HOST }}
         username: ${{ secrets.REMOTE_USER }}
         key: ${{ secrets.REMOTE_SSH_KEY }}
