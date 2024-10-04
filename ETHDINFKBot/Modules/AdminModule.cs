@@ -98,46 +98,54 @@ namespace ETHDINFKBot.Modules
         [RequireUserPermission(GuildPermission.ManageChannels)]
         public async Task SyncEmotes()
         {
-            ulong serverId = Context.Guild.Id;
-
-            // find all emotes with this server id and clear it
-            int returnedCleared = DatabaseManager.EmoteDatabaseManager.ClearServerEmotes(serverId);
-
-            // get all emotes from the server
-            var emotes = Context.Guild.Emotes;
-
-            List<ulong> emoteIds = new List<ulong>();
-
-            // list of emote streams
-            Dictionary<string, Stream> emoteStreams = new Dictionary<string, Stream>();
-
-            using (var webClient = new WebClient())
+            try
             {
-                foreach (var emote in emotes)
+                ulong serverId = Context.Guild.Id;
+
+                // find all emotes with this server id and clear it
+                int returnedCleared = DatabaseManager.EmoteDatabaseManager.ClearServerEmotes(serverId);
+
+                // get all emotes from the server
+                var emotes = Context.Guild.Emotes;
+
+                List<ulong> emoteIds = new List<ulong>();
+
+                // list of emote streams
+                Dictionary<string, Stream> emoteStreams = new Dictionary<string, Stream>();
+
+                await Context.Channel.SendMessageAsync($"Found {emotes.Count} emotes downloading...", false);
+
+                using (var webClient = new WebClient())
                 {
-                    byte[] bytes = webClient.DownloadData(emote.Url);
-                    Stream stream = new MemoryStream(bytes);
-                    emoteStreams.Add(emote.Name + ".png", stream);
-
-                    emoteIds.Add(emote.Id);
+                    foreach (var emote in emotes)
+                    {
+                        byte[] bytes = webClient.DownloadData(emote.Url);
+                        Stream stream = new MemoryStream(bytes);
+                        emoteStreams.Add(emote.Name + (emote.Animated ? ".gif" : ".png"), stream);
+                        emoteIds.Add(emote.Id);
+                    }
                 }
+
+                // create zip with all emotes from emoteStreams
+                string zipFilePath = "output.zip";
+
+                CreateZipFromStreams(emoteStreams, zipFilePath);
+
+                // upload zip to discord
+                await Context.Channel.SendFileAsync(zipFilePath, "Emotes.zip");
+
+                // delete zip file
+                File.Delete(zipFilePath);
+
+
+                int setEmotes = DatabaseManager.EmoteDatabaseManager.SetServerEmotes(emoteIds, serverId);
+
+                await Context.Channel.SendMessageAsync($"Cleared {returnedCleared} and set {setEmotes} emotes", false);
             }
-
-            // create zip with all emotes from emoteStreams
-            string zipFilePath = "output.zip";
-
-            CreateZipFromStreams(emoteStreams, zipFilePath);
-
-            // upload zip to discord
-            await Context.Channel.SendFileAsync(zipFilePath, "Emotes.zip");
-
-            // delete zip file
-            File.Delete(zipFilePath);
-
-
-            int setEmotes = DatabaseManager.EmoteDatabaseManager.SetServerEmotes(emoteIds, serverId);
-
-            await Context.Channel.SendMessageAsync($"Cleared {returnedCleared} and set {setEmotes} emotes", false);
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.ToString(), false);
+            }
         }
 
 
