@@ -72,6 +72,10 @@ namespace ETHDINFKBot.Modules
 
         static void CreateZipFromStreams(Dictionary<string, Stream> fileStreams, string zipFilePath)
         {
+            // make sure the file is not there
+            if (File.Exists(zipFilePath))
+                File.Delete(zipFilePath);
+
             // Create a ZIP package
             using (Package zip = Package.Open(zipFilePath, FileMode.Create))
             {
@@ -80,8 +84,25 @@ namespace ETHDINFKBot.Modules
                     string fileName = entry.Key;
                     Stream fileStream = entry.Value;
 
-                    // Each file is stored in the package as a part (entry) with a URI
+                    // Create a unique URI for the file part in the ZIP package
                     Uri fileUri = PackUriHelper.CreatePartUri(new Uri(fileName, UriKind.Relative));
+
+                    // Check if the part already exists in the package
+                    if (zip.PartExists(fileUri))
+                    {
+                        // Optionally, generate a new file name or skip the duplicate
+                        int counter = 1;
+                        string fileExtension = Path.GetExtension(fileName);
+                        string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
+
+                        // Generate a unique file name by appending a counter to the original name
+                        do
+                        {
+                            fileName = $"{fileNameWithoutExtension}_{counter}{fileExtension}";
+                            fileUri = PackUriHelper.CreatePartUri(new Uri(fileName, UriKind.Relative));
+                            counter++;
+                        } while (zip.PartExists(fileUri));
+                    }
 
                     // Create the part for the file
                     PackagePart packagePart = zip.CreatePart(fileUri, System.Net.Mime.MediaTypeNames.Application.Octet);
