@@ -159,6 +159,13 @@ namespace ETHDINFKBot.Modules
             canvas.DrawText(menu.Calories > 0 ? menu.Calories + " kcal" : "n/a kcal", new SKPoint(left, usedHeight), kcalFont);
             usedHeight += 15;
 
+            // if menu has Weight then show it
+            if (menu.Weight > 0)
+            {
+                canvas.DrawText(menu.Weight + " g", new SKPoint(left, usedHeight), kcalFont);
+                usedHeight += 15;
+            }
+
             if (menuUserSettings?.FullNutritions == true)
             {
                 canvas.DrawText(menu.Protein > 0 ? $"Protein: {menu.Protein} g" : "Protein: n/a", new SKPoint(left, usedHeight), DrawingHelper.MediumTextPaint);
