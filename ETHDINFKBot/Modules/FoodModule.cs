@@ -176,6 +176,8 @@ namespace ETHDINFKBot.Modules
                 usedHeight += 14;
                 canvas.DrawText(menu.Protein > 0 ? $"Salt: {menu.Salt} g" : "Salt: n/a", new SKPoint(left, usedHeight), DrawingHelper.MediumTextPaint);
                 usedHeight += 14;
+                canvas.DrawText(menu.Sugar > 0 ? $"Sugar: {menu.Sugar} g" : "Sugar: n/a", new SKPoint(left, usedHeight), DrawingHelper.MediumTextPaint);
+                usedHeight += 14;
             }
 
             usedHeight += 10;
