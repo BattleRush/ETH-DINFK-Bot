@@ -361,6 +361,7 @@ namespace ETHDINFKBot
 #if DEBUG
                     www = @"C:\Temp\wss";
 #endif
+                    // battlerush.dev cdhs22.battlerush.dev cdn.battlerush.dev place.battlerush.dev ws.battlerush.dev www.battlerush.dev
                     // Create and prepare a new SSL server context
                     // TO REGENERATE "sudo openssl pkcs12 -export -out battlerush.dev.pfx -inkey privkey.pem -in fullchain.pem"
                     //var context = new SslContext(SslProtocols.Tls13, new X509Certificate2(Path.Combine(Configuration["CertFilePath"], "battlerush.dev.pfx"), ""));

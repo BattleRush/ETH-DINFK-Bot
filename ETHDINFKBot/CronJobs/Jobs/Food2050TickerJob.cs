@@ -158,13 +158,13 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                 if(message.Length > 1800)
                 {
-                    await channel.SendMessageAsync(message.Substring(0, 2000));
+                    //await channel.SendMessageAsync(message.Substring(0, 2000));
                     message = "";
                 }
             }
 
-            if (!string.IsNullOrEmpty(message))
-                await channel.SendMessageAsync(message);
+            //if (!string.IsNullOrEmpty(message))
+                //await channel.SendMessageAsync(message);
 
             if (!string.IsNullOrEmpty(errorLog))
             {

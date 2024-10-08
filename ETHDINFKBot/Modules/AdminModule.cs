@@ -41,6 +41,8 @@ using ETHDINFKBot.Helpers.Food;
 using System.Runtime.InteropServices;
 using Discord.Net;
 using System.ComponentModel.DataAnnotations;
+using System.IO.Packaging;
+
 
 namespace ETHDINFKBot.Modules
 {
@@ -68,26 +70,103 @@ namespace ETHDINFKBot.Modules
     public class AdminModule : ModuleBase<SocketCommandContext>
     {
 
+        static void CreateZipFromStreams(Dictionary<string, Stream> fileStreams, string zipFilePath)
+        {
+            // make sure the file is not there
+            if (File.Exists(zipFilePath))
+                File.Delete(zipFilePath);
+
+            // Create a ZIP package
+            using (Package zip = Package.Open(zipFilePath, FileMode.Create))
+            {
+                foreach (var entry in fileStreams)
+                {
+                    string fileName = entry.Key;
+                    Stream fileStream = entry.Value;
+
+                    // Create a unique URI for the file part in the ZIP package
+                    Uri fileUri = PackUriHelper.CreatePartUri(new Uri(fileName, UriKind.Relative));
+
+                    // Check if the part already exists in the package
+                    if (zip.PartExists(fileUri))
+                    {
+                        // Optionally, generate a new file name or skip the duplicate
+                        int counter = 1;
+                        string fileExtension = Path.GetExtension(fileName);
+                        string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
+
+                        // Generate a unique file name by appending a counter to the original name
+                        do
+                        {
+                            fileName = $"{fileNameWithoutExtension}_{counter}{fileExtension}";
+                            fileUri = PackUriHelper.CreatePartUri(new Uri(fileName, UriKind.Relative));
+                            counter++;
+                        } while (zip.PartExists(fileUri));
+                    }
+
+                    // Create the part for the file
+                    PackagePart packagePart = zip.CreatePart(fileUri, System.Net.Mime.MediaTypeNames.Application.Octet);
+
+                    // Copy the stream content to the part
+                    using (Stream partStream = packagePart.GetStream())
+                    {
+                        fileStream.CopyTo(partStream);
+                    }
+                }
+            }
+        }
         [Command("emotesync")]
         [RequireUserPermission(GuildPermission.ManageChannels)]
         public async Task SyncEmotes()
         {
-            ulong serverId = Context.Guild.Id;
+            try
+            {
+                ulong serverId = Context.Guild.Id;
 
-            // find all emotes with this server id and clear it
-            int returnedCleared = DatabaseManager.EmoteDatabaseManager.ClearServerEmotes(serverId);
+                // find all emotes with this server id and clear it
+                int returnedCleared = DatabaseManager.EmoteDatabaseManager.ClearServerEmotes(serverId);
 
-            // get all emotes from the server
-            var emotes = Context.Guild.Emotes;
+                // get all emotes from the server
+                var emotes = Context.Guild.Emotes;
 
-            List<ulong> emoteIds = new List<ulong>();
+                List<ulong> emoteIds = new List<ulong>();
 
-            foreach (var emote in emotes)
-                emoteIds.Add(emote.Id);
+                // list of emote streams
+                Dictionary<string, Stream> emoteStreams = new Dictionary<string, Stream>();
 
-            int setEmotes = DatabaseManager.EmoteDatabaseManager.SetServerEmotes(emoteIds, serverId);
+                await Context.Channel.SendMessageAsync($"Found {emotes.Count} emotes downloading...", false);
 
-            await Context.Channel.SendMessageAsync($"Cleared {returnedCleared} and set {setEmotes} emotes", false);
+                using (var webClient = new WebClient())
+                {
+                    foreach (var emote in emotes)
+                    {
+                        byte[] bytes = webClient.DownloadData(emote.Url);
+                        Stream stream = new MemoryStream(bytes);
+                        emoteStreams.Add(emote.Name + (emote.Animated ? ".gif" : ".png"), stream);
+                        emoteIds.Add(emote.Id);
+                    }
+                }
+
+                // create zip with all emotes from emoteStreams
+                string zipFilePath = "output.zip";
+
+                CreateZipFromStreams(emoteStreams, zipFilePath);
+
+                // upload zip to discord
+                await Context.Channel.SendFileAsync(zipFilePath, "Emotes.zip");
+
+                // delete zip file
+                File.Delete(zipFilePath);
+
+
+                int setEmotes = DatabaseManager.EmoteDatabaseManager.SetServerEmotes(emoteIds, serverId);
+
+                await Context.Channel.SendMessageAsync($"Cleared {returnedCleared} and set {setEmotes} emotes", false);
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.ToString(), false);
+            }
         }
 
 
@@ -1747,7 +1826,7 @@ Total todays menus: {allTodaysMenus.Count}");
 
                                     if (!anyKey)
                                     {
-                                       await Context.Channel.SendMessageAsync($"No similar restaurant found for {dbRestaurantName}", false);
+                                        await Context.Channel.SendMessageAsync($"No similar restaurant found for {dbRestaurantName}", false);
                                     }
                                 }
                                 else
