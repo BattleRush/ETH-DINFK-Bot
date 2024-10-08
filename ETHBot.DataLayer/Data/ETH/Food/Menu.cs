@@ -28,6 +28,8 @@ namespace ETHBot.DataLayer.Data.ETH.Food
         public double Fat { get; set; }
         public double Carbohydrates { get; set; }
         public double Salt { get; set; }
+        public double Sugar { get; set; }
+        public double Weight { get; set; }
         public string? DirectMenuImageUrl { get; set; }
         public string? FallbackMenuImageUrl { get; set; }
 

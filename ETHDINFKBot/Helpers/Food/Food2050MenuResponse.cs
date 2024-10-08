@@ -44,12 +44,22 @@ namespace ETHDINFKBot.Helpers.Food
         public string menuLineDescription { get; set; }
         public List<MenuPrice> prices { get; set; }
         public List<string> allergensList { get; set; }
-        public double? energy { get; set; }
-        public double? fat { get; set; }
-        public double? carbohydrates { get; set; }
-        public double? sugar { get; set; }
-        public double? protein { get; set; }
-        public double? salt { get; set; }
+
+        // outdated
+        // public double? energy { get; set; }
+        // public double? fat { get; set; }
+        // public double? carbohydrates { get; set; }
+        // public double? sugar { get; set; }
+        // public double? protein { get; set; }
+        // public double? salt { get; set; }
+
+        public double? energyPer100g {get; set; }
+        public double? fatPer100g {get; set; }
+        public double? carbohydratesPer100g {get; set; }
+        public double? sugarPer100g {get; set; }
+        public double? proteinPer100g {get; set; }
+        public double? saltPer100g {get; set; }
+
         public double? weight { get; set; }
     }
 

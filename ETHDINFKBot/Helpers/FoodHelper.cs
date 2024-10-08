@@ -56,76 +56,6 @@ namespace ETHDINFKBot.Helpers
 
         private readonly ILogger _logger = new Logger<FoodHelper>(Program.Logger);
 
-
-        /* TODO to be removed as ETH API returns the id
-                private int ETHAllergyToDBAlergyId(int allergyId)
-                {
-                                        switch (allergyId)
-                                        {
-                                            // gluten wheat
-                                            case 10:
-                                                return 1;
-
-                                            // crustaceans
-                                            case 11:
-                                                return 2;
-
-                                            // eggs
-                                            case 12:
-                                                return 3;
-
-                                            // fish
-                                            case 13:
-                                                return 4;
-
-                                            // peanuts
-                                            case 14:
-                                                return 5;
-
-                                            // soya
-                                            case 15:
-                                                return 6;
-
-                                            // milk, lactose
-                                            case 16:
-                                                return 7;
-
-                                            // nuts
-                                            case 17:
-                                                return 8;
-
-                                            // celery
-                                            case 18:
-                                                return 9;
-
-                                            // mustard
-                                            case 19:
-                                                return 10;
-
-                                            // sesame
-                                            case 20:
-                                                return 11;
-
-                                            // sulfite
-                                            case 21:
-                                               return 12;
-
-                                            // lupin
-                                            case 22:
-                                                return 13;
-
-                                            // molluscs
-                                            case 23:
-                                                return 14;
-
-                                            default:
-                                                int i = 1;
-                                                break; // Shouldt enter TODO catch
-                                        }
-
-                }
-                */
-
         public void HandleSVRestaurantMenu(Restaurant restaurant)
         {
             throw new NotImplementedException();
@@ -1110,6 +1040,17 @@ namespace ETHDINFKBot.Helpers
 
                             var imageUrl = responseRecipe.imageUrl ?? "";
 
+                            double weight = responseRecipe.weight ?? 0;
+                            double factor = weight / 100;
+
+                            int totalCalories = (int)((responseRecipe.energyPer100g ?? 0) * factor);
+                            double totalProtein = Math.Round((responseRecipe.proteinPer100g ?? 0) * factor);
+                            double totalCarbs = Math.Round((responseRecipe.carbohydratesPer100g ?? 0) * factor);
+                            double totalFat = Math.Round((responseRecipe.fatPer100g ?? 0) * factor);
+                            double totalSalt = Math.Round((responseRecipe.saltPer100g ?? 0) * factor);
+                            double totalSugar = Math.Round((responseRecipe.sugarPer100g ?? 0) * factor);
+
+
                             var menu = new Menu()
                             {
                                 Name = item.displayName,
@@ -1117,11 +1058,14 @@ namespace ETHDINFKBot.Helpers
                                 Amount = price,
                                 IsVegan = responseRecipe.isVegan ?? false,
                                 IsVegetarian = responseRecipe.isVegetarian ?? false,
-                                Calories = responseRecipe.energy != null ? (int)responseRecipe.energy : 0,
-                                Protein = Math.Round(responseRecipe.protein ?? 0, 1),
-                                Carbohydrates = Math.Round(responseRecipe.carbohydrates ?? 0, 1),
-                                Fat = Math.Round(responseRecipe.fat ?? 0, 1),
-                                Salt = Math.Round(responseRecipe.salt ?? 0, 1),
+                                Calories = totalCalories,
+                                Protein = totalProtein,
+                                Carbohydrates = totalCarbs,
+                                Fat = totalFat,
+                                Salt = totalSalt,
+                                Sugar = totalSugar,
+                                Weight = weight,
+                            
                                 DirectMenuImageUrl = responseRecipe.imageUrl,
                                 DateTime = recipe.date.AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(recipe.date) ? 2 : 1)
                             };
