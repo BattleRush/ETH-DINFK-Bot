@@ -1041,7 +1041,7 @@ namespace ETHDINFKBot.Helpers
                             var imageUrl = responseRecipe.imageUrl ?? "";
 
                             double weight = responseRecipe.weight ?? 0;
-                            double factor = weight / 100;
+                            double factor = weight / 100d;
 
                             int totalCalories = (int)((responseRecipe.energyPer100g ?? 0) * factor);
                             double totalProtein = Math.Round((responseRecipe.proteinPer100g ?? 0) * factor);
