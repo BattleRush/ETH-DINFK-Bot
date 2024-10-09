@@ -162,8 +162,8 @@ namespace ETHDINFKBot.Modules
             // if menu has Weight then show it
             if (menu.Weight > 0)
             {
-                canvas.DrawText(menu.Weight + " g", new SKPoint(left, usedHeight), kcalFont);
-                usedHeight += 15;
+                canvas.DrawText(menu.Weight + " g weight", new SKPoint(left, usedHeight), kcalFont);
+                usedHeight += 20;
             }
 
             if (menuUserSettings?.FullNutritions == true)
