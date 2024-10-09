@@ -100,7 +100,14 @@ namespace ETHDINFKBot.Helpers.Food
         public double? energy { get; set; }
         public double? proteins { get; set; }
         public double? fat { get; set; }
+
+        [JsonProperty("saturated-fatty-acids")]
+        public double? saturatedfattyacids { get; set; }
+
         public double? carbohydrates { get; set; }
+
+        public double? sugar { get; set; }
+        public double? salt { get; set; }
 
         [JsonProperty("fishing-method-array")]
         public List<FishingMethodArray> fishingmethodarray { get; set; }

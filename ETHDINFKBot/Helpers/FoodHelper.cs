@@ -238,6 +238,9 @@ namespace ETHDINFKBot.Helpers
                                 if (meal.name.Contains("Beachten Sie"))
                                     continue;
 
+                                if (meal.name.Contains("Sold out"))
+                                    continue;
+
                                 if (meal.name.Contains("Note our"))
                                     continue;
 
@@ -259,7 +262,8 @@ namespace ETHDINFKBot.Helpers
                                     Protein = (int)(meal.proteins ?? 0),
                                     Fat = (int)(meal.fat ?? 0),
                                     Carbohydrates = (int)(meal.carbohydrates ?? 0),
-
+                                    Salt = (int)(meal.salt ?? 0),
+                                    Sugar = (int)(meal.sugar ?? 0),
                                 };
 
                                 var dbMenu = FoodDBManager.CreateMenu(menu);

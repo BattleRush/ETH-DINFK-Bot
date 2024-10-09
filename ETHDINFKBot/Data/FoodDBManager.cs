@@ -496,6 +496,8 @@ namespace ETHDINFKBot.Data
                         dbMenu.Carbohydrates = menu.Carbohydrates;
                         dbMenu.Protein = menu.Protein;
                         dbMenu.Salt = menu.Salt;
+                        dbMenu.Sugar = menu.Sugar;
+                        dbMenu.Weight = menu.Weight;
                         // TODO add sugar to the table
 
                         context.SaveChanges();
