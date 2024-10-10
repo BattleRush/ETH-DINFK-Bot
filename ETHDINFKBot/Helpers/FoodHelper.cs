@@ -229,19 +229,22 @@ namespace ETHDINFKBot.Helpers
                                 if (meal.imageurl != null)
                                     imageUrl = meal.imageurl + "?client-id=ethz-wcms";
 
-                                if (meal.name.Contains("Geschlossen"))
-                                    continue;
 
-                                if (meal.name.Contains("Closed"))
-                                    continue;
+                                // istg ihate polymensa and the stupid sv restaurant i hope go bankrupt
+                                List<string> ignoreKeywords = new List<string>()
+                                {
+                                    "geschlossen",
+                                    "closed",
+                                    "beachten sie",
+                                    "sold out",
+                                    "novalue",
+                                    "note our"
+                                };
 
-                                if (meal.name.Contains("Beachten Sie"))
-                                    continue;
+                                var mealDescription = meal.description.ToLower();
+                                var mealName = meal.name.ToLower();
 
-                                if (meal.name.Contains("Sold out"))
-                                    continue;
-
-                                if (meal.name.Contains("Note our"))
+                                if (ignoreKeywords.Any(i => mealDescription.Contains(i) || mealName.Contains(i)))
                                     continue;
 
                                 var menu = new Menu()
