@@ -558,6 +558,8 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
                 builder.AddField($"**{prefix}sql size**", "DB Size info and row count (May take 10 seconds)");
                 builder.AddField($"**{prefix}sql query <query>**", "Run query on the main MariaDB");
                 builder.AddField($"**{prefix}sql queryd <query>**", "Run query on the main MariaDB and return the result as an image");
+                builder.AddField($"**{prefix}sql export <query>**", "Export the query result as text file (Up to 10000 rows)");
+                builder.AddField($"**{prefix}sql csv <query>**", "Export the query result as csv file (Up to 10000 rows)");
 
                 // related to the sql saved query feature
                 builder.AddField($"**{prefix}sql create**", "Create an SQL Command via discord modal");
@@ -569,6 +571,7 @@ WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}';";
                 builder.AddField($"**{prefix}sql template <command_name>**", "Get the template for a SQL command");
                 builder.AddField($"**{prefix}sql datatype <command_name>**", "Change the datatype for each parameter of a SQL command");
                 builder.AddField($"**{prefix}sql execute <command_name> <parameters>**", "Execute a SQL command with the given parameters. To get the template run list or template command");
+                builder.AddField($"**{prefix}sql executedraw <command_name> <parameters>**", "Execute a SQL command with the given parameters and return the result as a table image");
 
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
             }
@@ -1708,6 +1711,119 @@ ORDER BY table_name DESC;", true, 50);
             catch (Exception ex)
             {
                 Context.Channel.SendMessageAsync("Is this all you got <:kekw:768912035928735775> " + ex.ToString(), false);
+            }
+        }
+
+        // export command similar to query but allow up to 10k rows to be exported to a file
+        [Command("export", RunMode = RunMode.Async)]
+        public async Task SqlE([Remainder] string commandSql)
+        {
+            var userId = Context.Message.Author.Id;
+
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
+
+            // Allow the query to be send in a code block
+            commandSql = commandSql.Trim('`');
+
+            if (commandSql.StartsWith("sql"))
+                commandSql = commandSql.Substring(3);
+
+            if (ForbiddenQuery(commandSql, userId))
+                return;
+
+            if (ActiveSQLCommands.ContainsKey(userId) && ActiveSQLCommands[userId].AddSeconds(15) > DateTime.Now)
+            {
+                await Context.Channel.SendMessageAsync("Are you in such a hurry, that you cant wait out the last query you send out?", false);
+                return;
+            }
+
+            try
+            {
+                if (ActiveSQLCommands.ContainsKey(userId))
+                    ActiveSQLCommands[userId] = DateTime.Now;
+                else
+                    ActiveSQLCommands.Add(userId, DateTime.Now);
+
+                var commandResponse = await SQLHelper.SqlCommandRows(Context, commandSql, false, 10000);
+               
+                // create file with the result
+                string fileName = $"export_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.txt";
+                File.WriteAllText(fileName, commandResponse);
+
+                await Context.Channel.SendFileAsync(fileName, "export.txt", false, null, null, false, null, new Discord.MessageReference(Context.Message.Id));
+
+                // delete the file
+                File.Delete(fileName);
+
+                // release the user again as the query finished
+                ActiveSQLCommands[userId] = DateTime.MinValue;
+
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync("Is this all you got <:kekw:768912035928735775> " + ex.ToString(), false);
+            }
+        }
+
+        // csv command similar to query but allow up to 10k rows to be exported to a file
+        [Command("csv", RunMode = RunMode.Async)]
+        public async Task SqlCsv([Remainder] string commandSql)
+        {
+            var userId = Context.Message.Author.Id;
+
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
+
+            // Allow the query to be send in a code block
+            commandSql = commandSql.Trim('`');
+
+            if (commandSql.StartsWith("sql"))
+                commandSql = commandSql.Substring(3);
+
+            if (ForbiddenQuery(commandSql, userId))
+                return;
+
+            if (ActiveSQLCommands.ContainsKey(userId) && ActiveSQLCommands[userId].AddSeconds(15) > DateTime.Now)
+            {
+                await Context.Channel.SendMessageAsync("Are you in such a hurry, that you cant wait out the last query you send out?", false);
+                return;
+            }
+
+            try
+            {
+                if (ActiveSQLCommands.ContainsKey(userId))
+                    ActiveSQLCommands[userId] = DateTime.Now;
+                else
+                    ActiveSQLCommands.Add(userId, DateTime.Now);
+
+                var commandResponse = await SQLHelper.GetQueryResults(Context, commandSql, true, 10000);
+               
+                // create file with the result
+                string fileName = $"export_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.csv";
+
+                // write the header 
+                File.WriteAllText(fileName, string.Join(",", commandResponse.Header) + Environment.NewLine);
+
+                // go through the data and write it to the file
+                foreach (var row in commandResponse.Data)
+                {
+                    // todo escape commas?
+                    File.AppendAllText(fileName, string.Join(",", row) + Environment.NewLine);
+                }
+
+                await Context.Channel.SendFileAsync(fileName, "export.txt", false, null, null, false, null, new Discord.MessageReference(Context.Message.Id));
+
+                // delete the file
+                File.Delete(fileName);
+
+                // release the user again as the query finished
+                ActiveSQLCommands[userId] = DateTime.MinValue;
+
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync("Is this all you got <:kekw:768912035928735775> " + ex.ToString(), false);
             }
         }
 

@@ -72,9 +72,16 @@ namespace ETHDINFKBot.Helpers
 
         public static async Task<string> SqlCommand(SocketCommandContext context, string commandSql, bool adminOverwrite = false)
         {
-            var author = context.Message.Author;
-
             var queryResult = await GetQueryResults(context, commandSql.ToString(), false, 2000, adminOverwrite);
+            var resultString = GetRowStringFromResult(queryResult.Header, queryResult.Data, new List<int>());
+
+            return resultString + Environment.NewLine + $"{queryResult.TotalResults.ToString("N0")} Row(s) affected Time: {queryResult.Time.ToString("N0")}ms";
+        }
+
+
+        public static async Task<string> SqlCommandRows(SocketCommandContext context, string commandSql, bool adminOverwrite = false, int rows = 10000)
+        {
+            var queryResult = await GetQueryResults(context, commandSql.ToString(), true, rows, adminOverwrite);
             var resultString = GetRowStringFromResult(queryResult.Header, queryResult.Data, new List<int>());
 
             return resultString + Environment.NewLine + $"{queryResult.TotalResults.ToString("N0")} Row(s) affected Time: {queryResult.Time.ToString("N0")}ms";
@@ -131,7 +138,7 @@ namespace ETHDINFKBot.Helpers
                 {
                     using (var command = new MySqlCommand(commandSql, connection))
                     {
-                        command.CommandTimeout = fullUser || authorId == 223932775474921472 ? 300 : 30;
+                        command.CommandTimeout = fullUser || authorId == 223932775474921472 ? 300 : 60;
 
                         connection.Open();
 
@@ -146,7 +153,7 @@ namespace ETHDINFKBot.Helpers
                             {
                                 // todo disable
                                 // cap at 10k records to return in count (as temp fix if the query returns millions of rows)
-                                if (TotalResults == 10_000)
+                                if (TotalResults == 25_000)
                                 {
                                     command.Cancel();
                                     break;
