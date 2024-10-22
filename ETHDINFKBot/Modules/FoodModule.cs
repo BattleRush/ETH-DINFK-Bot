@@ -402,6 +402,39 @@ namespace ETHDINFKBot.Modules
             return currentMenus;
         }
 
+        [Command("fl")]
+        [Priority(0)]
+        public async Task DrawFoodImagesLunch()
+        {
+            int today = (int)DateTime.UtcNow.DayOfWeek;
+            await DrawFoodImages(today, 1);
+        }
+
+        [Command("fd")]
+        [Priority(1)]
+        public async Task DrawFoodImagesDinner()
+        {
+            int today = (int)DateTime.UtcNow.DayOfWeek;
+            await DrawFoodImages(today, 2);
+        }
+
+        // accept for "f" also "l" and "d" for lunch and dinner
+        [Command("f")]
+        [Priority(0)]
+        public async Task DrawFoodImages(string time)
+        {
+            int today = (int)DateTime.UtcNow.DayOfWeek;
+
+            if (time.ToLower() == "l" || time.ToLower() == "lunch")
+            {
+                await DrawFoodImages(today, 1);
+            }
+            else if (time.ToLower() == "d" || time.ToLower() == "dinner")
+            {
+                await DrawFoodImages(today, 2);
+            }
+        }
+
         [Command("f")]
         [Priority(0)]
         public async Task DrawFoodImages(int input = -1)
