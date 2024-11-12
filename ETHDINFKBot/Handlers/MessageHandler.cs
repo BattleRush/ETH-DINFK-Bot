@@ -150,19 +150,26 @@ namespace ETHDINFKBot.Handlers
                     return;
 
                 // if the message contains no embeds or attachments then delete the message and give 60s mute
-                if (SocketMessage.Attachments.Count == 0 && SocketMessage.Embeds.Count == 0)
+
+                // check if the message might be a link
+                bool containsLink = false;
+
+                if (SocketMessage.Content.Contains("http://") || SocketMessage.Content.Contains("https://"))
+                    containsLink = true;
+
+                if (SocketMessage.Attachments.Count == 0 && SocketMessage.Embeds.Count == 0 && !containsLink)
                 {
                     try
                     {
                         await SocketMessage.DeleteAsync();
+
+                        // mute the user for 60s
+                        //await SocketGuildUser.ModifyAsync(x => x.TimedOutUntil = DateTimeOffset.Now.AddSeconds(60));
                     }
                     catch (Exception ex)
                     {
                         // likely msg deleted
                     }
-
-                    // mute the user for 60s
-                    await SocketGuildUser.ModifyAsync(x => x.TimedOutUntil = DateTimeOffset.Now.AddSeconds(60));
                 }
             }
         }
