@@ -114,6 +114,7 @@ namespace ETHDINFKBot.Handlers
             {
                 EmoteDetection();
                 Autoreact();
+                MessagingInMemesChat();
                 //LiveInBestCanton();
                 await CheckVisWebsiteStatus();
             }
@@ -131,6 +132,39 @@ namespace ETHDINFKBot.Handlers
             await DownloadContent();
 
             return true; // kinda useless
+        }
+
+        private async Task MessagingInMemesChat()
+        {
+            List<ulong> upvoteChannels = new List<ulong>()
+            {
+                DiscordChannels["memes"],
+                DiscordChannels["ethmemes"]
+            };
+
+            // Check if the message is in the memes channel
+            if (upvoteChannels.Contains(SocketGuildChannel.Id))
+            {
+                // if the message is in a thread then ignore
+                if (SocketThreadChannel != null)
+                    return;
+
+                // if the message contains no embeds or attachments then delete the message and give 60s mute
+                if (SocketMessage.Attachments.Count == 0 && SocketMessage.Embeds.Count == 0)
+                {
+                    try
+                    {
+                        await SocketMessage.DeleteAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        // likely msg deleted
+                    }
+
+                    // mute the user for 60s
+                    await SocketGuildUser.ModifyAsync(x => x.TimedOutUntil = DateTimeOffset.Now.AddSeconds(60));
+                }
+            }
         }
 
         private async Task DownloadContent()

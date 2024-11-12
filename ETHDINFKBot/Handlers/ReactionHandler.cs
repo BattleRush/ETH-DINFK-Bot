@@ -70,9 +70,28 @@ namespace ETHDINFKBot.Handlers
                     SaveReaction(ReactionEmote);
                     UpvoteReactionToPullRequests(ReactionEmote);
                     PeopleWhoRefuseToPutFoodFav(ReactionEmote);
+                    PeopleUpvotingTheirOwnMessages(ReactionEmote);
                 }
             }
         }
+
+        private async void PeopleUpvotingTheirOwnMessages(Emote reactionEmote)
+        {
+            try
+            {
+                if (SocketGuildMessageUser.Id == SocketGuildReactionUser.Id && reactionEmote.Id == DiscordEmotes["this"])
+                {
+                    // delete the the message
+                    await Message.DeleteAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Eh idk sometimes it errors out because null ref
+                // TODO When not lazy find out why
+            }
+        }
+
 
         // DUPE From Message handler (since some like to react before typing xD)
         private async Task<bool> CreateOrUpdateDBUser()
