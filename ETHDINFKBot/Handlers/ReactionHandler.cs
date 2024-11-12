@@ -77,9 +77,15 @@ namespace ETHDINFKBot.Handlers
 
         private async void PeopleUpvotingTheirOwnMessages(Emote reactionEmote)
         {
+            List<ulong> upvoteChannels = new List<ulong>()
+            {
+                DiscordChannels["memes"],
+                DiscordChannels["ethmemes"]
+            };
+            
             try
             {
-                if (SocketGuildMessageUser.Id == SocketGuildReactionUser.Id && reactionEmote.Id == DiscordEmotes["this"])
+                if (upvoteChannels.Contains(SocketGuildChannel.Id) && SocketGuildMessageUser.Id == SocketGuildReactionUser.Id && reactionEmote.Id == DiscordEmotes["this"])
                 {
                     // delete the the message
                     await Message.DeleteAsync();
