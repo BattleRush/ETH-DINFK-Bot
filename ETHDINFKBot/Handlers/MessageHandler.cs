@@ -261,7 +261,7 @@ namespace ETHDINFKBot.Handlers
                             EmbedBuilder embedBuilder = new EmbedBuilder();
                             embedBuilder.WithTitle("VIS Website Status");
                             embedBuilder.WithDescription(@$"This is a status check of the VIS websites.
-VIS status website: https://monitoring-lee.vis.ethz.ch/grafana
+VIS status website: https://mon.vis.ethz.ch/grafana
 Comsol status website: https://monitoring-lee.vis.ethz.ch/grafana/goto/mMeOZ9FSR?orgId=1
 External status site: https://up.markc.su/status/vis");
 
