@@ -70,7 +70,7 @@ namespace ETHDINFKBot.Handlers
                     SaveReaction(ReactionEmote);
                     UpvoteReactionToPullRequests(ReactionEmote);
                     PeopleWhoRefuseToPutFoodFav(ReactionEmote);
-                    PeopleUpvotingTheirOwnMessages(ReactionEmote);
+                    //PeopleUpvotingTheirOwnMessages(ReactionEmote);
                 }
             }
         }
