@@ -1536,7 +1536,6 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 {
                     await Context.Channel.SendMessageAsync($"You used a type that doesnt exist yet. But because I'm so nice im adding it for you.", false);
                     bool success = DatabaseManager.Instance().AddRantType(type);
-                    await Context.Channel.SendMessageAsync($"Added {type} Success: {success}", false);
 
                     if (!success)
                         return;
@@ -1547,7 +1546,7 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
                 var guildChannel = (SocketGuildChannel)Context.Message.Channel;
 
                 bool successRant = DatabaseManager.AddRant(Context.Message.Id, Context.Message.Author.Id, guildChannel.Id, typeId, content);
-                await Context.Channel.SendMessageAsync($"Added rant Success: {successRant}", false);
+                await Context.Channel.SendMessageAsync($"Added rant. Success: {successRant}", false);
             }
         }
 
