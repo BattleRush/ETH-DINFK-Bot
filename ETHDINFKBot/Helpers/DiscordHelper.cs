@@ -603,7 +603,19 @@ namespace ETHDINFKBot.Helpers
                     }
                 }
 
+                var originalBirthdayUsers = birthdayUsers;
+                var birthdayUsers = new List<DiscordUser>();
 
+                // Filter out users that deleted their account or left the server
+                foreach (var user in originalBirthdayUsers)
+                {
+                    var discordUser = await client.GetUserAsync(user.DiscordUserId);
+                    var guild = client.GetGuild(guildId);
+                    if (discordUser != null && guild.GetUser(user.DiscordUserId) != null)
+                    {
+                        birthdayUsers.Add(user);
+                    }
+                }
 
                 if (birthdayUsers.Count == 0)
                     await spamChannel.SendMessageAsync("No birthdays today <:sadge:851469686578741298> maybe tomorrow...");
