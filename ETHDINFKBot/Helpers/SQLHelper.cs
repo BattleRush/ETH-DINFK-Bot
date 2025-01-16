@@ -293,7 +293,9 @@ namespace ETHDINFKBot.Helpers
                 builder.WithColor(0, 128, 255);
                 builder.WithDescription(ex.Message.Substring(0, Math.Min(ex.Message.Length, 2000)));
 
-                builder.WithAuthor(context.Message.Author);
+                if(context.Message?.Author != null)
+                    builder.WithAuthor(context.Message.Author); // TODO why is this null sometimes?
+
                 builder.WithCurrentTimestamp();
 
                 // TODO include maybe the sql query also in the embed
