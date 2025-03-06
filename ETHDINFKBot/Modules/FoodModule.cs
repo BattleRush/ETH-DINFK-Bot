@@ -1040,6 +1040,22 @@ It is also likely that there are no menus currently available today." + weekendS
         [Group("food")]
         public class FoodCommandModule : ModuleBase<SocketCommandContext>
         {
+
+            // TODO DUPLICATE CODE
+            // dont ask im trying to listen to the aircraft aerodynamics course while im trying to commit this
+            private bool AllowedToRun(BotPermissionType type)
+            {
+                var channelSettings = DatabaseManager.Instance().GetChannelSetting(Context.Message.Channel.Id);
+                if (Context.Message.Author.Id != Program.ApplicationSetting.Owner
+                    && !((BotPermissionType)(channelSettings?.ChannelPermissionFlags ?? 0)).HasFlag(type))
+                {
+                    Context.Channel.SendMessageAsync("Please use <#747776646551175217> for your :yum: needs", false);
+                    return true;
+                }
+
+                return false;
+            }
+
             private static FoodDBManager FoodDBManager = FoodDBManager.Instance();
             [Command("help")]
             [Priority(10)]
