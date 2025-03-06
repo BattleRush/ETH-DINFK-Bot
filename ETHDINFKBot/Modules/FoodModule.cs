@@ -29,9 +29,7 @@ namespace ETHDINFKBot.Modules
             if (Context.Message.Author.Id != Program.ApplicationSetting.Owner
                 && !((BotPermissionType)(channelSettings?.ChannelPermissionFlags ?? 0)).HasFlag(type))
             {
-#if DEBUG
-                Context.Channel.SendMessageAsync("blocked by perms", false);
-#endif
+                Context.Channel.SendMessageAsync("Please use <#747776646551175217> for your :yum: needs", false);
                 return true;
             }
 
@@ -406,6 +404,9 @@ namespace ETHDINFKBot.Modules
         [Priority(0)]
         public async Task DrawFoodImagesLunch()
         {
+            if (AllowedToRun(BotPermissionType.EnableFoodCommands))
+                return;
+            
             int today = (int)DateTime.UtcNow.DayOfWeek;
             await DrawFoodImages(today, 1);
         }
@@ -414,6 +415,9 @@ namespace ETHDINFKBot.Modules
         [Priority(1)]
         public async Task DrawFoodImagesDinner()
         {
+            if (AllowedToRun(BotPermissionType.EnableFoodCommands))
+                return;
+            
             int today = (int)DateTime.UtcNow.DayOfWeek;
             await DrawFoodImages(today, 2);
         }
@@ -423,6 +427,9 @@ namespace ETHDINFKBot.Modules
         [Priority(0)]
         public async Task DrawFoodImages(string time)
         {
+            if (AllowedToRun(BotPermissionType.EnableFoodCommands))
+                return;
+            
             int today = (int)DateTime.UtcNow.DayOfWeek;
 
             if (time.ToLower() == "l" || time.ToLower() == "lunch")
@@ -439,6 +446,9 @@ namespace ETHDINFKBot.Modules
         [Priority(0)]
         public async Task DrawFoodImages(int input = -1)
         {
+            if (AllowedToRun(BotPermissionType.EnableFoodCommands))
+                return;
+            
             // just return default food images
             if (input == -1)
             {
@@ -502,6 +512,9 @@ namespace ETHDINFKBot.Modules
         [Priority(2)]
         public async Task DrawFoodImages(int day, int time, int debug = -1)
         {
+            if (AllowedToRun(BotPermissionType.EnableFoodCommands))
+                return;
+            
             string dayStr = null;
             string timeStr = null;
 
@@ -566,6 +579,9 @@ namespace ETHDINFKBot.Modules
         [Priority(3)]
         public async Task DrawFoodImagesWithLocation()
         {
+            if (AllowedToRun(BotPermissionType.EnableFoodCommands))
+                return;
+
             await new FoodCommandModule().GetWeeklyMenuImage("lunch", false);
         }
 
@@ -573,6 +589,9 @@ namespace ETHDINFKBot.Modules
         [Priority(3)]
         public async Task DrawFoodImagesWithLocationDinner()
         {
+            if (AllowedToRun(BotPermissionType.EnableFoodCommands))
+                return;
+
             await new FoodCommandModule().GetWeeklyMenuImage("dinner", false);
         }
 
@@ -581,6 +600,9 @@ namespace ETHDINFKBot.Modules
         [Alias(new string[] { "f1", "f2", "f3", "f4", "f5", "f11", "f12", "f21", "f22", "f31", "f32", "f41", "f42", "f51", "f52" })]
         public async Task DrawFoodImagesShort()
         {
+            if (AllowedToRun(BotPermissionType.EnableFoodCommands))
+                return;
+
             var commandText = Context.Message.Content;
             commandText = commandText.Substring(Program.CurrentPrefix.Length);
             commandText = commandText.Substring(1);
@@ -613,7 +635,7 @@ namespace ETHDINFKBot.Modules
         {
             try
             {
-                if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                if (AllowedToRun(BotPermissionType.EnableFoodCommands))
                     return;
 
                 var meal = MealTime.Lunch;
@@ -1023,6 +1045,9 @@ It is also likely that there are no menus currently available today." + weekendS
             [Priority(10)]
             public async Task FoodHelp()
             {
+                if (AllowedToRun(BotPermissionType.EnableFoodCommands))
+                    return;
+            
                 EmbedBuilder builder = new EmbedBuilder();
 
                 builder.WithTitle("Food Help");
@@ -1054,6 +1079,9 @@ It is also likely that there are no menus currently available today." + weekendS
             [Priority(10)]
             public async Task GetWeeklyMenuImage(string time = null, bool debug = false)
             {
+                if (AllowedToRun(BotPermissionType.EnableFoodCommands))
+                    return;
+            
                 FoodModule module = new FoodModule();
                 MealTime meal = MealTime.Lunch;
 
@@ -1366,6 +1394,9 @@ It is also likely that there are no menus currently available today." + weekendS
             [Priority(10)]
             public async Task FoodAllergyInfo()
             {
+                if (AllowedToRun(BotPermissionType.EnableFoodCommands))
+                    return;
+            
                 var pathToAllergyImages = Path.Combine(Program.ApplicationSetting.BasePath, "Images", "Icons", "Food", "Allergies");
 
                 var (canvas, bitmap) = DrawingHelper.GetEmptyGraphics(650, 650);
@@ -1406,7 +1437,9 @@ It is also likely that there are no menus currently available today." + weekendS
             [Priority(10)]
             public async Task FoodSettings()
             {
-
+                if (AllowedToRun(BotPermissionType.EnableFoodCommands))
+                    return;
+            
                 var currentUser = Context.Message.Author;
                 var currentUserId = currentUser.Id;
 
