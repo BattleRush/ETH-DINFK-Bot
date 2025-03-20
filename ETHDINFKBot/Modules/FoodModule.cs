@@ -1053,17 +1053,27 @@ It is also likely that there are no menus currently available today." + weekendS
 
             // TODO DUPLICATE CODE
             // dont ask im trying to listen to the aircraft aerodynamics course while im trying to commit this
-            private bool AllowedToRun(BotPermissionType type)
+            private bool IsAllowedToRun(BotPermissionType type)
             {
                 var channelSettings = DatabaseManager.Instance().GetChannelSetting(Context.Message.Channel.Id);
                 if (Context.Message.Author.Id != Program.ApplicationSetting.Owner
                     && !((BotPermissionType)(channelSettings?.ChannelPermissionFlags ?? 0)).HasFlag(type))
                 {
+                    // if the role is server booster (758407204373790771) and the channel is spam (768600365602963496) then allow
+                    // check if the user has the role
+                    var user = Context.Guild.GetUser(Context.Message.Author.Id);
+                    if (user != null)
+                    {
+                        var serverBoosterRole = user.Roles.FirstOrDefault(i => i.Id == 758407204373790771);
+                        if (serverBoosterRole != null && Context.Message.Channel.Id == 768600365602963496)
+                            return true;
+                    }
+
                     Context.Channel.SendMessageAsync("Please use <#747776646551175217> for your :yum: needs", false);
-                    return true;
+                    return false;
                 }
 
-                return false;
+                return true;
             }
 
             private static FoodDBManager FoodDBManager = FoodDBManager.Instance();
