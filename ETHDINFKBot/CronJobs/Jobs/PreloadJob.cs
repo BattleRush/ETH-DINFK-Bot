@@ -176,9 +176,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
             // todo config
             ulong guildId = 747752542741725244;
-            ulong spamChannel = 768600365602963496;
             var guild = Program.Client.GetGuild(guildId);
-            var textChannel = guild.GetTextChannel(spamChannel);
 
             foreach (var item in Program.Client.Guilds)
             {
@@ -298,7 +296,6 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                     if (result.Length > 1500)
                     {
-                        await textChannel.SendMessageAsync(result.Substring(0, Math.Min(2000, result.Length)));
                         result = "";
                     }
                 }
@@ -306,7 +303,6 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
             if (result.Length > 0)
             {
-                await textChannel.SendMessageAsync(result.Substring(0, Math.Min(2000, result.Length))); 
             }
 
 

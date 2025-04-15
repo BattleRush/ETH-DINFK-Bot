@@ -618,10 +618,10 @@ namespace ETHDINFKBot
 
         private void ReloadChannelPositionLock(SocketGuild guild, bool delete, string channelName)
         {
-            ulong adminBotChannel = 747768907992924192;
+            ulong adminBotChannel = 1;
 
 #if DEBUG
-            adminBotChannel = 774286694794919989;
+            adminBotChannel = 1;
 #endif
             // list should always be empty
             ChannelPositions = new List<ChannelOrderInfo>();
@@ -823,11 +823,9 @@ namespace ETHDINFKBot
                 && newChannel is SocketGuildChannel newGuildChannel)
             {
                 ulong guildId = Program.ApplicationSetting.BaseGuild;
-                ulong adminBotChannel = 747768907992924192;
 
 #if DEBUG
                 guildId = 774286694794919986;
-                adminBotChannel = 774286694794919989;
 #endif
 
                 // only for 1 specific server
@@ -838,13 +836,6 @@ namespace ETHDINFKBot
                 {
                     // ORDER CHANGED
                     var guild = Program.Client.GetGuild(guildId);
-
-                    var textChannel = guild.GetTextChannel(adminBotChannel);
-
-                    EnforceChannelPositions(guildId, adminBotChannel);
-
-                    if (!Reordering)
-                        ChannelMoveDetections.Add($"    {newGuildChannel.Name} move from position {originalGuildChannel.Position} to {newGuildChannel.Position}");
                 }
             }
 
@@ -935,12 +926,10 @@ namespace ETHDINFKBot
                 Console.WriteLine(json);
 
                 //Spam channel
-                await guild.GetTextChannel(768600365602963496)?.SendMessageAsync(json);
             }
             catch (Exception ex)
             {
                 //Spam channel
-                await guild.GetTextChannel(768600365602963496)?.SendMessageAsync("Ex: " + ex.ToString());
             }
 
             var commands = Services.GetRequiredService<InteractionService>();
@@ -954,7 +943,6 @@ namespace ETHDINFKBot
             catch (Exception ex)
             {
                 //Spam channel
-                await guild.GetTextChannel(768600365602963496)?.SendMessageAsync("Add modules: " + ex.ToString());
             }
         }
 
@@ -975,12 +963,7 @@ namespace ETHDINFKBot
 
                 var lastStartUp = DatabaseManager.Instance().GetLastBotStartUpTime();
 
-                //ulong spamChannel = 768600365602963496;
                 var guild = Program.Client.GetGuild(guildId);
-
-                var textChannel = guild.GetTextChannel(DiscordHelper.DiscordChannels["spam"]);
-                if (textChannel != null)
-                    textChannel.SendMessageAsync($"Restarted with Branch: {ThisAssembly.Git.Branch} and Commit: {ThisAssembly.Git.Commit}. Last Uptime was: {CommonHelper.ToReadableString(DateTime.Now - lastStartUp)} Bot client ready. <@{Program.ApplicationSetting.Owner}>");
 
                 // Register bot startup time when bot is ready
                 DatabaseManager.Instance().AddBotStartUp();
@@ -1292,15 +1275,11 @@ namespace ETHDINFKBot
                 }
             }
 
-            var spamChannel = Client.GetGuild(Program.ApplicationSetting.BaseGuild).GetTextChannel(768600365602963496); // #spam
 
             string randomGif = randomGifs[new Random().Next(randomGifs.Count)];
-            await spamChannel.SendMessageAsync(randomGif);
-            await spamChannel.SendMessageAsync("", false, builder.Build());
 
             FirstDailyPostsCandidates = new List<SocketMessage>(); // Reset
 
-            DiscordHelper.DiscordUserBirthday(Client, Program.ApplicationSetting.BaseGuild, spamChannel.Id, true); // on first daily post trigger birthday messages -> TODO maybe move to a cron job
         }
 
         public async Task HandleCommandAsync(SocketMessage m)
@@ -1480,11 +1459,9 @@ namespace ETHDINFKBot
                         "https://tenor.com/view/wow-fireworks-3d-gifs-artist-woohoo-gif-18062148"
                     };
 
-                    var spamChannel = Client.GetGuild(Program.ApplicationSetting.BaseGuild).GetTextChannel(768600365602963496); // #spam
 
                     //string randomGif = randomGifs[new Random().Next(randomGifs.Count)];
                     //await m.Channel.SendMessageAsync(randomGif);
-                    await spamChannel.SendMessageAsync("", false, builder.Build());
 
                     // ONE TIME CODE TO BE DELETED
                     //if (firstPoster.DiscordUserId == 321022340412735509)

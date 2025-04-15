@@ -67,9 +67,6 @@ namespace ETHDINFKBot
             if (Context.Message.Author.Id != Program.ApplicationSetting.Owner
                 && !((BotPermissionType)(channelSettings?.ChannelPermissionFlags ?? 0)).HasFlag(type))
             {
-#if DEBUG
-                Context.Channel.SendMessageAsync("blocked by perms", false);
-#endif
                 return true;
             }
 
@@ -1821,7 +1818,6 @@ Help is in EBNF form, so I hope for you all reading this actually paid attention
         public async Task Lukas()
         {
             await Context.Channel.SendMessageAsync("<@223932775474921472>");
-            await Context.Channel.SendMessageAsync("https://media.discordapp.net/attachments/768600365602963496/958082710100901988/ezgif.com-gif-maker.gif");
         }
 
 

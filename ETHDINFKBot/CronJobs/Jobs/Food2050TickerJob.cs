@@ -122,7 +122,6 @@ namespace ETHDINFKBot.CronJobs.Jobs
                             $"CO2 Delta: {co2EmissionsGramsDelta}g\n" +
                             $"CO2 Total: {co2EmissionsGramsTotal}g\n";*/
 
-                        //var channel = Program.Client.GetGuild(747752542741725244).GetTextChannel(768600365602963496);
                         //await channel.SendMessageAsync(message);
 
                         var added = foodDBManager.AddFood2050CO2Entry(new ETHBot.DataLayer.Data.ETH.Food.Food2050CO2Entry()
@@ -149,7 +148,6 @@ namespace ETHDINFKBot.CronJobs.Jobs
             }
 
             // send to spam how many records added for restaurant
-            var channel = Program.Client.GetGuild(747752542741725244).GetTextChannel(768600365602963496);
 
             string message = $"Food2050 CO2 Data added:\n";
             foreach (var item in restaurantCO2Added)
@@ -199,8 +197,6 @@ namespace ETHDINFKBot.CronJobs.Jobs
             {
                 _logger.LogError(ex.Message);
                 // send to spam
-                var channel = Program.Client.GetGuild(747752542741725244).GetTextChannel(768600365602963496);
-                channel.SendMessageAsync($"Error in {Name}: {ex.Message}");
             }
 
             return Task.CompletedTask;

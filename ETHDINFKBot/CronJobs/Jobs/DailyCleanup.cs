@@ -43,7 +43,6 @@ namespace ETHDINFKBot.CronJobs.Jobs
             };
 
             var guild = Program.Client.GetGuild(747752542741725244);
-            var textChannel = guild.GetTextChannel(768600365602963496);
 
             foreach (var fileEnding in fileEndings)
             {
@@ -87,54 +86,12 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
 
 
-        private async void CleanupExpiredEvents()
-        {
-            var guild = Program.Client.GetGuild(747752542741725244);
-            var textChannel = guild.GetTextChannel(819864331192631346);
-            var logChannel = guild.GetTextChannel(747768907992924192);
-
-            // get last 100 messages
-            var messages = await textChannel.GetMessagesAsync(100).FlattenAsync();
-
-            // seach for messages created by the bot
-            var botMessages = messages.Where(i => i.Author.Id == Program.Client.CurrentUser.Id);
-
-            foreach (var botMessage in botMessages)
-            {
-                try
-                {
-                    var eventId = botMessage.Content.Split("/").LastOrDefault();
-
-                    if (ulong.TryParse(eventId, out ulong eventIdParsed))
-                    {
-                        // get active events from discord
-                        var discordEvent = guild.GetEvent(eventIdParsed);
-                        if (discordEvent == null || discordEvent.Status == GuildScheduledEventStatus.Completed)
-                        {
-                            // event is not active anymore
-                            await botMessage.DeleteAsync();
-                            await logChannel.SendMessageAsync($"Deleted expired event: {discordEvent?.Name ?? "NULL"} ({eventIdParsed}) with status {discordEvent?.Status}");
-                        }
-                    }
-                    else
-                    {
-                        await logChannel.SendMessageAsync($"Failed to parse event id from {botMessage.Content}");
-                        continue;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    await logChannel.SendMessageAsync($"Failed to delete event {botMessage.Content} | {ex.ToString()}");
-                }
-            }
-        }
 
         /*public async void CleanupCDN()
         {
             return; // TODO
             string[] files = Directory.GetFiles(System.IO.Path.Combine(Program.ApplicationSetting.BasePath, "Emotes"));
             var guild = Program.Client.GetGuild(747752542741725244);
-            var textChannel = guild.GetTextChannel(768600365602963496);
 
             if (textChannel != null)
                 textChannel.SendMessageAsync($"Found {files.Length} emotes to be deleted");
@@ -150,7 +107,6 @@ namespace ETHDINFKBot.CronJobs.Jobs
         public async void RemovePingHell()
         {
             var guild = Program.Client.GetGuild(747752542741725244);
-            var textChannel = guild.GetTextChannel(768600365602963496);
 
 
             // Get users that havent pinged the role in the last 72h
@@ -199,14 +155,12 @@ ORDER BY MAX(PH.DiscordMessageId)";
                             await guildUser.RemoveRoleAsync(rolePingHell);
 
                             // send in spam that they are free
-                            await textChannel.SendMessageAsync($"<@{userId}> finally escaped PingHell. May you never ping it ever again.");
                         }
                     }
                 }
                 catch (Exception ex)
                 {
                     // Disable for now
-                    await textChannel.SendMessageAsync($"Failed to remove pinghell ID: {row[0]} SnowFlakePing: {row[1]} | {ex.ToString()}");
                     //if(ex.InnerException != null)
                     //{
                     //    await textChannel.SendMessageAsync($"InnerException: {ex.InnerException.ToString()}");
@@ -219,7 +173,7 @@ ORDER BY MAX(PH.DiscordMessageId)";
         {
             await DiscordHelper.SyncVisEvents(
                 747752542741725244, // GuildId
-                747768907992924192, // AdminBot Channel
+                1, // AdminBot Channel
                 819864331192631346); // Events Channel
         }
 

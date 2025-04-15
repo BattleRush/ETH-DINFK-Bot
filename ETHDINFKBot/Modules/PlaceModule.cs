@@ -1377,10 +1377,8 @@ If you violate the server rules your pixels will be removed.
 
             // todo config
             ulong guildId = Program.ApplicationSetting.BaseGuild;
-            ulong spamChannel = 768600365602963496;
 
             var guild = Program.Client.GetGuild(guildId);
-            var textChannel = guild.GetTextChannel(spamChannel);
 
             var chunkFolder = Path.Combine(Program.ApplicationSetting.BasePath, "TimelapseChunks");
 
@@ -1397,9 +1395,7 @@ If you violate the server rules your pixels will be removed.
 
             var totalPixelsPlaced = dbManager.GetBoardHistoryCount(lastPixelIdChunked, totalPixelsChunked);
 
-            if(sendMessage)
-                await textChannel.SendMessageAsync($"Total pixels to load {totalPixelsPlaced.ToString("N0")}", false);
-
+         
             //short chunkId = 0;
 
             var botSettings = DatabaseManager.Instance().GetBotSettings();
@@ -1477,9 +1473,7 @@ If you violate the server rules your pixels will be removed.
                 counter += 1;
             }
 
-            if(sendMessage)
-                await textChannel.SendMessageAsync($"Saved {file}", false);
-
+           
             File.WriteAllBytes(filePath, data);
 
 
@@ -1492,9 +1486,6 @@ If you violate the server rules your pixels will be removed.
             botSettings.PlacePixelIdLastChunked = pixelHistory.OrderBy(i => i.PlaceBoardHistoryId).Last().PlaceBoardHistoryId;
 
             DatabaseManager.Instance().SetBotSettings(botSettings);
-
-            if(sendMessage)
-                await textChannel.SendMessageAsync($"Done. Timelapse has been updated automatically in {watch.ElapsedMilliseconds}ms", false);
         }
 
         [Command("setpixel")]

@@ -30,11 +30,7 @@ namespace ETHDINFKBot.CronJobs
             Console.WriteLine("Run");
             foreach (var item in Program.Client.Guilds)
             {
-                var spamChannel = item.GetTextChannel(768600365602963496);
-                if(spamChannel != null)
-                {
-                    //spamChannel.SendMessageAsync("Cronjob is running");
-                }
+
             } 
             return Task.CompletedTask;
         }

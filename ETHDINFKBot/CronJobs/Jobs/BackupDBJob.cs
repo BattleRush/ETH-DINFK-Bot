@@ -50,7 +50,6 @@ namespace ETHDINFKBot.CronJobs.Jobs
         {   
             // todo config
             //ulong guildId = 747752542741725244;
-            //ulong spamChannel = 768600365602963496;
             //var guild = Program.Client.GetGuild(guildId);
             //var textChannel = guild.GetTextChannel(spamChannel);
 

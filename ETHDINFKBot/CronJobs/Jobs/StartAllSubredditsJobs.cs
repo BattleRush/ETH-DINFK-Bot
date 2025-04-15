@@ -14,7 +14,6 @@ namespace ETHDINFKBot.CronJobs.Jobs
     public class StartAllSubredditsJobs : CronJobService
     {
         private readonly ulong GuildId = 747752542741725244;
-        private readonly ulong SpamChannelId = 768600365602963496; // todo config?
 
         private readonly ILogger<StartAllSubredditsJobs> _logger;
 
@@ -38,7 +37,6 @@ namespace ETHDINFKBot.CronJobs.Jobs
             //Console.WriteLine("Run {Name}");
 
             var guild = Program.Client.GetGuild(GuildId);
-            var textChannel = guild.GetTextChannel(SpamChannelId);
 
 
             // TODO Duplicate code from Admin code
@@ -47,7 +45,6 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
             var allNames = allSubreddits.Select(i => i.SubredditName).ToList();
 
-            await textChannel.SendMessageAsync($"Starting Subreddit Reload (CronJob)", false);
 
             for (int i = 0; i < allNames.Count; i += 100)
             {
@@ -56,10 +53,8 @@ namespace ETHDINFKBot.CronJobs.Jobs
                 // Do something with 100 or remaining items
             }
 
-            await textChannel.SendMessageAsync($"Please wait :)", false);
 
 
-            await CommonHelper.ScrapReddit(allNames, textChannel);
 
 
             _logger.LogInformation($"{Name} is done.");

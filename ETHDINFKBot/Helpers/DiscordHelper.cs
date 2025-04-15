@@ -33,7 +33,6 @@ namespace ETHDINFKBot.Helpers
             { "ethmemes", 758293511514226718 },
             { "uzhmemes", 1091476764607398039 },
             { "serotonin", 814440115392348171 },
-            { "spam", 768600365602963496 },
             { "botfun", 747776646551175217 },
             { "admin-memes", 1192547859577454722 }
         };
@@ -877,7 +876,6 @@ namespace ETHDINFKBot.Helpers
         public static async Task SyncVisEvents(ulong guildId, ulong adminBotChannelId, ulong eventsChannelId)
         {
             var guild = Program.Client.GetGuild(guildId);
-            var adminBotChannel = guild.GetTextChannel(adminBotChannelId);
             var eventChannel = guild.GetTextChannel(eventsChannelId);
             int eventsCreated = 0;
 
@@ -980,17 +978,13 @@ namespace ETHDINFKBot.Helpers
                             //ulong eventChannelId = 819864331192631346;
 
                             await eventChannel.SendMessageAsync($"{title}{Environment.NewLine}https://discord.com/events/{guildId}/{guildEvent.Id}");
-                            await adminBotChannel.SendMessageAsync($"Created new VIS Event: {title}");
                         }
                     }
                 }
 
-                if (eventsCreated > 0)
-                    await adminBotChannel.SendMessageAsync("Events synced");
             }
             catch (Exception ex)
             {
-                await adminBotChannel.SendMessageAsync(ex.ToString());
             }
         }
 

@@ -699,17 +699,6 @@ namespace ETHDINFKBot.Modules
                       .ToArray();
         }
 
-        [Command("events")]
-        [RequireUserPermission(GuildPermission.ManageChannels)]
-        public async Task SyncVisEvents()
-        {
-            // TODO Move constants to config
-            await DiscordHelper.SyncVisEvents(
-                (Context.Channel as SocketGuildChannel).Guild.Id,
-                747768907992924192,
-                819864331192631346);
-        }
-
         [Command("cronjob")]
         public async Task ManualCronJob(string cronJobName)
         {
