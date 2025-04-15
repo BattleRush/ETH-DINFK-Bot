@@ -194,7 +194,7 @@ ORDER BY MAX(PH.DiscordMessageId)";
                         RemovePingHell();
                         //CleanupOldEmotes();
                         SyncVisEvents();
-                        CleanupExpiredEvents();
+                        //CleanupExpiredEvents();
                         DiscordHelper.CheckVISAmpel();
                         //CleanupCDN();
 #endif
