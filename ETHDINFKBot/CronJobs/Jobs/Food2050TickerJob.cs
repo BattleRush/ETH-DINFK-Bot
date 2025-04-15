@@ -175,12 +175,10 @@ namespace ETHDINFKBot.CronJobs.Jobs
                         var split = errorLog.Split(Environment.NewLine);
                         var messagePart = split.Take(10);
                         errorLog = string.Join(Environment.NewLine, split.Skip(10));
-                        await channel.SendMessageAsync(string.Join(Environment.NewLine, messagePart).Substring(0, 2000));
                     }
                 }
                 else
                 {
-                    await channel.SendMessageAsync(errorLog);
                 }
             }
         }
