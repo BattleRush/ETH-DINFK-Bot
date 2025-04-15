@@ -115,10 +115,10 @@ jobs:
       run: |
         echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
         echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
-    - name: HTTP Request Action
-      uses: fjogeleit/http-request-action@v1.8.1
-      with:
-        url: '${{ secrets.WEBHOOK_URL }}'
-        method: 'POST'
-        data: '{ "content": "New Build available. Branch: ${{ steps.vars.outputs.branch }} Commit: ${{ steps.vars.outputs.sha_short }}" }'
+    # - name: HTTP Request Action
+    #   uses: fjogeleit/http-request-action@v1.8.1
+    #   with:
+    #     url: '${{ secrets.WEBHOOK_URL }}'
+    #     method: 'POST'
+    #     data: '{ "content": "New Build available. Branch: ${{ steps.vars.outputs.branch }} Commit: ${{ steps.vars.outputs.sha_short }}" }'
 
