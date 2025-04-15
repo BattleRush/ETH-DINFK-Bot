@@ -220,7 +220,8 @@ ORDER BY MAX(PH.DiscordMessageId)";
             await DiscordHelper.SyncVisEvents(
                 747752542741725244, // GuildId
                 747768907992924192, // AdminBot Channel
-                819864331192631346); // Events Channel
+                819864331192631346, // Events Channel
+                747776646551175217);// BotLog Channel 
         }
 
         public override Task DoWork(CancellationToken cancellationToken)
