@@ -874,10 +874,11 @@ namespace ETHDINFKBot.Helpers
         }
 
 
-        public static async Task SyncVisEvents(ulong guildId, ulong adminBotChannelId, ulong eventsChannelId)
+        public static async Task SyncVisEvents(ulong guildId, ulong adminBotChannelId, ulong eventsChannelId, ulong botLogChannelId)
         {
             var guild = Program.Client.GetGuild(guildId);
             var adminBotChannel = guild.GetTextChannel(adminBotChannelId);
+            var botLogChannel = guild.GetTextChannel(botLogChannelId);
             var eventChannel = guild.GetTextChannel(eventsChannelId);
             int eventsCreated = 0;
 
@@ -990,7 +991,7 @@ namespace ETHDINFKBot.Helpers
             }
             catch (Exception ex)
             {
-                await adminBotChannel.SendMessageAsync(ex.ToString());
+                await botLogChannel.SendMessageAsync(ex.ToString());
             }
         }
 

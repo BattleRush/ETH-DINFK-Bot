@@ -707,7 +707,8 @@ namespace ETHDINFKBot.Modules
             await DiscordHelper.SyncVisEvents(
                 (Context.Channel as SocketGuildChannel).Guild.Id,
                 747768907992924192,
-                819864331192631346);
+                819864331192631346,
+                747776646551175217);
         }
 
         [Command("cronjob")]
