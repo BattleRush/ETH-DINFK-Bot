@@ -183,6 +183,8 @@ ORDER BY MAX(PH.DiscordMessageId)";
 
             try
             {
+                RemovePingHell();
+
                 foreach (var item in Program.Client.Guilds)
                 {
                     var channel = item.GetTextChannel(ServerSuggestion);
@@ -191,7 +193,6 @@ ORDER BY MAX(PH.DiscordMessageId)";
                         // dont clean up server suggestions
                         //CleanUpOldMessages(channel, TimeSpan.FromDays(-7));
 #if !DEBUG
-                        RemovePingHell();
                         //CleanupOldEmotes();
                         SyncVisEvents();
                         //CleanupExpiredEvents();
