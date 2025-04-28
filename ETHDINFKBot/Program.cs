@@ -1537,9 +1537,9 @@ namespace ETHDINFKBot
             if (BannedUsers.Any(i => i == m.Author.Id))
             {
                 // rip bozo message
-                if ((m.Channel.Id == DiscordHelper.DiscordChannels["spam"] || m.Channel.Id == DiscordHelper.DiscordChannels["botfun"]))
+                /*if ((m.Channel.Id == DiscordHelper.DiscordChannels["spam"] || m.Channel.Id == DiscordHelper.DiscordChannels["botfun"]))
                     await m.Channel.SendMessageAsync($"<@{m.Author.Id}> rip bozo");
-
+*/
                 await m.DeleteAsync();
                 //await replyMsg.DeleteAsync();
 

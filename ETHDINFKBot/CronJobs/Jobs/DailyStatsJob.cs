@@ -14,7 +14,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 {
     public class DailyStatsJob : CronJobService
     {
-        private readonly ulong GeneralChatId = DiscordHelper.DiscordChannels["spam"]; // todo config?
+        //private readonly ulong GeneralChatId = DiscordHelper.DiscordChannels["spam"]; // todo config?
         private readonly ILogger<DailyStatsJob> _logger;
         private readonly string Name = "DailyStatsJob";
 
@@ -88,7 +88,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                 Directory.Delete(currentBasePath, true);
 
             var guild = Program.Client.GetGuild(Program.ApplicationSetting.BaseGuild);
-            var spamChannel = guild.GetTextChannel(GeneralChatId);
+            //var spamChannel = guild.GetTextChannel(GeneralChatId);
 
             try
             {
@@ -96,10 +96,10 @@ namespace ETHDINFKBot.CronJobs.Jobs
             }
             catch (Exception e)
             {
-                await spamChannel.SendMessageAsync("Error: " + e.ToString().Substring(0, Math.Min(e.ToString().Length, 1980)));
+                //await spamChannel.SendMessageAsync("Error: " + e.ToString().Substring(0, Math.Min(e.ToString().Length, 1980)));
             }
 
-            if (spamChannel != null)
+            /*if (spamChannel != null)
             {
                 try
                 {
@@ -127,7 +127,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
                 {
                     await spamChannel.SendMessageAsync("Error: " + e.ToString());
                 }
-            }
+            }*/
 
             return;
         }

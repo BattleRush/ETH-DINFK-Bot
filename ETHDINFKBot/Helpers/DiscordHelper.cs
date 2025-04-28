@@ -873,7 +873,7 @@ namespace ETHDINFKBot.Helpers
         }
 
 
-        public static async Task SyncVisEvents(ulong guildId, ulong adminBotChannelId, ulong eventsChannelId)
+        public static async Task SyncVisEvents(ulong guildId, ulong eventsChannelId)
         {
             var guild = Program.Client.GetGuild(guildId);
             var eventChannel = guild.GetTextChannel(eventsChannelId);

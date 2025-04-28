@@ -36,31 +36,31 @@ namespace ETHDINFKBot.CronJobs.Jobs
         private void CleanupOldEmotes()
         {
             return;
-/*
-            var fileEndings = new List<string>()
-            {
-                "*.png", "*.gif"
-            };
+            /*
+                        var fileEndings = new List<string>()
+                        {
+                            "*.png", "*.gif"
+                        };
 
-            var guild = Program.Client.GetGuild(747752542741725244);
+                        var guild = Program.Client.GetGuild(747752542741725244);
 
-            foreach (var fileEnding in fileEndings)
-            {
-                var files = Directory.EnumerateFiles(System.IO.Path.Combine(Program.ApplicationSetting.BasePath, "Emotes"), fileEnding, SearchOption.AllDirectories);
-                int deletedFiles = 0;
-                foreach (var file in files)
-                {
-                    FileInfo fi = new FileInfo(file);
-                    if (fi.LastAccessTime < DateTime.Now.AddMonths(-3))
-                    {
-                        fi.Delete();
-                        deletedFiles++;
-                    }
-                }
+                        foreach (var fileEnding in fileEndings)
+                        {
+                            var files = Directory.EnumerateFiles(System.IO.Path.Combine(Program.ApplicationSetting.BasePath, "Emotes"), fileEnding, SearchOption.AllDirectories);
+                            int deletedFiles = 0;
+                            foreach (var file in files)
+                            {
+                                FileInfo fi = new FileInfo(file);
+                                if (fi.LastAccessTime < DateTime.Now.AddMonths(-3))
+                                {
+                                    fi.Delete();
+                                    deletedFiles++;
+                                }
+                            }
 
-                //if (textChannel != null && deletedFiles > 10)
-                    //textChannel.SendMessageAsync($"Found {deletedFiles} emotes to be deleted");
-            }*/
+                            //if (textChannel != null && deletedFiles > 10)
+                                //textChannel.SendMessageAsync($"Found {deletedFiles} emotes to be deleted");
+                        }*/
         }
 
 
@@ -82,6 +82,40 @@ namespace ETHDINFKBot.CronJobs.Jobs
             //var messageDelete = await channel.SendMessageAsync($"Deleting {oldMessages.Count()} messages"); // enable when this message is correct
             //Task.Delay(TimeSpan.FromMinutes(5));
             //messageDelete.DeleteAsync();
+        }
+
+        public  async void CleanupExpiredEvents()
+        {
+            var guild = Program.Client.GetGuild(747752542741725244);
+            var textChannel = guild.GetTextChannel(819864331192631346);
+            // get last 100 messages
+            var messages = await textChannel.GetMessagesAsync(100).FlattenAsync();
+            // seach for messages created by the bot
+            var botMessages = messages.Where(i => i.Author.Id == Program.Client.CurrentUser.Id);
+            foreach (var botMessage in botMessages)
+            {
+                try
+                {
+                    var eventId = botMessage.Content.Split("/").LastOrDefault();
+                    if (ulong.TryParse(eventId, out ulong eventIdParsed))
+                    {
+                        // get active events from discord
+                        var discordEvent = guild.GetEvent(eventIdParsed);
+                        if (discordEvent == null || discordEvent.Status == GuildScheduledEventStatus.Completed)
+                        {
+                            // event is not active anymore
+                            await botMessage.DeleteAsync();
+                        }
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+                catch (Exception ex)
+                {
+                }
+            }
         }
 
 
@@ -173,7 +207,6 @@ ORDER BY MAX(PH.DiscordMessageId)";
         {
             await DiscordHelper.SyncVisEvents(
                 747752542741725244, // GuildId
-                1, // AdminBot Channel
                 819864331192631346); // Events Channel
         }
 
@@ -194,7 +227,7 @@ ORDER BY MAX(PH.DiscordMessageId)";
                         RemovePingHell();
                         //CleanupOldEmotes();
                         SyncVisEvents();
-                        //CleanupExpiredEvents();
+                        CleanupExpiredEvents();
                         DiscordHelper.CheckVISAmpel();
                         //CleanupCDN();
 #endif

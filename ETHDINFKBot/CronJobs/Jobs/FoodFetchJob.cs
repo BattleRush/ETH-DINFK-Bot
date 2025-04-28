@@ -13,7 +13,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
 {
     public class FoodFetchJob : CronJobService
     {
-        private readonly ulong GeneralChatId = DiscordHelper.DiscordChannels["spam"]; // todo config?
+        //private readonly ulong GeneralChatId = DiscordHelper.DiscordChannels["spam"]; // todo config?
         private readonly ILogger<FoodFetchJob> _logger;
         private readonly string Name = "FoodFetchJob";
 
@@ -32,7 +32,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
         public override Task DoWork(CancellationToken cancellationToken)
         {
             var guild = Program.Client.GetGuild(Program.ApplicationSetting.BaseGuild);
-            var spamChannel = guild.GetTextChannel(GeneralChatId);
+            //var spamChannel = guild.GetTextChannel(GeneralChatId);
 
             _logger.LogInformation($"{DateTime.Now:hh:mm:ss} {Name} is working.");
             Console.WriteLine("Run FoodFetchJob");
@@ -48,7 +48,7 @@ namespace ETHDINFKBot.CronJobs.Jobs
             }
             catch (Exception ex)
             {
-                spamChannel.SendMessageAsync($"Error while fetching food menus: {ex}");
+                //spamChannel.SendMessageAsync($"Error while fetching food menus: {ex}");
             }
 
             // Message only if it took longer than 10 seconds -> some load happened
