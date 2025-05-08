@@ -203,7 +203,7 @@ ORDER BY MAX(PH.DiscordMessageId)";
             }
         }
 
-        public async Task SyncVisEvents()
+        public async void SyncVisEvents()
         {
             await DiscordHelper.SyncVisEvents(
                 747752542741725244, // GuildId

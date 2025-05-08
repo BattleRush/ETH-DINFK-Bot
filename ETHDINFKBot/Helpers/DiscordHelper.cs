@@ -985,6 +985,9 @@ namespace ETHDINFKBot.Helpers
             }
             catch (Exception ex)
             {
+                // send msg about the error in guild
+                var guildLogChannel = Program.Client.GetGuild(774286694794919986).GetTextChannel(1194659305119567955);
+                await guildLogChannel.SendMessageAsync($"Error while syncing VIS events: {ex.ToString()}");
             }
         }
 
