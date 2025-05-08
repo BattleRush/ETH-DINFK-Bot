@@ -156,8 +156,9 @@ namespace ETHDINFKBot.CronJobs.Jobs
             }
             catch(Exception ex)
             {
-                Thread.Sleep(1000);
-                Console.WriteLine(ex.Message);
+                Thread.Sleep(60_000);
+                Console.WriteLine("Error in DoOCR");
+                Console.WriteLine(ex);
             }
 
             return true;

@@ -348,7 +348,7 @@ namespace ETHDINFKBot.Helpers
                         // redownload file as likely its corrupted
                     }
 
-                    if(string.IsNullOrWhiteSpace(filePath))
+                    if (string.IsNullOrWhiteSpace(filePath))
                     {
                         Console.WriteLine("Path is empty for url " + url);
                         throw new Exception("Path is empty for url " + url);
@@ -879,6 +879,8 @@ namespace ETHDINFKBot.Helpers
             var eventChannel = guild.GetTextChannel(eventsChannelId);
             int eventsCreated = 0;
 
+            var guildLogChannel = Program.Client.GetGuild(774286694794919986).GetTextChannel(1194659305119567955);
+
             try
             {
                 var activeEvents = await guild.GetEventsAsync();
@@ -959,8 +961,15 @@ namespace ETHDINFKBot.Helpers
                             if (startDateTime == endDateTime)
                                 endDateTime = endDateTime.AddHours(1);
 
-                            var stream = await client.GetStreamAsync(new Uri(WebUtility.HtmlDecode(imgUrl)));
-                            cover = new Image(stream);
+                            try
+                            {
+                                var stream = await client.GetStreamAsync(new Uri(WebUtility.HtmlDecode(imgUrl)));
+                                cover = new Image(stream);
+                            }
+                            catch (Exception ex)
+                            {
+                                await guildLogChannel.SendMessageAsync($"Error while downloading image: {ex.ToString()}");
+                            }
 
                             // Create Event
                             var guildEvent = await guild.CreateEventAsync(
@@ -986,7 +995,6 @@ namespace ETHDINFKBot.Helpers
             catch (Exception ex)
             {
                 // send msg about the error in guild
-                var guildLogChannel = Program.Client.GetGuild(774286694794919986).GetTextChannel(1194659305119567955);
                 await guildLogChannel.SendMessageAsync($"Error while syncing VIS events: {ex.ToString()}");
             }
         }
