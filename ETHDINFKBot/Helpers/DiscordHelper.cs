@@ -18,6 +18,7 @@ using HtmlAgilityPack;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using Discord.Net;
+using System.Net.Http.Headers;
 
 namespace ETHDINFKBot.Helpers
 {
@@ -889,6 +890,19 @@ namespace ETHDINFKBot.Helpers
                 Image cover = new Image();
                 using (HttpClient client = new HttpClient())
                 {
+                    client.Timeout = TimeSpan.FromSeconds(5);
+                    
+                    client.DefaultRequestHeaders.Accept.Clear();
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xhtml+xml"));
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xml", 0.9));
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*", 0.8));
+
+                    client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0");
+                    
+                    client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br, zstd");
+                    client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");
+
                     var response = await client.GetAsync($"https://vis.ethz.ch/en/events/");
                     var contents = await response.Content.ReadAsStringAsync();
 
