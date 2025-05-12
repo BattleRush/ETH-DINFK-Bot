@@ -19,6 +19,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using Discord.Net;
 using System.Net.Http.Headers;
+using System.Net.Sockets;
 
 namespace ETHDINFKBot.Helpers
 {
@@ -888,7 +889,26 @@ namespace ETHDINFKBot.Helpers
 
                 // Download image from url
                 Image cover = new Image();
-                using (HttpClient client = new HttpClient())
+
+                var handler = new SocketsHttpHandler
+                {
+                    ConnectCallback = async (context, cancellationToken) =>
+                    {
+                        var addresses = await Dns.GetHostAddressesAsync(context.DnsEndPoint.Host);
+
+                        // Pick only IPv4 addresses
+                        var ipv4Address = Array.Find(addresses, a => a.AddressFamily == AddressFamily.InterNetwork);
+
+                        if (ipv4Address == null)
+                            throw new Exception("No IPv4 address found.");
+
+                        var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                        await socket.ConnectAsync(ipv4Address, context.DnsEndPoint.Port, cancellationToken);
+                        return new NetworkStream(socket, ownsSocket: true);
+                    }
+                };
+                
+                using (HttpClient client = new HttpClient(handler))
                 {
                     client.Timeout = TimeSpan.FromSeconds(5);
 
