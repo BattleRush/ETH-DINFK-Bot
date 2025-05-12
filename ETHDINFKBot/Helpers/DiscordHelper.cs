@@ -907,15 +907,15 @@ namespace ETHDINFKBot.Helpers
                         return new NetworkStream(socket, ownsSocket: true);
                     }
                 };
-                
+
                 using (HttpClient client = new HttpClient(handler))
                 {
                     client.Timeout = TimeSpan.FromSeconds(5);
 
-                    client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0");
+                    /*client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0");
                     
                     client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br, zstd");
-                    client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");
+                    client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");*/
 
                     var response = await client.GetAsync($"https://vis.ethz.ch/en/events/");
                     var contents = await response.Content.ReadAsStringAsync();
