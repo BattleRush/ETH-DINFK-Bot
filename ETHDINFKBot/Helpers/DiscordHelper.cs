@@ -920,6 +920,8 @@ namespace ETHDINFKBot.Helpers
                     var response = await client.GetAsync($"https://vis.ethz.ch/en/events/");
                     var contents = await response.Content.ReadAsStringAsync();
 
+                    Console.WriteLine($"Response: {contents}");
+
                     var doc = new HtmlDocument();
                     doc.LoadHtml(contents);
 
