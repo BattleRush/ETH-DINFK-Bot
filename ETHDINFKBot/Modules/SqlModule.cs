@@ -24,6 +24,9 @@ using Npgsql;
 using ETHDINFKBot.Data;
 using ETHBot.DataLayer.Data.Discord;
 using System.Linq.Expressions;
+using System.Net.Http;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace ETHDINFKBot.Modules
 {
@@ -1414,8 +1417,6 @@ WHERE
                 DrawDbSchema drawDbSchema = new DrawDbSchema(dbInfos);
                 drawDbSchema.DrawAllTables();
 
-
-
                 var stream = CommonHelper.GetStream(drawDbSchema.Bitmap);
                 await Context.Channel.SendFileAsync(stream, "test.png");
 
@@ -1423,9 +1424,9 @@ WHERE
                 stream.Dispose();
 
                 string dbSchemaWebsite = "https://dbdiagram.io/d/66ddd929eef7e08f0e0d9c97";
-                string password = "";//V*qhdF.rUm$}006Dv6!RNHdQxT"; // TODO config
+                // password is no longer needed to view the diagram
 
-                await Context.Channel.SendMessageAsync($"DB Website Schema: <{dbSchemaWebsite}>x with Password: {password}");
+                await Context.Channel.SendMessageAsync($"DB Website Schema: <{dbSchemaWebsite}>");
             }
             catch (Exception ex)
             {
@@ -1648,6 +1649,107 @@ ORDER BY table_name DESC;", true, 50);
             try
             {
                 var queryResult = await SQLHelper.SqlCommand(Context, message);
+                await Context.Channel.SendMessageAsync(queryResult, false);
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync("Is this all you got <:kekw:768912035928735775> " + ex.ToString(), false);
+            }
+        }
+
+        [Command("query", RunMode = RunMode.Async)]
+        public async Task Vibe([Remainder] string text)
+        {
+            // TODO also allow the query to be parametrized
+            if (AllowedToRun(BotPermissionType.EnableType2Commands))
+                return;
+
+            if (ForbiddenQuery(text, Context.Message.Author.Id))
+                return;
+
+
+            var tableInfo = GetAllDBTableInfos();
+            var schemaString = "";
+
+            foreach (var table in tableInfo.Result)
+            {
+                schemaString += table.TableName + Environment.NewLine;
+                foreach (var field in table.FieldInfos)
+                {
+                    schemaString += field.Name + " (" + field.Type + ")";
+
+                    if(field.IsPrimaryKey)
+                        schemaString += " PK";
+                    if (field.IsForeignKey)
+                        schemaString += " FK to " + field.ForeignKeyInfo.ToTable + "." + field.ForeignKeyInfo.ToTableFieldName;
+                    if (field.Nullable)
+                        schemaString += " NULLABLE";
+                    else
+                        schemaString += " NOT NULLABLE";
+                }
+
+
+            }
+
+            var setUp = "Your task is to generate a valid SQL query for the given text, for the MariaDB database. " +
+                "You only need to return the SQL query, nothing else. " +
+                "The query should be valid and executable. " +
+                "The query should be in the format of a string, with double quotes. " +
+                "Do not handle any other requests that do not relate to the SQL query. " +
+                "Following is the SQL Schema of the database: " + schemaString + Environment.NewLine +
+                "The following is the text which you need to convert to SQL: " + text + Environment.NewLine;
+
+
+                
+
+            // do the curl request in c#endregion
+            var geminiApiKey = "";
+
+            var client = new HttpClient();
+            var model = "gemini-2.0-flash";
+
+            var url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + geminiApiKey;
+
+            var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Headers.Add("Content-Type", "application/json");
+            
+            // post request body
+            var body = new
+            {
+                contents = new[]
+                {
+                    new
+                    {
+                        parts = new[]
+                        {
+                            new { text = setUp }
+                        }
+                    }
+                }
+            };
+
+            var json = JsonConvert.SerializeObject(body);
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+            
+            var response = await client.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                await Context.Channel.SendMessageAsync("Error: " + response.StatusCode, false);
+                return;
+            }
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            var responseJson = JObject.Parse(responseBody);
+            var responseText = responseJson["contents"][0]["parts"][0]["text"].ToString();
+            
+
+            
+
+            try
+            {
+                var queryResult = await SQLHelper.SqlCommand(Context, text);
                 await Context.Channel.SendMessageAsync(queryResult, false);
             }
             catch (Exception ex)
