@@ -52,6 +52,14 @@ namespace ETHDINFKBot.CronJobs.Jobs
 
                 var files = fileDBManager.GetFilesToOcrProcess();
 
+                if (files == null || files.Count == 0)
+                {
+                    //_logger.LogInformation("No files to process");
+                    return Task.CompletedTask;
+                }
+
+                Console.WriteLine($"Found {files.Count} files to process");
+
                 foreach (var file in files)
                 {
                     var success = DoOCR(file).Result;
