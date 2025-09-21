@@ -954,7 +954,7 @@ namespace ETHDINFKBot.Helpers
 
                 string timeString = time == null ? "" : $"{time}/";
 
-                string mainUrl = $"https://app.food2050.ch/{location}/{mensa}/menu/{timeString}weekly";
+                string mainUrl = $"https://app.food2050.ch/en/v2/zfv/{location}/{mensa}/{timeString}/menu/weekly";
                 string mainPage = client.DownloadString(mainUrl);
 
                 // get text between "buildId":" and ","
@@ -964,7 +964,7 @@ namespace ETHDINFKBot.Helpers
                 int endIndex = buildIdString.IndexOf("\",");
                 string buildId = buildIdString.Substring(0, endIndex);
 
-                string url = $"https://app.food2050.ch/_next/data/{buildId}/de/{location}/{mensa}/menu/{timeString}weekly.json";
+                string url = $"https://app.food2050.ch/_next/data/{buildId}/en/v2/zfv/{location}/{mensa}/{timeString}/weekly.json";
 
                 string json = client.DownloadString(url);
 
