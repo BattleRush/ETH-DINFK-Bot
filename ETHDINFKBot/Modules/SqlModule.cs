@@ -1657,7 +1657,7 @@ ORDER BY table_name DESC;", true, 50);
             }
         }
 
-        [Command("query", RunMode = RunMode.Async)]
+        [Command("vibe", RunMode = RunMode.Async)]
         public async Task Vibe([Remainder] string text)
         {
             // TODO also allow the query to be parametrized
