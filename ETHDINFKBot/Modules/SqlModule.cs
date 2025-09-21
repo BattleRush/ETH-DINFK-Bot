@@ -1773,6 +1773,11 @@ ORDER BY table_name DESC;", true, 50);
             if (commandSql.StartsWith("sql"))
                 commandSql = commandSql.Substring(3);
 
+            if(Context.Message.Author.Id == 153929916977643521) // TODO remove IGNORE
+            {
+                await Context.Channel.SendMessageAsync("running query : " + commandSql, false);
+            }
+
             if (ForbiddenQuery(commandSql, userId))
                 return;
 
@@ -1803,8 +1808,16 @@ ORDER BY table_name DESC;", true, 50);
                 else
                     ActiveSQLCommands.Add(userId, DateTime.Now);
 
+                Stopwatch watch = new Stopwatch();
+                watch.Start();
+
+                await Context.Channel.SendMessageAsync("Running query, please wait...", false);
+
                 var commandResponse = await SQLHelper.SqlCommand(Context, commandSql);
                 await Context.Channel.SendMessageAsync(commandResponse, false);
+
+                watch.Stop();
+                await Context.Channel.SendMessageAsync($"Query time: {watch.ElapsedMilliseconds.ToString("N0")}ms", false);
 
                 // release the user again as the query finished
                 ActiveSQLCommands[userId] = DateTime.MinValue;
@@ -1812,7 +1825,7 @@ ORDER BY table_name DESC;", true, 50);
             }
             catch (Exception ex)
             {
-                Context.Channel.SendMessageAsync("Is this all you got <:kekw:768912035928735775> " + ex.ToString(), false);
+                await Context.Channel.SendMessageAsync("Is this all you got <:kekw:768912035928735775> " + ex.ToString(), false);
             }
         }
 
