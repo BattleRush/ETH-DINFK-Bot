@@ -935,12 +935,12 @@ namespace ETHDINFKBot.Helpers
                         // Ensure HTML is decoded properly and trim any unecessary spaces
                         title = HttpUtility.HtmlDecode(title)?.Trim();
 
-                        // substring title to max 100 chars due to api limits
-                        if (title.Length > 100)
-                            title = title.Substring(0, 100);
-
                         if (title != null)
                         {
+                            // substring title to max 100 chars due to api limits
+                            if (title.Length > 100)
+                                title = title.Substring(0, 100);
+
                             // This event is already created
                             if (activeEvents.Any(i => i.Name == title))
                                 continue;
