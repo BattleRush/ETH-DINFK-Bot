@@ -164,7 +164,7 @@ namespace ETHDINFKBot.Helpers
 
             if (facility == null)
             {
-                foreach(var foundFacility in ethFoodResponse.weeklyrotaarray.Where(i => i.facilityid.ToString() == restaurant.InternalName))
+                foreach (var foundFacility in ethFoodResponse.weeklyrotaarray.Where(i => i.facilityid.ToString() == restaurant.InternalName))
                 {
                     // check if from to to is between today
 
@@ -949,60 +949,53 @@ namespace ETHDINFKBot.Helpers
         {
             try
             {
-                WebClient client = new WebClient();
-                var menus = new List<(Menu, List<int>)>();
-
-                string timeString = time == null ? "" : $"{time}/";
-
-                string mainUrl = $"https://app.food2050.ch/en/v2/zfv/{location}/{mensa}/{timeString}/menu/weekly";
-                string mainPage = client.DownloadString(mainUrl);
-
-                // get text between "buildId":" and ","
-                // TODO make this more robust
-                int startIndex = mainPage.IndexOf("\"buildId\":\"") + "\"buildId\":\"".Length;
-                string buildIdString = mainPage.Substring(startIndex);
-                int endIndex = buildIdString.IndexOf("\",");
-                string buildId = buildIdString.Substring(0, endIndex);
-
-                string url = $"https://app.food2050.ch/_next/data/{buildId}/en/v2/zfv/{location}/{mensa}/{timeString}/weekly.json";
-
-                string json = client.DownloadString(url);
-
-                Thread.Sleep(1000);
-
-                var result = JsonConvert.DeserializeObject<Food2050WeeklyResponse>(json);
-                var categories = result?.pageProps?.query?.location?.kitchen?.digitalMenu?.categories ?? new List<Category>();
-
-
-                foreach (var category in categories)
+                // Use a single WebClient instance
+                using (WebClient client = new WebClient())
                 {
-                    if (category.__typename != "DigitalMenuCategory")
-                        continue;
+                    var menus = new List<(Menu, List<int>)>();
+                    string timeString = time == null ? "" : $"{time}/";
 
-                    foreach (var item in category.items)
+                    // 1. Fetch the main HTML page
+                    string mainUrl = $"https://app.food2050.ch/en/v2/zfv/{location}/{mensa}/{timeString}menu/weekly";
+                    string mainPage = client.DownloadString(mainUrl);
+
+                    // 2. **Extract the __NEXT_DATA__ JSON blob from the HTML**
+                    string scriptTagStart = "<script id=\"__NEXT_DATA__\" type=\"application/json\">";
+                    int startIndex = mainPage.IndexOf(scriptTagStart) + scriptTagStart.Length;
+                    int endIndex = mainPage.IndexOf("</script>", startIndex);
+                    string initialJson = mainPage.Substring(startIndex, endIndex - startIndex);
+
+                    // 3. **Deserialize the initial JSON to get buildId and menu structure**
+                    var initialData = JsonConvert.DeserializeObject<NextData>(initialJson);
+                    string buildId = initialData.BuildId;
+                    var dailyMenus = initialData.Props.PageProps.Organisation.Outlet.MenuCategory.Calendar.Week.Daily;
+
+                    // 4. **Iterate through days and menu items from the initial data**
+                    foreach (var day in dailyMenus)
                     {
-                        foreach (var recipe in item.dailyRecipies)
+                        if (day.From.DateLocal < DateTime.Now.Date.AddDays(-1))
+                            continue;
+
+                        foreach (var initialMenuItem in day.MenuItems)
                         {
-                            if (recipe?.recipe == null)
-                                continue;
-
-                            // if recipe datetime is older than now minus 1 day then skip
-                            if (recipe.date < DateTime.UtcNow.AddDays(-1))
-                                continue;
-
-                            // example https://app.food2050.ch/_next/data/fWt87G0z-iWkq_diJzXc_/uzh-zentrum/untere-mensa/food-profile/2023-07-28-mittag-butcher.json?locationSlug=uzh-zentrum&kitchenSlug=untere-mensa&slug=2023-07-28-mittag-butcher
-                            var menuUrl = $"https://app.food2050.ch/_next/data/{buildId}/de/{location}/{mensa}/food-profile/{recipe.recipe.slug}.json";
-
-                            Food2050MenuResponse menuResult = null;
-
+                            Food2050MenuDetailResponse menuResult = null;
                             try
                             {
-                                string menuJson = client.DownloadString(menuUrl);
-                                Thread.Sleep(500);
-                                menuResult = JsonConvert.DeserializeObject<Food2050MenuResponse>(menuJson);
+                                // 5. **Construct the detail JSON URL from the detailUrl property**
+                                // Example detailUrl: "https://app.food2050.ch/de/v2/zfv/..."
+                                // We need to transform it to: "https://app.food2050.ch/_next/data/{buildId}/de/v2/zfv/....json"
+                                var detailUri = new Uri(initialMenuItem.DetailUrl);
+                                string path = detailUri.AbsolutePath;
+                                // To get english descriptions, we can replace the language code
+                                path = System.Text.RegularExpressions.Regex.Replace(path, "^/[a-z]{2}/", "/en/");
 
-                                if (menuResult == null)
-                                    continue;
+                                var menuUrl = $"https://app.food2050.ch/_next/data/{buildId}{path}.json";
+
+                                string menuJson = client.DownloadString(menuUrl);
+                                Thread.Sleep(500); // Respect the server
+                                menuResult = JsonConvert.DeserializeObject<Food2050MenuDetailResponse>(menuJson);
+
+                                if (menuResult == null) continue;
                             }
                             catch (Exception ex)
                             {
@@ -1010,104 +1003,77 @@ namespace ETHDINFKBot.Helpers
                                 menus.Add((
                                     new Menu()
                                     {
-                                        Name = item.displayName,
-                                        Description = ex.Message,
-                                        DateTime = recipe.date.AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(recipe.date) ? 2 : 1)
+                                        Name = initialMenuItem.Category.Name,
+                                        Description = $"{initialMenuItem.Dish.Name} (Error: {ex.Message})",
+                                        DateTime = day.From.DateLocal.AddHours(TimeZoneInfo.Local.IsDaylightSavingTime(day.From.DateLocal) ? 12 : 11)
                                     }, new List<int>())
                                 );
                                 continue;
                             }
 
-                            var responseRecipe = menuResult.pageProps.recipe;
+                            var menuItemDetail = menuResult.PageProps.Organisation.Outlet.MenuCategory.MenuItem;
+                            var dishDetail = menuItemDetail.Dish;
 
                             double price = 0;
-
-                            foreach (var priceItem in responseRecipe.prices)
+                            foreach (var priceItem in menuItemDetail.Prices)
                             {
-                                // eng
-                                if (priceItem.category.title == "Student")
+                                if (priceItem.PriceCategory.Name == "Student" || priceItem.PriceCategory.Name == "Studierende")
                                 {
-                                    price = priceItem.amount;
-                                    break;
-                                }
-
-                                // Sometimes the price comes as german
-                                if (priceItem.category.title == "Studierende")
-                                {
-                                    price = priceItem.amount;
+                                    // Price is a string like "6.1", so we need to parse it
+                                    double.TryParse(priceItem.Amount, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out price);
                                     break;
                                 }
                             }
 
-                            if (price == 0)
+                            if (price == 0 && menuItemDetail.Prices.Any())
                             {
-                                // no price found just get the first one if there exists one
-                                price = responseRecipe?.prices?.FirstOrDefault()?.amount ?? 0;
+                                double.TryParse(menuItemDetail.Prices.FirstOrDefault()?.Amount, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out price);
                             }
 
-                            var imageUrl = responseRecipe.imageUrl ?? "";
-
-                            double weight = responseRecipe.weight ?? 0;
-                            double factor = weight / 100d;
-
-                            int totalCalories = (int)((responseRecipe.energyPer100g ?? 0) * factor);
-                            double totalProtein = Math.Round((responseRecipe.proteinPer100g ?? 0) * factor);
-                            double totalCarbs = Math.Round((responseRecipe.carbohydratesPer100g ?? 0) * factor);
-                            double totalFat = Math.Round((responseRecipe.fatPer100g ?? 0) * factor);
-                            double totalSalt = Math.Round((responseRecipe.saltPer100g ?? 0) * factor);
-                            double totalSugar = Math.Round((responseRecipe.sugarPer100g ?? 0) * factor);
-
-
+                            // 6. **Extract data from the new, nested JSON structure**
                             var menu = new Menu()
                             {
-                                Name = item.displayName,
-                                Description = responseRecipe.title,
+                                Name = initialMenuItem.Category.Name,
+                                Description = dishDetail.Name,
                                 Amount = price,
-                                IsVegan = responseRecipe.isVegan ?? false,
-                                IsVegetarian = responseRecipe.isVegetarian ?? false,
-                                Calories = totalCalories,
-                                Protein = totalProtein,
-                                Carbohydrates = totalCarbs,
-                                Fat = totalFat,
-                                Salt = totalSalt,
-                                Sugar = totalSugar,
-                                Weight = weight,
-                            
-                                DirectMenuImageUrl = responseRecipe.imageUrl,
-                                DateTime = recipe.date.AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(recipe.date) ? 2 : 1)
+                                IsVegan = dishDetail.IsVegan,
+                                IsVegetarian = dishDetail.IsVegetarian,
+                                Calories = (int?)dishDetail.Stats.Energy?.Amount ?? 0,
+                                Protein = dishDetail.Stats.Protein?.Amount ?? 0,
+                                Carbohydrates = dishDetail.Stats.Carbohydrates?.Amount ?? 0,
+                                Fat = dishDetail.Stats.Fat?.Amount ?? 0,
+                                Salt = dishDetail.Stats.Salt?.Amount ?? 0,
+                                Sugar = dishDetail.Stats.Sugar?.Amount ?? 0,
+                                Weight = dishDetail.Stats.ServingWeight?.Amount ?? 0,
+                                DirectMenuImageUrl = dishDetail.ImageUrl,
+                                DateTime = day.From.DateLocal.AddHours(TimeZoneInfo.Local.IsDaylightSavingTime(day.From.DateLocal) ? 12 : 11) // Assuming midday
                             };
 
+                            // The fallback image logic remains the same
                             if (menu.DirectMenuImageUrl == null)
                             {
-                                // find from menus with direct image if there exists one menu with same description
                                 menu.FallbackMenuImageUrl = FoodDBManager.GetDirectImageByMenuDescription(menu.Description);
-
                                 if (string.IsNullOrWhiteSpace(menu.FallbackMenuImageUrl))
                                 {
-                                    // find from current menu list if any menu has same description
-                                    menu.FallbackMenuImageUrl = menus
-                                        .FirstOrDefault(x => x.Item1.Description == menu.Description).Item1
-                                        ?.DirectMenuImageUrl;
+                                    menu.FallbackMenuImageUrl = menus.FirstOrDefault(x => x.Item1.Description == menu.Description).Item1?.DirectMenuImageUrl;
                                 }
                             }
 
+                            // 7. **Allergy data is now in a list of objects**
                             List<int> allergyIds = new List<int>();
-
-                            //Console.WriteLine("Found allergens: " + recipe.recipe.allergens);
-                            foreach (var allergy in recipe.recipe.allergens.Split(','))
+                            foreach (var allergy in dishDetail.Allergens)
                             {
-                                int allergyId = MapFood2050AllergyToDBInt(allergy);
+                                int allergyId = MapFood2050AllergyToDBInt(allergy.Allergen.ExternalId);
                                 if (allergyId > 0)
                                     allergyIds.Add(allergyId);
                             }
 
                             menus.Add((menu, allergyIds));
-                            Thread.Sleep(1000);
+                            Thread.Sleep(1000); // Respect the server
                         }
                     }
+                    return menus;
                 }
-
-                return menus;
             }
             catch (Exception ex)
             {
