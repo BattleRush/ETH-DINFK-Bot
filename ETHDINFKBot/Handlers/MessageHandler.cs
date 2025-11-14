@@ -261,9 +261,9 @@ namespace ETHDINFKBot.Handlers
                             EmbedBuilder embedBuilder = new EmbedBuilder();
                             embedBuilder.WithTitle("VIS Website Status");
                             embedBuilder.WithDescription(@$"This is a status check of the VIS websites.
-VIS status website: https://mon.vis.ethz.ch/grafana
-Comsol status website: https://mon.vis.ethz.ch/d/iWYPozoMk/community-solutions?orgId=1&from=now-24h&to=now&timezone=browser&var-datasource=aekidu4htbxmof&var-namespace=cat-prod&var-job=$__all
-External status site: https://up.markc.su/status/vis");
+VIS status website: [LINK](https://mon.vis.ethz.ch)
+Comsol status website: [LINK](https://mon.vis.ethz.ch/d/iWYPozoMk/community-solutions?orgId=1&from=now-24h&to=now&timezone=browser&var-datasource=aekidu4htbxmof&var-namespace=cat-prod&var-job=$__all)
+External status site: [LINK](https://up.markc.su/status/vis)");
 
                             Dictionary<string, string> websites = new Dictionary<string, string>
                             {
