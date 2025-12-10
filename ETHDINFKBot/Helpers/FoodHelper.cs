@@ -956,7 +956,7 @@ namespace ETHDINFKBot.Helpers
                     string timeString = time == null ? "" : $"{time}/";
 
                     // 1. Fetch the main HTML page
-                    string mainUrl = $"https://app.food2050.ch/en/v2/zfv/{location}/{mensa}/{timeString}menu/weekly";
+                    string mainUrl = $"https://app.food2050.ch/de/v2/zfv/{location}/{mensa}/{timeString}menu/weekly";
                     string mainPage = client.DownloadString(mainUrl);
 
                     // 2. **Extract the __NEXT_DATA__ JSON blob from the HTML**
@@ -987,7 +987,7 @@ namespace ETHDINFKBot.Helpers
                                 var detailUri = new Uri(initialMenuItem.DetailUrl);
                                 string path = detailUri.AbsolutePath;
                                 // To get english descriptions, we can replace the language code
-                                path = System.Text.RegularExpressions.Regex.Replace(path, "^/[a-z]{2}/", "/en/");
+                                path = System.Text.RegularExpressions.Regex.Replace(path, "^/[a-z]{2}/", "/de/");
 
                                 var menuUrl = $"https://app.food2050.ch/_next/data/{buildId}{path}.json";
 
