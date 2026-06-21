@@ -14,20 +14,29 @@ namespace ETHDINFKBot.Modules
     {
         private static readonly HashSet<ulong> Whitelist = new HashSet<ulong>();
 
-        // Channel/thread IDs that "purge all" must never touch
-        private static readonly HashSet<ulong> Blacklist = new HashSet<ulong>();
+        // Users (besides the bot owner) allowed to use every purge command
+        private static readonly HashSet<ulong> AdminUsers = new HashSet<ulong>
+        {
+            238388792132763648
+        };
+
+        // Set by the skip button to stop purging the channel currently being processed
+        private volatile bool _skipRequested;
 
         // 2-hour safety buffer before the actual 14-day bulk-delete cutoff
         private static DateTimeOffset BulkDeleteCutoff =>
             DateTimeOffset.UtcNow.AddDays(-14).AddHours(2);
 
+        private bool IsAdmin(ulong userId) =>
+            userId == Program.ApplicationSetting.Owner || AdminUsers.Contains(userId);
+
         private bool IsWhitelisted(ulong userId) =>
-            userId == Program.ApplicationSetting.Owner || Whitelist.Contains(userId);
+            IsAdmin(userId) || Whitelist.Contains(userId);
 
         [Command("adduser")]
         public async Task AddUser(ulong userId)
         {
-            if (Context.Message.Author.Id != Program.ApplicationSetting.Owner)
+            if (!IsAdmin(Context.Message.Author.Id))
             {
                 await Context.Channel.SendMessageAsync("Only the owner can manage the purge whitelist.");
                 return;
@@ -39,7 +48,7 @@ namespace ETHDINFKBot.Modules
         [Command("removeuser")]
         public async Task RemoveUser(ulong userId)
         {
-            if (Context.Message.Author.Id != Program.ApplicationSetting.Owner)
+            if (!IsAdmin(Context.Message.Author.Id))
             {
                 await Context.Channel.SendMessageAsync("Only the owner can manage the purge whitelist.");
                 return;
@@ -54,7 +63,7 @@ namespace ETHDINFKBot.Modules
         [Command("list")]
         public async Task ListWhitelist()
         {
-            if (Context.Message.Author.Id != Program.ApplicationSetting.Owner)
+            if (!IsAdmin(Context.Message.Author.Id))
             {
                 await Context.Channel.SendMessageAsync("Only the owner can view the purge whitelist.");
                 return;
@@ -66,50 +75,6 @@ namespace ETHDINFKBot.Modules
             }
             string users = string.Join("\n", Whitelist.Select(id => $"<@{id}> (`{id}`)"));
             await Context.Channel.SendMessageAsync($"**Purge whitelist** ({Whitelist.Count} user(s)):\n{users}");
-        }
-
-        [Command("blacklist")]
-        public async Task BlacklistChannel(ulong channelId)
-        {
-            if (Context.Message.Author.Id != Program.ApplicationSetting.Owner)
-            {
-                await Context.Channel.SendMessageAsync("Only the owner can manage the purge blacklist.");
-                return;
-            }
-            Blacklist.Add(channelId);
-            await Context.Channel.SendMessageAsync($"Added <#{channelId}> to the purge blacklist. It will be skipped by `purge all`. ({Blacklist.Count} channel(s)/thread(s) total)");
-        }
-
-        [Command("unblacklist")]
-        public async Task UnblacklistChannel(ulong channelId)
-        {
-            if (Context.Message.Author.Id != Program.ApplicationSetting.Owner)
-            {
-                await Context.Channel.SendMessageAsync("Only the owner can manage the purge blacklist.");
-                return;
-            }
-            bool removed = Blacklist.Remove(channelId);
-            if (removed)
-                await Context.Channel.SendMessageAsync($"Removed <#{channelId}> from the purge blacklist.");
-            else
-                await Context.Channel.SendMessageAsync($"<#{channelId}> is not on the purge blacklist.");
-        }
-
-        [Command("blacklistlist")]
-        public async Task ListBlacklist()
-        {
-            if (Context.Message.Author.Id != Program.ApplicationSetting.Owner)
-            {
-                await Context.Channel.SendMessageAsync("Only the owner can view the purge blacklist.");
-                return;
-            }
-            if (Blacklist.Count == 0)
-            {
-                await Context.Channel.SendMessageAsync("The purge blacklist is empty.");
-                return;
-            }
-            string channels = string.Join("\n", Blacklist.Select(id => $"<#{id}> (`{id}`)"));
-            await Context.Channel.SendMessageAsync($"**Purge blacklist** ({Blacklist.Count} channel(s)/thread(s)):\n{channels}");
         }
 
         [Command("channel", RunMode = RunMode.Async)]
@@ -129,9 +94,9 @@ namespace ETHDINFKBot.Modules
                 return;
             }
 
-            var statusMsg = await Context.Channel.SendMessageAsync($"Purging your messages in <#{channel.Id}>...");
+            var statusMsg = await Context.Channel.SendMessageAsync($"Purging your messages in #{channel.Name}...");
             int deleted = await PurgeMessagesInChannel(channel, userId, statusMsg);
-            await statusMsg.ModifyAsync(m => m.Content = $"Done! Deleted **{deleted}** message(s) from <#{channel.Id}>.");
+            await statusMsg.ModifyAsync(m => m.Content = $"Done! Deleted **{deleted}** message(s) from #{channel.Name}.");
         }
 
         [Command("all", RunMode = RunMode.Async)]
@@ -145,38 +110,80 @@ namespace ETHDINFKBot.Modules
             }
 
             var guild = Context.Guild;
+            var textChannels = guild.TextChannels.OrderBy(c => c.Position).ToList();
+
+            // Unique button id per purge run so clicks only affect this invocation
+            string skipButtonId = $"purge-skip-{Context.Message.Id}";
+            var skipButton = new ComponentBuilder()
+                .WithButton("Skip this channel", skipButtonId, ButtonStyle.Secondary)
+                .Build();
+            var noButton = new ComponentBuilder().Build();
+
             var statusMsg = await Context.Channel.SendMessageAsync("Starting full server purge across all text channels. This may take a while...");
 
             int totalDeleted = 0;
             int channelsProcessed = 0;
-            var textChannels = guild.TextChannels.OrderBy(c => c.Position).ToList();
-
             int channelsSkipped = 0;
 
-            foreach (var channel in textChannels)
+            // Listen for the skip button for the duration of this run
+            Func<SocketMessageComponent, Task> onButton = async component =>
             {
-                if (Blacklist.Contains(channel.Id) || Blacklist.Contains(channel.CategoryId ?? 0))
+                if (component.Data.CustomId != skipButtonId)
+                    return;
+                _skipRequested = true;
+                await component.DeferAsync();
+            };
+            Context.Client.ButtonExecuted += onButton;
+
+            try
+            {
+                for (int i = 0; i < textChannels.Count; i++)
                 {
-                    channelsSkipped++;
-                    continue;
+                    var channel = textChannels[i];
+                    _skipRequested = false;
+
+                    // channel.Name comes from the gateway cache, so the real name is shown
+                    // even if the invoking user can't access the channel (a <#id> mention wouldn't render)
+                    string channelLabel = $"#{channel.Name} (`{channel.Id}`)";
+
+                    var botPerms = guild.CurrentUser.GetPermissions(channel);
+                    if (!botPerms.ReadMessageHistory || !botPerms.ManageMessages)
+                    {
+                        channelsSkipped++;
+                        await statusMsg.ModifyAsync(m =>
+                        {
+                            m.Content = $"Skipping {channelLabel} — no access | channel **{i + 1}/{textChannels.Count}**\n**{totalDeleted}** message(s) deleted so far";
+                            m.Components = noButton;
+                        });
+                        continue;
+                    }
+
+                    await statusMsg.ModifyAsync(m =>
+                    {
+                        m.Content = $"Now purging {channelLabel} — channel **{i + 1}/{textChannels.Count}**\n**{totalDeleted}** message(s) deleted so far";
+                        m.Components = skipButton;
+                    });
+
+                    int deleted = await PurgeMessagesInChannel(channel, userId);
+                    totalDeleted += deleted;
+
+                    if (_skipRequested)
+                        channelsSkipped++;
+                    else
+                        channelsProcessed++;
                 }
-
-                var botPerms = guild.CurrentUser.GetPermissions(channel);
-                if (!botPerms.ReadMessageHistory || !botPerms.ManageMessages)
-                    continue;
-
-                int deleted = await PurgeMessagesInChannel(channel, userId);
-                totalDeleted += deleted;
-                channelsProcessed++;
-
-                if (channelsProcessed % 5 == 0 || deleted > 0)
-                    await statusMsg.ModifyAsync(m => m.Content =
-                        $"Purging... **{channelsProcessed}/{textChannels.Count}** channels processed | **{totalDeleted}** message(s) deleted so far");
+            }
+            finally
+            {
+                Context.Client.ButtonExecuted -= onButton;
             }
 
-            string skippedNote = channelsSkipped > 0 ? $" (skipped **{channelsSkipped}** blacklisted channel(s))" : "";
-            await statusMsg.ModifyAsync(m => m.Content =
-                $"Purge complete! Deleted **{totalDeleted}** message(s) across **{channelsProcessed}** channel(s).{skippedNote}");
+            string skippedNote = channelsSkipped > 0 ? $" Skipped **{channelsSkipped}** channel(s)." : "";
+            await statusMsg.ModifyAsync(m =>
+            {
+                m.Content = $"Purge complete! Deleted **{totalDeleted}** message(s) across **{channelsProcessed}** channel(s).{skippedNote}";
+                m.Components = noButton;
+            });
         }
 
         private async Task<int> PurgeMessagesInChannel(SocketTextChannel channel, ulong targetUserId, IUserMessage statusMessage = null)
@@ -186,6 +193,9 @@ namespace ETHDINFKBot.Modules
 
             while (true)
             {
+                if (_skipRequested)
+                    break;
+
                 IEnumerable<IMessage> batch;
                 try
                 {
@@ -242,6 +252,8 @@ namespace ETHDINFKBot.Modules
                 // Delete messages older than 14 days one by one — bulk delete not allowed by Discord API
                 foreach (var msg in oldMessages)
                 {
+                    if (_skipRequested)
+                        break;
                     if (await TryDeleteMessage(msg))
                         totalDeleted++;
                     await Task.Delay(300); // ~3 deletes/sec to respect rate limits
