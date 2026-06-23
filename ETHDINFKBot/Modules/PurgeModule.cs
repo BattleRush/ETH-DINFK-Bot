@@ -164,6 +164,11 @@ namespace ETHDINFKBot.Modules
                     m.Components = noButton;
                 });
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[purge] unexpected error purging #{channel.Name} ({channel.Id}): {ex}");
+                await Context.Channel.SendMessageAsync($"⚠ Purge of {channelLabel} stopped due to an unexpected error: {DescribeError(ex)}.");
+            }
             finally
             {
                 Context.Client.ButtonExecuted -= onButton;
@@ -245,6 +250,12 @@ namespace ETHDINFKBot.Modules
                         channelsProcessed++;
                 }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[purge] unexpected error during purge all: {ex}");
+                await SafeModifyAsync(statusMsg, $"⚠ Purge stopped due to an unexpected error: {DescribeError(ex)}. Deleted **{totalDeleted}** message(s) before stopping.");
+                return;
+            }
             finally
             {
                 Context.Client.ButtonExecuted -= onButton;
@@ -258,54 +269,100 @@ namespace ETHDINFKBot.Modules
             });
         }
 
+        // Let Discord.Net wait out rate limits / 502s / timeouts instead of throwing
+        private static RequestOptions PurgeRequestOptions => new RequestOptions
+        {
+            RetryMode = RetryMode.AlwaysRetry,
+            Timeout = 30000
+        };
+
+        private static string DescribeError(Exception ex)
+        {
+            if (ex is HttpException http)
+                return $"HTTP {(int)http.HttpCode} {http.Reason ?? http.Message}";
+            return $"{ex.GetType().Name}: {ex.Message}";
+        }
+
+        private static async Task SafeModifyAsync(IUserMessage message, string content)
+        {
+            if (message == null)
+                return;
+            try
+            {
+                await message.ModifyAsync(m => m.Content = content);
+            }
+            catch
+            {
+                // Updating the status message must never break the purge
+            }
+        }
+
         private async Task<int> PurgeMessagesInChannel(SocketTextChannel channel, ulong targetUserId, IUserMessage statusMessage = null, string progressPrefix = null)
         {
+            const int maxConsecutiveErrors = 5;
+
             int totalDeleted = 0;
             int scanned = 0;
             int batchCount = 0;
             int consecutiveErrors = 0;
             ulong? beforeId = null;
+            string label = progressPrefix ?? $"Purging #{channel.Name}";
 
             while (true)
             {
                 if (_skipRequested)
                     break;
 
-                IEnumerable<IMessage> batch;
+                List<IMessage> messages;
                 try
                 {
-                    batch = beforeId == null
-                        ? await channel.GetMessagesAsync(100).FlattenAsync()
-                        : await channel.GetMessagesAsync(beforeId.Value, Direction.Before, 100).FlattenAsync();
+                    var batch = beforeId == null
+                        ? await channel.GetMessagesAsync(100, PurgeRequestOptions).FlattenAsync()
+                        : await channel.GetMessagesAsync(beforeId.Value, Direction.Before, 100, PurgeRequestOptions).FlattenAsync();
+                    messages = batch.ToList();
                     consecutiveErrors = 0;
                 }
-                catch (HttpException ex)
+                catch (Exception ex)
                 {
-                    // Don't silently abandon the channel on a transient error — log and retry a few times
+                    // Catch *everything* (HttpException, RateLimitedException, TimeoutException, ...)
+                    // so a single hiccup can't silently kill the command's background task.
                     consecutiveErrors++;
-                    Console.WriteLine($"[purge] fetch error in #{channel.Name} ({channel.Id}) after {scanned} scanned: {(int?)ex.HttpCode} {ex.Reason ?? ex.Message} (attempt {consecutiveErrors})");
-                    if (consecutiveErrors >= 3)
+                    string reason = DescribeError(ex);
+                    Console.WriteLine($"[purge] fetch error in #{channel.Name} ({channel.Id}) after {scanned} scanned (attempt {consecutiveErrors}/{maxConsecutiveErrors}): {reason}");
+
+                    if (consecutiveErrors >= maxConsecutiveErrors)
+                    {
+                        await SafeModifyAsync(statusMessage, $"{label}\n⚠ Giving up after {scanned} scanned — repeated fetch errors: {reason}. Deleted **{totalDeleted}** so far.");
                         break;
-                    await Task.Delay(2000);
+                    }
+
+                    await SafeModifyAsync(statusMessage, $"{label}\n⚠ Fetch error after {scanned} scanned ({reason}). Retrying {consecutiveErrors}/{maxConsecutiveErrors}...");
+                    await Task.Delay(2000 * consecutiveErrors);
                     continue;
                 }
 
-                var messages = batch.ToList();
                 if (messages.Count == 0)
                     break;
 
-                beforeId = messages.Min(m => m.Id);
+                // Guard against ever looping on the same page (paginate strictly backwards)
+                ulong newBeforeId = messages.Min(m => m.Id);
+                if (beforeId.HasValue && newBeforeId >= beforeId.Value)
+                    break;
+                beforeId = newBeforeId;
+
                 scanned += messages.Count;
                 batchCount++;
 
                 // Show that we're still working even when a long stretch has nothing to delete
-                if (statusMessage != null && progressPrefix != null && batchCount % 5 == 0)
-                    await statusMessage.ModifyAsync(m => m.Content =
-                        $"{progressPrefix}\nScanned **{scanned}** messages, deleted **{totalDeleted}** so far...");
+                if (statusMessage != null && batchCount % 5 == 0)
+                    await SafeModifyAsync(statusMessage, $"{label}\nScanned **{scanned}** messages, deleted **{totalDeleted}** so far...");
 
                 var userMessages = messages.Where(m => m.Author.Id == targetUserId).ToList();
                 if (userMessages.Count == 0)
+                {
+                    await Task.Delay(150); // be gentle on the message-history rate limit while scanning
                     continue;
+                }
 
                 var cutoff = BulkDeleteCutoff;
                 var recentMessages = userMessages.Where(m => m.CreatedAt >= cutoff).ToList();
@@ -316,25 +373,27 @@ namespace ETHDINFKBot.Modules
                 {
                     try
                     {
-                        await channel.DeleteMessagesAsync(recentMessages);
+                        await channel.DeleteMessagesAsync(recentMessages, PurgeRequestOptions);
                         totalDeleted += recentMessages.Count;
                         await Task.Delay(500);
                     }
-                    catch (HttpException)
+                    catch (Exception ex)
                     {
-                        // Fall back to individual deletes if bulk fails
+                        // Bulk failed (e.g. a message slipped past the 14-day line) — delete individually
+                        Console.WriteLine($"[purge] bulk delete failed in #{channel.Name}: {DescribeError(ex)} — falling back to individual deletes");
                         foreach (var msg in recentMessages)
                         {
-                            await TryDeleteMessage(msg);
-                            totalDeleted++;
+                            if (_skipRequested) break;
+                            if (await TryDeleteMessage(msg))
+                                totalDeleted++;
                             await Task.Delay(300);
                         }
                     }
                 }
                 else if (recentMessages.Count == 1)
                 {
-                    await TryDeleteMessage(recentMessages[0]);
-                    totalDeleted++;
+                    if (await TryDeleteMessage(recentMessages[0]))
+                        totalDeleted++;
                     await Task.Delay(300);
                 }
 
@@ -347,9 +406,6 @@ namespace ETHDINFKBot.Modules
                         totalDeleted++;
                     await Task.Delay(300); // ~3 deletes/sec to respect rate limits
                 }
-
-                if (statusMessage != null && progressPrefix == null && totalDeleted > 0 && totalDeleted % 25 == 0)
-                    await statusMessage.ModifyAsync(m => m.Content = $"Purging... ({totalDeleted} messages deleted so far)");
             }
 
             return totalDeleted;
@@ -359,11 +415,12 @@ namespace ETHDINFKBot.Modules
         {
             try
             {
-                await message.DeleteAsync();
+                await message.DeleteAsync(PurgeRequestOptions);
                 return true;
             }
-            catch (HttpException)
+            catch (Exception ex)
             {
+                Console.WriteLine($"[purge] delete failed for message {message.Id}: {DescribeError(ex)}");
                 return false;
             }
         }
