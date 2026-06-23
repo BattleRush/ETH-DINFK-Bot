@@ -94,9 +94,80 @@ namespace ETHDINFKBot.Modules
                 return;
             }
 
-            var statusMsg = await Context.Channel.SendMessageAsync($"Purging your messages in #{channel.Name}...");
-            int deleted = await PurgeMessagesInChannel(channel, userId, statusMsg);
-            await statusMsg.ModifyAsync(m => m.Content = $"Done! Deleted **{deleted}** message(s) from #{channel.Name}.");
+            await PurgeOneChannelWithStatus(channel, userId);
+        }
+
+        [Command("channel", RunMode = RunMode.Async)]
+        public async Task PurgeChannel(ulong channelId)
+        {
+            var userId = Context.Message.Author.Id;
+            if (!IsWhitelisted(userId))
+            {
+                await Context.Channel.SendMessageAsync("You are not whitelisted to use the purge command.");
+                return;
+            }
+
+            // GetTextChannel also resolves threads (SocketThreadChannel is a SocketTextChannel)
+            var channel = Context.Guild.GetTextChannel(channelId);
+            if (channel == null)
+            {
+                await Context.Channel.SendMessageAsync($"Couldn't find a text channel/thread with id `{channelId}` in this server.");
+                return;
+            }
+
+            await PurgeOneChannelWithStatus(channel, userId);
+        }
+
+        // Purges the user's messages in a single channel with a live status message,
+        // scan progress, and a Skip button (same machinery as `purge all`).
+        private async Task PurgeOneChannelWithStatus(SocketTextChannel channel, ulong userId)
+        {
+            // channel.Name comes from the gateway cache, so the real name is shown
+            // even if the invoking user can't access the channel (a <#id> mention wouldn't render)
+            string channelLabel = $"#{channel.Name} (`{channel.Id}`)";
+
+            var botPerms = Context.Guild.CurrentUser.GetPermissions(channel);
+            if (!botPerms.ReadMessageHistory || !botPerms.ManageMessages)
+            {
+                await Context.Channel.SendMessageAsync($"I don't have access to {channelLabel} (need Read Message History + Manage Messages).");
+                return;
+            }
+
+            string skipButtonId = $"purge-skip-{Context.Message.Id}";
+            var skipButton = new ComponentBuilder()
+                .WithButton("Skip / stop", skipButtonId, ButtonStyle.Secondary)
+                .Build();
+            var noButton = new ComponentBuilder().Build();
+
+            _skipRequested = false;
+            Func<SocketMessageComponent, Task> onButton = async component =>
+            {
+                if (component.Data.CustomId != skipButtonId)
+                    return;
+                _skipRequested = true;
+                await component.DeferAsync();
+            };
+            Context.Client.ButtonExecuted += onButton;
+
+            int deleted;
+            try
+            {
+                var statusMsg = await Context.Channel.SendMessageAsync($"Purging your messages in {channelLabel}...");
+                await statusMsg.ModifyAsync(m => m.Components = skipButton);
+
+                deleted = await PurgeMessagesInChannel(channel, userId, statusMsg, $"Purging your messages in {channelLabel}");
+
+                string stoppedNote = _skipRequested ? " (stopped early)" : "";
+                await statusMsg.ModifyAsync(m =>
+                {
+                    m.Content = $"Done! Deleted **{deleted}** message(s) from {channelLabel}.{stoppedNote}";
+                    m.Components = noButton;
+                });
+            }
+            finally
+            {
+                Context.Client.ButtonExecuted -= onButton;
+            }
         }
 
         [Command("all", RunMode = RunMode.Async)]
@@ -164,7 +235,8 @@ namespace ETHDINFKBot.Modules
                         m.Components = skipButton;
                     });
 
-                    int deleted = await PurgeMessagesInChannel(channel, userId);
+                    string progressPrefix = $"Now purging {channelLabel} — channel **{i + 1}/{textChannels.Count}**";
+                    int deleted = await PurgeMessagesInChannel(channel, userId, statusMsg, progressPrefix);
                     totalDeleted += deleted;
 
                     if (_skipRequested)
@@ -186,9 +258,12 @@ namespace ETHDINFKBot.Modules
             });
         }
 
-        private async Task<int> PurgeMessagesInChannel(SocketTextChannel channel, ulong targetUserId, IUserMessage statusMessage = null)
+        private async Task<int> PurgeMessagesInChannel(SocketTextChannel channel, ulong targetUserId, IUserMessage statusMessage = null, string progressPrefix = null)
         {
             int totalDeleted = 0;
+            int scanned = 0;
+            int batchCount = 0;
+            int consecutiveErrors = 0;
             ulong? beforeId = null;
 
             while (true)
@@ -202,10 +277,17 @@ namespace ETHDINFKBot.Modules
                     batch = beforeId == null
                         ? await channel.GetMessagesAsync(100).FlattenAsync()
                         : await channel.GetMessagesAsync(beforeId.Value, Direction.Before, 100).FlattenAsync();
+                    consecutiveErrors = 0;
                 }
-                catch (HttpException)
+                catch (HttpException ex)
                 {
-                    break;
+                    // Don't silently abandon the channel on a transient error — log and retry a few times
+                    consecutiveErrors++;
+                    Console.WriteLine($"[purge] fetch error in #{channel.Name} ({channel.Id}) after {scanned} scanned: {(int?)ex.HttpCode} {ex.Reason ?? ex.Message} (attempt {consecutiveErrors})");
+                    if (consecutiveErrors >= 3)
+                        break;
+                    await Task.Delay(2000);
+                    continue;
                 }
 
                 var messages = batch.ToList();
@@ -213,6 +295,13 @@ namespace ETHDINFKBot.Modules
                     break;
 
                 beforeId = messages.Min(m => m.Id);
+                scanned += messages.Count;
+                batchCount++;
+
+                // Show that we're still working even when a long stretch has nothing to delete
+                if (statusMessage != null && progressPrefix != null && batchCount % 5 == 0)
+                    await statusMessage.ModifyAsync(m => m.Content =
+                        $"{progressPrefix}\nScanned **{scanned}** messages, deleted **{totalDeleted}** so far...");
 
                 var userMessages = messages.Where(m => m.Author.Id == targetUserId).ToList();
                 if (userMessages.Count == 0)
@@ -259,7 +348,7 @@ namespace ETHDINFKBot.Modules
                     await Task.Delay(300); // ~3 deletes/sec to respect rate limits
                 }
 
-                if (statusMessage != null && totalDeleted > 0 && totalDeleted % 25 == 0)
+                if (statusMessage != null && progressPrefix == null && totalDeleted > 0 && totalDeleted % 25 == 0)
                     await statusMessage.ModifyAsync(m => m.Content = $"Purging... ({totalDeleted} messages deleted so far)");
             }
 
