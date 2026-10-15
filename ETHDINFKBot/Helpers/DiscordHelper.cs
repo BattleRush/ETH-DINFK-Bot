@@ -14,6 +14,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using System.Xml.Linq;
 using HtmlAgilityPack;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -887,9 +888,6 @@ namespace ETHDINFKBot.Helpers
             {
                 var activeEvents = await guild.GetEventsAsync();
 
-                // Download image from url
-                Image cover = new Image();
-
                 var handler = new SocketsHttpHandler
                 {
                     ConnectCallback = async (context, cancellationToken) =>
@@ -917,111 +915,46 @@ namespace ETHDINFKBot.Helpers
                     client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br, zstd");
                     client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");*/
 
-                    var response = await client.GetAsync($"https://vis.ethz.ch/en/events/");
-                    var contents = await response.Content.ReadAsStringAsync();
-
-                    Console.WriteLine($"Response: {contents}");
-
-                    var doc = new HtmlDocument();
-                    doc.LoadHtml(contents);
-
-                    string xPath = "//*[@class=\"card full-height\"]";
-                    HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes(xPath);
-
-                    foreach (var node in nodes)
+                    foreach (var visEvent in await FetchVisEvents(client, VisEventsRssUrl))
                     {
-                        string title = node.SelectSingleNode(".//h5")?.InnerText;
+                        // Discord does not allow to create events that already started
+                        if (visEvent.StartDate <= DateTimeOffset.Now)
+                            continue;
 
-                        // Ensure HTML is decoded properly and trim any unecessary spaces
-                        title = HttpUtility.HtmlDecode(title)?.Trim();
+                        var payload = BuildVisEventPayload(visEvent);
 
-                        if (title != null)
+                        // This event is already created
+                        if (activeEvents.Any(i => i.Name == payload.Title))
+                            continue;
+
+                        // Download the cover image of the event if it has one
+                        Image? cover = null;
+                        if (!string.IsNullOrWhiteSpace(visEvent.CoverImageUrl))
                         {
-                            // substring title to max 100 chars due to api limits
-                            if (title.Length > 100)
-                                title = title.Substring(0, 100);
-
-                            // This event is already created
-                            if (activeEvents.Any(i => i.Name == title))
-                                continue;
-
-                            bool startDateParsed = false;
-                            DateTime startDateTime = DateTime.Now;
-                            bool endDateParsed = false;
-                            DateTime endDateTime = DateTime.Now;
-
-                            var pNodes = node.SelectNodes(".//p");
-                            var imgNode = node.SelectSingleNode(".//img");
-
-                            var description = pNodes[1].InnerText;
-
-                            var eventLink = "https://vis.ethz.ch" + node.SelectSingleNode(".//a").Attributes["href"].Value;
-
-                            description = $"Link: {eventLink}{Environment.NewLine}{description}";
-
-                            string imgUrl = imgNode.Attributes["src"]?.Value;
-                            if (imgUrl.StartsWith("/static"))
-                                imgUrl = "https://vis.ethz.ch" + imgUrl;
-
-                            CultureInfo provider = CultureInfo.InvariantCulture;
-
-                            foreach (var pNode in pNodes)
-                            {
-                                if (pNode.InnerText.ToLower().Contains("event start time"))
-                                {
-                                    string dateTimeString = pNode.InnerText.Replace("Event start time", "").Trim();
-                                    startDateParsed = DateTime.TryParseExact(dateTimeString, "d.M.yyyy HH:mm", provider,
-                                    DateTimeStyles.None, out startDateTime);
-
-                                    // CET/CEST to UTC
-                                    startDateTime = startDateTime.AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(startDateTime) ? -2 : -1);
-                                }
-                                else if (pNode.InnerText.ToLower().Contains("event end time"))
-                                {
-                                    string dateTimeString = pNode.InnerText.Replace("Event end time", "").Trim();
-                                    endDateParsed = DateTime.TryParseExact(dateTimeString, "d.M.yyyy HH:mm", provider,
-                                    DateTimeStyles.None, out endDateTime);
-
-                                    // CET/CEST to UTC
-                                    endDateTime = endDateTime.AddHours(Program.TimeZoneInfo.IsDaylightSavingTime(endDateTime) ? -2 : -1);
-                                }
-                            }
-
-                            // Either end or start date is not parsed
-                            if (!startDateParsed || !endDateParsed)
-                                continue;
-
-                            // Apperently VIS cant put end dates
-                            if (startDateTime == endDateTime)
-                                endDateTime = endDateTime.AddHours(1);
-
                             try
                             {
-                                var stream = await client.GetStreamAsync(new Uri(WebUtility.HtmlDecode(imgUrl)));
-                                cover = new Image(stream);
+                                cover = await DownloadVisEventCoverImage(client, visEvent.CoverImageUrl);
                             }
                             catch (Exception ex)
                             {
                                 await guildLogChannel.SendMessageAsync($"Error while downloading image: {ex.ToString()}");
                             }
-
-                            // Create Event
-                            var guildEvent = await guild.CreateEventAsync(
-                                title,
-                                startTime: startDateTime,
-                                GuildScheduledEventType.External,
-                                description: description,
-                                endTime: endDateTime,
-                                location: "VIS Event",
-                                coverImage: cover
-                            );
-
-                            eventsCreated++;
-
-                            //ulong eventChannelId = 819864331192631346;
-
-                            await eventChannel.SendMessageAsync($"{title}{Environment.NewLine}https://discord.com/events/{guildId}/{guildEvent.Id}");
                         }
+
+                        // Create Event
+                        var guildEvent = await guild.CreateEventAsync(
+                            name: payload.Title,
+                            startTime: payload.StartDate,
+                            type: GuildScheduledEventType.External,
+                            description: payload.Description,
+                            endTime: payload.EndDate,
+                            location: payload.Location,
+                            coverImage: cover
+                        );
+
+                        eventsCreated++;
+
+                        await eventChannel.SendMessageAsync($"{payload.Title}{Environment.NewLine}https://discord.com/events/{guildId}/{guildEvent.Id}");
                     }
                 }
 
@@ -1031,6 +964,176 @@ namespace ETHDINFKBot.Helpers
                 // send msg about the error in guild
                 await guildLogChannel.SendMessageAsync($"Error while syncing VIS events: {ex.ToString()}");
             }
+        }
+
+        public const string VisEventsRssUrl = "https://vis.ethz.ch/en/events/rss.xml";
+
+        public static async Task<List<VisEventRssItem>> FetchVisEvents(HttpClient client, string rssUrl)
+        {
+            var response = await client.GetAsync(rssUrl);
+            response.EnsureSuccessStatusCode();
+
+            return ParseVisEventsRss(await response.Content.ReadAsStringAsync());
+        }
+
+        /// <summary>
+        /// Builds the payload of the discord event out of a feed item. The cover image is not part of it, it gets
+        /// downloaded separately.
+        /// </summary>
+        public static VisEventDiscordPayload BuildVisEventPayload(VisEventRssItem visEvent)
+        {
+            string title = visEvent.Title;
+
+            // substring title to max 100 chars due to api limits
+            if (title.Length > 100)
+                title = title.Substring(0, 100);
+
+            string description = $"Link: {visEvent.Link}";
+            if (!string.IsNullOrWhiteSpace(visEvent.Description))
+                description += $"{Environment.NewLine}{visEvent.Description}";
+
+            // substring description to max 1000 chars due to api limits
+            if (description.Length > 1000)
+                description = description.Substring(0, 1000);
+
+            string location = string.IsNullOrWhiteSpace(visEvent.Location) ? "VIS Event" : visEvent.Location;
+
+            // substring location to max 100 chars due to api limits
+            if (location.Length > 100)
+                location = location.Substring(0, 100);
+
+            var startDate = visEvent.StartDate.ToUniversalTime();
+            var endDate = visEvent.EndDate.ToUniversalTime();
+
+            // discord needs an end date after the start date
+            if (endDate <= startDate)
+                endDate = startDate.AddHours(1);
+
+            return new VisEventDiscordPayload(
+                title,
+                description,
+                location,
+                startDate,
+                endDate);
+        }
+
+        public static async Task<Image> DownloadVisEventCoverImage(HttpClient client, string coverImageUrl)
+        {
+            // buffer it, the HttpClient might be disposed before the image gets read
+            byte[] coverBytes = await client.GetByteArrayAsync(coverImageUrl);
+
+            return new Image(new MemoryStream(coverBytes));
+        }
+
+        private static readonly XNamespace VisEventNamespace = "http://purl.org/rss/1.0/modules/event/";
+
+        public sealed record VisEventRssItem(string Title, string Link, string Description, string Location, DateTimeOffset StartDate, DateTimeOffset EndDate, string CoverImageUrl);
+
+        public sealed record VisEventDiscordPayload(string Title, string Description, string Location, DateTimeOffset StartDate, DateTimeOffset EndDate);
+
+        /// <summary>
+        /// Parses the events out of the RSS feed of <see href="https://vis.ethz.ch/en/events/rss.xml"/>
+        /// </summary>
+        public static List<VisEventRssItem> ParseVisEventsRss(string rssXml)
+        {
+            List<VisEventRssItem> events = new();
+
+            foreach (var item in XDocument.Parse(rssXml).Descendants("item"))
+            {
+                string title = item.Element("title")?.Value?.Trim();
+                string link = item.Element("link")?.Value?.Trim();
+
+                if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(link))
+                    continue;
+
+                // The dates are in swiss time, the offset in the feed tells us which one it is
+                if (!TryParseVisDate(item.Element(VisEventNamespace + "startdate")?.Value, out var startDate) ||
+                    !TryParseVisDate(item.Element(VisEventNamespace + "enddate")?.Value, out var endDate))
+                    continue;
+
+                var (description, location) = ParseVisEventDescription(item.Element("description")?.Value, link);
+
+                events.Add(new VisEventRssItem(title, link, description, location, startDate, endDate, ParseVisEventCoverImageUrl(item)));
+            }
+
+            return events;
+        }
+
+        /// <summary>
+        /// The cover image of an event is either published as a "media:content" tag or as a plain "enclosure" tag.
+        /// </summary>
+        private static string ParseVisEventCoverImageUrl(XElement item)
+        {
+            string mediaUrl = item.Descendants()
+                .Where(i => i.Name.LocalName == "content" && (i.Attribute("medium")?.Value == "image" || i.Attribute("type")?.Value?.StartsWith("image/") == true))
+                .Select(i => i.Attribute("url")?.Value?.Trim())
+                .FirstOrDefault(i => !string.IsNullOrWhiteSpace(i));
+
+            if (mediaUrl != null)
+                return mediaUrl;
+
+            return item.Elements("enclosure")
+                .Where(i => i.Attribute("type")?.Value?.StartsWith("image/") != false)
+                .Select(i => i.Attribute("url")?.Value?.Trim())
+                .FirstOrDefault(i => !string.IsNullOrWhiteSpace(i));
+        }
+
+        private static bool TryParseVisDate(string value, out DateTimeOffset date)
+            => DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out date);
+
+        /// <summary>
+        /// The description in the feed holds the date and the location for the users as well as a link back to the
+        /// event page. The date and the link are already covered by the other feed elements, so they get cut out to
+        /// only keep the real description of the event.
+        /// </summary>
+        private static (string Description, string Location) ParseVisEventDescription(string descriptionHtml, string eventLink)
+        {
+            if (string.IsNullOrWhiteSpace(descriptionHtml))
+                return (null, null);
+
+            var doc = new HtmlDocument();
+            doc.LoadHtml(descriptionHtml);
+
+            string location = null;
+            List<string> descriptionParts = new();
+
+            var blocks = doc.DocumentNode.SelectNodes("//p")?.Cast<HtmlNode>().ToList() ?? new List<HtmlNode>() { doc.DocumentNode };
+
+            foreach (var block in blocks)
+            {
+                // The last paragraph only holds the "View Event" link back to the event page
+                var anchors = block.SelectNodes(".//a");
+                if (anchors != null && anchors.Any(a => GetAbsoluteVisUrl(a.GetAttributeValue("href", null)) == eventLink))
+                    continue;
+
+                // HtmlAgilityPack does not decode the entities the text is made of
+                string text = HttpUtility.HtmlDecode(block.InnerText)?.Trim();
+
+                if (text.StartsWith("When:", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (text.StartsWith("Where:", StringComparison.OrdinalIgnoreCase))
+                {
+                    location = text.Substring("Where:".Length).Trim();
+                    continue;
+                }
+
+                if (text.Length > 0)
+                    descriptionParts.Add(text);
+            }
+
+            return (string.Join(Environment.NewLine, descriptionParts), location);
+        }
+
+        private static string GetAbsoluteVisUrl(string href)
+        {
+            if (string.IsNullOrWhiteSpace(href))
+                return null;
+
+            if (href.StartsWith("/"))
+                return "https://vis.ethz.ch" + href;
+
+            return href;
         }
 
         // idk where to put it so it lives here
