@@ -176,15 +176,18 @@ namespace ETHDINFKBot.Modules
 
             if (menuUserSettings?.FullNutritions == true)
             {
-                canvas.DrawText(menu.Protein > 0 ? $"Protein: {menu.Protein} g" : "Protein: n/a", new SKPoint(left, usedHeight), DrawingHelper.MediumTextPaint);
+                // whole grams from 10 g up, one decimal below that (salt, soups) so small values don't all show as 0
+                string Grams(double value) => value.ToString(value >= 10 ? "0" : "0.#", System.Globalization.CultureInfo.InvariantCulture);
+
+                canvas.DrawText(menu.Protein > 0 ? $"Protein: {Grams(menu.Protein)} g" : "Protein: n/a", new SKPoint(left, usedHeight), DrawingHelper.MediumTextPaint);
                 usedHeight += 14;
-                canvas.DrawText(menu.Protein > 0 ? $"Fat: {menu.Fat} g" : "Fat: n/a", new SKPoint(left, usedHeight), DrawingHelper.MediumTextPaint);
+                canvas.DrawText(menu.Protein > 0 ? $"Fat: {Grams(menu.Fat)} g" : "Fat: n/a", new SKPoint(left, usedHeight), DrawingHelper.MediumTextPaint);
                 usedHeight += 14;
-                canvas.DrawText(menu.Protein > 0 ? $"Carbohydrates: {menu.Carbohydrates} g" : "Carbohydrates: n/a", new SKPoint(left, usedHeight), DrawingHelper.MediumTextPaint);
+                canvas.DrawText(menu.Protein > 0 ? $"Carbohydrates: {Grams(menu.Carbohydrates)} g" : "Carbohydrates: n/a", new SKPoint(left, usedHeight), DrawingHelper.MediumTextPaint);
                 usedHeight += 14;
-                canvas.DrawText(menu.Protein > 0 ? $"Salt: {menu.Salt} g" : "Salt: n/a", new SKPoint(left, usedHeight), DrawingHelper.MediumTextPaint);
+                canvas.DrawText(menu.Protein > 0 ? $"Salt: {Grams(menu.Salt)} g" : "Salt: n/a", new SKPoint(left, usedHeight), DrawingHelper.MediumTextPaint);
                 usedHeight += 14;
-                canvas.DrawText(menu.Sugar > 0 ? $"Sugar: {menu.Sugar} g" : "Sugar: n/a", new SKPoint(left, usedHeight), DrawingHelper.MediumTextPaint);
+                canvas.DrawText(menu.Sugar > 0 ? $"Sugar: {Grams(menu.Sugar)} g" : "Sugar: n/a", new SKPoint(left, usedHeight), DrawingHelper.MediumTextPaint);
                 usedHeight += 14;
             }
 
