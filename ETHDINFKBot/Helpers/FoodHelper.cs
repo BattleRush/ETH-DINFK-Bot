@@ -1083,7 +1083,10 @@ namespace ETHDINFKBot.Helpers
                             var menu = new Menu()
                             {
                                 Name = initialMenuItem.Category.Name,
-                                Description = dishDetail.Name,
+                                // dish title on the first line, the sides below it (same layout as the ETH menus)
+                                Description = string.IsNullOrWhiteSpace(dishDetail.Description)
+                                    ? dishDetail.Name
+                                    : dishDetail.Name + Environment.NewLine + dishDetail.Description.Trim(),
                                 Amount = price,
                                 IsVegan = dishDetail.IsVegan,
                                 IsVegetarian = dishDetail.IsVegetarian,
@@ -1102,6 +1105,11 @@ namespace ETHDINFKBot.Helpers
                             if (menu.DirectMenuImageUrl == null)
                             {
                                 menu.FallbackMenuImageUrl = FoodDBManager.GetDirectImageByMenuDescription(menu.Description);
+                                if (string.IsNullOrWhiteSpace(menu.FallbackMenuImageUrl))
+                                {
+                                    // rows saved before the sides were added only have the dish title
+                                    menu.FallbackMenuImageUrl = FoodDBManager.GetDirectImageByMenuDescription(dishDetail.Name);
+                                }
                                 if (string.IsNullOrWhiteSpace(menu.FallbackMenuImageUrl))
                                 {
                                     menu.FallbackMenuImageUrl = menus.FirstOrDefault(x => x.Item1.Description == menu.Description).Item1?.DirectMenuImageUrl;
