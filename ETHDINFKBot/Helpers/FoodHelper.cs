@@ -5,6 +5,7 @@ using ETHDINFKBot.Helpers.Food;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -945,6 +946,61 @@ namespace ETHDINFKBot.Helpers
             return -1;
         }
 
+        // food2050 no longer sends the __NEXT_DATA__ json (and the /_next/data/ urls are gone).
+        // The page data is now in <script>self.__next_f.push([1,"..."])</script> blocks: one "rowId:json" per line,
+        // where a repeated object is only sent once and afterwards referenced as "$rowId:path:to:the:object".
+        // Returns the value of the first property with the given name (references replaced) or null if there is none.
+        private static JToken GetFood2050PageData(string page, string propertyName)
+        {
+            var jsonSettings = new JsonSerializerSettings() { DateParseHandling = DateParseHandling.None };
+
+            var pageData = new StringBuilder();
+            foreach (System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(page, @"self\.__next_f\.push\(\[1,(""(?:[^""\\]|\\.)*"")\]\)"))
+                pageData.Append(JsonConvert.DeserializeObject<string>(match.Groups[1].Value, jsonSettings));
+
+            var rows = new Dictionary<string, JToken>();
+            foreach (string line in pageData.ToString().Split('\n'))
+            {
+                int separator = line.IndexOf(':');
+                if (separator < 1)
+                    continue;
+
+                try
+                {
+                    rows[line.Substring(0, separator)] = JsonConvert.DeserializeObject<JToken>(line.Substring(separator + 1), jsonSettings);
+                }
+                catch (JsonException)
+                {
+                    // Not a json row (script imports, hints, text)
+                }
+            }
+
+            var property = rows.Values.OfType<JContainer>().SelectMany(i => i.DescendantsAndSelf()).OfType<JProperty>()
+                .FirstOrDefault(i => i.Name == propertyName && i.Value is JContainer);
+            if (property == null)
+                return null;
+
+            // Replace the references with the object they point to, example: "$14:props:outlet:menuCategory:calendar:week:daily:0:menuItems:0:category"
+            foreach (var reference in ((JContainer)property.Value).Descendants().OfType<JValue>().Where(i => i.Type == JTokenType.String && ((string)i).StartsWith('$')).ToList())
+            {
+                string[] path = ((string)reference).Substring(1).Split(':');
+                rows.TryGetValue(path[0], out JToken target);
+
+                for (int i = 1; i < path.Length && target != null; i++)
+                {
+                    if (target is JArray array) // "props" are the 4th entry of a row like ["$","$L15",null,{...}]
+                        target = path[i] == "props" ? array.ElementAtOrDefault(3) : (int.TryParse(path[i], out int index) ? array.ElementAtOrDefault(index) : null);
+                    else
+                        target = (target as JObject)?[path[i]];
+                }
+
+                if (target != null)
+                    reference.Replace(target.DeepClone());
+            }
+
+            return property.Value;
+        }
+
         public List<(Menu, List<int>)> GetUZHMensaMenuWeek(string location, string mensa, string time = null)
         {
             try
@@ -956,19 +1012,13 @@ namespace ETHDINFKBot.Helpers
                     string timeString = time == null ? "" : $"{time}/";
 
                     // 1. Fetch the main HTML page
-                    string mainUrl = $"https://app.food2050.ch/de/v2/zfv/{location}/{mensa}/{timeString}menu/weekly";
+                    string mainUrl = $"https://app.food2050.ch/de/zfv/{location}/{mensa}/{timeString}menu/weekly";
                     string mainPage = client.DownloadString(mainUrl);
 
-                    // 2. **Extract the __NEXT_DATA__ JSON blob from the HTML**
-                    string scriptTagStart = "<script id=\"__NEXT_DATA__\" type=\"application/json\">";
-                    int startIndex = mainPage.IndexOf(scriptTagStart) + scriptTagStart.Length;
-                    int endIndex = mainPage.IndexOf("</script>", startIndex);
-                    string initialJson = mainPage.Substring(startIndex, endIndex - startIndex);
-
-                    // 3. **Deserialize the initial JSON to get buildId and menu structure**
-                    var initialData = JsonConvert.DeserializeObject<NextData>(initialJson);
-                    string buildId = initialData.BuildId;
-                    var dailyMenus = initialData.Props.PageProps.Organisation.Outlet.MenuCategory.Calendar.Week.Daily;
+                    // 2. **Extract the menu structure from the page data** (was __NEXT_DATA__ before)
+                    var dailyMenus = GetFood2050PageData(mainPage, "daily")?.ToObject<List<Daily>>();
+                    if (dailyMenus == null)
+                        throw new Exception($"No weekly menu found on {mainUrl}");
 
                     // 4. **Iterate through days and menu items from the initial data**
                     foreach (var day in dailyMenus)
@@ -978,24 +1028,24 @@ namespace ETHDINFKBot.Helpers
 
                         foreach (var initialMenuItem in day.MenuItems)
                         {
-                            Food2050MenuDetailResponse menuResult = null;
+                            MenuItemDetail menuItemDetail = null;
                             try
                             {
-                                // 5. **Construct the detail JSON URL from the detailUrl property**
-                                // Example detailUrl: "https://app.food2050.ch/de/v2/zfv/..."
-                                // We need to transform it to: "https://app.food2050.ch/_next/data/{buildId}/de/v2/zfv/....json"
+                                // 5. **Construct the detail page URL from the detailUrl property**
+                                // Example detailUrl: "https://app.food2050.ch/de/zfv/..."
                                 var detailUri = new Uri(initialMenuItem.DetailUrl);
                                 string path = detailUri.AbsolutePath;
                                 // To get english descriptions, we can replace the language code
                                 path = System.Text.RegularExpressions.Regex.Replace(path, "^/[a-z]{2}/", "/de/");
 
-                                var menuUrl = $"https://app.food2050.ch/_next/data/{buildId}{path}.json";
+                                var menuUrl = $"https://app.food2050.ch{path}";
 
-                                string menuJson = client.DownloadString(menuUrl);
+                                string menuPage = client.DownloadString(menuUrl);
                                 Thread.Sleep(500); // Respect the server
-                                menuResult = JsonConvert.DeserializeObject<Food2050MenuDetailResponse>(menuJson);
+                                menuItemDetail = GetFood2050PageData(menuPage, "menuItem")?.ToObject<MenuItemDetail>();
 
-                                if (menuResult == null) continue;
+                                if (menuItemDetail == null)
+                                    throw new Exception("No menu details found on the page");
                             }
                             catch (Exception ex)
                             {
@@ -1011,7 +1061,6 @@ namespace ETHDINFKBot.Helpers
                                 continue;
                             }
 
-                            var menuItemDetail = menuResult.PageProps.Organisation.Outlet.MenuCategory.MenuItem;
                             var dishDetail = menuItemDetail.Dish;
 
                             double price = 0;
